@@ -33,7 +33,7 @@ support ML-driven insights on intervention priorities
     - 🌿 sustainable compute logic
  
 
-### 🌿 design features (what's built into the model)
+# 🌿 design features (what's built into the model)
 
 | **Dimension** | **Key Fields / Features** | **Notes** |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ support ML-driven insights on intervention priorities
 
 ---
 
-### 🧮 field tagging for mathematical modeling
+# 🧮 field tagging for mathematical modeling
 
 | **Type** | **Meaning** | **Example Fields** |
 | --- | --- | --- |
@@ -69,7 +69,7 @@ support ML-driven insights on intervention priorities
 
 ---
 
-### 🛠 logic + governance features
+# 🛠 logic + governance features
 
 | Category | ***Implementation Suggestion*** |
 | --- | --- |
@@ -95,11 +95,5 @@ support ML-driven insights on intervention priorities
 - designs for **climate-aligned computation + interpretability**
 
 ---
-
-### ✨ Bonus Tips
-
-- **Version Control Everything:** Use Git branches for experimental modules.
-- **Automate:** CI/CD with GitHub Actions for schema validation & tests.
-- **Data Ethics:** Keep logging biases and assumptions as we grow.
 
 formerly, towardTreeEquity: https://github.com/kalliannhale/towardTreeEquity
