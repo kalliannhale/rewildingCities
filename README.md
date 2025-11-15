@@ -1,14 +1,14 @@
 # rewildingCities 🦋
 a modular toolkit that powers a modern data platform designed to support predictive analytics, policy insight, and community storytelling around green infrastructure and climate resilience.
 
-🌱 overview
+## 🌱 overview
 this project lays the foundation for a structured, spatially aware data pipeline to support equity-centered urban ecological analytics. it serves three core audiences:
 
 policy researchers exploring correlations between canopy cover, demographic patterns, and environmental risk
 municipal planners verifying and supplementing local tree inventories
 community organizers + citizen scientists engaging in neighborhood-level data storytelling
 
-🧬 project architecture
+## 🧬 project architecture
 
 this repo supports a multi-phase initiative:
 
