@@ -1,99 +1,97 @@
-# 🦋 rewildingCities
-a modular toolkit that powers a modern data platform designed to support predictive analytics, policy insight, and community storytelling around green infrastructure and climate resilience.
+# 🌱 rewildingCities
 
-## 🌱 overview
-this project lays the foundation for a structured, spatially aware data pipeline to support equity-centered urban ecological analytics. it serves three core audiences:
+*Collective science for climate-resilient futures.*
 
-policy researchers exploring correlations between canopy cover, demographic patterns, and environmental risk
-municipal planners verifying and supplementing local tree inventories
-community organizers + citizen scientists engaging in neighborhood-level data storytelling
+Authors of science fiction interpret our realities to imagine and project our shared histories, futures, global maps, and economies. We're building tools to investigate these speculative realities, together.
 
-## 🧬 project architecture
+rewildingCities is an open-source platform for collective imagination through actual science—where research on urban ecosystems meets worldbuilding, and data becomes a lens for designing climate-resilient futures. We create accessible, rigorous analytical tools for communities ready to ask: *How will we redraw this map? What flourishes when we make room for the wild? When will we finally design our infrastructure like nature does—to be collaborative, adaptive, regenerative?*
 
-this repo supports a multi-phase initiative:
+**Our first investigation: Park Cooling Intensity.** We're going to need to understand how heat travels throughout our cities. Nature did it best with green infrastructure, and we want to look at how we can design a *literal* rewilding of the city to combat our deadliest, most frequent natural disasters: heat waves. We've built an accessible pipeline for citizens to conduct their own geospatial analyses with community-specific datasets.
 
-Data Mart Construction
-
-unify municipal tree data, census layers, environmental indices, and zoning/flood overlays
-prepare geospatial joins and block-level summaries
-Operational Community Database
-
-format outputs for use by community organizers and citizen-science tools
-Interactive Dashboard
-
-visualize spatial equity gaps and green infrastructure resilience
-support ML-driven insights on intervention priorities
-
-
-- **architecture goals**:
-    - 🌱 modular ETL + derivation pipeline (in R)
-    - 📐 statistical inference compatibility
-    - 💡 machine learning–readiness, *have to think about this idea of learning readiness*
-    - ✨ community narrative integration
-    - 🌿 sustainable compute logic
- 
-
-# 🌿 design features (what's built into the model)
-
-| **Dimension** | **Key Fields / Features** | **Notes** |
-| --- | --- | --- |
-| **identity & location** | `tree_id`, `parcel_id`, `lat/lon`, `block_id`, `land_use_type` | canonical spatial anchors |
-| **structural context** | `distance_to_building`, `shading_building_area_m2`, `built_form_type`, `biophilic_index` | architecture ↔ tree interface |
-| **species ecology** | `species`, `native_status`, `drought_tolerance`, `pollen_score`, `canopy_width` | for local climate resilience |
-| **maintenance** | `last_maintained`, `estimated_lifespan`, `planned`, `maintenance_cost_est`,  `remove` | supports forecasting + labor planning |
-| **green labor link** | `responsible_entity`, `green_job_classification` | supports economic justice analytics |
-| **economic value** | `estimated_cooling_savings`, `property_value_change`, `stormwater_savings`, `CO₂_sequestered_value` | **public benefit modeling (!)** |
-| **community ecology** | `narrative_field`, `community_reported`, `memorial_tag` | stories, meaning, neighborhood priorities |
-| **public health link** | `respiratory_risk_index`, `greenspace_access_score`, `nearest_air_monitor` | links to sacrifice zones; burdens of injustice |
-| **climate resilience** | `UHI_buffer`, `resilience_zone`, `stormwater_retention` | index fields & model targets |
-| **political geography** | `council_district`, `zoning_code`, `EJ_zone`, `redlined_status`, `CRS` | allows ***policy traceability*** |
-| **hydrology interface** | `watershed`, `floodplain_status`, `impervious_surface_pct` | linked to water quality + urban drainage |
-| **species suitability** | `climate_zone`, `soil_type`, `expected_mortality_2050` | for future species planning |
-| **cost/responsibility** | `cost_to_plant`, `funding_source`, `labor_hours` | supports budget modeling + equity |
-| **ML-ready fields** | `tree_vector_embedding`, `feature_imputed`, `predictive_cluster_id` | for supervised + unsupervised tasks |
+Currently, our platform supports initial spatial analyses exploring rising urban temperatures and the effects of green infrastructure. We invite researchers, organizers, and learners to build with us—creating pipelines using this infrastructure to investigate the questions that matter to your community, and contribute to the development of economies of resilience.
 
 ---
 
-# 🧮 field tagging for mathematical modeling
+## 🔮 Who This Is For
 
-| **Type** | **Meaning** | **Example Fields** |
-| --- | --- | --- |
-| `measured` | directly observed | `species`, `dbh`, `planted_date` |
-| `derived` | computed from others | `canopy_area`, `shade_score` |
-| `indexed` | normalized composite scores | `cooling_index`, `EJ_score` |
-| `categorical` | qualitative labels | `condition`, `land_use_type` |
-| `temporal` | sequential or periodic | `last_inspection`, `planted_year` |
-| `spatial` | point, buffer, or join-based | `geometry`, `distance_to_building` |
-| `latent` | model-inferred | `vulnerability_zone`, `risk_cluster_id` |
-| `economic` | monetized outputs | `cooling_cost_saved`, `maintenance_cost` |
+- **Researchers and analysts** who believe data can serve more than dashboards
+- **Advocates and planners** building evidence for climate-resilient futures
+- **Designers and systems thinkers** practicing biomimicry at the civic scale
+- **Learners** developing technical literacy through meaningful work
 
 ---
 
-# 🛠 logic + governance features
+## 🌿 The Garden
 
-| Category | ***Implementation Suggestion*** |
-| --- | --- |
-| **schema validation** | per-layer `.yaml` schemas + R validators using custom rules |
-| **state tracking** | versioned time-aware logs (e.g. `tree_state_log`) for changelogs |
-| **model metadata** | store `model_version`, `prediction_timestamp`, `observed_outcome`, `interval_coverage` |
-| **data provenance** | include `source`, `ingestion_date`, `transformation_log` per record |
-| **cross-layer joins** | use a `layer_index.yaml` to declare canonical IDs and join methods |
-| **schema relationships** | define relational rules and validate (e.g. tree → parcel via geometry match) |
-| **narrative governance** | add `narrative_visibility`, `community_consent_status`, and `contributor_org` fields; for example, imagine this is being used by a child and they don’t understand what is vulnerable and sensitive information |
-| **uncertainty tracking** | store `confidence_interval`, `feature_imputed`, `data_confidence_note` per key variable |
-| **semantic enrichment** | allow optional tags like `tree_symbolism`, `heritage_marker`, `healing_landscape_type` |
-| **evaluation hooks** | tag fields with `cv_fold_id`, `train_test_split_id`, `evaluation_metric_target` where needed |
+The codebase is organized as a garden—a living system where patterns emerge from interaction:
 
----
-
-### 🌱 environmental commitment (embedded)
-
-- runs **locally**, minimizing compute and cloud dependence
-- uses **efficient formats** (`feather`, `parquet`, `geojson`)
-- minimizes **redundant derivations** with caching + modularity
-- embeds **community governance** + narrative care
-- designs for **climate-aligned computation + interpretability**
+| Directory | Purpose | Metaphor |
+|-----------|---------|----------|
+| `soil/` | Validation, repair, data registration | Preparing the ground |
+| `seeds/` | Schemas, crosswalks, templates | Preserved patterns |
+| `roots/` | Primitives (atomic analytical operations) | Hidden foundation |
+| `growth/` | Recipes (composed workflows) | What blooms |
+| `harvest/` | Outputs (reports, maps, dashboards) | What we gather |
+| `compost/` | Logs, archives, feedback | Transformation |
+| `garden/` | Experiments, notebooks, tests | Where new things grow |
+| `plots/` | City-specific data and manifests | Each city is a plot |
+| `field-guide/` | Documentation | Nature guide |
+| `canopy/` | Orchestration | Visible structure |
 
 ---
 
-formerly, towardTreeEquity: https://github.com/kalliannhale/towardTreeEquity
+## 🛠️ Core Concepts
+
+**Manifests** declare what data a city has—not just formats, but meaning. What does this dataset represent? What are its limitations? What story can it tell?
+
+**Recipes** compose analytical workflows from atomic primitives. Run them for learning. Run them for production. The same tools serve both.
+
+**Profiles** let you subset for context: `dev` for fast iteration, `full` for production, `neighborhood` for local analysis.
+
+**Crosswalks** translate between classification systems, because every city names its world differently.
+
+---
+
+## 🚀 Getting Started
+
+```bash
+git clone https://github.com/rewilding-intelligence/rewildingCities.git
+cd rewildingCities
+./start-ur-garden.sh
+```
+
+---
+
+## 🌱 Principles
+
+1. **Honest outputs** — Document limitations. Tell people what they're actually getting.
+2. **Data pluralism** — Help communities work with what they have.
+3. **Composable primitives** — Atomic operations for learning or production.
+4. **Transparent provenance** — Every output knows where it came from.
+5. **Local-first, cloud-ready** — Works on a laptop. Scales when needed.
+6. **Pedagogical design** — The structure teaches.
+
+---
+
+## 🌍 Vision
+
+Infrastructure for investigating urban ecosystems. Tools that meet communities where they are. Research that learns from the patterns nature has always known.
+
+---
+
+## 🤝 Join Us
+
+rewildingCities is a project of **Rewilding Intelligence**, a research initiative facilitating collaborative data science for climate-resilient futures.
+
+---
+
+## 📚 Foundations
+
+- Xiao, Y. et al. (2023). "Using buffer analysis to determine urban park cooling intensity." *Science of the Total Environment*
+- Practices from reproducible research, biomimicry, and participatory design
+
+---
+
+**The tools are here.** 🌱
+
+---

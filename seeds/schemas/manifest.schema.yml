@@ -1,0 +1,182 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# MANIFEST SCHEMA v1.0
+# A manifest declares what data a city has, what it means, and where it lives.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+manifest:
+  type: object
+  required: [city, crs, datasets]
+  properties:
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # IDENTITY
+    # ───────────────────────────────────────────────────────────────────────────
+    city:
+      type: object
+      required: [name, id]
+      properties:
+        name: { type: string, description: "Human-readable city name" }
+        id: { type: string, pattern: "^[a-z0-9_]+$", description: "Machine ID" }
+        region: { type: string, description: "State/province" }
+        country: { type: string, description: "ISO country code" }
+        timezone: { type: string, description: "IANA timezone" }
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # SPATIAL REFERENCE
+    # ───────────────────────────────────────────────────────────────────────────
+    crs:
+      type: object
+      required: [working]
+      properties:
+        working: { type: string, description: "EPSG code for analysis" }
+        notes: { type: string, description: "Why this CRS" }
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # STEWARDSHIP
+    # ───────────────────────────────────────────────────────────────────────────
+    stewardship:
+      type: object
+      properties:
+        maintainers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              contact: { type: string }
+              organization: { type: string }
+        initialized: { type: string, format: date }
+        last_verified: { type: string, format: date }
+        community_partners: { type: array, items: { type: string } }
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # SCOPE (subsetting defaults)
+    # ───────────────────────────────────────────────────────────────────────────
+    scope:
+      type: object
+      properties:
+        study_area:
+          type: object
+          properties:
+            type: { type: string, enum: [full, bbox, boundary, buffer] }
+            bbox: { type: array, items: { type: number }, minItems: 4, maxItems: 4 }
+            boundary_dataset: { type: string }
+            boundary_filter: { type: string }
+            center: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }
+            radius_km: { type: number }
+        feature_sampling:
+          type: object
+          properties:
+            enabled: { type: boolean, default: false }
+            method: { type: string, enum: [random, stratified, filtered, explicit] }
+            n: { type: integer }
+            seed: { type: integer }
+            stratify_by: { type: string }
+            n_per_stratum: { type: integer }
+            filter: { type: string }
+            feature_ids: { type: array, items: { type: string } }
+        resolution:
+          type: object
+          properties:
+            mode: { type: string, enum: [native, target, overview], default: native }
+            target_meters: { type: number }
+            overview_level: { type: integer }
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # DATASETS
+    # ───────────────────────────────────────────────────────────────────────────
+    datasets:
+      type: object
+      additionalProperties:
+        $ref: "#/definitions/dataset"
+
+definitions:
+  dataset:
+    type: object
+    required: [available]
+    properties:
+    
+      # availability
+      available: { type: boolean }
+      
+      # source (where to get data)
+      source:
+        type: object
+        properties:
+          type: { type: string, enum: [local, api, url] }
+          path: { type: string }
+          provider: { type: string, enum: [socrata, arcgis_rest, ckan, custom] }
+          endpoint: { type: string, format: uri }
+          query_params: { type: object }
+          auth:
+            type: object
+            properties:
+              type: { type: string, enum: [none, api_key, oauth] }
+              key_env_var: { type: string }
+          url: { type: string, format: uri }
+      
+      # cache (local storage)
+      cache:
+        type: object
+        properties:
+          path: { type: string }
+          fetched_at: { type: string, format: date-time }
+          refresh_policy: { type: string, enum: [manual, daily, weekly, always], default: manual }
+          max_age_days: { type: integer }
+      
+      # semantic identity
+      format: { type: string, enum: [geotiff, geojson, geopackage, shapefile, parquet, csv, feather] }
+      semantic_type:
+        type: string
+        enum:
+          - land_surface_temperature
+          - land_cover
+          - ndvi
+          - nighttime_lights
+          - population_density
+          - elevation
+          - park_boundaries
+          - city_boundary
+          - administrative_districts
+          - road_network
+          - water_bodies
+          - building_footprints
+      measurement_type: { type: string, enum: [absolute, relative, anomaly] }
+      statistic: { type: string, enum: [mean, median, max, min, composite] }
+      units: { type: string }
+      classification_scheme: { type: string }
+      num_classes: { type: integer }
+      geometry_type: { type: string, enum: [point, linestring, polygon, multipoint, multilinestring, multipolygon, mixed] }
+      id_field: { type: string }
+      
+      # temporal
+      temporal:
+        type: object
+        properties:
+          type: { type: string, enum: [snapshot, seasonal_composite, annual_average, multi_year_composite] }
+          year: { type: integer }
+          range:
+            type: object
+            properties:
+              start: { type: string, format: date }
+              end: { type: string, format: date }
+          season: { type: string, enum: [spring, summer, fall, winter, annual] }
+      
+      # provenance
+      provenance:
+        type: object
+        properties:
+          source: { type: string }
+          source_url: { type: string, format: uri }
+          license: { type: string }
+          retrieval_date: { type: string, format: date }
+          processing_notes: { type: string }
+      
+      # quality
+      quality:
+        type: object
+        properties:
+          confidence: { type: string, enum: [high, medium, low, unknown] }
+          known_issues: { type: array, items: { type: string } }
+          spatial_resolution: { type: string }
+          completeness: { type: string }

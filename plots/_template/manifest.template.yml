@@ -1,0 +1,80 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# CITY MANIFEST TEMPLATE
+# Copy to plots/your_city/manifest.yml and fill in
+# ═══════════════════════════════════════════════════════════════════════════════
+
+city:
+  name: ""
+  id: ""
+  region: ""
+  country: ""
+  timezone: ""
+
+crs:
+  working: ""
+  notes: ""
+
+stewardship:
+  maintainers:
+    - name: ""
+      organization: ""
+  initialized: ""
+  last_verified: ""
+  community_partners: []
+
+scope:
+  study_area:
+    type: full
+  feature_sampling:
+    enabled: false
+  resolution:
+    mode: native
+
+datasets:
+
+  lst_median:
+    available: false
+    # source:
+    #   type: local | api | url
+    #   path: ".data/lst_median.tif"  # for local
+    #   provider: socrata              # for api
+    #   endpoint: ""                   # for api
+    #   url: ""                        # for url
+    # cache:
+    #   path: ".data/lst_median.tif"
+    #   refresh_policy: manual
+    # format: geotiff
+    # semantic_type: land_surface_temperature
+    # measurement_type: relative
+    # statistic: median
+    # temporal:
+    #   type: seasonal_composite
+    #   season: summer
+    #   year: 2023
+    # provenance:
+    #   source: ""
+    #   source_url: ""
+    # quality:
+    #   confidence: medium
+    #   known_issues: []
+
+  lst_mean:
+    available: false
+
+  parks:
+    available: false
+
+  land_cover:
+    available: false
+
+  ndvi:
+    available: false
+
+  nighttime_lights:
+    available: false
+
+  population:
+    available: false
+
+  roads:
+    available: false
