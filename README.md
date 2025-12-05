@@ -1,4 +1,4 @@
-# 🌱 rewildingCities
+# rewildingCities 🌱
 
 *Collective science for climate-resilient futures.*
 
@@ -6,13 +6,13 @@ Authors of science fiction interpret our realities to imagine and project our sh
 
 rewildingCities is an open-source platform for collective imagination through actual science—where research on urban ecosystems meets worldbuilding, and data becomes a lens for designing climate-resilient futures. We create accessible, rigorous analytical tools for communities ready to ask: *How will we redraw this map? What flourishes when we make room for the wild? When will we finally design our infrastructure like nature does—to be collaborative, adaptive, regenerative?*
 
-**Our first investigation: Park Cooling Intensity.** We're going to need to understand how heat travels throughout our cities. Nature did it best with green infrastructure, and we want to look at how we can design a *literal* rewilding of the city to combat our deadliest, most frequent natural disasters: heat waves. We've built an accessible pipeline for citizens to conduct their own geospatial analyses with community-specific datasets.
+**Our first investigation: surviving rising temperatures.** We're going to need to understand how heat travels throughout our cities. Nature did it best with green infrastructure, and we want to look at how we can design a *literal* rewilding of the city to combat our deadliest, most frequent natural disasters: heat waves. We've built an accessible pipeline for citizens to conduct their own geospatial analyses with community-specific datasets.
 
 Currently, our platform supports initial spatial analyses exploring rising urban temperatures and the effects of green infrastructure. We invite researchers, organizers, and learners to build with us—creating pipelines using this infrastructure to investigate the questions that matter to your community, and contribute to the development of economies of resilience.
 
 ---
 
-## 🔮 Who This Is For
+## Who is this for?
 
 - **Researchers and analysts** who believe data can serve more than dashboards
 - **Advocates and planners** building evidence for climate-resilient futures
@@ -21,7 +21,7 @@ Currently, our platform supports initial spatial analyses exploring rising urban
 
 ---
 
-## 🌿 The Garden
+## Our Garden 🌿
 
 The codebase is organized as a garden—a living system where patterns emerge from interaction:
 
@@ -40,7 +40,7 @@ The codebase is organized as a garden—a living system where patterns emerge fr
 
 ---
 
-## 🛠️ Core Concepts
+## How is this shaped?
 
 **Manifests** declare what data a city has—not just formats, but meaning. What does this dataset represent? What are its limitations? What story can it tell?
 
@@ -52,17 +52,7 @@ The codebase is organized as a garden—a living system where patterns emerge fr
 
 ---
 
-## 🚀 Getting Started
-
-```bash
-git clone https://github.com/rewilding-intelligence/rewildingCities.git
-cd rewildingCities
-./start-ur-garden.sh
-```
-
----
-
-## 🌱 Principles
+## Our guiding principles:
 
 1. **Honest outputs** — Document limitations. Tell people what they're actually getting.
 2. **Data pluralism** — Help communities work with what they have.
@@ -73,25 +63,25 @@ cd rewildingCities
 
 ---
 
-## 🌍 Vision
+## The vision:
 
-Infrastructure for investigating urban ecosystems. Tools that meet communities where they are. Research that learns from the patterns nature has always known.
-
----
-
-## 🤝 Join Us
-
-rewildingCities is a project of **Rewilding Intelligence**, a research initiative facilitating collaborative data science for climate-resilient futures.
+rewildingCities is a project of **Rewilding Intelligence**, a research initiative facilitating collaborative data science for climate-resilient futures. Infrastructure for investigating urban ecosystems. Tools that meet communities where they are. Research that learns from the patterns our natural environment has made clear.
 
 ---
 
-## 📚 Foundations
+## Join our citizen scientist efforts! :)
+
+```bash
+git clone https://github.com/rewilding-intelligence/rewildingCities.git
+cd rewildingCities
+./start-ur-garden.sh
+```
+
+---
+
+## Current Foundations:
 
 - Xiao, Y. et al. (2023). "Using buffer analysis to determine urban park cooling intensity." *Science of the Total Environment*
 - Practices from reproducible research, biomimicry, and participatory design
-
----
-
-**The tools are here.** 🌱
 
 ---
