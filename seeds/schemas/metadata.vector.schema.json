@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rewilding.city/schemas/metadata.vector.schema.json",
+  "title": "Vector Metadata",
+  "description": "Additional metadata fields for vector data. Used when data_category is 'vector'.",
+
+  "type": "object",
+
+  "properties": {
+    "feature_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of features in the dataset",
+      "examples": [2847, 299, 15]
+    },
+
+    "geometry_type": {
+      "type": "string",
+      "enum": ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection"],
+      "description": "OGC geometry type"
+    },
+
+    "bbox": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4,
+      "description": "Bounding box as [minx, miny, maxx, maxy] in the envelope's CRS",
+      "examples": [[913175.1, 120121.8, 1067382.5, 272844.3]]
+    },
+
+    "total_area_m2": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Sum of all feature areas in square meters. Useful for quick sanity checks."
+    },
+
+    "id_field": {
+      "type": "string",
+      "description": "Name of the attribute field that uniquely identifies features",
+      "examples": ["park_id", "OBJECTID", "gid"]
+    },
+
+    "attribute_fields": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of attribute field names present in the dataset",
+      "examples": [["park_id", "name", "borough", "acres", "typecategory"]]
+    }
+  },
+
+  "additionalProperties": true
+}

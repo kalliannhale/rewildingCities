@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rewilding.city/schemas/metadata.raster.schema.json",
+  "title": "Raster Metadata",
+  "description": "Additional metadata fields for raster data. Used when data_category is 'raster'.",
+
+  "type": "object",
+
+  "properties": {
+    "resolution_m": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Cell size in meters. For non-square cells, use the smaller dimension.",
+      "examples": [30, 10, 0.5, 100]
+    },
+
+    "dimensions": {
+      "type": "object",
+      "description": "Raster dimensions",
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cols": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": ["rows", "cols"],
+      "additionalProperties": false
+    },
+
+    "bbox": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4,
+      "description": "Bounding box as [minx, miny, maxx, maxy] in the envelope's CRS",
+      "examples": [[913175.1, 120121.8, 1067382.5, 272844.3]]
+    },
+
+    "band_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of bands in the raster",
+      "examples": [1, 3, 4]
+    },
+
+    "units": {
+      "type": "string",
+      "description": "Measurement units for cell values",
+      "examples": ["celsius", "kelvin", "fahrenheit", "index", "class_code", "percent", "meters"]
+    },
+
+    "measurement_type": {
+      "type": "string",
+      "enum": ["absolute", "relative", "anomaly", "categorical"],
+      "description": "How cell values should be interpreted. absolute: real-world measurement. relative: normalized index. anomaly: deviation from baseline. categorical: discrete classes."
+    },
+
+    "statistic": {
+      "type": "string",
+      "enum": ["mean", "median", "max", "min", "sum", "composite", "single_acquisition"],
+      "description": "For derived products, what statistic the values represent",
+      "examples": ["median", "mean", "single_acquisition"]
+    },
+
+    "value_range": {
+      "type": "object",
+      "description": "Actual data value range (excluding NoData)",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      },
+      "required": ["min", "max"],
+      "additionalProperties": false,
+      "examples": [{ "min": 18.3, "max": 47.2 }]
+    },
+
+    "nodata_value": {
+      "type": ["number", "null"],
+      "description": "The value representing NoData/missing cells. Null if no NoData value is set.",
+      "examples": [-9999, 0, null]
+    },
+
+    "nodata_percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage of cells that are NoData. Critical for quality assessment.",
+      "examples": [2.3, 0, 40.5]
+    },
+
+    "dtype": {
+      "type": "string",
+      "description": "Data type of cell values",
+      "enum": ["uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64"],
+      "examples": ["float32", "uint8"]
+    },
+
+    "source_sensor": {
+      "type": "string",
+      "description": "Satellite or sensor that captured the source imagery",
+      "examples": ["Landsat 8 OLI/TIRS", "Sentinel-2 MSI", "MODIS", "VIIRS", "Google Earth"]
+    },
+
+    "processing_level": {
+      "type": "string",
+      "description": "Processing level of the source data",
+      "examples": ["L1C", "L2A", "Surface Reflectance", "Analysis Ready"]
+    },
+
+    "acquisition_context": {
+      "type": "object",
+      "description": "Context about when/how the imagery was acquired",
+      "properties": {
+        "season": {
+          "type": "string",
+          "enum": ["spring", "summer", "fall", "winter", "year_round"],
+          "description": "Seasonal context of acquisition"
+        },
+        "time_of_day": {
+          "type": "string",
+          "enum": ["day", "night", "mixed"],
+          "description": "Daytime vs nighttime acquisition"
+        },
+        "cloud_cover_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Cloud cover percentage of source scene(s)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "classification_scheme": {
+      "type": "object",
+      "description": "For categorical rasters (land cover), documents the class mapping",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the classification scheme",
+          "examples": ["NYC LiDAR 8-Class", "ESA WorldCover", "NLCD"]
+        },
+        "class_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "classes": {
+          "type": "object",
+          "description": "Mapping of class values to labels",
+          "additionalProperties": { "type": "string" },
+          "examples": [{
+            "1": "Tree Canopy",
+            "2": "Grass/Shrub",
+            "3": "Bare Soil",
+            "4": "Water",
+            "5": "Building",
+            "6": "Road",
+            "7": "Other Impervious",
+            "8": "Railroad"
+          }]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "additionalProperties": true
+}

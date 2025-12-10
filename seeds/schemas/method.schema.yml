@@ -1,0 +1,253 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# METHOD SCHEMA v1.0
+# A method declares HOW to answer certain types of questions, with explicit
+# choice points that change meaning. Abstract approach, not instantiated.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://rewilding.city/schemas/method.schema.json"
+title: "Method"
+description: >
+  Abstract analytical approaches with explicit choices. Methods describe how
+  to answer certain types of questions, with decision points that carry
+  epistemological weight. The experiment resolves these choices.
+
+type: object
+required: [id, name, description, choices, requires_primitives, requires_data, produces]
+
+properties:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # IDENTITY
+  # ───────────────────────────────────────────────────────────────────────────
+  id:
+    type: string
+    pattern: "^[a-z0-9_]+$"
+    description: Machine-readable identifier
+    examples: ["buffer_gradient_analysis", "hot_cold_spot_analysis"]
+
+  name:
+    type: string
+    description: Human-readable name
+    examples: ["Buffer-Based Thermal Gradient Analysis"]
+
+  domain:
+    type: string
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, statistical]
+    description: Scientific domain this method belongs to
+
+  description:
+    type: string
+    description: >
+      What this method does, when to use it, and how it works conceptually.
+
+  diagram:
+    type: string
+    description: >
+      ASCII or text diagram illustrating the method visually.
+      Helps users understand the concept at a glance.
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # WHAT THIS METHOD ANSWERS
+  # ───────────────────────────────────────────────────────────────────────────
+  answers_question_types:
+    type: array
+    items:
+      type: string
+    description: >
+      Types of questions this method can address.
+    examples:
+      - "spatial_gradient"
+      - "influence_extent"
+      - "intensity_measurement"
+      - "feature_comparison"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CHOICES (the key concept)
+  # ───────────────────────────────────────────────────────────────────────────
+  choices:
+    type: object
+    description: >
+      Decision points that change meaning. Each choice represents an
+      epistemological commitment — not just a parameter, but a decision
+      about what you're measuring and why.
+    additionalProperties:
+      $ref: "#/$defs/choice"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # REQUIREMENTS
+  # ───────────────────────────────────────────────────────────────────────────
+  requires_primitives:
+    type: object
+    description: >
+      Primitives this method uses, with their purpose.
+    additionalProperties:
+      type: object
+      properties:
+        from:
+          type: string
+          description: Which layer the primitive comes from
+          examples: ["roots/geometry", "roots/metrics", "soil/validate"]
+        purpose:
+          type: string
+          description: What role this primitive plays in the method
+
+  requires_data:
+    type: array
+    items:
+      type: object
+      required: [name, type, semantic_types]
+      properties:
+        name:
+          type: string
+          description: Role this data plays
+        type:
+          type: string
+          enum: [vector, raster, tabular]
+        semantic_types:
+          type: array
+          items:
+            type: string
+          description: Acceptable semantic types for this role
+        description:
+          type: string
+        guidance:
+          type: string
+          description: Advice on selecting appropriate data
+    description: Data this method needs to execute
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # OUTPUTS
+  # ───────────────────────────────────────────────────────────────────────────
+  produces:
+    type: array
+    items:
+      type: object
+      required: [name, semantic_type, data_category]
+      properties:
+        name:
+          type: string
+          description: Output identifier
+        semantic_type:
+          type: string
+          description: Semantic type of this output
+        data_category:
+          type: string
+          enum: [vector, raster, tabular]
+        description:
+          type: string
+    description: What this method produces
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # REFERENCES
+  # ───────────────────────────────────────────────────────────────────────────
+  references:
+    type: array
+    items:
+      type: object
+      properties:
+        citation:
+          type: string
+        note:
+          type: string
+          description: How this reference informs the method
+    description: Papers describing or validating this method
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # METADATA
+  # ───────────────────────────────────────────────────────────────────────────
+  version:
+    type: string
+    default: "1.0.0"
+
+  created:
+    type: string
+    format: date
+
+  contributors:
+    type: array
+    items:
+      type: string
+
+$defs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CHOICE DEFINITION
+  # ───────────────────────────────────────────────────────────────────────────
+  choice:
+    type: object
+    required: [name, description]
+    properties:
+      name:
+        type: string
+        description: Human-readable name for this choice
+      description:
+        type: string
+        description: What this choice means and why it matters
+      
+      # For enumerated choices (pick from options)
+      options:
+        type: object
+        description: >
+          Named options for this choice. Keys are option IDs,
+          values describe the option in detail.
+        additionalProperties:
+          $ref: "#/$defs/choice_option"
+      
+      # For numeric/parametric choices
+      type:
+        type: string
+        enum: [integer, number, string, boolean]
+        description: Data type for parametric choices
+      units:
+        type: string
+        description: Units for numeric choices
+      default:
+        description: Default value if not specified
+      range:
+        type: object
+        properties:
+          min:
+            type: number
+          max:
+            type: number
+        description: Valid range for numeric choices
+      guidance:
+        type: string
+        description: How to select an appropriate value
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CHOICE OPTION (for enumerated choices)
+  # ───────────────────────────────────────────────────────────────────────────
+  choice_option:
+    type: object
+    required: [name, description]
+    properties:
+      name:
+        type: string
+        description: Human-readable option name
+      id:
+        type: string
+        description: Machine-readable identifier (used in experiments)
+      description:
+        type: string
+        description: What this option means
+      formula:
+        type: string
+        description: Mathematical formula if applicable
+      answers:
+        type: string
+        description: What question this option helps answer
+      when_to_use:
+        type: array
+        items:
+          type: string
+        description: Situations where this option is appropriate
+      limitations:
+        type: array
+        items:
+          type: string
+        description: Known limitations or caveats
+      interpretation:
+        type: string
+        description: How to interpret results when using this option

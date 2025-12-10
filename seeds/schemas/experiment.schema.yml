@@ -1,0 +1,243 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EXPERIMENT SCHEMA v1.0
+# An experiment binds curiosity to method with resolved choices, applied to
+# a specific place. The instantiation — where abstraction becomes action.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://rewilding.city/schemas/experiment.schema.json"
+title: "Experiment"
+description: >
+  The instantiation of a method to address a curiosity in a specific place.
+  Resolves all choices, declares the workflow, and binds to a manifest.
+
+type: object
+required: [id, name, curiosity, method, choices, city, manifest, steps]
+
+properties:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # IDENTITY
+  # ───────────────────────────────────────────────────────────────────────────
+  id:
+    type: string
+    pattern: "^[a-z0-9_]+$"
+    description: Machine-readable identifier
+    examples: ["nyc_park_cooling_pedestrian", "la_heat_equity_analysis"]
+
+  name:
+    type: string
+    description: Human-readable name
+    examples: ["NYC Park Cooling Analysis: Pedestrian Thermal Comfort"]
+
+  description:
+    type: string
+    description: >
+      What this experiment investigates and why. Sets context for
+      interpreting results.
+
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags for discovery and organization
+    examples: ["nyc", "pedestrian_comfort", "thermal_refuge", "summer"]
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # SCIENTIFIC LINEAGE
+  # ───────────────────────────────────────────────────────────────────────────
+  curiosity:
+    type: object
+    required: [ref]
+    properties:
+      ref:
+        type: string
+        description: Reference to curiosity ($curiosity-space/{domain}/{id})
+        examples: ["$curiosity-space/thermal/park_cooling_effect"]
+      sub_question:
+        type: string
+        description: Which sub-question this experiment addresses
+        examples: ["maximum_cooling", "cooling_extent"]
+    description: What question this experiment answers
+
+  method:
+    type: object
+    required: [ref]
+    properties:
+      ref:
+        type: string
+        description: Reference to method ($methods/{domain}/{id})
+        examples: ["$methods/thermal/buffer_gradient_analysis"]
+    description: How this experiment answers the question
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # RESOLVED CHOICES
+  # ───────────────────────────────────────────────────────────────────────────
+  choices:
+    type: object
+    description: >
+      Resolved choices from the method. Each key must correspond to a choice
+      declared in the method. These are epistemological commitments.
+    additionalProperties: true
+    examples:
+      intensity_measure: "TPM-M"
+      central_tendency: "median"
+      buffer_interval: 30
+      max_buffer_distance: 300
+
+  rationale:
+    type: string
+    description: >
+      Explanation for why these choices were made. Supports reproducibility
+      and interpretation. Can use markdown formatting.
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # PLACE
+  # ───────────────────────────────────────────────────────────────────────────
+  city:
+    type: string
+    description: City ID this experiment runs against
+    examples: ["nyc", "la", "chicago"]
+
+  manifest:
+    type: string
+    description: Path to manifest file, relative to project root
+    examples: ["plots/nyc/manifest.yml"]
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # PARAMETERS (runtime configuration, not epistemological choices)
+  # ───────────────────────────────────────────────────────────────────────────
+  parameters:
+    type: object
+    description: >
+      Runtime configuration that doesn't change meaning. Can include
+      rationale fields explaining each parameter.
+    additionalProperties: true
+    examples:
+      min_park_area_ha: 0.09
+      min_park_area_rationale: "Following Xiao et al. (2023)..."
+      target_crs: "EPSG:2263"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # WORKFLOW
+  # ───────────────────────────────────────────────────────────────────────────
+  steps:
+    type: array
+    description: >
+      The actual workflow — primitives to run in dependency order.
+    items:
+      $ref: "#/$defs/step"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # EXPECTED OUTPUTS
+  # ───────────────────────────────────────────────────────────────────────────
+  expected_outputs:
+    type: object
+    description: What this experiment produces (for documentation)
+    properties:
+      primary:
+        type: object
+        properties:
+          semantic_type:
+            type: string
+          description:
+            type: string
+      secondary:
+        type: array
+        items:
+          type: object
+          properties:
+            semantic_type:
+              type: string
+            description:
+              type: string
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # INTERPRETATION
+  # ───────────────────────────────────────────────────────────────────────────
+  interpretation_guidance:
+    type: string
+    description: >
+      How to interpret results from this experiment. What do high/low
+      values mean? What context matters? Can use markdown.
+
+  limitations:
+    type: array
+    items:
+      type: string
+    description: >
+      Known limitations of this analysis. Honest documentation of
+      what the results can and cannot tell us.
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # METADATA
+  # ───────────────────────────────────────────────────────────────────────────
+  version:
+    type: string
+    default: "1.0.0"
+
+  created:
+    type: string
+    format: date
+
+  contributors:
+    type: array
+    items:
+      type: string
+
+$defs:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # STEP DEFINITION
+  # ───────────────────────────────────────────────────────────────────────────
+  step:
+    type: object
+    required: [id, primitive, outputs]
+    properties:
+      id:
+        type: string
+        pattern: "^[a-z0-9_]+$"
+        description: Step identifier (used in $steps references)
+      
+      primitive:
+        type: string
+        description: Primitive to run (soil/{path} or roots/{path})
+        examples: ["soil/validate_boundaries", "roots/geometry/generate_buffers"]
+      
+      version:
+        type: string
+        default: "1.0.0"
+        description: Primitive version to use
+      
+      description:
+        type: string
+        description: What this step does (for documentation)
+      
+      inputs:
+        type: object
+        description: >
+          Input mappings. Keys are input names expected by the primitive,
+          values are references.
+        additionalProperties:
+          type: string
+        examples:
+          parks: "$manifest.park_boundaries"
+          zones: "$steps.generate_buffers.buffers"
+      
+      outputs:
+        type: object
+        description: >
+          Output declarations. Keys are output names,
+          values are semantic types for the output.
+        additionalProperties:
+          type: string
+        examples:
+          validated: "park_boundaries_validated"
+          buffers: "park_buffers"
+      
+      params:
+        type: object
+        description: >
+          Parameters to pass to the primitive. Can include references
+          to $choices.{name} or $parameters.{name}.
+        additionalProperties: true

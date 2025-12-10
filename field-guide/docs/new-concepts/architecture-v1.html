@@ -1,0 +1,232 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>architecture-design-v1</title>
+    </head>
+    <body>
+        <h1>architecture-design-v1</h1>
+        <p># *Executive Summary*</p>
+<p>*rewildingCities* is an open-source platform promoting the democratic development of socio-technical systems for climate resilience by facilitating creative scientific communities that innovate.</p>
+<p>Localized communities of citizen scientists are encouraged to conduct rigorous geospatial analyses exploring speculative realities for positive communal development in response to the interconnected crises of social and environmental chaos—with the aim of modeling these potentialities and identifying priorities for broader interventions in municipal ecology and development.</p>
+<p>We accept curated datasets from public portals, Google Earth Engine exports, academic institutions, and other forms of community-collected information. Each participating community initializes and maintains a public manifest that feeds into the analyses performed on their platform plot. The system is designed to help communities understand what their data can and cannot tell them, and to produce honest, contextualized analysis.</p>
+<p>One of the most salient issues we can tackle is surviving rising temperatures. Urban heatwaves have quickly become the deadliest of natural disasters (Habeeb et al., 2015; He et al., 2022; Shafiei Shiva et al., 2019). Green infrastructure is the most effective, sustainable, and holistically beneficial way to create a legacy of resilience for our cities. However, the resources and tools needed to analyze the changes required to our urban landscapes are locked inside academic institutions and often require specialized expertise.</p>
+<p>---</p>
+<p># Architecture Overview</p>
+<p>### The Garden Metaphor</p>
+<p>The codebase is organized as a garden:</p>
+<p>| Directory | Purpose | Metaphor |<br>| --- | --- | --- |<br>| `soil/` | Validation, repair, data registration | Preparing the ground |<br>| `seeds/` | Schemas, crosswalks, templates, profiles, packages | Preserved patterns |<br>| `roots/` | Primitives (atomic analytical operations) | Hidden foundation |<br>| `growth/` | Recipes (composed workflows) | What blooms |<br>| `harvest/` | Outputs (reports, maps, dashboards) | What we gather |<br>| `compost/` | Logs, archives, feedback | Transformation |<br>| `garden/` | Experiments, notebooks, tests | Where new things grow |<br>| `plots/` | City-specific data and manifests | Each city is a plot |<br>| `field-guide/` | Documentation | Nature guide |<br>| `canopy/` | Orchestration (Python) | Visible structure |<br>| `terraform/` | Infrastructure as code | Cloud provisioning |</p>
+<p>## Language Architecture</p>
+<p>The system employs a polyglot architecture with clear separation of concerns:</p>
+<p>| Layer | Language | Responsibility |<br>| --- | --- | --- |<br>| **canopy/** | Python | Orchestration, AWS integration, manifest reading, envelope I/O, provenance management, schema validation |<br>| **roots/** | R | Analytical primitives—geospatial operations, metrics, statistics |<br>| **soil/** | R | Data validation and repair primitives |<br>| **harvest/** | Python | ??? |</p>
+<p>**Separated by What Each Language Does Best:**</p>
+<p>- Python excels at infrastructure glue: `boto3` for AWS, robust JSON/YAML handling, file I/O orchestration;<br>- R excels at geospatial science: `sf`, `terra`, `exactextractr`, `landscapemetrics` are best-in-class.</p>
+<p>### The Hand-Off</p>
+<p>→ File-based communication via an envelope contract. </p>
+<p>- Python writes envelope JSON + data files. R reads, computes, writes results and updated envelope. Python reads the updated envelope and continues orchestration.</p>
+<p>```<br>Python                                          R<br>   │                                             │<br>   ├── 1. Write inputs.json ────────────────────►│<br>   ├── 2. Write params.json ────────────────────►│<br>   │                                             │<br>   ├── 3. subprocess.run(Rscript primitive.R ...)│<br>   │                                             │<br>   │                                             ├── 4. Reads inputs<br>   │                                             ├── 5. Does work<br>   │                                             ├── 6. Writes output file<br>   │                                             ├── 7. Prints JSON to stdout<br>   │                                             │<br>   │◄── 8. Capture stdout ───────────────────────┤<br>   │◄── 9. Check exit code ──────────────────────┤<br>   │                                             │<br>   ├── 10. Parse JSON response                   │<br>   ├── 11. Build envelope                        │<br>   └── 12. Continue or handle error              │<br>```</p>
+<p>---</p>
+<p># Core Abstractions</p>
+<p>### 1. The Envelope Contract</p>
+<p>The foundational abstraction for primitive communication; as data transforms within our architectural system, the nature of each change is communicated down the line through ***envelopes***—JSON documents that travel alongside data files:</p>
+<p>```json<br>{<br>  "data": {<br>    "path": "plots/nyc/.data/park_buffers.geojson",<br>    "format": "geojson",<br>    "secondary": {}<br>  },<br>  "metadata": {<br>    "semantic_type": "park_buffers",<br>    "data_category": "vector",<br>    "crs": "EPSG:2263",<br>    "feature_count": 2847,<br>    "geometry_type": "Polygon",<br>    "bbox": [913175.1, 120121.8, 1067382.5, 272844.3]<br>  },<br>  "provenance": [<br>    {<br>      "primitive": "generate_buffers",<br>      "version": "1.0.0",<br>      "timestamp": "2024-12-19T14:32:00Z",<br>      "params": { "distances": [30, 60, 90] },<br>      "input_hash": {<br>        "value": "a3f2b8c1...",<br>        "method": "full_file",<br>        "algorithm": "md5"<br>      },<br>      "duration_seconds": 45.67<br>    }<br>  ],<br>  "warnings": [<br>    {<br>      "level": "warning",<br>      "primitive": "validate_boundaries",<br>      "message": "3 parks excluded due to invalid geometry"<br>    }<br>  ]<br>}</p>
+<p>```</p>
+<p>**Behavioral Rules:**</p>
+<p>- Primitives accept raw data OR envelope (graceful unwrapping)<br>- Primitives ALWAYS return envelope (promotes into tracked form)<br>- Warnings accumulate across the full pipeline<br>- Provenance appends with each primitive execution</p>
+<p>### 2. Manifests</p>
+<p>Our manifests declare what data a city has, what it means, and where it lives.</p>
+<p>```yaml<br>city:<br>  name: "New York City"<br>  id: "nyc"</p>
+<p>datasets:<br>  parks:<br>    available: true<br>    source:<br>      type: api<br>      provider: socrata<br>      endpoint: "<https://data.cityofnewyork.us/>..."<br>    cache:<br>      path: ".data/parks.geojson"<br>    semantic_type: park_boundaries<br>    quality:<br>      known_issues:<br>        - "Cartographic boundaries, not survey-accurate"</p>
+<p>```</p>
+<p>**Key features:**</p>
+<p>- Semantic typing: Not just *raster* but `land_surface_temperature` with measurement context<br>- Source flexibility: `api`, `url`, or `local` — data arrives many ways<br>- Mandatory caching: All data is cached locally (or in S3 for cloud)<br>- Quality documentation: Known issues propagate to outputs<br>- Temporal tracking: When data is from, not just what it is</p>
+<p>### 3. The Garden Layer</p>
+<p>The garden layer declares a composed workflow of primitives.</p>
+<p>| **Layer** | **Holds** | **References** |<br>| --- | --- | --- |<br>| **curiosity-space** | The question, sub-questions, significance | Nothing — it's the root |<br>| **methods** | The choice-space, primitives needed, what it produces | Curiosities it can address (loosely) |<br>| **experiments** | Resolved choices, specific city, actual workflow steps | $curiosity-space/..., $methods/..., $manifest., $choices., $steps., $parameters. |</p>
+<p>The experiment is the **instantiation**. It's where abstraction becomes action. This is the conceptual heart of the system. It separates **what we want to know** from **how we answer it** from **what we're actually doing**.</p>
+<p>### Layer 1: Curiosity-Space</p>
+<p>**Location:** `garden/curiosity-space/`</p>
+<p>Research questions that are domain-specific but method-agnostic. They articulate *what we want to know* without prescribing *how*.</p>
+<p>Example: `park_cooling_effect.yml`</p>
+<p>- Question: "How effectively do urban parks cool their surroundings?"<br>- Sub-questions: maximum_cooling, cumulative_cooling, cooling_extent, cooling_factors<br>- Significance, related phenomena, foundational research<br>- No implementation details — pure inquiry</p>
+<p>### Layer 2: Methods</p>
+<p>**Location:** `garden/methods/`</p>
+<p>Abstract analytical approaches with explicit **choices**. Methods describe *how* to answer certain types of questions, with decision points that change meaning.</p>
+<p>Example: `buffer_gradient_analysis.yml`</p>
+<p>- Describes concentric buffer analysis for spatial gradients<br>- **Choices** (the key concept):<br>    - `intensity_measure`: TPM-M (peak felt difference) vs TPM-A (aggregate thermal load)<br>    - `central_tendency`: median (human experience) vs mean (engineering load)<br>    - `buffer_interval`: granularity in meters<br>    - `max_buffer_distance`: how far to analyze<br>- Declares required primitives, required data, expected outputs<br>- Does not resolve choices — that's the experiment's job</p>
+<p>### Layer 3: Experiments</p>
+<p>**Location:** `garden/experiments/`</p>
+<p>Investigations that bind curiosity to method with **resolved choices**, applied to a specific place.</p>
+<p>Example: `nyc_park_cooling_pedestrian.yml`</p>
+<p>- References: `$curiosity-space/thermal/park_cooling_effect` (sub_question: maximum_cooling)<br>- Method: `$methods/thermal/buffer_gradient_analysis`<br>- **Resolved choices**: `intensity_measure: TPM-M`, `central_tendency: median`, etc.<br>- **Rationale**: explains *why* these choices (pedestrian comfort focus)<br>- **Parameters**: runtime configuration (min_park_area_ha, target_crs)<br>- **Steps**: the actual workflow with primitives and references</p>
+<p>### 4. Primitives</p>
+<p>Atomic analytical operations organized by type:</p>
+<p>| Layer | Primitives |<br>| --- | --- |<br>| **soil/** | `validate_raster`, `validate_boundaries`, `check_alignment`, `repair_geometry`, `fetch_dataset` |<br>| **roots/geometry/** | `extract_features`, `calculate_geometry`, `generate_buffers`, `subtract_geometry`, `clip_to_boundary` |<br>| **roots/metrics/** | `zonal_statistics`, `land_cover_proportions`, `landscape_metrics`, `calculate_pci` |<br>| **roots/statistics/** | `correlation_analysis`, `hotspot_analysis`, `regression_analysis`, `spatial_autocorrelation` |</p>
+<p>### 5. Profiles</p>
+<p>Pre-configured scope settings for different contexts:</p>
+<p>| **Profile** | **Purpose** | **Subsetting** | **Hashing** |<br>| --- | --- | --- | --- |<br>| `full` | Production analysis | None | Full file hash |<br>| `dev` | Fast iteration | 5 features per stratum, 30m resolution | Metadata hash |<br>| `test` | Automated testing | 10 random features, 100m resolution | Skipped |<br>| `neighborhood` | Local analysis | 2km buffer around point | Metadata hash |</p>
+<p>### 6. Crosswalks</p>
+<p>Classification mappings between different land cover schemes:</p>
+<p>```yaml<br>from: "NYC LiDAR 8-Class"<br>to: "Nanjing 6-Class Study"<br>mappings:<br>  vegetation: [1, 2] # Tree Canopy, Grass/Shrubs<br>  water: [4]<br>  impervious: [5, 6, 7, 8]</p>
+<p>```</p>
+<p>---</p>
+<p># The Envelope System</p>
+<p>The garden is for scientific exploration: the quality of which must be transparent. The envelope system of provenance is designed to encourage the participation of non-experts, who are able to experiment with potentially messy analyses and discover the limitations of their ideas. This helps demonstrate the complexity of actual scientific inquiry, creating a wide door for imaginative engagement—as opposed to perfectionist gatekeeping.</p>
+<p>## *Warnings*</p>
+<p>Warnings are the system’s honesty about limitations. They accumulate across the pipeline so final outputs tell the complete story.</p>
+<p>### *Template*</p>
+<p>```json<br>{<br>  "level": "info | warning | critical",<br>  "primitive": "which_primitive",<br>  "message": "human-readable explanation"<br>}</p>
+<p>```</p>
+<p>### *Meanings*</p>
+<p>| Level | Meaning | Example |<br>| --- | --- | --- |<br>| `info` | Transformation happened, but it’s not a problem. | “CRS transformed from EPSG:4326 to EPSG:2263” |<br>| `warning` | Data has been degraded: proceed with caution! | “3 parks excluded due to invalid geometry” |<br>| `critical` | Results may be unreliable… Human review is recommended. | “LST raster has 40% NoData within study area” |</p>
+<p>## Provenance</p>
+<p>Every primitive appends a provenance entry documenting what ran, when, with what parameters, and on what input:</p>
+<p>```json<br>{<br>  "primitive": "generate_buffers",<br>  "version": "1.0.0",<br>  "timestamp": "2024-12-19T14:32:00Z",<br>  "params": { "distances": [30, 60, 90] },<br>  "input_hash": {<br>    "value": "a3f2b8c1...",<br>    "method": "full_file",<br>    "algorithm": "md5"<br>  },<br>  "duration_seconds": 45.67<br>}</p>
+<p>```</p>
+<p>**Input Hashing:** Profile-controlled for performance vs. audit-ability tradeoff.</p>
+<p>| Profile | Hash Method | Rationale |<br>| --- | --- | --- |<br>| `full` | Full file hash | Production needs receipts |<br>| `dev` | Metadata hash (size + mtime) | Fast iteration |<br>| `test` | Skipped | CI/CD speed |</p>
+<p>For the sake of transparency, even absences are documented; if hashing is skipped, the `reason` field explains why. </p>
+<p>## Validation Tiers</p>
+<p>Not a locked gate, but a gentle trellis:</p>
+<p>| Tier | Behavior | Purpose |<br>| --- | --- | --- |<br>| **Required** | Missing → error, pipeline stops | Can’t proceed without this: absolutely essential, for some critical reason. |<br>| **Expected** | Missing → warning propagates to output | Should be there, but the system works without it. |<br>| **Optional** | Missing → silent, no complaint | Enrichment: not essential, perhaps for super-users. |</p>
+<p>## Metadata by Category</p>
+<p>**Base (all envelopes):**</p>
+<p>- `semantic_type` — what this data represents (validated against `semantic_types.yml`)<br>- `data_category` — `raster`, `vector`, or `tabular`<br>- `crs` — coordinate reference system</p>
+<p>**Vector metadata:**</p>
+<p>| Field | Tier |<br>| --- | --- |<br>| `feature_count` | Expected |<br>| `geometry_type` | Expected |<br>| `bbox` | Expected |<br>| `total_area_m2` | Optional |<br>| `id_field` | Optional |<br>| `attribute_fields` | Optional |</p>
+<p>**Raster metadata:**</p>
+<p>| Field | Tier |<br>| --- | --- |<br>| `resolution_m` | Expected |<br>| `dimensions` | Expected |<br>| `bbox` | Expected |<br>| `units` | Expected |<br>| `measurement_type` | **Expected—but maybe this should be required?** |<br>| `nodata_percentage` | Expected |<br>| `band_count` | Optional |<br>| `value_range` | Optional |<br>| `source_sensor` | Optional |<br>| `classification_scheme` | Optional |<br>| `acquisition_context` | Optional |</p>
+<p>**Tabular metadata:**</p>
+<p>| Field | Tier |<br>| --- | --- |<br>| `row_count` | Expected |<br>| `variables` | Expected |<br>| `id_field` | Expected |<br>| `spatial_unit` | Expected |<br>| `variable_details` | Optional |<br>| `statistical_context` | Optional |<br>| `model_fit` | Optional |<br>| `interpretation_notes` | Optional |</p>
+<p>### Behavioral Rules</p>
+<p>- Primitives accept raw data OR envelope (graceful unwrapping)<br>- Primitives ALWAYS return envelope (promotes into tracked form)<br>- Warnings accumulate across the full pipeline<br>- Provenance appends with each primitive execution<br>- Lineage (scientific context) is added to final envelope metadata</p>
+<p>## Reference Resolution</p>
+<p>Experiments use references that the orchestrator resolves at runtime:</p>
+<p>| Prefix | Source | Semantic Role |<br>| --- | --- | --- |<br>| `$manifest.` | `plots/{city}/manifest.yml` | What data exists for this place |<br>| `$choices.` | Experiment's `choices:` block | Epistemological commitments |<br>| `$parameters.` | Experiment's `parameters:` block | Runtime configuration |<br>| `$steps.{id}.{output}` | Output from prior step | Data flowing through pipeline |</p>
+<p>**Important:** `$choices.` and `$parameters.` are kept separate intentionally. They carry different semantic weight. Choices are *why* (analytical decisions). Parameters are *how* (runtime config). This distinction matters for provenance and interpretation.</p>
+<p>**NOT `$params.`** — we use `$parameters.` for consistency with the YAML block name. Debugging at 2am will thank you.</p>
+<p>---</p>
+<p>## Registry System</p>
+<p>Primitives are registered in layer-specific YAML files:</p>
+<p>- `roots/_registry.yml` — analytical primitives<br>- `soil/_registry.yml` — validation/repair primitives</p>
+<p>### Primitive Reference Resolution</p>
+<p>When experiment says `primitive: soil/validate_boundaries`:</p>
+<p>1. Parse prefix: `soil/` → load `soil/_registry.yml`<br>2. Look up key: `validate_boundaries`<br>3. Find path: `path: validate/validate_boundaries.R`<br>4. Construct full path: `soil/validate/validate_boundaries.R`<br>5. Validate file exists (fail early with clear message)</p>
+<p>### Roots Registry Schema</p>
+<p>```yaml<br>primitives:<br>  generate_buffers:<br>    path: geometry/generate_buffers.R<br>    version: 1.0.0<br>    description: Generate concentric buffer rings<br>    inputs:<br>      - name: parks<br>        semantic_types: [park_boundaries]<br>        required: true<br>    outputs:<br>      semantic_type: park_buffers<br>      data_category: vector<br>    params:<br>      distances:<br>        type: array<br>        default: [30, 60, 90]</p>
+<p>```</p>
+<p>### Soil Registry Schema (Extended)</p>
+<p>Soil primitives have additional fields because they validate and repair:</p>
+<p>```yaml<br>primitives:<br>  validate_boundaries:<br>    path: validate/validate_boundaries.R<br>    version: 1.0.0<br>    description: Validate vector geometries</p>
+<p>    # Standard fields (same as roots)<br>    inputs: [...]<br>    outputs: {...}<br>    params: {...}</p>
+<p>    # Soil-specific fields<br>    validates:<br>      - id: valid_geometry<br>        description: Geometry passes st_is_valid()<br>        severity_if_failed: warning<br>      - id: crs_present<br>        description: CRS is defined<br>        severity_if_failed: critical</p>
+<p>    repairs:<br>      - id: invalid_geometry<br>        method: st_make_valid<br>        when: repair_invalid is true</p>
+<p>    may_exclude_features: true<br>    exclusion_documented_in: warnings</p>
+<p>```</p>
+<p>---</p>
+<p>## Orchestrator Architecture</p>
+<p>**Location:** `canopy/orchestrator/`</p>
+<p>```<br>canopy/orchestrator/<br>├── __init__.py        # Exports<br>├── references.py      # ReferenceResolver<br>├── dependencies.py    # DependencyResolver + ExecutionPlan<br>├── registry.py        # RegistryManager<br>└── orchestrator.py    # Models, parsing, Orchestrator class</p>
+<p>```</p>
+<p>### Key Classes</p>
+<p>**`Orchestrator`** — The runner</p>
+<p>- Loads experiment and manifest<br>- Validates before running (fail fast)<br>- Builds execution plan via DAG resolution<br>- Executes steps in topological order<br>- Accumulates envelopes with provenance<br>- Enriches final envelopes with lineage</p>
+<p>**`ReferenceResolver`** — Resolves `$manifest.`, `$choices.`, `$parameters.`, `$steps.`</p>
+<p>- Fortified against typos (detects malformed references)<br>- Provides helpful error messages with suggestions<br>- Levenshtein distance for "did you mean?" hints</p>
+<p>**`DependencyResolver`** — Builds DAG, topological sort</p>
+<p>- Extracts `$steps.` dependencies<br>- Detects cycles with clear error showing the cycle path<br>- Produces deterministic execution order</p>
+<p>**`RegistryManager`** — Layer-based primitive lookup</p>
+<p>- Caches loaded registries<br>- Validates primitive files exist on disk<br>- Clear error messages for missing primitives</p>
+<p>### Data Structures</p>
+<p>```python<br>@dataclass<br>class Experiment:<br>    id: str<br>    name: str<br>    description: str<br>    lineage: Lineage<br>    city: str<br>    manifest_path: str<br>    choices: dict[str, Any]<br>    parameters: dict[str, Any]<br>    steps: list[StepDefinition]</p>
+<p>@dataclass<br>class Lineage:<br>    curiosity_ref: str<br>    sub_question: str | None<br>    method_ref: str<br>    choices: dict[str, Any]</p>
+<p>@dataclass<br>class StepDefinition:<br>    id: str<br>    primitive: str  # e.g., "soil/validate_boundaries"<br>    version: str<br>    description: str<br>    inputs: dict[str, str]   # input_name -> reference<br>    outputs: dict[str, str]  # output_name -> semantic_type<br>    params: dict[str, Any]</p>
+<p>```</p>
+<p>---</p>
+<p># *Data Flow*</p>
+<p>## *Layers in Python*</p>
+<p>```<br>┌─────────────────────────────────────┐<br>│  Orchestrator (orchestrator.py)     │  ← Runs recipes, manages workflow<br>├─────────────────────────────────────┤<br>│  EnvelopeBuilder (envelope.py)      │  ← Hashing, timing, provenance<br>├─────────────────────────────────────┤<br>│  PrimitiveRunner (primitive.py)     │  ← Subprocess invocation<br>└─────────────────────────────────────┘<br>```</p>
+<p>Each layer knows about the layer below it.</p>
+<p>### Reference Resolution Map:</p>
+<p>| **Prefix** | **Source** | **Semantic role** |<br>| --- | --- | --- |<br>| $manifest. | plots/{city}/manifest.yml | What data exists for this place |<br>| $choices. | Experiment’s choices: block | Epistemological commitments (resolved from method options) |<br>| $parameters. | Experiment’s parameters: block | Runtime configuration for this investigation |<br>| $steps.{id}.{output} | Output from a prior step | Data flowing through the pipeline |</p>
+<p>## *Local Development*</p>
+<p>```<br>manifest.yml<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ canopy/ (Python)                            │<br>│ - Reads manifest                            │<br>│ - Creates initial envelope                  │<br>│ - Dispatches to primitives                  │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ soil/ (R)                                   │<br>│ - Fetch from APIs/URLs                      │<br>│ - Validate, cache to .data/                 │<br>│ - Returns envelope with warnings            │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ roots/ (R)                                  │<br>│ - Run primitives (geometry, metrics, stats) │<br>│ - Each primitive appends to provenance      │<br>│ - Warnings accumulate                       │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ harvest/                                    │<br>│ - Generate reports, maps, exports           │<br>│ - Final envelope documents full lineage     │<br>└─────────────────────────────────────────────┘</p>
+<p>```</p>
+<p>## *Cloud (AWS Batch)*</p>
+<p>***Why Batch over Lambda:***</p>
+<p>| Concern | Lambda | Batch |<br>| --- | --- | --- |<br>| R runtime | Custom container required, complex build | Native Docker support, use `rocker/geospatial` directly |<br>| Memory | 10GB max | Up to 120GB+ |<br>| Timeout | 15 minutes | Unlimited |<br>| Cold start | 30-60 seconds for large containers | N/A—containers run to completion |<br>| Geospatial libs | GDAL/PROJ compilation issues | Pre-built in Rocker images |</p>
+<p>***Cloud Architecture:***</p>
+<p>```<br>GitHub Push<br>     │<br>     ▼<br>GitHub Actions (trigger)<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ Step 1: FETCH         (Batch Job)           │<br>│ - Read manifest                             │<br>│ - Fetch from APIs/URLs                      │<br>│ - Cache to S3: rewilding-{city}-cache/      │<br>│ - Write initial envelopes                   │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ Step 2: VALIDATE      (Batch Job)           │<br>│ - Check CRS, formats, alignment             │<br>│ - Write validation envelopes to S3          │<br>│ - If critical errors → stop, notify         │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ Step 3: ANALYZE       (Batch Array Job)     │<br>│ - Step Functions distributes park IDs       │<br>│ - Each array index processes a batch        │<br>│ - Results + envelopes written to S3         │<br>└─────────────────────────────────────────────┘<br>     │<br>     ▼<br>┌─────────────────────────────────────────────┐<br>│ Step 4: HARVEST       (Batch Job)           │<br>│ - Combine results                           │<br>│ - Merge provenance chains                   │<br>│ - Generate report, maps                     │<br>│ - Final envelope with full lineage          │<br>│ - Notify: done!                             │<br>└─────────────────────────────────────────────┘</p>
+<p>```</p>
+<p>### ***Container Strategy:***</p>
+<p>```<br>┌─────────────────────────────────────────────┐<br>│           LOCAL                             │<br>│  ┌─────────────────────────────────────┐    │<br>│  │  Docker: rocker/geospatial +        │    │<br>│  │          rewildingCities deps       │    │<br>│  │  Reads from: plots/nyc/.data/       │    │<br>│  │  Writes to:  harvest/               │    │<br>│  └─────────────────────────────────────┘    │<br>└─────────────────────────────────────────────┘</p>
+<p>┌─────────────────────────────────────────────┐<br>│           AWS (Batch)                       │<br>│  ┌─────────────────────────────────────┐    │<br>│  │  Same Docker image (from ECR)       │    │<br>│  │  Reads from: S3                     │    │<br>│  │  Writes to:  S3                     │    │<br>│  └─────────────────────────────────────┘    │<br>└─────────────────────────────────────────────┘</p>
+<p>```</p>
+<p>**Same code, same container.** Primitives don’t know where they are—orchestration handles storage abstraction.</p>
+<p>- **Storage:** Separate S3 buckets for each city (`rewilding-nyc-cache`)<br>- **Orchestration:** AWS Step Functions coordinating Batch jobs<br>- **Parallelization:** Step 3 uses Batch Array Jobs for fan-out<br>- **Logging:** CloudWatch + envelope provenance chains</p>
+<p>---</p>
+<p>## Schema System</p>
+<p>We run modular JSON schemas, that are validated at runtime:</p>
+<p>```<br>seeds/schemas/<br>├── envelope.schema.json ← the trunk (references all others)<br>├── metadata.base.schema.json ← required fields all envelopes share<br>├── metadata.vector.schema.json ← plots, buffers, boundaries<br>├── metadata.raster.schema.json ← i.e., LST, NDVI, land cover...<br>├── metadata.tabular.schema.json ← stats, correlations, results of analyses<br>├── provenance.schema.json ← chain of custody entry<br>├── warning.schema.json  ← warning entry structure<br>└── semantic_types.yml  ← vocabulary of valid semantic types</p>
+<p>```</p>
+<p>### **Semantic Types Vocabulary** (`semantic_types.yml`):</p>
+<p>```yaml<br>types:<br>  park_boundaries:<br>    category: vector<br>    description: Raw park boundary polygons from municipal data</p>
+<p>  park_buffers:<br>    category: vector<br>    description: Concentric buffer rings for TPM-M analysis</p>
+<p>  land_surface_temperature:<br>    category: raster<br>    description: LST derived from thermal satellite imagery<br>    typical_units: celsius</p>
+<p>  pci_results:<br>    category: tabular<br>    description: Park Cooling Intensity calculated via TPM-M method to <br>    analyze cooling influence of green infrastructure, or TPM-A for <br>    cumulative cooling efficiency to calculate the *average* temperature <br>    reduction over the entire cooling distance, rather than the <br>    *maximum* difference at a single point (TPM-M).<br>```</p>
+<p>Communities extend the vocabulary by adding new types as analyses expand.</p>
+<p>---</p>
+<p># *Data Pluralism Patterns*</p>
+<p>### Pattern 1 | *Semantic Data Typing*</p>
+<p>Every dataset has meaning as well as format; this helps us abstract from existing research to modularize and expand upon it with our own rigorous analyses. </p>
+<p>For example, in the PCI pilot study, Park Cooling Intensity calculated via TPM-M method to analyze cooling influence of green infrastructure, or TPM-A for cumulative cooling efficiency to calculate the *average* temperature reduction over the entire cooling distance, rather than the *maximum* difference at a single point (TPM-M). </p>
+<p>Using median vs. mean tends to measure different things: in the case of the median, this is like the actual felt difference walking around the city, whereas mean is more useful in contemplating total thermal load for engineering purposes. We want to facilitate this level of abstraction by providing in-depth meaning-making within our user workflows.</p>
+<p>- `measurement_type`: absolute | relative | anomaly | categorical<br>- `statistic`: mean | median | max<br>- `units`: celsius | fahrenheit | index</p>
+<p>Recipes declare what they need, and the system warns if there’s a mismatch.</p>
+<p>### Pattern 2 | Classification Crosswalks</p>
+<p>A major challenge of creating a distributed, scalable system in this regard is the reality that different communities often have different data schemas, and although we prescribe general recipes, the actual input will be disparate and somewhat unpredictable. Crosswalks are a workaround for mapping between variable categories systematically, with documentation.</p>
+<p>### Pattern 3 | Temporal Alignment Tracking</p>
+<p>Every envelope documents temporal provenance:</p>
+<p>```json<br>"temporal_extent": {<br>  "start": "2020-06-01",<br>  "end": "2020-08-31",<br>  "description": "Summer 2020"<br>}</p>
+<p>```</p>
+<p>Warnings surface when inputs have misaligned temporal coverage.</p>
+<p>### Pattern 4 | Geometry Validation with Repair</p>
+<p>Mixed geometries, invalid polygons, projection chaos—the system detects issues and offers repair paths, not silent failure. Excluded features are documented in warnings.</p>
+<p>### Should we implement pattern 5 — Measurement Conversion? (i.e., converting from Fahrenheit to Celsius or dealing with Kelvin—and other similar situations we are likely to run into)</p>
+<p>---</p>
+<p>## Analytical Primitives</p>
+<p>First iterative abstraction from Xiao et al. (2023):</p>
+<p>| Layer | Operations |<br>| --- | --- |<br>| **Data Acquisition** | LST retrieval, park boundaries, land cover classification |<br>| **Geometric Operations** | Buffer generation, area/perimeter calculation, shape indices |<br>| **Metric Calculation** | Land cover proportions (FAP, GAP, IAP, WAP, FWAP), landscape metrics (NDVI, LPI, LSI, SHAPE_MN, PD, AI) |<br>| **Spatial Analysis** | Hot/cold spot analysis, spatial clustering |<br>| **Statistical Analysis** | Pearson/partial correlation, multivariate regression |</p>
+<p>---</p>
+<p>### **`{rewildr}`: Primitive Helper Package**</p>
+<p>`rewildr` is a lightweight R package that enforces consistency across analytical primitives. It provides the R-side implementation of the envelope contract, handling the boilerplate so primitives can focus on science.</p>
+<p>### **Core Responsibilities:**</p>
+<p>| Module | Purpose |<br>| --- | --- |<br>| `args.R` | Standard argument parsing for primitive invocation |<br>| `warnings.R` | Warning accumulation throughout execution |<br>| `metadata.R` | Metadata extraction for vectors, rasters, and tabular data |<br>| `output.R` | Structured JSON output for Python handoff |<br>| `validate.R` | Common validation helpers (CRS matching, geometry repair, spatial overlap) |<br>| `utils.R` | Safe I/O wrappers with error handling |</p>
+<p>### **Key Functions:**</p>
+<p>| Function | What it does |<br>| --- | --- |<br>| `parse_primitive_args()` | Parses `<inputs_json> <output_path> <params_json>` from command line |<br>| `warnings_collector()` | Creates a mutable notebook for accumulating warnings |<br>| `extract_vector_metadata()` | Extracts feature count, bbox, geometry type from `sf` objects |<br>| `extract_raster_metadata()` | Extracts resolution, dimensions, nodata percentage from `terra` rasters |<br>| `primitive_success()` | Outputs metadata + warnings as JSON, exits cleanly |<br>| `primitive_failure()` | Outputs error as JSON, exits with error code |</p>
+<p>**Location:** `seeds/packages/rewildr/`</p>
+<p>**Philosophy:** Primitives should do science, not plumbing. `{rewildr}` handles the contract so every primitive behaves consistently—same argument structure, same output format, same warning semantics. Python orchestration can rely on predictable behavior from any primitive it invokes.</p>
+<p>---</p>
+<p>## User Journey</p>
+<p>| User | Entry Point | Interaction |<br>| --- | --- | --- |<br>| **Developer (Aaliyah)** | Full pipeline | Writes manifests, configures recipes, adds cities |<br>| **Organizer (Jayden)** | Growth layer | Selects recipes, adjusts parameters, interprets outputs |<br>| **Resident (Destiny)** | Harvest layer | Views dashboards, clicks maps, reads reports |<br>| **Learner** | Any layer | Runs primitives individually to understand them; warnings teach |</p>
+<p>---</p>
+<p># Implementing the Abstractions</p>
+<p>## Harvest Layer</p>
+<p>roots/statistics/hotspot_analysis.R  →  produces hotspot_results (tabular)<br>↓<br>harvest/maps/thermal_hotspots.py     →  renders interactive map + static PNG<br>↓<br>harvest/reports/thermal_report.py    →  generates PDF with map, stats, warnings, provenance</p>
+<p>## Directory Structure</p>
+<p>```<br>rewildingCities/<br>│<br>├── soil/                                    # Validation & data preparation (R)<br>│   ├── _registry.yml                        # Soil primitives registry<br>│   ├── validate/<br>│   │   ├── validate_boundaries.R<br>│   │   ├── validate_raster.R<br>│   │   └── check_alignment.R<br>│   ├── repair/<br>│   │   └── repair_geometry.R<br>│   ├── register/<br>│   │   └── fetch_dataset.R<br>│   ├── scope/<br>│   │   └── apply_scope.R    # NOT YET WRITTEN - profile-based subsetting<br>│   └── convert/<br>│       └── normalize_units.R        # NOT YET WRITTEN - unit conversion<br>│<br>├── seeds/                                   # Preserved patterns<br>│   ├── schemas/<br>│   │   ├── envelope.schema.json            # ✅ Envelope contract<br>│   │   ├── provenance.schema.json          # ✅ Chain of custody<br>│   │   ├── warning.schema.json             # ✅ Warning structure<br>│   │   ├── manifest.schema.yml             # ✅ City manifest<br>│   │   ├── curiosity.schema.yml            # ✅ Research questions<br>│   │   ├── method.schema.yml               # ✅ Analytical approaches<br>│   │   ├── experiment.schema.yml           # ✅ Instantiated investigations<br>│   │   └── semantic_types.yml              # ✅ Vocabulary of data types<br>│   ├── crosswalks/<br>│   │   └── land_cover/<br>│   │       └── nyc_lidar_to_nanjing.yml<br>│   ├── profiles/<br>│   │   └── profiles.yml<br>│   ├── templates/<br>│   │   ├── manifest.template.yml<br>│   │   ├── curiosity.template.yml<br>│   │   ├── method.template.yml<br>│   │   └── experiment.template.yml<br>│   └── packages/<br>│       └── rewildr/            # ✅ R helper package (verified)<br>│           ├── DESCRIPTION<br>│           ├── NAMESPACE<br>│           ├── R/<br>│           │   ├── args.R<br>│           │   ├── output.R<br>│           │   ├── warnings.R<br>│           │   ├── metadata.R<br>│           │   ├── validate.R<br>│           │   └── utils.R<br>│           ├── man/<br>│           └── tests/<br>│               └── testthat/<br>│<br>├── roots/                                   # Analytical primitives (R)<br>│   ├── _registry.yml                        # Roots primitives registry<br>│   ├── geometry/<br>│   │   ├── generate_buffers.R<br>│   │   ├── subtract_geometry.R<br>│   │   ├── clip_to_boundary.R<br>│   │   └── calculate_geometry.R<br>│   ├── metrics/<br>│   │   ├── zonal_statistics.R<br>│   │   ├── landscape_metrics.R<br>│   │   ├── calculate_pci.R<br>│   │   └── land_cover_proportions.R<br>│   └── statistics/<br>│       ├── correlation_analysis.R<br>│       ├── partial_correlation.R<br>│       ├── hotspot_analysis.R<br>│       └── regression_analysis.R<br>│<br>├── garden/                                  # Where science grows<br>│   ├── curiosity-space/<br>│   │   ├── thermal/<br>│   │   │   └── park_cooling_effect.yml      # ✅ Written<br>│   │   ├── landscape/<br>│   │   └── index.yml<br>│   ├── methods/<br>│   │   ├── thermal/<br>│   │   │   ├── buffer_gradient_analysis.yml # ✅ Written<br>│   │   │   └── hot_cold_spot_analysis.yml<br>│   │   ├── landscape/<br>│   │   ├── statistical/<br>│   │   └── index.yml<br>│   ├── experiments/<br>│   │   ├── nyc_park_cooling_pedestrian.yml  # ✅ Written<br>│   │   ├── nyc_park_cooling_engineering.yml<br>│   │   └── index.yml<br>│   ├── notebooks/<br>│   └── tests/<br>│<br>├── harvest/                                 # Outputs (Python)<br>│   ├── maps/<br>│   │   ├── thermal_hotspots.py              # NOT YET WRITTEN<br>│   │   ├── park_cooling_gradient.py         # NOT YET WRITTEN<br>│   │   └── city_thermal_summary.py          # NOT YET WRITTEN<br>│   ├── reports/<br>│   │   ├── pci_report.py                    # NOT YET WRITTEN<br>│   │   └── park_card.py                     # NOT YET WRITTEN<br>│   ├── dashboards/<br>│   │   └── components.py                    # NOT YET WRITTEN<br>│   └── exports/<br>│       └── formats.py                       # NOT YET WRITTEN<br>│<br>├── compost/                                 # Logs, archives, feedback<br>│   ├── logs/                                # ✅ Run logs written here<br>│   ├── archive/<br>│   └── feedback/<br>│<br>├── plots/                                   # City data<br>│   ├── nyc/<br>│   │   ├── manifest.yml<br>│   │   ├── .data/<br>│   │   └── .envelopes/<br>│   └── _template/<br>│       └── manifest.template.yml<br>│<br>├── field-guide/                             # Documentation<br>│   ├── concepts/<br>│   ├── tutorials/<br>│   └── species/<br>│<br>├── canopy/                                  # Orchestration (Python)<br>│   ├── __init__.py<br>│   ├── orchestrator/<br>│   │   ├── __init__.py<br>│   │   ├── orchestrator.py    # ✅ Updated with logging + method validation<br>│   │   ├── references.py       # ReferenceResolver<br>│   │   ├── dependencies.py     # DependencyResolver, ExecutionPlan<br>│   │   ├── registry.py     # RegistryManager<br>│   │   └── semantic_types.py    # ✅ NEW - SemanticTypeRegistry<br>│   ├── envelope.py            # ✅ Updated with schema validation<br>│   ├── primitive.py          # ✅ Updated with project_root/cwd<br>│   ├── hashing.py  # MAY BE REDUNDANT (Hasher in envelope.py)<br>│   ├── manifest.py  # MAY BE REDUNDANT (parsing in orchestrator.py)<br>│   ├── aws/<br>│   │   ├── __init__.py<br>│   │   ├── s3.py                            # NOT YET WRITTEN<br>│   │   └── batch.py                         # NOT YET WRITTEN<br>│   └── cli.py                               # NOT YET WRITTEN<br>│<br>├── terraform/                               # Infrastructure as code<br>│   ├── main.tf                              # NOT YET WRITTEN<br>│   ├── batch.tf                             # NOT YET WRITTEN<br>│   ├── s3.tf                                # NOT YET WRITTEN<br>│   └── ecr.tf                               # NOT YET WRITTEN<br>│<br>├── Dockerfile<br>├── docker-compose.yml<br>├── requirements.txt  # Added: jsonschema>=4.18.0, referencing>=0.30.0<br>├── pyproject.toml<br>├── start-ur-garden.sh<br>├── .gitignore<br>├── LICENSE<br>└── README.md<br>```</p>
+<p>---</p>
+<p>## Design Principles</p>
+<p>1. **Honest outputs** — Never silently degrade quality. Warnings accumulate. The final output tells the complete story of every compromise along the way.<br>2. **Data pluralism** — Accept data from many sources in many forms. Flexible validation tiers—expected vs. optional—help communities work with what they have.<br>3. **Composable primitives** — Atomic operations that can be run independently (for learning) or composed into workflows (for production). Accept raw or envelope; always return envelope.<br>4. **Transparent provenance** — Every output knows where it came from, what scope was applied, what parameters were used, and how long each step took. Even absence is documented.<br>5. **Local-first, cloud-ready** — Works on a 2018 laptop. Scales to AWS Batch when needed. Same container, sme code, different storage backend.<br>6. **Democratic access** — The resident viewing a dashboard and the developer writing primitives are both first-class users. Critical warnings inform rather than gate-keep.<br>7. **Pedagogical design** — The structure teaches. Schemas include descriptions and examples. Warnings are lessons. The garden is for exploration.</p>
+<p>---</p>
+<p>## Key References</p>
+<p>- **PCI Study:** Xiao, Y. et al. (2023). “Using buffer analysis to determine urban park cooling intensity.” *Science of the Total Environment*, 868, 161463.<br>- **Design Inspiration:** The recipe-manifest model draws from reproducible research practices, infrastructure-as-code patterns, and abolition feminism.</p>
+<p>---</p>
+<p>## Glossary</p>
+<p>| Term | Definition |<br>| --- | --- |<br>| **Manifest** | YAML file declaring a city's available data, metadata, and quality notes |<br>| **Recipe** | YAML file declaring a workflow of primitives to answer a research question |<br>| **Primitive** | Atomic R function that does one analytical operation and returns an envelope |<br>| **Envelope** | JSON document carrying data path, metadata, provenance, and warnings |<br>| **Profile** | Pre-configured scope settings (full, dev, test, neighborhood) affecting subsetting and hashing |<br>| **Crosswalk** | Mapping between different classification schemes |<br>| **Scope** | Subsetting configuration (study area, feature sampling, resolution) |<br>| **Provenance** | Chain of custody documenting what ran, when, with what parameters |<br>| **Plot** | A city's directory containing its manifest and cached data |<br>| **Semantic type** | What a dataset *means* (not just its format), validated against vocabulary |<br>| **PCI** | Park Cooling Intensity — measure of a park's thermal impact on surroundings |<br>| **Validation tier** | Required (error if missing), Expected (warning if missing), Optional (silent) |</p>
+<p>---</p>
+
+    </body>
+    </html>
+    

@@ -1,0 +1,228 @@
+# ============================================================
+# Buffer Gradient Analysis
+# A method for understanding spatial thermal gradients
+garden/methods/thermal/buffer_gradient_analysis.yml
+# ============================================================
+
+id: buffer_gradient_analysis
+name: "Buffer-Based Thermal Gradient Analysis"
+domain: thermal
+
+description: >
+  Analyzes how temperature changes with distance from a landscape feature 
+  (park, water body, forest) using concentric buffer zones. By measuring 
+  temperature in successive rings radiating outward, we can identify the 
+  "turning point" where the feature's cooling influence ends and background 
+  urban temperature dominates.
+  
+  This method transforms a continuous thermal gradient into discrete, 
+  measurable zones—making the invisible influence of green infrastructure 
+  visible and quantifiable.
+
+# Visual representation of the concept
+diagram: |
+  
+        <------------------ 150m Buffer ------------------>
+        <------------ 120m Buffer ------------>
+        <-------- 90m Buffer -------->
+        <---- 60m Buffer ---->
+        <- 30m ->
+        
+        [  Ring 5  [  Ring 4  [  Ring 3  [  Ring 2  [  Ring 1  [ PARK ]
+        
+        LST:  34.2°    33.8°     32.1°     30.5°     28.2°     26.1°
+                ↑
+          Turning Point (cooling influence ends here)
+
+# What types of questions this method can answer
+answers_question_types:
+  - spatial_gradient
+  - influence_extent
+  - intensity_measurement
+  - feature_comparison
+
+# The choices that define variations of this method
+choices:
+
+  intensity_measure:
+    name: "How to define intensity"
+    description: >
+      The cooling (or heating) intensity can be measured as the maximum 
+      difference at a single point, or as the average difference across 
+      the entire influence zone. Each tells a different story.
+    
+    options:
+    
+      TPM-M:
+        name: "Turning Point Maximum"
+        id: TPM-M
+        description: >
+          Intensity = LST at first local maximum - LST inside feature.
+          Captures the peak temperature difference at the point where 
+          cooling influence ends.
+        formula: "PCI = LST_turning_point - LST_park"
+        answers: "What's the strongest cooling effect?"
+        when_to_use:
+          - "Comparing parks by their peak cooling potential"
+          - "Identifying thermal refuge boundaries for pedestrians"
+          - "Heat vulnerability and refuge mapping"
+          - "When you care about the 'felt' experience of entering a cool zone"
+        limitations:
+          - "Sensitive to local hot spots (parking lots, buildings) in buffer zones"
+          - "Doesn't capture sustained cooling over distance"
+          - "May overvalue parks with sharp but narrow cooling gradients"
+        interpretation: >
+          A park with PCI (TPM-M) of 5°C creates a thermal refuge where 
+          someone crossing into its influence zone experiences up to 5 
+          degrees of cooling. Higher values = stronger thermal refuge.
+          
+      TPM-A:
+        name: "Turning Point Average"
+        id: TPM-A
+        description: >
+          Intensity = Average LST across all buffers up to turning point - LST inside feature.
+          Captures cumulative cooling efficiency across the entire influence zone.
+        formula: "PCI = mean(LST_buffers[1:turning_point]) - LST_park"
+        answers: "What's the total cooling contribution?"
+        when_to_use:
+          - "Urban heat island energy balance modeling"
+          - "Engineering thermal load calculations"
+          - "Comparing parks by sustained cooling contribution"
+          - "When you care about aggregate heat reduction"
+        limitations:
+          - "May undervalue parks with sharp but localized cooling"
+          - "Affected by land cover composition within buffer zones"
+          - "Less intuitive for communicating to non-technical audiences"
+        interpretation: >
+          A park with PCI (TPM-A) of 3°C provides an average of 3 degrees 
+          cooling across its entire influence zone. Better for understanding 
+          total thermal load reduction than peak experience.
+
+  central_tendency:
+    name: "How to summarize temperature within zones"
+    description: >
+      Each buffer ring contains many raster pixels with varying temperatures. 
+      We need to summarize them to a single value. The choice between median 
+      and mean affects what story the data tells.
+    
+    options:
+    
+      median:
+        name: "Median LST"
+        id: median
+        description: >
+          The middle value when all pixel temperatures are sorted. 
+          Robust to outliers like parking lots, rooftops, or sensor artifacts.
+        answers: "What's the typical temperature experience?"
+        when_to_use:
+          - "Human thermal comfort studies"
+          - "When buffer zones contain anomalous hot/cold surfaces"
+          - "Representing the 'felt' temperature for a person walking through"
+          - "When data quality is uncertain"
+        interpretation: >
+          "A person walking through this zone would typically experience 
+          this temperature." The parking lot in the corner doesn't skew 
+          the number.
+          
+      mean:
+        name: "Mean LST"
+        id: mean
+        description: >
+          The arithmetic average of all pixel temperatures. 
+          Captures total thermal energy including outliers.
+        answers: "What's the aggregate thermal load?"
+        when_to_use:
+          - "Energy balance calculations"
+          - "Engineering and infrastructure thermal design"
+          - "When outliers represent real thermal contributions to model"
+          - "Surface energy budget modeling"
+        interpretation: >
+          "This zone contributes this much total thermal energy to the 
+          urban heat budget." That parking lot matters because it's 
+          radiating heat into the environment.
+
+  buffer_interval:
+    name: "Distance between buffer rings"
+    description: >
+      The spacing between concentric rings determines the granularity 
+      of gradient measurement.
+    type: integer
+    units: meters
+    default: 30
+    range:
+      min: 10
+      max: 100
+    guidance: >
+      Match to your LST raster resolution. For Landsat (30m), use 30m 
+      intervals. Smaller intervals (10-15m) capture finer gradients but 
+      increase computation and may exceed raster precision. Larger 
+      intervals (50-100m) are faster but may miss the turning point.
+
+  max_buffer_distance:
+    name: "Maximum buffer distance"
+    description: >
+      How far out to generate buffers before stopping.
+    type: integer
+    units: meters
+    default: 500
+    guidance: >
+      Most urban parks have cooling influence under 300-500m. Larger 
+      parks or parks adjacent to water may extend further. Setting this 
+      too high wastes computation; too low may miss the turning point.
+
+# What primitives this method requires
+requires_primitives:
+  - generate_buffers:
+      from: roots/geometry
+      purpose: "Create concentric ring geometries around features"
+  - zonal_statistics:
+      from: roots/metrics
+      purpose: "Extract temperature statistics within each ring"
+  - calculate_pci:
+      from: roots/metrics
+      purpose: "Identify turning point and compute intensity"
+
+# What data this method needs
+requires_data:
+  - name: feature_boundaries
+    type: vector
+    semantic_types: 
+      - park_boundaries
+      - water_boundaries
+      - forest_boundaries
+    description: "Polygons defining the features to analyze"
+  
+  - name: surface_temperature
+    type: raster
+    semantic_types:
+      - land_surface_temperature
+    description: "LST raster, ideally summer daytime acquisition"
+    guidance: >
+      Use cloud-free summer imagery when heat stress is highest. 
+      Landsat 8 TIRS provides 30m resolution suitable for park-scale 
+      analysis. Consider using median composite over multiple dates 
+      to reduce single-acquisition artifacts.
+
+# Outputs this method produces
+produces:
+  - name: buffer_zones
+    semantic_type: park_buffers
+    data_category: vector
+    description: "Concentric ring polygons with distance attributes"
+  
+  - name: zonal_temperatures
+    semantic_type: zonal_statistics
+    data_category: tabular
+    description: "Temperature statistics per buffer ring per feature"
+  
+  - name: cooling_intensity
+    semantic_type: pci_results
+    data_category: tabular
+    description: "PCI value, turning point distance, and gradient profile per feature"
+
+# References
+references:
+  - citation: "Xiao, Y. et al. (2023)"
+    note: "Source of TPM-M methodology and systematic method comparison"
+  - citation: "Yu, Z. et al. (2017)"
+    note: "Turning point concept and buffer size recommendations"

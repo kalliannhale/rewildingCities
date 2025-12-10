@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rewilding.city/schemas/provenance.schema.json",
+  "title": "Provenance Entry",
+  "description": "A record of a primitive's execution, documenting what ran, when, with what parameters, and on what inputs. Provenance entries accumulate as data flows through the pipeline, creating a complete chain of custody.",
+
+  "type": "object",
+  "required": ["primitive", "version", "timestamp", "params", "inputs", "duration_seconds"],
+
+  "properties": {
+    "primitive": {
+      "type": "string",
+      "description": "Name of the primitive that was executed",
+      "examples": ["generate_buffers", "zonal_statistics", "calculate_pci", "validate_boundaries"]
+    },
+
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the primitive",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["1.0.0", "2.1.3"]
+    },
+
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the primitive executed",
+      "examples": ["2024-12-19T14:32:00Z"]
+    },
+
+    "params": {
+      "type": "object",
+      "description": "Parameters passed to the primitive. Structure varies by primitive.",
+      "examples": [
+        { "distances": [30, 60, 90] },
+        { "stats": ["median", "mean", "min", "max"] },
+        { "method": "TPM-M", "statistic": "median" }
+      ]
+    },
+
+    "inputs": {
+      "type": "array",
+      "description": "All inputs consumed by this primitive, with lineage information. Always an array, even for single-input primitives.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "semantic_type", "path", "hash"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Role this input plays in the primitive",
+            "examples": ["parks", "zones", "raster", "baseline", "buffer_stats"]
+          },
+          "semantic_type": {
+            "type": "string",
+            "description": "Semantic type of the input data, from semantic_types.yml vocabulary",
+            "examples": ["park_boundaries", "park_buffers", "land_surface_temperature", "zonal_statistics"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to the input file at time of execution (local path or S3 URI)",
+            "examples": [
+              "plots/nyc/.data/parks.geojson",
+              "s3://rewilding-nyc-cache/parks.geojson"
+            ]
+          },
+          "hash": {
+            "type": "object",
+            "description": "Fingerprint of input data for reproducibility and tamper detection",
+            "required": ["value", "method"],
+            "properties": {
+              "value": {
+                "type": ["string", "null"],
+                "description": "The hash value, or null if hashing was skipped"
+              },
+              "method": {
+                "type": "string",
+                "enum": ["full_file", "metadata", "skipped"],
+                "description": "How the hash was computed. full_file: complete content hash. metadata: size + mtime + header. skipped: no hash computed."
+              },
+              "algorithm": {
+                "type": "string",
+                "description": "Hash algorithm used (present when method is not 'skipped')",
+                "examples": ["md5", "sha256"]
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why hashing was skipped (present when method is 'skipped')",
+                "examples": ["dev profile", "test profile", "in-memory input"]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "lineage_branch": {
+      "type": ["string", "null"],
+      "description": "Which input stream contributed this entry to the current envelope's provenance chain. Null for the primitive that created this envelope; named for inherited entries from input envelopes.",
+      "examples": ["parks", "zones", "raster", "buffer_stats", null]
+    },
+
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Execution time in seconds"
+    }
+  },
+
+  "additionalProperties": false
+}

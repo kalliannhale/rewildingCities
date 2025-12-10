@@ -1,0 +1,17 @@
+# Curiosity Space Index
+# Registry of research questions we explore
+
+curiosities:
+  
+  thermal:
+    - id: park_cooling_effect
+      path: thermal/park_cooling_effect.yml
+      question: "How effectively do urban parks cool their surroundings?"
+      sub_questions: [maximum_cooling, cumulative_cooling, cooling_extent, cooling_factors, surrounding_influence]
+
+  # Future curiosities
+  # landscape:
+  #   - id: vegetation_connectivity
+  #     question: "How connected are urban vegetation patches?"
+  #   - id: habitat_fragmentation
+  #     question: "How fragmented are potential wildlife corridors?"

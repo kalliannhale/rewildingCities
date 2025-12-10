@@ -1,0 +1,134 @@
+# ============================================================
+# Park Cooling Effect
+# A curiosity in the thermal domain
+# garden/curiosity-space/thermal/park_cooling_effect.yml
+# ============================================================
+
+id: park_cooling_effect
+domain: thermal
+
+# The core curiosity
+question: "How effectively do urban parks cool their surroundings?"
+
+description: >
+  Urban parks create localized cooling islands within the heat of cities. 
+  Trees transpire, water evaporates, shade blocks radiation, and green 
+  surfaces absorb less heat than concrete. But how far does this cooling 
+  extend? How strong is it? And what makes some parks better thermal 
+  refuges than others?
+  
+  This curiosity drives us toward understanding parks not just as 
+  recreational spaces, but as critical cooling infrastructure—nature's 
+  air conditioning in an overheating world.
+
+# Why this matters
+significance: >
+  Urban heatwaves have become the deadliest of natural disasters. As 
+  cities warm, understanding and maximizing the cooling potential of 
+  green infrastructure becomes a matter of public health, environmental 
+  justice, and climate resilience. Parks in low-income neighborhoods 
+  are often smaller and less vegetated—quantifying cooling effects 
+  helps advocate for equitable green space distribution.
+
+# The sub-questions we can explore
+sub_questions:
+
+  maximum_cooling:
+    question: "What is the peak cooling effect at the park boundary?"
+    description: >
+      The strongest temperature difference between inside and outside 
+      the park's thermal influence zone. This is the "best case" cooling 
+      a person might experience.
+    interpretation: >
+      Higher values indicate parks that create sharp thermal gradients—
+      stepping into their influence zone feels dramatically cooler. 
+      Think of it as the park's "thermal welcome mat."
+    answers_for:
+      - Pedestrian thermal comfort assessment
+      - Identifying strongest thermal refuges
+      - Heat vulnerability mapping
+
+  cumulative_cooling:
+    question: "What is the total cooling contribution across the influence zone?"
+    description: >
+      The average temperature reduction from park edge to the boundary 
+      of influence. Captures sustained cooling rather than peak cooling.
+    interpretation: >
+      Higher values indicate parks that provide consistent cooling over 
+      distance, even if the peak isn't dramatic. Better for modeling 
+      aggregate urban heat reduction.
+    answers_for:
+      - Urban heat island modeling
+      - Infrastructure thermal load calculations
+      - City-wide cooling capacity assessment
+
+  cooling_extent:
+    question: "How far does the cooling effect extend?"
+    description: >
+      The distance at which park influence becomes indistinguishable 
+      from background urban temperature—the "turning point."
+    interpretation: >
+      Larger extent means the park benefits a wider area. A small park 
+      with large extent punches above its weight. Extent may vary by 
+      direction based on wind patterns and surrounding land cover.
+    answers_for:
+      - Buffer zone planning around parks
+      - Spacing recommendations for new green spaces
+      - Understanding park "reach"
+
+  cooling_factors:
+    question: "What landscape features most influence cooling intensity?"
+    description: >
+      The relationship between park characteristics (area, shape, 
+      vegetation density, water presence) and cooling performance.
+    interpretation: >
+      Identifies actionable design parameters. If vegetation density 
+      correlates more strongly than area, then improving existing parks 
+      may be more effective than building new ones.
+    depends_on: 
+      - maximum_cooling
+      - cumulative_cooling
+    answers_for:
+      - Park design guidelines
+      - Prioritizing improvement investments
+      - Understanding mechanism of cooling
+
+  surrounding_influence:
+    question: "How does the surrounding urban environment affect cooling?"
+    description: >
+      Whether parks in dense commercial areas perform differently than 
+      parks in residential neighborhoods. The role of impervious surfaces, 
+      building height, traffic, and nighttime lights.
+    interpretation: >
+      Parks don't exist in isolation. A park surrounded by asphalt may 
+      show strong cooling (because the baseline is so hot) or weak cooling 
+      (because the surrounding heat overwhelms it). Understanding this 
+      helps site new parks strategically.
+    answers_for:
+      - Strategic park siting
+      - Understanding confounding factors
+      - Contextual performance benchmarking
+
+# Related phenomena this connects to
+related_phenomena:
+  - urban_heat_island
+  - thermal_comfort
+  - green_infrastructure
+  - evapotranspiration
+  - surface_energy_balance
+
+# Literature that informs this curiosity
+foundational_research:
+  - citation: "Xiao, Y. et al. (2023). Using buffer analysis to determine urban park cooling intensity. Science of the Total Environment, 868, 161463."
+    contribution: "Systematic comparison of PCI quantification methods; TPM-M methodology"
+  - citation: "Yu, Z. et al. (2017). How to select the appropriate buffer size to quantify the cooling effect of urban green space."
+    contribution: "Turning point concept for defining cooling extent"
+
+# Tags for discovery
+tags:
+  - climate_resilience
+  - public_health
+  - environmental_justice
+  - urban_planning
+  - heat_mitigation
+  - green_infrastructure

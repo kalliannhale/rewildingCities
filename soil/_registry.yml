@@ -1,0 +1,318 @@
+# soil/_registry.yml
+# Registry for validation and preparation primitives
+
+primitives:
+
+  validate_boundaries:
+    path: validate/validate_boundaries.R
+    version: 1.0.0
+    description: >
+      Validate vector geometries for analytical readiness. Checks for 
+      valid geometry, CRS presence, minimum area thresholds, and empty 
+      features. Optionally repairs invalid geometries and reprojects 
+      to target CRS.
+    
+    # === Standard fields (shared with roots/) ===
+    
+    inputs:
+      - name: boundaries
+        semantic_types: 
+          - park_boundaries
+          - water_boundaries
+          - forest_boundaries
+          - study_area
+        required: true
+        description: Vector features to validate
+    
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: >
+        Same features, validated and optionally repaired. 
+        Excluded features documented in warnings.
+    
+    params:
+      target_crs:
+        type: string
+        default: null
+        description: If provided, reproject to this CRS
+      min_area_ha:
+        type: number
+        default: null
+        description: Exclude features below this area threshold
+      repair_invalid:
+        type: boolean
+        default: false
+        description: Attempt to repair invalid geometries via st_make_valid
+      drop_empty:
+        type: boolean
+        default: true
+        description: Remove empty or null geometries
+    
+    # === Soil-specific fields ===
+    
+    validates:
+      - id: valid_geometry
+        description: Geometry passes st_is_valid()
+        severity_if_failed: warning
+      - id: crs_present
+        description: CRS is defined, not NA
+        severity_if_failed: critical
+      - id: min_area
+        description: Feature area meets threshold
+        severity_if_failed: info
+        conditional: when min_area_ha is set
+      - id: no_empty_geometries
+        description: Geometry is not empty or null
+        severity_if_failed: warning
+    
+    repairs:
+      - id: invalid_geometry
+        method: st_make_valid
+        when: repair_invalid is true
+        description: Attempts topological repair of invalid geometries
+      - id: crs_transform
+        method: st_transform
+        when: target_crs differs from input CRS
+        description: Reprojects features to target coordinate system
+    
+    may_exclude_features: true
+    exclusion_documented_in: warnings
+    
+
+  validate_raster:
+    path: validate/validate_raster.R
+    version: 1.0.0
+    description: >
+      Validate raster data for analytical readiness. Checks CRS, 
+      resolution, NoData coverage, and value ranges. Does not modify 
+      raster data — validation only.
+    
+    inputs:
+      - name: raster
+        semantic_types:
+          - land_surface_temperature
+          - ndvi
+          - land_cover
+        required: true
+        description: Raster to validate
+    
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: raster
+      description: >
+        Same raster, with validation metadata attached. 
+        No transformation — envelope documents quality.
+    
+    params:
+      expected_crs:
+        type: string
+        default: null
+        description: Warn if raster CRS doesn't match
+      max_nodata_percent:
+        type: number
+        default: 50
+        description: Critical warning if NoData exceeds this threshold
+      expected_resolution_m:
+        type: number
+        default: null
+        description: Warn if resolution differs significantly
+      value_range:
+        type: object
+        properties:
+          min: { type: number }
+          max: { type: number }
+        default: null
+        description: Expected value range for sanity checking
+    
+    validates:
+      - id: crs_present
+        description: CRS is defined
+        severity_if_failed: critical
+      - id: crs_match
+        description: CRS matches expected value
+        severity_if_failed: warning
+        conditional: when expected_crs is set
+      - id: nodata_coverage
+        description: NoData percentage within acceptable bounds
+        severity_if_failed: critical
+        threshold_param: max_nodata_percent
+      - id: resolution_match
+        description: Resolution matches expected value
+        severity_if_failed: info
+        conditional: when expected_resolution_m is set
+      - id: value_range_sane
+        description: Values fall within expected range
+        severity_if_failed: warning
+        conditional: when value_range is set
+    
+    repairs: []  # validate_raster does not modify data
+    
+    may_exclude_features: false
+
+
+  repair_geometry:
+    path: repair/repair_geometry.R
+    version: 1.0.0
+    description: >
+      Aggressive geometry repair for severely damaged features. 
+      Use when validate_boundaries with repair_invalid: true is 
+      insufficient. Applies multiple repair strategies in sequence.
+    
+    inputs:
+      - name: boundaries
+        semantic_types:
+          - park_boundaries
+          - water_boundaries
+        required: true
+        description: Vector features needing repair
+    
+    outputs:
+      semantic_type: null
+      data_category: vector
+      description: Repaired features. Unrepairable features excluded.
+    
+    params:
+      strategies:
+        type: array
+        items: string
+        default: [make_valid, buffer_zero, snap_to_grid]
+        description: Repair strategies to attempt, in order
+      snap_tolerance:
+        type: number
+        default: 0.001
+        description: Tolerance for snap_to_grid strategy
+      buffer_distance:
+        type: number
+        default: 0
+        description: Buffer distance for buffer_zero strategy
+    
+    validates:
+      - id: geometry_repairable
+        description: At least one strategy succeeds
+        severity_if_failed: warning
+    
+    repairs:
+      - id: make_valid
+        method: st_make_valid
+        description: Standard topological repair
+      - id: buffer_zero
+        method: st_buffer(0)
+        description: Buffer by zero to fix self-intersections
+      - id: snap_to_grid
+        method: st_snap_to_grid
+        description: Snap coordinates to regular grid
+    
+    may_exclude_features: true
+    exclusion_documented_in: warnings
+
+
+  fetch_dataset:
+    path: register/fetch_dataset.R
+    version: 1.0.0
+    description: >
+      Fetch data from remote sources (APIs, URLs) and cache locally. 
+      Handles Socrata, direct downloads, and authenticated sources.
+    
+    inputs: []  # No data input — fetches from remote
+    
+    outputs:
+      semantic_type: null  # Determined by manifest declaration
+      data_category: null  # Determined by fetched data
+      description: Fetched and cached dataset
+    
+    params:
+      source_type:
+        type: string
+        enum: [socrata, url, earthengine]
+        required: true
+        description: Type of remote source
+      endpoint:
+        type: string
+        required: true
+        description: URL or API endpoint
+      cache_path:
+        type: string
+        required: true
+        description: Where to cache the fetched data
+      force_refresh:
+        type: boolean
+        default: false
+        description: Re-fetch even if cache exists
+      auth_env_var:
+        type: string
+        default: null
+        description: Environment variable containing auth token
+    
+    validates:
+      - id: endpoint_reachable
+        description: Remote endpoint responds
+        severity_if_failed: critical
+      - id: response_valid
+        description: Response parses as expected format
+        severity_if_failed: critical
+      - id: cache_writable
+        description: Can write to cache location
+        severity_if_failed: critical
+    
+    repairs: []
+    
+    may_exclude_features: false
+    requires_network: true
+    idempotent: true  # Safe to re-run; uses cache
+
+
+  check_alignment:
+    path: validate/check_alignment.R
+    version: 1.0.0
+    description: >
+      Check spatial alignment between vector and raster data. 
+      Verifies CRS match, spatial overlap, and resolution appropriateness.
+    
+    inputs:
+      - name: vector
+        semantic_types:
+          - park_boundaries
+          - park_buffers
+          - study_area
+        required: true
+      - name: raster
+        semantic_types:
+          - land_surface_temperature
+          - ndvi
+          - land_cover
+        required: true
+    
+    outputs:
+      semantic_type: alignment_report
+      data_category: tabular
+      description: Report documenting alignment status and any issues
+    
+    params:
+      require_full_coverage:
+        type: boolean
+        default: false
+        description: Fail if vector extends beyond raster extent
+      min_overlap_percent:
+        type: number
+        default: 80
+        description: Minimum percentage of vector covered by raster
+    
+    validates:
+      - id: crs_match
+        description: Vector and raster share same CRS
+        severity_if_failed: critical
+      - id: spatial_overlap
+        description: Features fall within raster extent
+        severity_if_failed: critical
+      - id: coverage_sufficient
+        description: Overlap meets minimum threshold
+        severity_if_failed: warning
+        threshold_param: min_overlap_percent
+      - id: resolution_appropriate
+        description: Raster resolution suitable for feature sizes
+        severity_if_failed: info
+    
+    repairs: []
+    
+    may_exclude_features: false

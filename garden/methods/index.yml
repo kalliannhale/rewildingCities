@@ -1,0 +1,26 @@
+# Methods Index
+# Registry of analytical approaches
+
+methods:
+
+  thermal:
+    - id: buffer_gradient_analysis
+      path: thermal/buffer_gradient_analysis.yml
+      name: "Buffer-Based Thermal Gradient Analysis"
+      answers: [spatial_gradient, influence_extent, intensity_measurement]
+      
+    # Future methods
+    # - id: hot_cold_spot_analysis
+    #   path: thermal/hot_cold_spot_analysis.yml
+    #   name: "Getis-Ord Hot/Cold Spot Analysis"
+
+  # landscape:
+  #   - id: fragstats_metrics
+  #     path: landscape/fragstats_metrics.yml
+  #     name: "Landscape Pattern Metrics (FRAGSTATS)"
+
+  # statistical:
+  #   - id: correlation_analysis
+  #     path: statistical/correlation_analysis.yml
+  #     name: "Correlation Analysis with Controls"
+

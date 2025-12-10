@@ -1,0 +1,22 @@
+# Inquiries Index
+# Registry of applied investigations
+
+inquiries:
+
+  nyc:
+    - id: nyc_park_cooling_pedestrian
+      path: nyc_park_cooling_pedestrian.yml
+      name: "NYC Park Cooling - Pedestrian Comfort"
+      curiosity: park_cooling_effect
+      method: buffer_gradient_analysis
+      choices:
+        intensity_measure: TPM-M
+        central_tendency: median
+        
+    # Future inquiries
+    # - id: nyc_park_cooling_engineering
+    #   path: nyc_park_cooling_engineering.yml
+    #   name: "NYC Park Cooling - Engineering Assessment"
+    #   choices:
+    #     intensity_measure: TPM-A
+    #     central_tendency: mean

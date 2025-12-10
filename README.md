@@ -1,10 +1,10 @@
 # rewildingCities 🌱
 
-*Collective science for climate-resilient futures.*
+*Help us facilitate collective science for climate-resilient futures!*
 
 Authors of science fiction interpret our realities to imagine and project our shared histories, futures, global maps, and economies. Together, we want to explore speculative realities of climate resilience on Earth.
 
-rewildingCities is an open-source platform for collective imagination through *actual* science—where research on urban ecosystems meets world-building, and data becomes a lens for innovating our climate-resilient futures. We create accessible, rigorous analytical tools for communities who are ready to ask: *How will we redraw this map? What flourishes when we make room for the wild? When will we finally design our infrastructure like nature does—to be collaborative, adaptive, regenerative?*
+rewildingCities is an open-source platform for collective imagination through *actual* science—where research on urban ecosystems meets world-building, and data becomes a lens for innovating our climate-resilient futures. We create accessible, rigorous analytical tools for communities who are ready to ask: *How will we redraw this map? What flourishes when we make room for the wild? When will we finally design our infrastructure like nature does—to be collaborative, adaptive, and regenerative?*
 
 **Our first investigation: surviving rising temperatures.** We're going to need to understand how heat travels throughout our cities. Nature did it best with green infrastructure, and we want to look at how we can design a *literal* rewilding of the city to combat our deadliest, most frequent natural disasters: heat waves. We've built an accessible pipeline for citizens to conduct their own geospatial analyses with community-specific datasets.
 

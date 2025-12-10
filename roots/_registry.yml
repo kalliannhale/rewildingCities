@@ -1,0 +1,44 @@
+# roots/_registry.yml
+primitives:
+  generate_buffers:
+    path: geometry/generate_buffers.R
+    version: 1.0.0
+    description: Generate concentric buffer rings around features
+    inputs:
+      - name: parks
+        semantic_types: [park_boundaries]
+        required: true
+    outputs:
+      semantic_type: park_buffers
+      data_category: vector
+    params:
+      distances:
+        type: array
+        items: integer
+        default: [30, 60, 90, 120, 150]
+      dissolve:
+        type: boolean
+        default: false
+      id_field:
+        type: string
+        default: null
+
+  zonal_statistics:
+    path: metrics/zonal_statistics.R
+    version: 1.0.0
+    description: Extract raster statistics within vector zones
+    inputs:
+      - name: zones
+        semantic_types: [park_buffers, park_boundaries]
+        required: true
+      - name: raster
+        semantic_types: [land_surface_temperature, ndvi, land_cover]
+        required: true
+    outputs:
+      semantic_type: zonal_statistics
+      data_category: tabular
+    params:
+      stats:
+        type: array
+        items: string
+        default: [median, mean, min, max]

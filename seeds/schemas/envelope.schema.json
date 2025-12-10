@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rewilding.city/schemas/envelope.schema.json",
+  "title": "rewildingCities Envelope",
+  "description": "The contract between primitives. Carries data, metadata, provenance, and warnings through the analytical pipeline. Data alone doesn't carry its own story—the envelope does.",
+
+  "type": "object",
+  "required": ["data", "metadata", "provenance", "warnings"],
+
+  "properties": {
+    "data": {
+      "type": "object",
+      "description": "Pointers to the actual data files. The envelope references data; it doesn't contain it.",
+      "required": ["path", "format"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the primary data file, relative to plot root or S3 bucket",
+          "examples": [
+            "plots/nyc/.data/park_buffers.geojson",
+            "s3://rewilding-nyc-cache/park_buffers.geojson"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "description": "File format of the primary data",
+          "enum": ["geojson", "parquet", "gpkg", "tiff", "csv", "json", "arrow"],
+          "examples": ["geojson", "tiff", "parquet"]
+        },
+        "secondary": {
+          "type": "object",
+          "description": "Optional secondary outputs that travel with the primary data (e.g., summary CSV alongside GeoJSON). Keys are descriptive names, values are paths.",
+          "additionalProperties": {
+            "type": "string",
+            "description": "Path to secondary file"
+          },
+          "examples": [{
+            "summary": "plots/nyc/.data/park_buffers_summary.csv"
+          }]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "What this data IS—semantically, spatially, temporally. Combines base metadata with category-specific fields. See metadata.base.schema.json and category-specific schemas.",
+      "required": ["semantic_type", "data_category", "crs"],
+      "properties": {
+        "semantic_type": {
+          "type": "string",
+          "description": "What this data represents semantically. Must be a valid type from semantic_types.yml.",
+          "$comment": "Validated against seeds/schemas/semantic_types.yml at runtime"
+        },
+        "data_category": {
+          "type": "string",
+          "enum": ["raster", "vector", "tabular"],
+          "description": "The structural category of the data. Determines which additional metadata fields are expected."
+        },
+        "crs": {
+          "type": ["string", "null"],
+          "description": "Coordinate reference system as EPSG code. Null for non-spatial tabular data.",
+          "examples": ["EPSG:2263", "EPSG:4326", null]
+        }
+      },
+      "additionalProperties": true,
+      "$comment": "Additional properties allowed to accommodate category-specific metadata (vector, raster, tabular fields)"
+    },
+
+    "provenance": {
+      "type": "array",
+      "description": "Chain of custody. Each primitive appends its record. Inherited entries from input envelopes are tagged with lineage_branch. Newest entries last.",
+      "items": {
+        "$ref": "provenance.schema.json"
+      }
+    },
+
+    "warnings": {
+      "type": "array",
+      "description": "Accumulated warnings from all primitives in the chain. The system's honesty about limitations, transformations, and quality concerns.",
+      "items": {
+        "$ref": "warning.schema.json"
+      }
+    }
+  },
+
+  "additionalProperties": false
+}

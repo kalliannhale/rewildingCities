@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rewilding.city/schemas/metadata.tabular.schema.json",
+  "title": "Tabular Metadata",
+  "description": "Additional metadata fields for tabular data. Used when data_category is 'tabular'.",
+
+  "type": "object",
+
+  "properties": {
+    "row_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of rows in the dataset",
+      "examples": [299, 2847, 15]
+    },
+
+    "column_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of columns in the dataset"
+    },
+
+    "variables": {
+      "type": "array",
+      "description": "List of variable/column names",
+      "items": { "type": "string" },
+      "examples": [["park_id", "PA", "PP", "NDVI_veg", "LSI", "PCI"]]
+    },
+
+    "variable_details": {
+      "type": "object",
+      "description": "Detailed information about each variable. Keys are variable names.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the variable"
+          },
+          "dtype": {
+            "type": "string",
+            "enum": ["numeric", "integer", "categorical", "boolean", "datetime", "string"],
+            "description": "Data type of the variable"
+          },
+          "units": {
+            "type": "string",
+            "description": "Measurement units if applicable",
+            "examples": ["hectares", "meters", "celsius", "index", "percent"]
+          },
+          "role": {
+            "type": "string",
+            "enum": ["identifier", "dependent", "independent", "control", "covariate", "outcome", "descriptive"],
+            "description": "Role of this variable in the analysis"
+          },
+          "value_range": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "For categorical variables, the valid categories"
+          }
+        },
+        "additionalProperties": false
+      },
+      "examples": [{
+        "PA": {
+          "description": "Park Area",
+          "dtype": "numeric",
+          "units": "hectares",
+          "role": "independent"
+        },
+        "PCI": {
+          "description": "Park Cooling Intensity",
+          "dtype": "numeric",
+          "units": "celsius",
+          "role": "dependent"
+        }
+      }]
+    },
+
+    "id_field": {
+      "type": "string",
+      "description": "Name of the field that uniquely identifies each row",
+      "examples": ["park_id", "buffer_id", "zone_id"]
+    },
+
+    "spatial_unit": {
+      "type": "string",
+      "description": "What spatial entity does each row represent?",
+      "examples": ["park", "buffer_ring", "district", "census_tract", "grid_cell"]
+    },
+
+    "joins_to": {
+      "type": "string",
+      "description": "Semantic type of the vector dataset this table can join to",
+      "examples": ["park_boundaries", "park_buffers", "study_area"]
+    },
+
+    "analysis_type": {
+      "type": "string",
+      "enum": ["descriptive", "inferential", "predictive", "exploratory", "diagnostic"],
+      "description": "What kind of analysis produced this output?"
+    },
+
+    "statistical_context": {
+      "type": "object",
+      "description": "Context for statistical outputs (correlations, regressions, tests)",
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "Statistical method used",
+          "examples": ["pearson", "spearman", "partial_correlation", "stepwise_regression", "ols", "gwr", "hotspot_analysis"]
+        },
+        "sample_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "n for statistical calculations"
+        },
+        "confidence_level": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence level used (e.g., 0.95)",
+          "examples": [0.95, 0.99]
+        },
+        "significance_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Alpha level for significance testing",
+          "examples": [0.05, 0.01]
+        },
+        "dependent_variable": {
+          "type": "string",
+          "description": "The outcome variable (for regression)",
+          "examples": ["PCI"]
+        },
+        "independent_variables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Predictor variables",
+          "examples": [["PA", "PP", "NDVI_veg", "LSI", "Buffer_grey"]]
+        },
+        "controlled_for": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Variables controlled for (in partial correlation)",
+          "examples": [["Buffer_NTL", "Buffer_RL"]]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "model_fit": {
+      "type": "object",
+      "description": "Model fit statistics (for regression outputs)",
+      "properties": {
+        "r_squared": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Coefficient of determination"
+        },
+        "adjusted_r_squared": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Adjusted R² accounting for number of predictors"
+        },
+        "rmse": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Root mean squared error"
+        },
+        "aic": {
+          "type": "number",
+          "description": "Akaike Information Criterion"
+        },
+        "bic": {
+          "type": "number",
+          "description": "Bayesian Information Criterion"
+        },
+        "f_statistic": {
+          "type": "number",
+          "description": "F-statistic for overall model significance"
+        },
+        "f_pvalue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "p-value for F-statistic"
+        },
+        "degrees_of_freedom": {
+          "type": "object",
+          "properties": {
+            "model": { "type": "integer" },
+            "residual": { "type": "integer" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "data_quality": {
+      "type": "object",
+      "description": "Quality indicators for the tabular data",
+      "properties": {
+        "complete_cases": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of rows with no missing values"
+        },
+        "missing_percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of cells with missing values"
+        },
+        "excluded_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of observations excluded from analysis"
+        },
+        "exclusion_reasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Why observations were excluded",
+          "examples": [["invalid geometry", "missing LST coverage", "area below threshold"]]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "aggregation": {
+      "type": "object",
+      "description": "For aggregated outputs, how was aggregation performed?",
+      "properties": {
+        "aggregated_from": {
+          "type": "string",
+          "description": "Source semantic type that was aggregated",
+          "examples": ["park_buffers", "zonal_statistics"]
+        },
+        "aggregation_level": {
+          "type": "string",
+          "description": "What level data was aggregated to",
+          "examples": ["park", "district", "borough", "city"]
+        },
+        "aggregation_functions": {
+          "type": "object",
+          "description": "Which function was applied to each variable",
+          "additionalProperties": { 
+            "type": "string",
+            "enum": ["sum", "mean", "median", "min", "max", "count", "first", "mode"]
+          },
+          "examples": [{
+            "LST": "mean",
+            "area": "sum",
+            "park_count": "count"
+          }]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "matrix_structure": {
+      "type": "object",
+      "description": "For matrix outputs (correlation matrices, distance matrices)",
+      "properties": {
+        "matrix_type": {
+          "type": "string",
+          "enum": ["correlation", "covariance", "distance", "similarity", "confusion"],
+          "description": "What kind of matrix is this?"
+        },
+        "symmetric": {
+          "type": "boolean",
+          "description": "Is the matrix symmetric?"
+        },
+        "diagonal": {
+          "type": "string",
+          "enum": ["ones", "zeros", "variances", "counts", "na"],
+          "description": "What the diagonal represents"
+        },
+        "row_labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "col_labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "interpretation_notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Human-readable notes to aid interpretation of results",
+      "examples": [[
+        "Partial correlations control for urbanization indicators (Buffer_NTL, Buffer_RL)",
+        "Sample excludes parks smaller than 0.09 hectares",
+        "LST values represent summer median (June-August 2020)"
+      ]]
+    }
+  },
+
+  "additionalProperties": true
+}

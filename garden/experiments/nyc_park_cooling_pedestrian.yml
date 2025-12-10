@@ -1,0 +1,206 @@
+# ============================================================
+# NYC Park Cooling - Pedestrian Comfort Analysis
+# An inquiry applying buffer gradient analysis to NYC parks
+# garden/experiments/nyc_park_cooling_pedestrian.yml
+# ============================================================
+
+id: nyc_park_cooling_pedestrian
+name: "NYC Park Cooling Analysis: Pedestrian Thermal Comfort"
+
+description: >
+  How effectively do New York City's parks cool their surroundings, 
+  and which parks offer the strongest thermal refuge for pedestrians?
+  
+  This inquiry applies buffer gradient analysis to 2,000+ NYC parks 
+  using summer Landsat LST imagery, measuring the peak cooling effect 
+  (TPM-M) using median temperatures to represent the typical experience 
+  of a person walking through each park's influence zone.
+
+# What question are we answering?
+curiosity: 
+  ref: $curiosity-space/thermal/park_cooling_effect
+  sub_question: maximum_cooling
+
+# What method are we using?
+method: 
+  ref: $methods/thermal/buffer_gradient_analysis
+
+# What choices are we making?
+choices:
+  intensity_measure: TPM-M
+  central_tendency: median
+  buffer_interval: 30
+  max_buffer_distance: 300
+
+# Why these choices?
+rationale: >
+  We're interested in pedestrian thermal comfort—the "felt" difference 
+  when entering a park's cooling zone. 
+  
+  **TPM-M** captures the peak cooling at the boundary, representing 
+  the strongest relief a pedestrian would experience.
+  
+  **Median LST** is robust to anomalous hot surfaces (parking lots, 
+  maintenance buildings, paved paths) that don't represent the typical 
+  thermal experience within or around the park.
+  
+  **30m intervals** match our Landsat LST resolution.
+  
+  **300m max distance** is sufficient for most NYC parks based on 
+  literature suggesting urban park cooling rarely extends beyond 
+  this distance.
+
+# Where are we applying this?
+city: nyc
+manifest: plots/nyc/manifest.yml
+
+# Parameters specific to this inquiry
+parameters:
+  min_park_area_ha: 0.09
+  min_park_area_rationale: >
+    Following Xiao et al. (2023), exclude parks smaller than 0.09 
+    hectares as they may not generate measurable cooling signatures 
+    at Landsat resolution.
+  
+  lst_season: summer
+  lst_season_rationale: >
+    Summer captures peak heat stress when park cooling is most 
+    critical for public health.
+  
+  target_crs: "EPSG:2263"
+  target_crs_rationale: >
+    New York State Plane (Long Island), feet. Standard CRS for 
+    NYC municipal data, ensures accurate area and distance calculations.
+
+# The workflow steps
+steps:
+
+  - id: validate_parks
+    primitive: soil/validate_boundaries
+    version: "1.0.0"
+    description: "Validate park boundary geometries and reproject to target CRS"
+    inputs:
+      parks: $manifest.park_boundaries
+    outputs:
+      validated: park_boundaries_validated
+    params:
+      target_crs: $parameters.target_crs
+      min_area_ha: $parameters.min_park_area_ha
+      repair_invalid: true
+
+  - id: validate_lst
+    primitive: soil/validate_raster
+    version: "1.0.0"
+    description: "Validate LST raster and check alignment with study area"
+    inputs:
+      raster: $manifest.land_surface_temperature
+    outputs:
+      validated: lst_validated
+    params:
+      expected_crs: $parameters.target_crs
+      max_nodata_percent: 20
+
+  - id: generate_buffers
+    primitive: roots/geometry/generate_buffers
+    version: "1.0.0"
+    description: "Generate concentric buffer rings around each park"
+    inputs:
+      parks: $steps.validate_parks.validated
+    outputs:
+      buffers: park_buffers
+    params:
+      interval_m: $choices.buffer_interval
+      max_distance_m: $choices.max_buffer_distance
+      ring_type: "donut"  # Subtract inner from outer to get rings
+
+  - id: park_baseline_temperature
+    primitive: roots/metrics/zonal_statistics
+    version: "1.0.0"
+    description: "Extract baseline temperature inside each park"
+    inputs:
+      zones: $steps.validate_parks.validated
+      raster: $steps.validate_lst.validated
+    outputs:
+      stats: park_temperatures
+    params:
+      stats: [$choices.central_tendency]
+      prefix: "park"
+
+  - id: buffer_temperatures
+    primitive: roots/metrics/zonal_statistics
+    version: "1.0.0"
+    description: "Extract temperature statistics for each buffer ring"
+    inputs:
+      zones: $steps.generate_buffers.buffers
+      raster: $steps.validate_lst.validated
+    outputs:
+      stats: buffer_temperatures
+    params:
+      stats: [$choices.central_tendency]
+      prefix: "buffer"
+
+  - id: calculate_pci
+    primitive: roots/metrics/calculate_pci
+    version: "1.0.0"
+    description: "Calculate Park Cooling Intensity using TPM-M method"
+    inputs:
+      park_temps: $steps.park_baseline_temperature.stats
+      buffer_temps: $steps.buffer_temperatures.stats
+    outputs:
+      pci: pci_results
+    params:
+      method: $choices.intensity_measure
+      statistic: $choices.central_tendency
+      min_buffers_for_turning_point: 3
+
+# What we expect to learn
+expected_outputs:
+  primary:
+    semantic_type: pci_results
+    description: >
+      A table with one row per park containing:
+      - Park identifier
+      - PCI value (°C)
+      - Turning point distance (m)
+      - Cooling extent classification
+    
+  secondary:
+    - semantic_type: park_buffers
+      description: "Buffer ring geometries for visualization"
+    - semantic_type: zonal_statistics
+      description: "Full temperature profile by distance"
+
+# How to interpret results
+interpretation_guidance: >
+  **PCI values** represent the maximum cooling effect in degrees Celsius.
+  A PCI of 5.0 means the park creates up to 5°C of cooling at its 
+  influence boundary compared to inside the park.
+  
+  **Higher PCI** = stronger thermal refuge. But consider context:
+  - Parks in dense commercial areas may show high PCI simply because 
+    surroundings are extremely hot
+  - Parks surrounded by other green space may show low PCI because 
+    the baseline is already cool
+  
+  **Turning point distance** indicates how far the cooling extends.
+  A small park with large extent is punching above its weight.
+  
+  **For pedestrian comfort**: prioritize parks with high PCI and 
+  accessible entrances from heat-stressed areas.
+
+# Limitations to document
+limitations:
+  - "Single-season analysis may not represent year-round patterns"
+  - "Landsat 30m resolution may miss fine-scale thermal variations"
+  - "Does not account for vertical thermal gradients (shade vs. sun)"
+  - "Buffer zones may cross into other parks or water bodies"
+  - "Wind direction affects cooling plume but is not modeled here"
+
+# Tags for discovery
+tags:
+  - nyc
+  - pedestrian_comfort
+  - thermal_refuge
+  - summer
+  - TPM-M
+  - median

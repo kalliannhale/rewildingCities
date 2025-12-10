@@ -1,182 +1,433 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# MANIFEST SCHEMA v1.0
+# MANIFEST SCHEMA v1.1
 # A manifest declares what data a city has, what it means, and where it lives.
+# The manifest is the source of truth for semantic typing — when you declare
+# a dataset, you declare what it means.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-manifest:
-  type: object
-  required: [city, crs, datasets]
-  properties:
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://rewilding.city/schemas/manifest.schema.json"
+title: "City Manifest"
+description: >
+  Declares what data a city has, what it means, and where it comes from.
+  Each city plot maintains a manifest that feeds into analyses.
 
-    # ───────────────────────────────────────────────────────────────────────────
-    # IDENTITY
-    # ───────────────────────────────────────────────────────────────────────────
-    city:
-      type: object
-      required: [name, id]
-      properties:
-        name: { type: string, description: "Human-readable city name" }
-        id: { type: string, pattern: "^[a-z0-9_]+$", description: "Machine ID" }
-        region: { type: string, description: "State/province" }
-        country: { type: string, description: "ISO country code" }
-        timezone: { type: string, description: "IANA timezone" }
+type: object
+required: [city, crs, datasets]
 
-    # ───────────────────────────────────────────────────────────────────────────
-    # SPATIAL REFERENCE
-    # ───────────────────────────────────────────────────────────────────────────
-    crs:
-      type: object
-      required: [working]
-      properties:
-        working: { type: string, description: "EPSG code for analysis" }
-        notes: { type: string, description: "Why this CRS" }
+properties:
 
-    # ───────────────────────────────────────────────────────────────────────────
-    # STEWARDSHIP
-    # ───────────────────────────────────────────────────────────────────────────
-    stewardship:
-      type: object
-      properties:
-        maintainers:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              contact: { type: string }
-              organization: { type: string }
-        initialized: { type: string, format: date }
-        last_verified: { type: string, format: date }
-        community_partners: { type: array, items: { type: string } }
+  # ───────────────────────────────────────────────────────────────────────────
+  # IDENTITY
+  # ───────────────────────────────────────────────────────────────────────────
+  city:
+    type: object
+    required: [name, id]
+    properties:
+      name:
+        type: string
+        description: Human-readable city name
+        examples: ["New York City", "Los Angeles", "Chicago"]
+      id:
+        type: string
+        pattern: "^[a-z0-9_]+$"
+        description: Machine-readable identifier (lowercase, underscores only)
+        examples: ["nyc", "la", "chicago"]
+      region:
+        type: string
+        description: State/province
+        examples: ["New York", "California"]
+      country:
+        type: string
+        description: ISO 3166-1 alpha-2 country code
+        examples: ["US", "CA", "MX"]
+      timezone:
+        type: string
+        description: IANA timezone identifier
+        examples: ["America/New_York", "America/Los_Angeles"]
+    additionalProperties: false
 
-    # ───────────────────────────────────────────────────────────────────────────
-    # SCOPE (subsetting defaults)
-    # ───────────────────────────────────────────────────────────────────────────
-    scope:
-      type: object
-      properties:
-        study_area:
+  # ───────────────────────────────────────────────────────────────────────────
+  # SPATIAL REFERENCE
+  # ───────────────────────────────────────────────────────────────────────────
+  crs:
+    type: object
+    required: [working]
+    properties:
+      working:
+        type: string
+        description: EPSG code for analysis (local projected CRS recommended)
+        examples: ["EPSG:2263", "EPSG:26911"]
+      notes:
+        type: string
+        description: Why this CRS was chosen
+        examples: ["NYC State Plane feet, standard for city data"]
+    additionalProperties: false
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # STEWARDSHIP
+  # ───────────────────────────────────────────────────────────────────────────
+  stewardship:
+    type: object
+    description: Who maintains this manifest and when
+    properties:
+      maintainers:
+        type: array
+        items:
           type: object
           properties:
-            type: { type: string, enum: [full, bbox, boundary, buffer] }
-            bbox: { type: array, items: { type: number }, minItems: 4, maxItems: 4 }
-            boundary_dataset: { type: string }
-            boundary_filter: { type: string }
-            center: { type: array, items: { type: number }, minItems: 2, maxItems: 2 }
-            radius_km: { type: number }
-        feature_sampling:
-          type: object
-          properties:
-            enabled: { type: boolean, default: false }
-            method: { type: string, enum: [random, stratified, filtered, explicit] }
-            n: { type: integer }
-            seed: { type: integer }
-            stratify_by: { type: string }
-            n_per_stratum: { type: integer }
-            filter: { type: string }
-            feature_ids: { type: array, items: { type: string } }
-        resolution:
-          type: object
-          properties:
-            mode: { type: string, enum: [native, target, overview], default: native }
-            target_meters: { type: number }
-            overview_level: { type: integer }
+            name:
+              type: string
+            contact:
+              type: string
+              description: Email or other contact method
+            organization:
+              type: string
+          required: [name]
+      initialized:
+        type: string
+        format: date
+        description: When this manifest was created
+      last_verified:
+        type: string
+        format: date
+        description: When datasets were last verified available
+      community_partners:
+        type: array
+        items:
+          type: string
+        description: Organizations collaborating on this plot
 
-    # ───────────────────────────────────────────────────────────────────────────
-    # DATASETS
-    # ───────────────────────────────────────────────────────────────────────────
-    datasets:
-      type: object
-      additionalProperties:
-        $ref: "#/definitions/dataset"
+  # ───────────────────────────────────────────────────────────────────────────
+  # SCOPE (subsetting defaults for this plot)
+  # ───────────────────────────────────────────────────────────────────────────
+  scope:
+    type: object
+    description: >
+      Default subsetting configuration for this plot. Can be overridden
+      by experiment parameters or profile settings.
+    properties:
+      study_area:
+        type: object
+        description: Spatial extent for analysis
+        properties:
+          type:
+            type: string
+            enum: [full, bbox, boundary, buffer]
+            description: How study area is defined
+          bbox:
+            type: array
+            items:
+              type: number
+            minItems: 4
+            maxItems: 4
+            description: "[xmin, ymin, xmax, ymax] in working CRS"
+          boundary_dataset:
+            type: string
+            description: Reference to a dataset defining the boundary
+          boundary_filter:
+            type: string
+            description: Optional filter expression for boundary features
+          center:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 2
+            description: "[x, y] center point for buffer type"
+          radius_km:
+            type: number
+            description: Buffer radius in kilometers
+      feature_sampling:
+        type: object
+        description: How to subset features for dev/test profiles
+        properties:
+          enabled:
+            type: boolean
+            default: false
+          method:
+            type: string
+            enum: [random, stratified, filtered, explicit]
+          n:
+            type: integer
+            description: Number of features for random sampling
+          seed:
+            type: integer
+            description: Random seed for reproducibility
+          stratify_by:
+            type: string
+            description: Field to stratify by
+          n_per_stratum:
+            type: integer
+            description: Features per stratum for stratified sampling
+          filter:
+            type: string
+            description: Filter expression for filtered method
+          feature_ids:
+            type: array
+            items:
+              type: string
+            description: Explicit feature IDs to include
+      resolution:
+        type: object
+        description: Raster resolution settings
+        properties:
+          mode:
+            type: string
+            enum: [native, target, overview]
+            default: native
+          target_meters:
+            type: number
+            description: Target resolution for target mode
+          overview_level:
+            type: integer
+            description: Overview level for overview mode
 
-definitions:
+  # ───────────────────────────────────────────────────────────────────────────
+  # DATASETS
+  # ───────────────────────────────────────────────────────────────────────────
+  datasets:
+    type: object
+    description: >
+      Named datasets available for this city. Keys are dataset identifiers
+      used in experiment references ($manifest.parks, $manifest.lst, etc.)
+    additionalProperties:
+      $ref: "#/$defs/dataset"
+
+$defs:
   dataset:
     type: object
-    required: [available]
+    required: [available, semantic_type]
     properties:
-    
-      # availability
-      available: { type: boolean }
-      
-      # source (where to get data)
+
+      # ─────────────────────────────────────────────────────────────────────
+      # AVAILABILITY
+      # ─────────────────────────────────────────────────────────────────────
+      available:
+        type: boolean
+        description: >
+          Whether this dataset is currently available. Set to false to
+          document planned/missing data without breaking experiments.
+
+      description:
+        type: string
+        description: Human-readable description of this dataset
+
+      # ─────────────────────────────────────────────────────────────────────
+      # SOURCE (where to get data)
+      # ─────────────────────────────────────────────────────────────────────
       source:
         type: object
+        description: How to fetch this data from its origin
         properties:
-          type: { type: string, enum: [local, api, url] }
-          path: { type: string }
-          provider: { type: string, enum: [socrata, arcgis_rest, ckan, custom] }
-          endpoint: { type: string, format: uri }
-          query_params: { type: object }
+          type:
+            type: string
+            enum: [local, api, url, earthengine, manual]
+            description: >
+              local: already on disk
+              api: fetch from REST API
+              url: direct download
+              earthengine: Google Earth Engine export
+              manual: requires manual acquisition
+          path:
+            type: string
+            description: Path for local type
+          provider:
+            type: string
+            enum: [socrata, arcgis_rest, ckan, earthengine, custom]
+            description: API provider (determines fetch logic)
+          endpoint:
+            type: string
+            format: uri
+            description: API endpoint URL
+          query_params:
+            type: object
+            description: Query parameters for API requests
+            additionalProperties: true
+          asset_id:
+            type: string
+            description: Earth Engine asset ID
+          url:
+            type: string
+            format: uri
+            description: Direct download URL
           auth:
             type: object
             properties:
-              type: { type: string, enum: [none, api_key, oauth] }
-              key_env_var: { type: string }
-          url: { type: string, format: uri }
-      
-      # cache (local storage)
+              type:
+                type: string
+                enum: [none, api_key, oauth]
+              key_env_var:
+                type: string
+                description: Environment variable containing auth token
+          notes:
+            type: string
+            description: Notes about accessing this source
+
+      # ─────────────────────────────────────────────────────────────────────
+      # CACHE (local storage)
+      # ─────────────────────────────────────────────────────────────────────
       cache:
         type: object
+        description: Local caching configuration
         properties:
-          path: { type: string }
-          fetched_at: { type: string, format: date-time }
-          refresh_policy: { type: string, enum: [manual, daily, weekly, always], default: manual }
-          max_age_days: { type: integer }
-      
-      # semantic identity
-      format: { type: string, enum: [geotiff, geojson, geopackage, shapefile, parquet, csv, feather] }
+          path:
+            type: string
+            description: Path relative to plot directory
+            examples: [".data/parks.geojson", ".data/lst_summer_2023.tif"]
+          fetched_at:
+            type: string
+            format: date-time
+            description: When data was last fetched
+          refresh_policy:
+            type: string
+            enum: [manual, daily, weekly, always]
+            default: manual
+          max_age_days:
+            type: integer
+            description: Re-fetch if cache older than this
+
+      # ─────────────────────────────────────────────────────────────────────
+      # SEMANTIC IDENTITY (what this data means)
+      # ─────────────────────────────────────────────────────────────────────
       semantic_type:
         type: string
-        enum:
+        description: >
+          What this data represents. Must be a valid type from
+          semantic_types.yml. This is the source of truth for meaning.
+        examples:
+          - park_boundaries
           - land_surface_temperature
           - land_cover
           - ndvi
-          - nighttime_lights
-          - population_density
-          - elevation
-          - park_boundaries
-          - city_boundary
-          - administrative_districts
-          - road_network
-          - water_bodies
-          - building_footprints
-      measurement_type: { type: string, enum: [absolute, relative, anomaly] }
-      statistic: { type: string, enum: [mean, median, max, min, composite] }
-      units: { type: string }
-      classification_scheme: { type: string }
-      num_classes: { type: integer }
-      geometry_type: { type: string, enum: [point, linestring, polygon, multipoint, multilinestring, multipolygon, mixed] }
-      id_field: { type: string }
-      
-      # temporal
+
+      format:
+        type: string
+        enum: [geotiff, geojson, geopackage, shapefile, parquet, csv, feather, tif]
+        description: File format
+
+      measurement_type:
+        type: string
+        enum: [absolute, relative, anomaly, categorical]
+        description: >
+          How values should be interpreted.
+          absolute: raw measurement (e.g., temperature in Celsius)
+          relative: difference from baseline
+          anomaly: deviation from expected
+          categorical: discrete classes
+
+      statistic:
+        type: string
+        enum: [mean, median, max, min, composite, instantaneous]
+        description: What statistic the values represent (for aggregated data)
+
+      units:
+        type: string
+        description: Measurement units
+        examples: ["celsius", "kelvin", "index", "meters", "percent"]
+
+      classification_scheme:
+        type: string
+        description: Name of classification scheme (for categorical data)
+        examples: ["NLCD 2019", "NYC LiDAR 8-Class"]
+
+      num_classes:
+        type: integer
+        description: Number of classes in categorical data
+
+      geometry_type:
+        type: string
+        enum: [point, linestring, polygon, multipoint, multilinestring, multipolygon, mixed]
+        description: Vector geometry type
+
+      id_field:
+        type: string
+        description: Field containing unique feature identifiers
+
+      # ─────────────────────────────────────────────────────────────────────
+      # TEMPORAL (when this data is from)
+      # ─────────────────────────────────────────────────────────────────────
       temporal:
         type: object
+        description: Temporal extent and nature of data
         properties:
-          type: { type: string, enum: [snapshot, seasonal_composite, annual_average, multi_year_composite] }
-          year: { type: integer }
+          type:
+            type: string
+            enum: [snapshot, seasonal_composite, annual_average, multi_year_composite]
+            description: Temporal aggregation type
+          year:
+            type: integer
+            description: Reference year
           range:
             type: object
             properties:
-              start: { type: string, format: date }
-              end: { type: string, format: date }
-          season: { type: string, enum: [spring, summer, fall, winter, annual] }
-      
-      # provenance
+              start:
+                type: string
+                format: date
+              end:
+                type: string
+                format: date
+            description: Date range for composites
+          season:
+            type: string
+            enum: [spring, summer, fall, winter, annual]
+            description: Season for seasonal composites
+
+      # ─────────────────────────────────────────────────────────────────────
+      # PROVENANCE (where this data came from)
+      # ─────────────────────────────────────────────────────────────────────
       provenance:
         type: object
+        description: Origin and licensing information
         properties:
-          source: { type: string }
-          source_url: { type: string, format: uri }
-          license: { type: string }
-          retrieval_date: { type: string, format: date }
-          processing_notes: { type: string }
-      
-      # quality
+          source:
+            type: string
+            description: Human-readable source name
+            examples: ["NYC Open Data", "USGS Landsat", "Google Earth Engine"]
+          source_url:
+            type: string
+            format: uri
+            description: URL to source documentation or portal
+          license:
+            type: string
+            description: License identifier or name
+            examples: ["CC-BY-4.0", "Public Domain", "NYC Open Data Terms"]
+          retrieval_date:
+            type: string
+            format: date
+            description: When data was retrieved from source
+          processing_notes:
+            type: string
+            description: Any processing applied before caching
+
+      # ─────────────────────────────────────────────────────────────────────
+      # QUALITY (known limitations)
+      # ─────────────────────────────────────────────────────────────────────
       quality:
         type: object
+        description: Known quality information and limitations
         properties:
-          confidence: { type: string, enum: [high, medium, low, unknown] }
-          known_issues: { type: array, items: { type: string } }
-          spatial_resolution: { type: string }
-          completeness: { type: string }
+          confidence:
+            type: string
+            enum: [high, medium, low, unknown]
+            description: Overall confidence in data quality
+          known_issues:
+            type: array
+            items:
+              type: string
+            description: Known problems or limitations
+            examples:
+              - "Cartographic boundaries, not survey-accurate"
+              - "Missing data for Staten Island before 2018"
+          spatial_resolution:
+            type: string
+            description: Spatial resolution for rasters, or accuracy for vectors
+            examples: ["30m", "10m", "survey-grade"]
+          completeness:
+            type: string
+            description: Notes on data completeness
+            examples: ["Full coverage", "Missing 3 parks in Queens"]
+          last_verified:
+            type: string
+            format: date
+            description: When quality was last checked

@@ -1,0 +1,141 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# CURIOSITY SCHEMA v1.0
+# A curiosity declares what we want to know — domain-specific but method-agnostic.
+# Pure inquiry, no implementation details.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://rewilding.city/schemas/curiosity.schema.json"
+title: "Curiosity"
+description: >
+  Research questions that articulate what we want to know without prescribing
+  how to answer. The root of the scientific model — curiosity drives everything.
+
+type: object
+required: [id, question]
+
+properties:
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # IDENTITY
+  # ───────────────────────────────────────────────────────────────────────────
+  id:
+    type: string
+    pattern: "^[a-z0-9_]+$"
+    description: Machine-readable identifier
+    examples: ["park_cooling_effect", "green_infrastructure_equity"]
+
+  domain:
+    type: string
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality]
+    description: Scientific domain this curiosity belongs to
+
+  tags:
+    type: array
+    items:
+      type: string
+    description: Tags for discovery and organization
+    examples:
+      - "climate_resilience"
+      - "public_health"
+      - "environmental_justice"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # THE QUESTION
+  # ───────────────────────────────────────────────────────────────────────────
+  question:
+    type: string
+    description: >
+      The central research question, stated plainly. Should be answerable
+      through empirical analysis but not prescribe a specific method.
+    examples:
+      - "How effectively do urban parks cool their surroundings?"
+
+  description:
+    type: string
+    description: >
+      Extended narrative explaining the curiosity, its context, and why
+      it matters. This is where the question comes alive.
+
+  significance:
+    type: string
+    description: >
+      Why this question matters. What decisions or understanding does it inform?
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # SUB-QUESTIONS
+  # ───────────────────────────────────────────────────────────────────────────
+  sub_questions:
+    type: object
+    description: >
+      Decomposition of the main question into specific, addressable parts.
+      Keys are identifiers used in experiment references.
+    additionalProperties:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          description: The sub-question itself
+        description:
+          type: string
+          description: Additional context or clarification
+        interpretation:
+          type: string
+          description: How to interpret answers to this sub-question
+        depends_on:
+          type: array
+          items:
+            type: string
+          description: Other sub-questions this one builds on
+        answers_for:
+          type: array
+          items:
+            type: string
+          description: What use cases this sub-question serves
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # CONTEXT
+  # ───────────────────────────────────────────────────────────────────────────
+  related_phenomena:
+    type: array
+    items:
+      type: string
+    description: Related concepts, effects, or processes
+    examples:
+      - "urban_heat_island"
+      - "evapotranspiration"
+      - "thermal_comfort"
+
+  foundational_research:
+    type: array
+    items:
+      type: object
+      required: [citation]
+      properties:
+        citation:
+          type: string
+          description: Full citation
+        contribution:
+          type: string
+          description: What this research established and how it informs the curiosity
+    description: Key papers or studies that inform this question
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # METADATA
+  # ───────────────────────────────────────────────────────────────────────────
+  version:
+    type: string
+    description: Version of this curiosity document
+    default: "1.0.0"
+
+  created:
+    type: string
+    format: date
+    description: When this curiosity was first articulated
+
+  contributors:
+    type: array
+    items:
+      type: string
+    description: People who contributed to formulating this question

@@ -1,0 +1,84 @@
+# seeds/schemas/semantic_types.yml
+# Vocabulary of semantic types for rewildingCities
+# Each type declares what a dataset MEANS, not just its format
+
+types:
+  # === Vector Types ===
+  
+  park_boundaries:
+    category: vector
+    format: geojson
+    description: Raw park boundary polygons from municipal data
+  
+  park_buffers:
+    category: vector
+    format: geojson
+    description: Concentric buffer rings for gradient analysis
+  
+  study_area:
+    category: vector
+    format: geojson
+    description: Boundary defining the extent of analysis
+  
+  buffer_zones:
+    category: vector
+    format: geojson
+    description: Buffer rings with park association removed (donut shapes)
+  
+  clipped_features:
+    category: vector
+    format: geojson
+    description: Features clipped to a study boundary
+  
+  # === Raster Types ===
+  
+  land_surface_temperature:
+    category: raster
+    format: tif
+    description: LST derived from thermal satellite imagery
+    typical_units: celsius
+  
+  ndvi:
+    category: raster
+    format: tif
+    description: Normalized Difference Vegetation Index
+    typical_units: index
+    value_range: [-1, 1]
+  
+  land_cover:
+    category: raster
+    format: tif
+    description: Categorical land cover classification
+    measurement_type: categorical
+  
+  # === Tabular Types ===
+  
+  zonal_statistics:
+    category: tabular
+    format: parquet
+    description: Summary statistics aggregated by zone
+  
+  pci_results:
+    category: tabular
+    format: parquet
+    description: Park Cooling Intensity calculated via TPM-M or TPM-A method
+  
+  correlation_matrix:
+    category: tabular
+    format: parquet
+    description: Pairwise correlation coefficients between variables
+  
+  regression_results:
+    category: tabular
+    format: parquet
+    description: Regression model outputs with coefficients and diagnostics
+  
+  landscape_metrics:
+    category: tabular
+    format: parquet
+    description: Landscape pattern metrics (LSI, SHAPE_MN, PD, AI, etc.)
+  
+  land_cover_proportions:
+    category: tabular
+    format: parquet
+    description: Proportional area of each land cover class within zones
