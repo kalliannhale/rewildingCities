@@ -208,56 +208,82 @@ primitives:
     version: 1.0.0
     passthrough: false
     description: >
-      Aggressive geometry repair for severely damaged features. 
-      Use when validate_boundaries with repair_invalid: true is 
-      insufficient. Applies multiple repair strategies in sequence.
+      Repair invalid geometries using st_make_valid(). Documents how many 
+      features were repaired and warns if any remain invalid after repair.
     
     inputs:
-      - name: boundaries
+      - name: features
         semantic_types:
           - park_boundaries
           - water_boundaries
+          - forest_boundaries
+          - study_area
+          - neighborhood_boundaries
         required: true
-        description: Vector features needing repair
+        description: Vector features to repair
     
     outputs:
-      semantic_type: null
+      semantic_type: null  # Preserves input semantic type
       data_category: vector
-      description: Repaired features. Unrepairable features excluded.
+      description: Features with repaired geometries
     
-    params:
-      strategies:
-        type: array
-        items: string
-        default: [make_valid, buffer_zero, snap_to_grid]
-        description: Repair strategies to attempt, in order
-      snap_tolerance:
-        type: number
-        default: 0.001
-        description: Tolerance for snap_to_grid strategy
-      buffer_distance:
-        type: number
-        default: 0
-        description: Buffer distance for buffer_zero strategy
+    params: {}  # No parameters — applies st_make_valid to all
     
     validates:
       - id: geometry_repairable
-        description: At least one strategy succeeds
+        description: Geometries can be repaired by st_make_valid
         severity_if_failed: warning
     
     repairs:
       - id: make_valid
         method: st_make_valid
         description: Standard topological repair
-      - id: buffer_zero
-        method: st_buffer(0)
-        description: Buffer by zero to fix self-intersections
-      - id: snap_to_grid
-        method: st_snap_to_grid
-        description: Snap coordinates to regular grid
     
-    may_exclude_features: true
+    may_exclude_features: false
     exclusion_documented_in: warnings
+
+  reproject_vector:
+    path: transform/reproject_vector.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Reproject vector features to a target CRS using st_transform().
+      Documents source and target CRS in envelope metadata.
+    
+    inputs:
+      - name: features
+        semantic_types:
+          - park_boundaries
+          - water_boundaries
+          - forest_boundaries
+          - study_area
+          - neighborhood_boundaries
+          - park_buffers
+        required: true
+        description: Vector features to reproject
+    
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: Features transformed to target CRS
+    
+    params:
+      target_crs:
+        type: string
+        required: true
+        description: Target CRS (e.g., "EPSG:2263" for NYC State Plane)
+    
+    validates:
+      - id: source_crs_present
+        description: Input has defined CRS
+        severity_if_failed: critical
+      - id: target_crs_valid
+        description: Target CRS can be parsed
+        severity_if_failed: critical
+    
+    repairs: []
+    
+    may_exclude_features: false
 
 
   fetch_dataset:

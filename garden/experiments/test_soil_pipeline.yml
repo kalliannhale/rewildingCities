@@ -1,0 +1,89 @@
+# ============================================================
+# Test: Soil Pipeline (Validate → Repair → Reproject)
+# Demonstrates primitive chaining with provenance accumulation
+# garden/experiments/test_soil_pipeline.yml
+# ============================================================
+
+id: test_soil_pipeline
+name: "Test: Soil Pipeline"
+
+description: >
+  Three-step soil pipeline demonstrating data preparation flow.
+  Validates NYC park boundaries, repairs invalid geometries, 
+  and reprojects to NYC State Plane (EPSG:2263).
+  
+  Shows: primitive chaining, warning accumulation, envelope provenance.
+
+curiosity: 
+  ref: $curiosity-space/thermal/park_cooling_effect
+  sub_question: maximum_cooling
+
+method: 
+  ref: $methods/thermal/buffer_gradient_analysis
+
+choices:
+  intensity_measure: TPM-M
+  central_tendency: median
+  buffer_interval: 30
+  max_buffer_distance: 300
+
+rationale: >
+  Testing the full soil layer pipeline: diagnose → heal → transform.
+  Data goes in messy, comes out analysis-ready, with full provenance.
+
+city: nyc
+manifest: plots/nyc/manifest.yml
+
+parameters:
+  target_crs: "EPSG:2263"
+
+steps:
+
+  - id: validate_parks
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: "Diagnose park boundary geometries"
+    inputs:
+      features: $manifest.park_boundaries
+    outputs:
+      checked: park_boundaries
+    params: {}
+
+  - id: repair_parks
+    primitive: soil/repair_geometry
+    version: "1.0.0"
+    description: "Repair invalid geometries found in validation"
+    inputs:
+      features: $steps.validate_parks.checked
+    outputs:
+      repaired: park_boundaries
+    params: {}
+
+  - id: reproject_parks
+    primitive: soil/reproject_vector
+    version: "1.0.0"
+    description: "Transform to NYC State Plane for accurate area calculations"
+    inputs:
+      features: $steps.repair_parks.repaired
+    outputs:
+      transformed: park_boundaries
+    params:
+      target_crs: $parameters.target_crs
+
+expected_outputs:
+  primary:
+    semantic_type: park_boundaries
+    description: "Analysis-ready park boundaries: validated, repaired, reprojected"
+
+interpretation_guidance: >
+  The final envelope contains the complete provenance chain: what was 
+  checked, what was repaired, what was transformed. Warnings from all 
+  three steps accumulate—the output tells the full story of data preparation.
+
+limitations:
+  - "Test pipeline only—does not proceed to analysis"
+
+tags:
+  - test
+  - soil
+  - pipeline

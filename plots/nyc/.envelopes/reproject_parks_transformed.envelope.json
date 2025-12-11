@@ -1,0 +1,191 @@
+{
+  "data": {
+    "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/reproject_parks_transformed.geojson",
+    "format": "geojson",
+    "secondary": {}
+  },
+  "metadata": {
+    "feature_count": 2055,
+    "geometry_type": "MULTIPOLYGON",
+    "bbox": [
+      913032.984,
+      119521.5484,
+      1064870.5861,
+      271316.8295
+    ],
+    "attribute_fields": [
+      "X.id",
+      "X.version",
+      "X.created_at",
+      "X.updated_at",
+      "acquisitiondate",
+      "acres",
+      "address",
+      "borough",
+      "class",
+      "communityboard",
+      "councildistrict",
+      "department",
+      "eapply",
+      "gisobjid",
+      "gispropnum",
+      "globalid",
+      "jurisdiction",
+      "location",
+      "mapped",
+      "name311",
+      "nys_assembly",
+      "nys_senate",
+      "objectid",
+      "omppropid",
+      "parentid",
+      "permit",
+      "permitdistrict",
+      "permitparent",
+      "pip_ratable",
+      "precinct",
+      "retired",
+      "signname",
+      "subcategory",
+      "typecategory",
+      "us_congress",
+      "waterfront",
+      "zipcode"
+    ],
+    "total_area_m2": 1261696753.8765,
+    "crs": "EPSG:2263",
+    "transform": {
+      "source_crs": "EPSG:4326",
+      "target_crs": "EPSG:2263",
+      "transformed": true
+    },
+    "semantic_type": "park_boundaries",
+    "data_category": "vector"
+  },
+  "provenance": [
+    {
+      "primitive": "validate_vector",
+      "version": "1.0.0",
+      "timestamp": "2025-12-11T09:02:49.433058+00:00",
+      "params": {},
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries",
+          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+          "hash": {
+            "value": "f5b956d6ef71e62bf3c5cdbf1c715239",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.257,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "repair_geometry",
+      "version": "1.0.0",
+      "timestamp": "2025-12-11T09:02:51.252779+00:00",
+      "params": {},
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries",
+          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+          "hash": {
+            "value": "f5b956d6ef71e62bf3c5cdbf1c715239",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.816,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "reproject_vector",
+      "version": "1.0.0",
+      "timestamp": "2025-12-11T09:02:52.860083+00:00",
+      "params": {
+        "target_crs": "EPSG:2263"
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries",
+          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/repair_parks_repaired.geojson",
+          "hash": {
+            "value": "071f0953a96d443ec14ac1167238368e",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.605,
+      "lineage_branch": null
+    }
+  ],
+  "warnings": [
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "Feature count: 2055"
+    },
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "CRS: EPSG:4326"
+    },
+    {
+      "level": "warning",
+      "primitive": "validate_vector",
+      "message": "14 geometries invalid (0.7%). Consider running repair_geometry."
+    },
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "Geometry type: MULTIPOLYGON"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Loaded 2055 features"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Found 14 invalid geometries (0.7%)"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Repaired 14 geometries"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Wrote repaired features to repair_parks_repaired.geojson"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Loaded 2055 features"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Transforming from EPSG:4326 to EPSG:2263"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Transformation complete"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Wrote transformed features to reproject_parks_transformed.geojson"
+    }
+  ]
+}

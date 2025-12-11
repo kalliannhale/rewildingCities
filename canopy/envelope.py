@@ -522,10 +522,17 @@ class EnvelopeBuilder:
             output_data_category
         )
         
+        # Determine final data path
+        # For passthrough primitives, use the input path (no new file created)
+        if passthrough and primitive_inputs:
+            final_path = primitive_inputs[0].path
+        else:
+            final_path = str(output_path)
+        
         # Construct envelope
         envelope = Envelope(
             data={
-                "path": str(output_path),
+                "path": final_path,
                 "format": output_format,
                 "secondary": {}
             },

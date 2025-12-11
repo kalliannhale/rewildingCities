@@ -1,12 +1,15 @@
 {
   "data": {
-    "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+    "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/repair_parks_repaired.geojson",
     "format": "geojson",
     "secondary": {}
   },
   "metadata": {
     "feature_count": 2055,
-    "geometry_type": "MULTIPOLYGON",
+    "geometry_type": [
+      "MULTIPOLYGON",
+      "POLYGON"
+    ],
     "bbox": [
       -74.2561,
       40.4945,
@@ -54,10 +57,10 @@
     ],
     "total_area_m2": 117215859.2585,
     "crs": "EPSG:4326",
-    "validation": {
-      "invalid_count": 14,
-      "empty_count": 0,
-      "geometry_types": "MULTIPOLYGON"
+    "repair": {
+      "invalid_before": 14,
+      "invalid_after": 0,
+      "repaired_count": 14
     },
     "semantic_type": "park_boundaries",
     "data_category": "vector"
@@ -81,6 +84,26 @@
         }
       ],
       "duration_seconds": 1.257,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "repair_geometry",
+      "version": "1.0.0",
+      "timestamp": "2025-12-11T09:02:51.252779+00:00",
+      "params": {},
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries",
+          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+          "hash": {
+            "value": "f5b956d6ef71e62bf3c5cdbf1c715239",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.816,
       "lineage_branch": null
     }
   ],
@@ -104,6 +127,26 @@
       "level": "info",
       "primitive": "validate_vector",
       "message": "Geometry type: MULTIPOLYGON"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Loaded 2055 features"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Found 14 invalid geometries (0.7%)"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Repaired 14 geometries"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Wrote repaired features to repair_parks_repaired.geojson"
     }
   ]
 }
