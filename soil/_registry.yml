@@ -79,10 +79,62 @@ primitives:
     may_exclude_features: true
     exclusion_documented_in: warnings
     
+  validate_vector:
+    path: validate/validate_vector.R
+    version: 1.0.0
+    passthrough: true
+    description: >
+      Diagnostic primitive: validates vector layer health without modifying data.
+      Checks CRS presence, geometry validity, empty geometries, and type consistency.
+      Returns input path with validation metadata attached to envelope.
+    
+    inputs:
+      - name: features
+        semantic_types:
+          - park_boundaries
+          - water_boundaries
+          - forest_boundaries
+          - study_area
+          - neighborhood_boundaries
+          - census_tracts
+        required: true
+        description: Vector features to diagnose
+    
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: >
+        Same data path (passthrough). Envelope contains validation 
+        diagnostics and accumulated warnings.
+    
+    params: {}  # No parameters — pure diagnostic
+    
+    validates:
+      - id: crs_present
+        description: CRS is defined
+        severity_if_failed: critical
+      - id: feature_count
+        description: Layer contains at least one feature
+        severity_if_failed: critical
+      - id: valid_geometry
+        description: Geometries pass st_is_valid()
+        severity_if_failed: warning
+      - id: no_empty_geometries
+        description: No empty or null geometries
+        severity_if_failed: warning
+      - id: geometry_type_consistent
+        description: Single geometry type (not mixed)
+        severity_if_failed: warning
+    
+    repairs: []  # Diagnostic only — does not modify
+    
+    may_exclude_features: false
+    passthrough: true
 
   validate_raster:
     path: validate/validate_raster.R
     version: 1.0.0
+    passthrough: true
     description: >
       Validate raster data for analytical readiness. Checks CRS, 
       resolution, NoData coverage, and value ranges. Does not modify 
@@ -154,6 +206,7 @@ primitives:
   repair_geometry:
     path: repair/repair_geometry.R
     version: 1.0.0
+    passthrough: false
     description: >
       Aggressive geometry repair for severely damaged features. 
       Use when validate_boundaries with repair_invalid: true is 

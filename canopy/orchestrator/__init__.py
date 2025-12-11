@@ -39,7 +39,6 @@ from .orchestrator import (
     # Parsing
     parse_manifest,
     parse_experiment,
-    load_registry,
     
     # Runner
     Orchestrator,
@@ -57,6 +56,7 @@ from .references import (
 )
 
 from .registry import (
+    load_registry,
     RegistryManager,
 )
 

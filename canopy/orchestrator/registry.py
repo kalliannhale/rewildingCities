@@ -1,6 +1,47 @@
 # === Registry Lookup ===
 # canopy/orchestrator/registry.py
 
+from __future__ import annotations
+from pathlib import Path
+import yaml
+from dataclasses import dataclass
+
+@dataclass
+class PrimitiveSpec:
+    """A primitive's specification from a registry."""
+    name: str
+    path: str  # relative path within layer
+    version: str
+    inputs: list[dict]
+    outputs: dict
+    params: dict
+    passthrough: bool = False  # ← add this
+
+def load_registry(layer: str, project_root: Path | None = None) -> dict[str, PrimitiveSpec]:
+    """Load a layer's primitive registry."""
+    project_root = project_root or Path.cwd()
+    registry_path = project_root / layer / "_registry.yml"
+    
+    if not registry_path.exists():
+        raise FileNotFoundError(f"Registry not found: {registry_path}")
+    
+    with open(registry_path, 'r') as f:
+        data = yaml.safe_load(f)
+    
+    specs = {}
+    for name, spec_data in data.get("primitives", {}).items():
+        specs[name] = PrimitiveSpec(
+            name=name,
+            path=spec_data["path"],
+            version=spec_data.get("version", "1.0.0"),
+            inputs=spec_data.get("inputs", []),
+            outputs=spec_data.get("outputs", {}),
+            params=spec_data.get("params", {}),
+            passthrough=spec_data.get("passthrough", False)  # ← add this
+        )
+    
+    return specs
+
 class RegistryManager:
     """
     Manages primitive registries across layers.

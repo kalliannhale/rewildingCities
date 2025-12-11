@@ -2,6 +2,7 @@
 # EXPERIMENT SCHEMA v1.0
 # An experiment binds curiosity to method with resolved choices, applied to
 # a specific place. The instantiation — where abstraction becomes action.
+# seeds/schemas/experiment.schema.yml
 # ═══════════════════════════════════════════════════════════════════════════════
 
 $schema: "https://json-schema.org/draft/2020-12/schema"

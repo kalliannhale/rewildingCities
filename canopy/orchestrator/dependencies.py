@@ -1,6 +1,13 @@
 # === DAG Building ===
 # canopy/orchestrator/dependencies.py
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+from collections import defaultdict
+import re
+
+
 @dataclass
 class ExecutionPlan:
     steps_in_order: list[str]

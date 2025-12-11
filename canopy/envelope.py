@@ -90,10 +90,12 @@ class Envelope:
                             "semantic_type": i.semantic_type,
                             "path": i.path,
                             "hash": {
-                                "value": i.hash.value,
-                                "method": i.hash.method,
-                                "algorithm": i.hash.algorithm,
-                                "reason": i.hash.reason
+                                k: v for k, v in {
+                                    "value": i.hash.value,
+                                    "method": i.hash.method,
+                                    "algorithm": i.hash.algorithm,
+                                    "reason": i.hash.reason
+                                }.items() if v is not None
                             }
                         }
                         for i in p.inputs
@@ -447,7 +449,8 @@ class EnvelopeBuilder:
         output_format: str,
         output_semantic_type: str,
         output_data_category: str,
-        params: dict[str, Any] | None = None
+        params: dict[str, Any] | None = None,
+        passthrough: bool = False
     ) -> "BuildResult":
         """
         Run a primitive and construct the output envelope.

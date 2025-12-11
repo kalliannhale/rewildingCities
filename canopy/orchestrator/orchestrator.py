@@ -122,11 +122,12 @@ class Experiment:
 class PrimitiveSpec:
     """A primitive's specification from a registry."""
     name: str
-    path: str  # relative path within layer, e.g., "geometry/generate_buffers.R"
+    path: str  # relative path within layer
     version: str
     inputs: list[dict]
     outputs: dict
     params: dict
+    passthrough: bool = False  # ← add this
 
 
 @dataclass
@@ -261,40 +262,6 @@ def parse_method(path: str | Path) -> Method:
         name=data.get("name", path.stem),
         choices=choices
     )
-
-
-def load_registry(layer: str, project_root: Path | None = None) -> dict[str, PrimitiveSpec]:
-    """
-    Load a layer's primitive registry.
-    
-    Args:
-        layer: "roots" or "soil"
-        project_root: Project root directory (defaults to current working directory)
-    
-    Returns:
-        Dict mapping primitive name -> PrimitiveSpec
-    """
-    project_root = project_root or Path.cwd()
-    registry_path = project_root / layer / "_registry.yml"
-    
-    if not registry_path.exists():
-        raise FileNotFoundError(f"Registry not found: {registry_path}")
-    
-    with open(registry_path, 'r') as f:
-        data = yaml.safe_load(f)
-    
-    specs = {}
-    for name, spec_data in data.get("primitives", {}).items():
-        specs[name] = PrimitiveSpec(
-            name=name,
-            path=spec_data["path"],
-            version=spec_data.get("version", "1.0.0"),
-            inputs=spec_data.get("inputs", []),
-            outputs=spec_data.get("outputs", {}),
-            params=spec_data.get("params", {})
-        )
-    
-    return specs
 
 
 # === Orchestrator ===
@@ -666,7 +633,8 @@ class Orchestrator:
             output_format=output_format,
             output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
-            params=resolved_params
+            params=resolved_params,
+            passthrough=primitive_spec.passthrough  # ← add this
         )
         
         if not build_result.success:

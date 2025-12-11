@@ -71,55 +71,143 @@ parameters:
   target_crs_rationale: >
     New York State Plane (Long Island), feet. Standard CRS for 
     NYC municipal data, ensures accurate area and distance calculations.
+  
+  max_nodata_percent: 20
+  max_nodata_rationale: >
+    Allow up to 20% NoData coverage in LST raster before flagging 
+    as critical. Some cloud contamination is expected in composites.
 
-# The workflow steps
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW STEPS
+# ═══════════════════════════════════════════════════════════════════════════════
+
 steps:
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SOIL: Prepare park boundaries
+  # ─────────────────────────────────────────────────────────────────────────────
+
   - id: validate_parks
-    primitive: soil/validate_boundaries
+    primitive: soil/validate_vector
     version: "1.0.0"
-    description: "Validate park boundary geometries and reproject to target CRS"
+    description: "Diagnose park boundary geometries—check CRS, validity, types"
     inputs:
-      parks: $manifest.park_boundaries
+      features: $manifest.park_boundaries
     outputs:
-      validated: park_boundaries_validated
+      checked: park_boundaries_checked
+    params: {}
+
+  - id: repair_parks
+    primitive: soil/repair_geometry
+    version: "1.0.0"
+    description: "Repair invalid geometries using st_make_valid"
+    inputs:
+      features: $steps.validate_parks.checked
+    outputs:
+      repaired: park_boundaries_repaired
+    params: {}
+
+  - id: reproject_parks
+    primitive: soil/reproject_vector
+    version: "1.0.0"
+    description: "Transform park boundaries to target CRS"
+    inputs:
+      features: $steps.repair_parks.repaired
+    outputs:
+      reprojected: park_boundaries_reprojected
     params:
       target_crs: $parameters.target_crs
+
+  - id: filter_parks
+    primitive: soil/filter_by_area
+    version: "1.0.0"
+    description: "Exclude parks below minimum area threshold"
+    inputs:
+      features: $steps.reproject_parks.reprojected
+    outputs:
+      filtered: park_boundaries_filtered
+    params:
       min_area_ha: $parameters.min_park_area_ha
-      repair_invalid: true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SOIL: Prepare LST raster
+  # ─────────────────────────────────────────────────────────────────────────────
 
   - id: validate_lst
     primitive: soil/validate_raster
     version: "1.0.0"
-    description: "Validate LST raster and check alignment with study area"
+    description: "Diagnose LST raster—check CRS, resolution, NoData coverage"
     inputs:
       raster: $manifest.land_surface_temperature
     outputs:
-      validated: lst_validated
+      checked: lst_checked
     params:
-      expected_crs: $parameters.target_crs
-      max_nodata_percent: 20
+      max_nodata_percent: $parameters.max_nodata_percent
+
+  - id: scale_lst
+    primitive: soil/scale_raster
+    version: "1.0.0"
+    description: "Convert Landsat DN values to Celsius"
+    inputs:
+      raster: $steps.validate_lst.checked
+    outputs:
+      scaled: lst_scaled
+    params:
+      scale: 0.00341802
+      offset: 149.0
+      from_unit: "landsat_dn"
+      to_unit: "celsius"
+      conversion: "kelvin_to_celsius"
+
+  - id: reproject_lst
+    primitive: soil/reproject_raster
+    version: "1.0.0"
+    description: "Transform LST to target CRS"
+    inputs:
+      raster: $steps.scale_lst.scaled
+    outputs:
+      reprojected: lst_reprojected
+    params:
+      target_crs: $parameters.target_crs
+      method: "bilinear"
+
+  - id: crop_lst
+    primitive: soil/crop_to_boundary
+    version: "1.0.0"
+    description: "Crop LST to park extent with buffer for analysis"
+    inputs:
+      raster: $steps.reproject_lst.reprojected
+      boundary: $steps.filter_parks.filtered
+    outputs:
+      cropped: lst_cropped
+    params:
+      buffer_m: 500
+      snap: "out"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # ROOTS: Analysis
+  # ─────────────────────────────────────────────────────────────────────────────
 
   - id: generate_buffers
-    primitive: roots/geometry/generate_buffers
+    primitive: roots/generate_buffers
     version: "1.0.0"
     description: "Generate concentric buffer rings around each park"
     inputs:
-      parks: $steps.validate_parks.validated
+      features: $steps.filter_parks.filtered
     outputs:
       buffers: park_buffers
     params:
       interval_m: $choices.buffer_interval
       max_distance_m: $choices.max_buffer_distance
-      ring_type: "donut"  # Subtract inner from outer to get rings
+      ring_type: "donut"
 
   - id: park_baseline_temperature
-    primitive: roots/metrics/zonal_statistics
+    primitive: roots/zonal_statistics
     version: "1.0.0"
     description: "Extract baseline temperature inside each park"
     inputs:
-      zones: $steps.validate_parks.validated
-      raster: $steps.validate_lst.validated
+      zones: $steps.filter_parks.filtered
+      raster: $steps.crop_lst.cropped
     outputs:
       stats: park_temperatures
     params:
@@ -127,12 +215,12 @@ steps:
       prefix: "park"
 
   - id: buffer_temperatures
-    primitive: roots/metrics/zonal_statistics
+    primitive: roots/zonal_statistics
     version: "1.0.0"
     description: "Extract temperature statistics for each buffer ring"
     inputs:
       zones: $steps.generate_buffers.buffers
-      raster: $steps.validate_lst.validated
+      raster: $steps.crop_lst.cropped
     outputs:
       stats: buffer_temperatures
     params:
@@ -140,7 +228,7 @@ steps:
       prefix: "buffer"
 
   - id: calculate_pci
-    primitive: roots/metrics/calculate_pci
+    primitive: roots/calculate_pci
     version: "1.0.0"
     description: "Calculate Park Cooling Intensity using TPM-M method"
     inputs:
@@ -153,7 +241,10 @@ steps:
       statistic: $choices.central_tendency
       min_buffers_for_turning_point: 3
 
-# What we expect to learn
+# ═══════════════════════════════════════════════════════════════════════════════
+# EXPECTED OUTPUTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
 expected_outputs:
   primary:
     semantic_type: pci_results
@@ -170,7 +261,10 @@ expected_outputs:
     - semantic_type: zonal_statistics
       description: "Full temperature profile by distance"
 
-# How to interpret results
+# ═══════════════════════════════════════════════════════════════════════════════
+# INTERPRETATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
 interpretation_guidance: >
   **PCI values** represent the maximum cooling effect in degrees Celsius.
   A PCI of 5.0 means the park creates up to 5°C of cooling at its 
@@ -188,7 +282,6 @@ interpretation_guidance: >
   **For pedestrian comfort**: prioritize parks with high PCI and 
   accessible entrances from heat-stressed areas.
 
-# Limitations to document
 limitations:
   - "Single-season analysis may not represent year-round patterns"
   - "Landsat 30m resolution may miss fine-scale thermal variations"
@@ -196,7 +289,6 @@ limitations:
   - "Buffer zones may cross into other parks or water bodies"
   - "Wind direction affects cooling plume but is not modeled here"
 
-# Tags for discovery
 tags:
   - nyc
   - pedestrian_comfort

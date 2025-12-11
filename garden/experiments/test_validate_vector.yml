@@ -1,0 +1,58 @@
+# ============================================================
+# Test: Validate Vector Primitive
+# A minimal experiment to test the validation flow
+# garden/experiments/test_validate_vector.yml
+# ============================================================
+
+id: test_validate_vector
+name: "Test: Validate Vector Primitive"
+
+description: >
+  Minimal test experiment to verify the validate_vector primitive
+  works through the full orchestration pipeline.
+
+curiosity: 
+  ref: $curiosity-space/thermal/park_cooling_effect
+  sub_question: maximum_cooling
+
+method: 
+  ref: $methods/thermal/buffer_gradient_analysis
+
+choices:
+  intensity_measure: TPM-M
+  central_tendency: median
+  buffer_interval: 30
+  max_buffer_distance: 300
+
+rationale: "Testing validate_vector primitive only."
+
+city: nyc
+manifest: plots/nyc/manifest.yml
+
+parameters:
+  target_crs: "EPSG:2263"
+
+steps:
+
+  - id: validate_parks
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: "Diagnose park boundary geometries"
+    inputs:
+      features: $manifest.park_boundaries
+    outputs:
+      checked: park_boundaries
+    params: {}
+
+expected_outputs:
+  primary:
+    semantic_type: park_boundaries
+    description: "Validated park boundaries with diagnostic metadata"
+
+interpretation_guidance: "This is a test."
+
+limitations:
+  - "Test only"
+
+tags:
+  - test

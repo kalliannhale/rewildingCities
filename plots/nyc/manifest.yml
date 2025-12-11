@@ -1,0 +1,21 @@
+# plots/nyc/manifest.yml
+
+city:
+  name: "New York City"
+  id: nyc
+
+datasets:
+  park_boundaries:
+    semantic_type: park_boundaries
+    description: "NYC Parks Properties - boundaries for spatial analysis"
+    source:
+      type: api
+      url: "https://data.cityofnewyork.us/resource/enfh-gkve.geojson"
+      documentation: "https://data.cityofnewyork.us/Recreation/Parks-Properties/enfh-gkve"
+    cache:
+      path: ".data/parks.geojson"
+      fetched: null  # filled in when fetch_dataset runs
+    format: geojson
+    id_field: gispropnum
+    known_issues:
+      - "Monthly updates may change feature count"

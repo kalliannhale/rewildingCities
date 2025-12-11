@@ -1,7 +1,7 @@
 # ============================================================
 # Buffer Gradient Analysis
 # A method for understanding spatial thermal gradients
-garden/methods/thermal/buffer_gradient_analysis.yml
+# garden/methods/thermal/buffer_gradient_analysis.yml
 # ============================================================
 
 id: buffer_gradient_analysis

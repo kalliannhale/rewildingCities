@@ -98,7 +98,7 @@ class PrimitiveRunner:
                     params_json_path
                 ],
                 capture_output=True,
-                text=True
+                text=True,
                 cwd=self.project_root
             )
             
@@ -117,7 +117,9 @@ class PrimitiveRunner:
         if not primitive.endswith('.R'):
             primitive = f"{primitive}.R"
         
-        path = self.primitives_dir / primitive
+        # primitive already includes layer (e.g., "soil/validate/validate_vector.R")
+        # so we resolve from project_root, not primitives_dir
+        path = self.project_root / primitive
         
         if not path.exists():
             raise FileNotFoundError(f"Primitive not found: {path}")
