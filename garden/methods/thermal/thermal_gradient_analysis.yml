@@ -1,5 +1,5 @@
 # ============================================================
-# Buffer Gradient Analysis
+# Buffer Gradient Analysis -- let's change this to thermal_gradient_analysis.yml
 # A method for understanding spatial thermal gradients
 # garden/methods/thermal/buffer_gradient_analysis.yml
 # ============================================================
@@ -182,7 +182,7 @@ requires_primitives:
       from: roots/metrics
       purpose: "Identify turning point and compute intensity"
 
-# What data this method needs
+# What data this method need?
 requires_data:
   - name: feature_boundaries
     type: vector
