@@ -79,7 +79,7 @@ rewildingCities is a project of **Rewilding Intelligence**, a research initiativ
 ## Join our citizen scientist efforts! :)
 
 ```bash
-git clone https://github.com/rewilding-intelligence/rewildingCities.git
+git clone https://github.com/kalliannhale/rewildingCities.git
 cd rewildingCities
 ```
 
