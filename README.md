@@ -44,7 +44,7 @@ The codebase is organized symbolically to support a living system where patterns
 
 **Manifests** declares what data each city has. What does this dataset represent? What are its limitations? What story can it tell?
 
-**Recipes** compose analytical workflows from atomic primitives. Run them for learning. Run them for production. The same tools serve both.
+**Experiments** compose analytical workflows from atomic primitives. Run them for learning. Run them for production. The same tools serve both.
 
 **Profiles** let you subset for context: `dev` for fast iteration, `full` for production, `neighborhood` for local analysis.
 
