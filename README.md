@@ -81,7 +81,6 @@ rewildingCities is a project of **Rewilding Intelligence**, a research initiativ
 ```bash
 git clone https://github.com/rewilding-intelligence/rewildingCities.git
 cd rewildingCities
-./start-ur-garden.sh
 ```
 
 ---
