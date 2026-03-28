@@ -8,11 +8,10 @@ methods:
       path: thermal/buffer_gradient_analysis.yml
       name: "Buffer-Based Thermal Gradient Analysis"
       answers: [spatial_gradient, influence_extent, intensity_measurement]
-      
-    # Future methods
-    # - id: hot_cold_spot_analysis
-    #   path: thermal/hot_cold_spot_analysis.yml
-    #   name: "Getis-Ord Hot/Cold Spot Analysis"
+
+    - id: hot_cold_spot_analysis
+      path: thermal/hot_cold_spot_analysis
+      name: "Getis-Ord Hot/Cold Spot Analysis"
 
   # landscape:
   #   - id: fragstats_metrics
@@ -23,4 +22,3 @@ methods:
   #   - id: correlation_analysis
   #     path: statistical/correlation_analysis.yml
   #     name: "Correlation Analysis with Controls"
-

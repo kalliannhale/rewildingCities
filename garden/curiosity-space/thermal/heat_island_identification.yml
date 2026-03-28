@@ -1,0 +1,149 @@
+# ============================================================
+# Heat Island Identification
+# garden/curiosity-space/thermal/heat_island_identification.yml
+# ============================================================
+
+id: heat_island_identification
+name: "Urban Heat Island Identification"
+domain: thermal
+
+description: >
+  Cities create their own microclimates. Concrete absorbs solar 
+  radiation, asphalt re-emits heat, buildings trap warm air between 
+  them. The result: some neighborhoods are dramatically hotter than 
+  others — not by accident, but by design. Decades of disinvestment, 
+  redlining, and inequitable infrastructure development have 
+  concentrated heat burden on the communities least resourced to 
+  cope with it.
+  
+  This curiosity asks: where are the statistically significant 
+  thermal clusters in a city? Where are the hot spots that endanger 
+  residents, and where are the cold spots that offer refuge?
+
+narrative: >
+  Before we can cool a city, we need to see it. Not the way a 
+  satellite sees it — as a grid of temperatures — but the way a 
+  community feels it. The block where elders can't sleep in July. 
+  The intersection where asphalt radiates at 60°C after sundown. 
+  The park that facilitates cooling the moment you step inside.
+  
+  Heat island identification is the diagnostic step. It transforms 
+  a continuous temperature surface into a map of statistically 
+  significant clusters — places where the heat (or cool) is not 
+  random, but structured by the built environment.
+
+sub_questions:
+
+  hot_spot_clusters:
+    description: >
+      Where are the statistically significant concentrations of 
+      high surface temperature? These are areas where heat is not 
+      random but spatially structured — persistent hot zones.
+    interpretation: >
+      Hot spots at 99% confidence are the most severe. These are 
+      neighborhoods where the built environment is actively 
+      concentrating heat. Overlaying these with demographic data 
+      explores the sociological distribution of thermal burden.
+    answers_for:
+      - Heat vulnerability assessment
+      - Emergency cooling center placement
+      - Priority zones for green infrastructure investment
+      - Urban planning
+
+  cold_spot_clusters:
+    description: >
+      Where are the statistically significant concentrations of 
+      low surface temperature? These are thermal refuges — often 
+      parks, water bodies, or areas with dense tree canopy.
+    interpretation: >
+      Cold pockets reveal potential cooling infrastructure that already
+      existing. Understanding their extent and distribution helps 
+      identify which communities have access to thermal refuge, 
+      and which do not.
+    answers_for:
+      - Thermal refuge identification
+      - Cooling access equity analysis
+      - Validating the effectiveness of green infrastructure
+      - Pedestrian comfort routing
+
+  thermal_landscape:
+    description: >
+      What can we learn about the overall spatial pattern of 
+      temperature across the study area? What proportion of urban 
+      land falls within relatively "hot" or "cool" zones?
+    interpretation: >
+      The ratio of hot-to-cold clustered area tells a story about 
+      the city's thermal balance. A city where 60% of area is in 
+      hot spot clusters and 10% in cold spots has a fundamentally 
+      different thermal equity profile than one split 30/30.
+    answers_for:
+      - City-wide thermal baseline
+      - Tracking change over time
+      - Comparing across cities
+      - Setting intervention targets
+
+# What data is needed to explore this curiosity?
+requires:
+  minimum:
+    - semantic_type: land_surface_temperature
+      description: >
+        LST raster covering the study area. Summer daytime 
+        acquisition preferred for heat stress assessment.
+    - semantic_type: study_boundary
+      description: >
+        Boundary polygon defining the area of analysis.
+  
+  enriching:
+    - semantic_type: census_tracts
+      description: >
+        For overlaying demographic and socioeconomic data 
+        with thermal clusters.
+    - semantic_type: park_boundaries
+      description: >
+        For validating that cold spots align with known 
+        green infrastructure.
+    - semantic_type: land_cover
+      description: >
+        For characterizing the composition of hot and cold 
+        spot areas.
+
+# Which methods can address this curiosity?
+compatible_methods:
+  - ref: $methods/thermal/hot_cold_spot_analysis
+    fit: direct
+    description: >
+      Getis-Ord Gi* spatial autocorrelation — the standard 
+      method for identifying statistically significant thermal 
+      clusters. Direct answer to all sub-questions.
+  
+  - ref: $methods/thermal/thermal_gradient_analysis
+    fit: complementary
+    description: >
+      Buffer gradient analysis can follow up on identified 
+      hot/cold spots to measure the cooling influence of 
+      specific features within cold spot zones.
+
+# Scientific grounding
+references:
+  - citation: >
+      Xiao, Y. et al. (2023). Using buffer analysis to 
+      determine urban park cooling intensity. Science of 
+      the Total Environment, 868, 161463.
+    contribution: >
+      Used Getis-Ord Gi* to identify thermal clusters in 
+      Nanjing; found 62.38% of urban parks located in cold 
+      spot areas above 90% confidence.
+  - citation: >
+      Getis, A. & Ord, J.K. (1992). The analysis of spatial 
+      association by use of distance statistics.
+    contribution: >
+      Original Gi* statistic for spatial autocorrelation.
+
+tags:
+  - climate_resilience
+  - public_health
+  - heat
+  - urban_planning
+  - thermal
+  - heat_island
+  - temperature

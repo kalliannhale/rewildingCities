@@ -1,0 +1,187 @@
+# ============================================================
+# NYC Heat Island Identification
+# plots/nyc/experiments/heat_island_identification.yml
+# ============================================================
+
+id: nyc_heat_island_identification
+name: "NYC Urban Heat Island Identification"
+
+description: >
+  Identify statistically significant thermal hot spots and cold
+  spots across New York City using Getis-Ord Gi* spatial
+  autocorrelation on summer daytime Landsat LST imagery.
+
+# === Scientific lineage ===
+
+curiosity:
+  ref: $curiosity-space/thermal/heat_island_identification
+  sub_question: thermal_landscape
+
+method:
+  ref: $methods/thermal/hot_cold_spot_analysis
+
+# === Epistemological commitments ===
+
+choices:
+  confidence_thresholds: standard_three_tier
+  spatial_weights: distance_band
+  output_format: raster
+
+# === Place ===
+
+city: nyc
+manifest: ../manifest.yml
+
+# === Parameters ===
+
+parameters:
+  target_crs: "EPSG:2263"
+  target_crs_rationale: >
+    NYC State Plane (Long Island). Consistent with all other
+    NYC experiments in this pipeline.
+
+  distance_band_m: 200
+  distance_band_rationale: >
+    200m captures neighborhood-scale thermal clustering at
+    Landsat 30m resolution.
+
+  max_nodata_percent: 20
+  max_nodata_rationale: >
+    Allow up to 20% NoData before flagging as critical.
+
+# === Workflow ===
+
+steps:
+
+  - id: validate_lst
+    primitive: soil/validate_raster
+    version: "1.0.0"
+    description: >
+      Check that LST raster has valid CRS, reasonable value range,
+      and acceptable NoData coverage.
+    inputs:
+      raster: $manifest.land_surface_temperature
+    outputs:
+      checked: lst_checked
+    params:
+      expected_crs: $parameters.target_crs
+      max_nodata_percent: $parameters.max_nodata_percent
+      expected_value_range: [250, 330]
+      expected_units: "kelvin"
+
+  - id: validate_boundary
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: >
+      Check that study boundary has valid CRS and geometry.
+    inputs:
+      features: $manifest.study_boundary
+    outputs:
+      checked: boundary_checked
+    params: {}
+
+  - id: reproject_lst
+    primitive: soil/reproject_raster
+    version: "1.0.0"
+    description: >
+      Ensure LST raster is in the target CRS for accurate
+      distance calculations in the Gi* analysis.
+    inputs:
+      raster: $steps.validate_lst.checked
+    outputs:
+      transformed: lst_reprojected
+    params:
+      target_crs: $parameters.target_crs
+      method: "bilinear"
+
+  - id: crop_lst
+    primitive: soil/crop_to_boundary
+    version: "1.0.0"
+    description: >
+      Constrain LST raster to the study area to reduce
+      computation and avoid edge effects.
+    inputs:
+      raster: $steps.reproject_lst.transformed
+      boundary: $steps.validate_boundary.checked
+    outputs:
+      cropped: lst_cropped
+    params:
+      buffer_m: 500
+
+  - id: compute_gi_star
+    primitive: roots/local_gi_star
+    version: "1.0.0"
+    description: >
+      Compute Getis-Ord Gi* z-scores for each raster cell,
+      testing for statistically significant spatial clustering
+      of high and low temperatures.
+    inputs:
+      raster: $steps.crop_lst.cropped
+    outputs:
+      z_scores: gi_star_z_scores
+    params:
+      weights_type: $choices.spatial_weights
+      distance_m: $parameters.distance_band_m
+
+  - id: classify_clusters
+    primitive: roots/classify_clusters
+    version: "1.0.0"
+    description: >
+      Classify z-scores into hot spot, cold spot, and
+      not-significant categories at 90%, 95%, and 99%
+      confidence levels. Produces classified raster and
+      summary table.
+    inputs:
+      z_scores: $steps.compute_gi_star.z_scores
+    outputs:
+      classified: thermal_hotspot_classification
+    params:
+      confidence_levels: [0.90, 0.95, 0.99]
+      classification_mode: $choices.confidence_thresholds
+
+# === Expected outputs ===
+
+expected_outputs:
+  primary:
+    semantic_type: thermal_hotspot_classification
+    description: >
+      Classified raster where each cell is coded as hot spot,
+      cold spot, or not significant at three confidence tiers.
+  secondary:
+    - semantic_type: thermal_cluster_summary
+      description: >
+        CSV summarizing cell counts and percentages per category.
+    - semantic_type: gi_star_z_scores
+      description: >
+        Raw z-score raster for researchers wanting custom thresholds.
+
+# === Interpretation ===
+
+interpretation_guidance: >
+  Hot spots at 99% confidence are the most severe thermal clusters.
+  Overlaying these with demographic data reveals who bears the heat
+  burden. Cold spots typically align with parks, water bodies, and
+  dense tree canopy — they are the city's existing thermal refuges.
+
+  The ratio of hot-to-cold area tells a story about the city's
+  thermal equity. A city with 40% hot spot area and 10% cold spot
+  area has a fundamentally different resilience profile than one
+  split evenly.
+
+limitations:
+  - >
+    Landsat LST captures surface temperature, not air temperature.
+    Surface temperature correlates with but is not identical to
+    the thermal experience of a person on the street.
+  - >
+    Single-date imagery captures one moment. Thermal patterns vary
+    by season, time of day, and weather conditions. Multi-temporal
+    composites provide more robust baselines.
+  - >
+    The Gi* statistic assumes a stationary spatial process. Cities
+    with strong directional gradients (e.g., coast to inland) may
+    show systematic biases in cluster detection.
+  - >
+    Distance band choice (200m) affects what scale of clustering
+    is detected. Larger bands detect broader patterns; smaller bands
+    detect finer variation.

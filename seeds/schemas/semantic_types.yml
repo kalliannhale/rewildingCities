@@ -1,9 +1,62 @@
+# ============================================================
 # seeds/schemas/semantic_types.yml
-# Vocabulary of semantic types for rewildingCities
-# Each type declares what a dataset MEANS, not just its format
+# Additions for the thermal analysis toolkit
+# Append these to the existing types block
+# ============================================================
 
 types:
+
+  # --- Thermal analysis types ---
+
+  gi_star_z_scores:
+    category: raster
+    format: tiff
+    description: >
+      Getis-Ord Gi* z-scores per raster cell. Positive values
+      indicate local clustering of high values (potential hot spot),
+      negative values indicate clustering of low values (potential
+      cold spot). The magnitude indicates statistical strength.
+    typical_units: z-score (standard deviations)
+    value_range: [-10, 10]
+
+  thermal_hotspot_classification:
+    category: raster
+    format: tiff
+    description: >
+      Integer-classified raster of thermal clusters. Codes:
+      99/-99 = hot/cold spot at 99% confidence,
+      95/-95 = 95% (exclusive of 99%),
+      90/-90 = 90% (exclusive of 95%),
+      0 = not significant.
+    typical_units: classification code
+    value_range: [-99, 99]
+
+  thermal_cluster_summary:
+    category: tabular
+    format: csv
+    description: >
+      Summary statistics for thermal cluster classification.
+      Rows per confidence tier with cell counts and percentages.
+      Tiers are exclusive (no double-counting).
+
+  study_boundary:
+    category: vector
+    format: geojson
+    description: >
+      Boundary polygon defining the spatial extent of analysis.
+      May be a city boundary, neighborhood, watershed, or any
+      user-defined area of interest.
+
+  city_boundary:
+    category: vector
+    format: geojson
+    description: >
+      Administrative boundary of a city or municipality.
+      Commonly used as the study boundary for city-wide analyses.
+      
+
   # === Vector Types ===
+  
   
   park_boundaries:
     category: vector

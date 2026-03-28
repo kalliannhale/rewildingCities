@@ -1,5 +1,63 @@
+# ============================================================
 # roots/_registry.yml
+# Additions for the thermal analysis toolkit
+# Append these entries to the existing registry
+# ============================================================
+
 primitives:
+
+  # --- statistics/ ---
+
+  local_gi_star:
+    path: statistics/local_gi_star.R
+    version: 1.0.0
+    description: >
+      Compute Getis-Ord Gi* z-scores for spatial autocorrelation.
+      Identifies whether each cell's neighborhood has significantly
+      higher or lower values than expected under spatial randomness.
+    inputs:
+      - name: raster
+        semantic_types: [land_surface_temperature, gi_star_z_scores]
+        required: true
+    outputs:
+      semantic_type: gi_star_z_scores
+      data_category: raster
+    params:
+      weights_type:
+        type: string
+        default: "distance_band"
+        options: ["distance_band", "queen"]
+      distance_m:
+        type: integer
+        default: 200
+        description: "Distance band radius in meters (only used when weights_type is distance_band)"
+
+  classify_clusters:
+    path: statistics/classify_clusters.R
+    version: 1.0.0
+    description: >
+      Classify a z-score raster into hot spot, cold spot, and
+      not-significant categories at specified confidence levels.
+      Tiers are exclusive (99% cells are not double-counted in 95%).
+      Produces a classified raster and a summary CSV as secondary output.
+    inputs:
+      - name: z_scores
+        semantic_types: [gi_star_z_scores]
+        required: true
+    outputs:
+      semantic_type: thermal_hotspot_classification
+      data_category: raster
+    params:
+      confidence_levels:
+        type: array
+        default: [0.90, 0.95, 0.99]
+      classification_mode:
+        type: string
+        default: "standard_three_tier"
+        options: ["standard_three_tier", "binary"]
+  
+  # geometry/
+
   generate_buffers:
     path: geometry/generate_buffers.R
     version: 1.0.0
@@ -22,6 +80,8 @@ primitives:
       id_field:
         type: string
         default: null
+  
+  # metrics/
 
   zonal_statistics:
     path: metrics/zonal_statistics.R

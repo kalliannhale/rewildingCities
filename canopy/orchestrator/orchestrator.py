@@ -311,7 +311,7 @@ class Orchestrator:
         self.experiment = parse_experiment(experiment_path)
         
         # Parse manifest (path is relative to project root)
-        manifest_path = self.project_root / self.experiment.manifest_path
+        manifest_path = self.experiment_path.parent / self.experiment.manifest_path
         self.manifest = parse_manifest(manifest_path)
         
         # Set up output directories

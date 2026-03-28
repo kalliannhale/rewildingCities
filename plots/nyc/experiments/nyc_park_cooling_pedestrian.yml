@@ -52,7 +52,7 @@ rationale: >
 
 # Where are we applying this?
 city: nyc
-manifest: plots/nyc/manifest.yml
+manifest: ../manifest.yml
 
 # Parameters specific to this inquiry
 parameters:

@@ -662,6 +662,11 @@ class EnvelopeBuilder:
         
         # CRS should come from primitive metadata
         # If not present, it will trigger a validation warning later
+
+        # Capacity to report both primary and secondary outputs
+        secondary = primitive_metadata.get("secondary", {})
+        if secondary:
+            data["secondary"] = secondary
         
         return metadata
 
