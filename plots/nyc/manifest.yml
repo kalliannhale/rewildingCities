@@ -1,21 +1,200 @@
-# plots/nyc/manifest.yml
-
 city:
-  name: "New York City"
+  name: New York City
   id: nyc
+  region: New York
+  country: US
+  timezone: America/New_York
+crs:
+  working: EPSG:2263
+  notes: 'NYC State Plane (Long Island), US feet. Standard for all NYC municipal data.
+    Ensures accurate area and distance calculations.
 
+    '
+stewardship:
+  maintainers:
+  - name: Kalli A. Hale
+    organization: rewildingCities
+  initialized: '2025-08-01'
+  last_verified: '2026-03-28'
+  community_partners: []
+scope:
+  study_area:
+    type: full
+  feature_sampling:
+    enabled: false
+  resolution:
+    mode: native
 datasets:
   park_boundaries:
+    available: true
+    description: NYC Parks properties boundaries
     semantic_type: park_boundaries
-    description: "NYC Parks Properties - boundaries for spatial analysis"
+    format: geojson
     source:
       type: api
-      url: "https://data.cityofnewyork.us/resource/enfh-gkve.geojson"
-      documentation: "https://data.cityofnewyork.us/Recreation/Parks-Properties/enfh-gkve"
+      provider: socrata
+      endpoint: https://data.cityofnewyork.us/resource/enfk-w5i2.geojson
+      query_params:
+        $limit: 50000
+      notes: NYC Parks Properties from NYC Open Data (Socrata)
     cache:
-      path: ".data/parks.geojson"
-      fetched: null  # filled in when fetch_dataset runs
+      path: .data/parks.geojson
+      refresh_policy: manual
+    temporal:
+      type: snapshot
+      year: 2024
+    provenance:
+      source: NYC Open Data
+      source_url: https://data.cityofnewyork.us/City-Government/Parks-Properties/enfk-w5i2
+      license: NYC Open Data Terms of Use
+    quality:
+      confidence: high
+      known_issues:
+      - Includes all park properties, not just green parks (pools, playgrounds, etc.)
+      - Some multipolygon boundaries may include disconnected fragments
+  study_boundary:
+    available: true
+    description: NYC borough boundaries dissolved to single polygon
+    semantic_type: study_boundary
     format: geojson
-    id_field: gispropnum
-    known_issues:
-      - "Monthly updates may change feature count"
+    source:
+      type: api
+      provider: socrata
+      endpoint: https://data.cityofnewyork.us/resource/7t3b-ywvw.geojson
+      query_params:
+        $limit: 10
+      notes: NYC Borough Boundaries from NYC Open Data
+    cache:
+      path: .data/city_boundary.geojson
+      refresh_policy: manual
+    provenance:
+      source: NYC Open Data
+      source_url: https://data.cityofnewyork.us/City-Government/Borough-Boundaries/7t3b-ywvw
+  land_surface_temperature:
+    available: true
+    description: Summer daytime LST from Landsat 8 OLI/TIRS
+    semantic_type: land_surface_temperature
+    format: geotiff
+    source:
+      type: manual
+      notes: 'Landsat 8 scene processed via radiative transfer equation. Acquire from
+        USGS EarthExplorer or Google Earth Engine. Export as GeoTIFF in WGS84, then
+        place at cache path. Summer daytime acquisition (June-August) preferred.
+
+        '
+    cache:
+      path: .data/lst_summer.tif
+      refresh_policy: manual
+    temporal:
+      type: seasonal_composite
+      season: summer
+      year: 2023
+    provenance:
+      source: USGS Landsat 8 OLI/TIRS
+      source_url: https://earthexplorer.usgs.gov/
+    quality:
+      confidence: medium
+      spatial_resolution: 30m
+      known_issues:
+      - Single-date acquisition subject to cloud contamination
+      - Surface temperature, not air temperature
+  land_cover:
+    available: true
+    description: NYC LiDAR-derived 8-class land cover
+    semantic_type: land_cover
+    format: geotiff
+    source:
+      type: url
+      url: https://data.cityofnewyork.us/api/geospatial/he6d-2qns?method=export&type=Original
+      notes: NYC 2017 LiDAR Land Cover, 8-class raster (0.5ft resolution)
+    cache:
+      path: .data/land_cover.tif
+      refresh_policy: manual
+    classification:
+      scheme: NYC LiDAR 8-Class
+      classes:
+        1: Tree Canopy
+        2: Grass/Shrubs
+        3: Bare Soil
+        4: Water
+        5: Buildings
+        6: Roads
+        7: Other Impervious
+        8: Railroads
+    provenance:
+      source: NYC Open Data
+      source_url: https://data.cityofnewyork.us/Environment/Land-Cover-Raster-Data-2017-6in-Resolution/he6d-2qns
+      license: NYC Open Data Terms of Use
+    quality:
+      confidence: high
+      spatial_resolution: 0.5ft (0.15m)
+      known_issues:
+      - "2017 vintage \u2014 some development since then"
+  ndvi:
+    available: true
+    description: NDVI derived from Landsat 8 summer imagery
+    semantic_type: ndvi
+    format: geotiff
+    source:
+      type: manual
+      notes: 'Compute from Landsat 8 bands 4 (Red) and 5 (NIR): NDVI = (B5 - B4) /
+        (B5 + B4). Export as GeoTIFF. Same scene date as LST for consistency.
+
+        '
+    cache:
+      path: .data/ndvi.tif
+      refresh_policy: manual
+    temporal:
+      type: seasonal_composite
+      season: summer
+      year: 2023
+    provenance:
+      source: Derived from USGS Landsat 8
+    quality:
+      confidence: medium
+      spatial_resolution: 30m
+  nighttime_lights:
+    available: true
+    description: VIIRS nighttime lights annual composite
+    semantic_type: nighttime_lights
+    format: geotiff
+    source:
+      type: url
+      url: https://eogdata.mines.edu/nighttime_light/annual/v22/2023/VNL_v22_npp-j01_2023_global_vcmslcfg_c202502121300.average_masked.dat.tif.gz
+      notes: "Earth Observation Group VIIRS annual composite. Global file \u2014 will\
+        \ need cropping to NYC extent.\n"
+    cache:
+      path: .data/ntl.tif
+      refresh_policy: manual
+      fetched_at: '2026-04-10T19:48:56.957563+00:00'
+    temporal:
+      type: annual_average
+      year: 2023
+    provenance:
+      source: Earth Observation Group, Colorado School of Mines
+      source_url: https://eogdata.mines.edu/products/vnl/
+    quality:
+      confidence: high
+      spatial_resolution: 500m
+  roads:
+    available: true
+    description: NYC street centerlines
+    semantic_type: roads
+    format: geojson
+    source:
+      type: api
+      provider: socrata
+      endpoint: https://data.cityofnewyork.us/resource/8rma-cm9c.geojson
+      query_params:
+        $limit: 200000
+      notes: LION street centerline data from NYC DoT
+    cache:
+      path: .data/roads.geojson
+      refresh_policy: manual
+    provenance:
+      source: NYC Open Data
+      source_url: https://data.cityofnewyork.us/City-Government/NYC-Street-Centerline-CSCL-/exjm-f27b
+    quality:
+      confidence: high
+      known_issues:
+      - "Very large dataset \u2014 may need spatial subsetting"

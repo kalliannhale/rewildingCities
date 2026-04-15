@@ -1,0 +1,19 @@
+name: rewilding
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  # Python Core & YAML parsing
+  - python=3.13
+  - pyyaml
+  
+  # R Core & YAML/JSON parsing
+  - r-base>=4.3
+  - r-yaml
+  - r-jsonlite
+  
+  # R Geospatial Stack
+  - r-sf
+  - r-terra
+  - r-spdep
+  - r-exactextractr

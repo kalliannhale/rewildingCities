@@ -1,10 +1,10 @@
 # ============================================================
-# Heat Island Identification
-# garden/curiosity-space/thermal/heat_island_identification.yml
+# Thermal Landscape Analysis
+# garden/curiosity-space/thermal/thermal_landscape_analysis.yml
 # ============================================================
 
-id: heat_island_identification
-name: "Urban Heat Island Identification"
+id: thermal_landscape_analysis
+name: "Thermal Landscape Analysis"
 domain: thermal
 
 description: >

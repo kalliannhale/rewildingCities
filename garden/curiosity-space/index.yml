@@ -6,12 +6,12 @@ curiosities:
   thermal:
     - id: park_cooling_effect
       path: thermal/park_cooling_effect.yml
-      question: "How effectively do urban parks cool their surroundings?"
+      question: "How effectively are our parks cooling their surroundings?"
       sub_questions: [maximum_cooling, cumulative_cooling, cooling_extent, cooling_factors, surrounding_influence, temperature, thermal]
 
-    - id: heat_island_identification
-      path: thermal/heat_island_identification.yml
-      question: "Where are our hot spots?"
+    - id: thermal_landscape_analysis
+      path: thermal/thermal_landscape_analysis.yml
+      question: "How do we analyze the thermal landscape of our community?"
       sub_questions: [climate_resilience, public_health, heat, urban_planning, thermal, heat_island, temperature]
 
 

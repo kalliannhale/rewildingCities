@@ -1,10 +1,10 @@
 # ============================================================
 # NYC Heat Island Identification
-# plots/nyc/experiments/heat_island_identification.yml
+# plots/nyc/experiments/thermal_landscape_analysis.yml
 # ============================================================
 
-id: nyc_heat_island_identification
-name: "NYC Urban Heat Island Identification"
+id: nyc_thermal_landscape
+name: "NYC Thermal Landscape Analysis"
 
 description: >
   Identify statistically significant thermal hot spots and cold
@@ -14,7 +14,7 @@ description: >
 # === Scientific lineage ===
 
 curiosity:
-  ref: $curiosity-space/thermal/heat_island_identification
+  ref: $curiosity-space/thermal/thermal_landscape_analysis
   sub_question: thermal_landscape
 
 method:

@@ -1,0 +1,83 @@
+# ============================================================
+# NYC LiDAR 8-Class → Blue/Green/Grey Crosswalk
+# seeds/crosswalks/land_cover/nyc_lidar_to_nanjing.yml
+# ============================================================
+# Maps NYC's 8-class LiDAR land cover scheme to the 3-class
+# system used in Xiao et al. (2023) for buffer zone
+# characterization: vegetation (green), water (blue),
+# impervious (grey).
+#
+# Also used by mask_raster_by_class.R to identify water pixels
+# for masking from LST before buffer analysis.
+# ============================================================
+
+from: "NYC LiDAR 8-Class"
+to: "Blue-Green-Grey (Xiao et al. 2023)"
+
+description: >
+  Reclassifies NYC's high-resolution LiDAR-derived land cover
+  into three landscape categories used for analyzing the
+  relationship between land cover composition and thermal
+  behavior. Following Xiao et al., "blue" represents water
+  features, "green" represents vegetation, and "grey"
+  represents impervious surfaces and built environment.
+
+source_scheme:
+  name: "NYC LiDAR 8-Class"
+  provider: "NYC Department of Information Technology & Telecommunications"
+  year: 2017
+  resolution: "0.5ft (0.15m)"
+  classes:
+    1: "Tree Canopy"
+    2: "Grass/Shrubs"
+    3: "Bare Soil"
+    4: "Water"
+    5: "Buildings"
+    6: "Roads"
+    7: "Other Impervious"
+    8: "Railroads"
+
+target_scheme:
+  name: "Blue-Green-Grey"
+  reference: "Xiao, Y. et al. (2023). Science of the Total Environment, 868, 161463."
+  classes:
+    vegetation: "Green landscape — tree canopy, grass, shrubs"
+    water: "Blue landscape — water bodies, rivers, ponds"
+    impervious: "Grey landscape — buildings, roads, paved surfaces"
+
+# The actual mapping
+mappings:
+  vegetation:
+    - 1  # Tree Canopy
+    - 2  # Grass/Shrubs
+  water:
+    - 4  # Water
+  impervious:
+    - 5  # Buildings
+    - 6  # Roads
+    - 7  # Other Impervious
+    - 8  # Railroads
+
+# What about bare soil (class 3)?
+unmapped:
+  3:
+    name: "Bare Soil"
+    rationale: >
+      Bare soil doesn't fit cleanly into the blue/green/grey
+      trichotomy. It's neither vegetated nor impervious in the
+      traditional sense. In NYC's context, bare soil often
+      represents construction sites, unpaved lots, or eroded
+      areas. Excluding it from all three categories means
+      proportions may not sum to 1.0, and this is documented
+      in the envelope warnings.
+    alternative_mappings:
+      - target: impervious
+        rationale: "Thermally similar to impervious — high albedo, no evapotranspiration"
+      - target: vegetation
+        rationale: "Ecologically, bare soil is potential green space"
+
+notes: >
+  This crosswalk is intentionally conservative about bare soil.
+  Communities can choose to map it to either category based on
+  their analytical goals. The unmapped warning in the envelope
+  makes this decision visible and discussable.

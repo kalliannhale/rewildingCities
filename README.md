@@ -80,6 +80,7 @@ rewildingCities is a project of **Rewilding Intelligence**, a research initiativ
 
 ```bash
 git clone https://github.com/kalliannhale/rewildingCities.git
+mamba
 cd rewildingCities
 ```
 
