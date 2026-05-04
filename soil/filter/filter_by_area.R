@@ -17,7 +17,7 @@ output_path <- args$output
 min_area_ha <- as.numeric(get_param(args$params, "min_area_ha", 0))
 max_area_ha <- as.numeric(get_param(args$params, "max_area_ha", Inf))
 
-w <- warnings_collector()
+w <- warnings_collector("filter_by_area")
 
 with_primitive_error_handling({
 

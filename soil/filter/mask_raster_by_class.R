@@ -42,7 +42,7 @@ mask_label       <- get_param(args$params, "mask_label", "masked classes")
 crosswalk_path   <- get_param(args$params, "crosswalk_path", NULL)
 crosswalk_group  <- get_param(args$params, "crosswalk_group", NULL)
 
-w <- warnings_collector()
+w <- warnings_collector("mask_raster_by_class")
 
 with_primitive_error_handling({
 

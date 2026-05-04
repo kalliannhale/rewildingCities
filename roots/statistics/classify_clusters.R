@@ -37,7 +37,7 @@ output_path   <- args$output
 conf_levels   <- as.numeric(get_param(args$params, "confidence_levels", c(0.90, 0.95, 0.99)))
 class_mode    <- get_param(args$params, "classification_mode", "standard_three_tier")
 
-w <- warnings_collector()
+w <- warnings_collector("classify_clusters")
 
 with_primitive_error_handling({
 

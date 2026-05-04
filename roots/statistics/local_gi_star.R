@@ -25,7 +25,7 @@ weights_type <- get_param(args$params, "weights_type", "distance_band")
 distance_m   <- as.numeric(get_param(args$params, "distance_m", 200))
 
 # --- Set up warnings collector ---
-w <- warnings_collector()
+w <- warnings_collector("local_gi_star")
 
 # --- Load raster ---
 with_primitive_error_handling({

@@ -39,7 +39,7 @@ p_enter            <- as.numeric(get_param(args$params, "p_enter", 0.10))
 p_remove           <- as.numeric(get_param(args$params, "p_remove", 0.11))
 seed               <- as.integer(get_param(args$params, "seed", 42))
 
-w <- warnings_collector()
+w <- warnings_collector("regression_analysis")
 
 with_primitive_error_handling({
 

@@ -1,0 +1,264 @@
+"""
+canopy/providers/base.py
+
+Provider base class and registry for programmatic data acquisition.
+
+Each provider knows one protocol. The registry dispatches to the right 
+provider based on source configuration. The orchestrator never needs to 
+know which provider handles what — it just asks the registry.
+
+Design principles:
+- One interface, many implementations (discover + acquire)
+- Providers are stateless — all config comes from the source block
+- Results are honest — warnings and limitations are first-class
+- Auth requirements are surfaced, not hidden
+"""
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+import logging
+
+logger = logging.getLogger("providers")
+
+
+# === Result Types ===
+
+@dataclass
+class AcquisitionResult:
+    """Result of acquiring a single dataset.
+    
+    The provider system's envelope — honest about what happened,
+    what went wrong, and what the user can do about it.
+    """
+    dataset_name: str
+    success: bool
+    path: str | None = None
+    size_bytes: int | None = None
+    message: str = ""
+    warnings: list[dict] = field(default_factory=list)
+    
+    # Advisory fields — what can the user do if this failed?
+    requires_auth: bool = False
+    auth_instructions: str | None = None
+    requires_manual: bool = False
+    manual_instructions: str | None = None
+    alternative_sources: list[str] = field(default_factory=list)
+
+
+@dataclass 
+class DiscoveryResult:
+    """Result of discovering available datasets for a territory.
+    
+    Used during coven founding — the system searches for what 
+    data exists for your territory and proposes a manifest.
+    """
+    semantic_type: str
+    description: str
+    source_config: dict           # ready to drop into a manifest
+    estimated_size: str | None = None
+    requires_auth: bool = False
+    quality_notes: str | None = None
+
+
+# === Provider Base ===
+
+class Provider(ABC):
+    """Base class for data providers.
+    
+    Each provider knows one protocol (Socrata API, STAC catalog,
+    direct URL download, etc.) and implements two operations:
+    
+    - acquire(): Given a source config, download the data
+    - discover(): Given a bounding box, find available datasets
+    
+    Providers are stateless. All configuration comes from the 
+    source block in the manifest. This means the same provider
+    class works for NYC Socrata and Chicago Socrata.
+    """
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Human-readable provider name (e.g., 'Socrata', 'Planetary Computer')."""
+        ...
+    
+    @abstractmethod
+    def can_handle(self, source_config: dict) -> bool:
+        """Whether this provider can handle the given source configuration.
+        
+        Dispatch is based on capability, not category. A provider might
+        handle multiple source types, or only a subset of a source type.
+        """
+        ...
+    
+    @abstractmethod
+    def acquire(
+        self,
+        source_config: dict,
+        cache_path: Path,
+        dataset_name: str,
+        **kwargs
+    ) -> AcquisitionResult:
+        """Acquire data and write to cache_path.
+        
+        Args:
+            source_config: The 'source' block from the manifest dataset
+            cache_path: Where to write the downloaded data
+            dataset_name: Name of the dataset (for logging/messages)
+            **kwargs: Additional context (e.g., bbox, gee_project)
+        
+        Returns:
+            AcquisitionResult with success/failure and advisory info
+        """
+        ...
+    
+    def discover(
+        self,
+        bbox: tuple[float, float, float, float],
+        semantic_types: list[str] | None = None,
+        **kwargs
+    ) -> list[DiscoveryResult]:
+        """Discover available datasets for a bounding box.
+        
+        Optional — not all providers support discovery.
+        Used during coven founding / manifest initialization.
+        
+        Args:
+            bbox: (xmin, ymin, xmax, ymax) in EPSG:4326
+            semantic_types: Filter by semantic type if provided
+            **kwargs: Provider-specific options
+        
+        Returns:
+            List of discoverable datasets with proposed source configs
+        """
+        return []  # Default: no discovery support
+
+
+# === Provider Registry ===
+
+class ProviderRegistry:
+    """Dispatches acquisition to the right provider.
+    
+    The orchestrator asks the registry "acquire this dataset" and
+    the registry finds the right provider, or explains why it can't.
+    """
+    
+    def __init__(self):
+        self._providers: list[Provider] = []
+    
+    def register(self, provider: Provider) -> None:
+        """Register a provider."""
+        self._providers.append(provider)
+        logger.debug(f"Registered provider: {provider.name}")
+    
+    def find_provider(self, source_config: dict) -> Provider | None:
+        """Find a provider that can handle this source config."""
+        for provider in self._providers:
+            if provider.can_handle(source_config):
+                return provider
+        return None
+    
+    def acquire(
+        self,
+        source_config: dict,
+        cache_path: Path,
+        dataset_name: str,
+        **kwargs
+    ) -> AcquisitionResult:
+        """Acquire a dataset, dispatching to the right provider.
+        
+        If no provider can handle the source config, returns a 
+        failure result with advisory information.
+        """
+        provider = self.find_provider(source_config)
+        
+        if provider is None:
+            source_type = source_config.get("type", "unknown")
+            source_provider = source_config.get("provider", "")
+            
+            # Build advisory message based on source type
+            if source_type == "manual":
+                notes = source_config.get("notes", "No instructions provided.")
+                return AcquisitionResult(
+                    dataset_name=dataset_name,
+                    success=False,
+                    message=f"Dataset '{dataset_name}' requires manual acquisition.",
+                    requires_manual=True,
+                    manual_instructions=notes,
+                )
+            
+            if source_type == "earthengine":
+                return AcquisitionResult(
+                    dataset_name=dataset_name,
+                    success=False,
+                    message=(
+                        f"Dataset '{dataset_name}' requires Google Earth Engine. "
+                        f"Run: python -m soil.register.acquire_gee plots/{{city}}/manifest.yml"
+                    ),
+                    requires_auth=True,
+                    auth_instructions=(
+                        "Earth Engine requires a free account:\n"
+                        "  1. Sign up at https://earthengine.google.com/\n"
+                        "  2. Run: earthengine authenticate\n"
+                        "  3. Then retry this experiment"
+                    ),
+                )
+            
+            return AcquisitionResult(
+                dataset_name=dataset_name,
+                success=False,
+                message=(
+                    f"No provider found for source type '{source_type}'"
+                    + (f" / provider '{source_provider}'" if source_provider else "")
+                    + f". Dataset '{dataset_name}' cannot be auto-acquired."
+                ),
+            )
+        
+        logger.info(f"Acquiring '{dataset_name}' via {provider.name}...")
+        
+        # Ensure parent directory exists
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            result = provider.acquire(source_config, cache_path, dataset_name, **kwargs)
+        except Exception as e:
+            result = AcquisitionResult(
+                dataset_name=dataset_name,
+                success=False,
+                message=f"Provider '{provider.name}' raised an error: {e}",
+                warnings=[{
+                    "level": "critical",
+                    "primitive": "provider_registry",
+                    "message": f"Acquisition failed for '{dataset_name}': {e}"
+                }]
+            )
+        
+        if result.success:
+            logger.info(f"  ✓ {dataset_name}: {result.message}")
+        else:
+            logger.warning(f"  ✗ {dataset_name}: {result.message}")
+        
+        return result
+    
+    def discover_all(
+        self,
+        bbox: tuple[float, float, float, float],
+        semantic_types: list[str] | None = None,
+        **kwargs
+    ) -> list[DiscoveryResult]:
+        """Run discovery across all registered providers."""
+        results = []
+        for provider in self._providers:
+            try:
+                found = provider.discover(bbox, semantic_types, **kwargs)
+                results.extend(found)
+            except Exception as e:
+                logger.warning(f"Discovery failed for {provider.name}: {e}")
+        return results
+    
+    @property
+    def registered_providers(self) -> list[str]:
+        """Names of all registered providers."""
+        return [p.name for p in self._providers]

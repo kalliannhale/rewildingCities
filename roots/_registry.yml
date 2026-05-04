@@ -102,3 +102,45 @@ primitives:
         type: array
         items: string
         default: [median, mean, min, max]
+  
+  calculate_pci:
+    path: metrics/calculate_pci.R
+    version: 1.0.0
+    description: >
+      Calculate Park Cooling Intensity via TPM-M gradient walk.
+      Takes zonal statistics (LST per buffer ring per feature) and
+      feature-interior LST, identifies the turning point where cooling
+      influence ends, and computes PCI for each feature.
+      TPM-M: PCI = LST_at_first_local_max - LST_inside_feature.
+ 
+    inputs:
+      - name: ring_stats
+        semantic_types: [zonal_statistics]
+        required: true
+        description: Temperature statistics per buffer ring per feature
+      - name: feature_stats
+        semantic_types: [zonal_statistics]
+        required: true
+        description: Temperature statistics inside each feature (baseline)
+ 
+    outputs:
+      semantic_type: pci_results
+      data_category: tabular
+      description: >
+        Per-feature PCI value, turning point distance, park LST,
+        and turning point LST
+ 
+    params:
+      method:
+        type: string
+        default: "TPM-M"
+        options: ["TPM-M", "TPM-A"]
+        description: PCI estimation method
+      min_rings:
+        type: integer
+        default: 2
+        description: Minimum buffer rings before turning point can be declared
+      lst_column:
+        type: string
+        default: "lst_median"
+        description: Column name for LST values in the stats tables

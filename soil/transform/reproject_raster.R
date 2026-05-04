@@ -5,6 +5,7 @@
 
 library(rewildr)
 library(terra)
+terra::terraOptions(progress=0)
 
 args <- parse_primitive_args()
 
@@ -13,7 +14,7 @@ output_path <- args$output
 target_crs  <- get_param(args$params, "target_crs")
 method      <- get_param(args$params, "method", "bilinear")
 
-w <- warnings_collector()
+w <- warnings_collector("reproject_raster")
 
 with_primitive_error_handling({
 

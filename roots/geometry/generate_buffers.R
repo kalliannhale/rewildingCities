@@ -22,7 +22,7 @@ interval    <- as.numeric(get_param(args$params, "interval_m", 30))
 max_dist    <- as.numeric(get_param(args$params, "max_distance_m", 500))
 id_field    <- get_param(args$params, "id_field", NULL)
 
-w <- warnings_collector()
+w <- warnings_collector("generate_buffers")
 
 with_primitive_error_handling({
 

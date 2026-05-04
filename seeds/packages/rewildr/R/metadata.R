@@ -26,10 +26,19 @@ extract_vector_metadata <- function(sf_obj, id_field = NULL) {
    total_area <- as.numeric(sum(sf::st_area(sf_obj)))
  }
  
+ crs_obj <- sf::st_crs(sf_obj)
+ crs_string <- if (!is.na(crs_obj)) {
+   epsg <- crs_obj$epsg
+   if (!is.null(epsg) && !is.na(epsg)) paste0("EPSG:", epsg) else crs_obj$input
+ } else {
+   NA_character_
+ }
+
  metadata <- list(
    feature_count = nrow(sf_obj),
    geometry_type = if (length(geom_types) == 1) geom_types else geom_types,
    bbox = bbox,
+   crs = crs_string,
    attribute_fields = attr_fields
  )
  
@@ -83,7 +92,11 @@ extract_raster_metadata <- function(rast_obj, units = NULL, measurement_type = N
      min = val_range[1, 1],
      max = val_range[2, 1]
    ),
-   dtype = terra::datatype(rast_obj)
+   dtype = terra::datatype(rast_obj),
+   crs = ifelse(is.na(terra::crs(rast_obj)) || terra::crs(rast_obj) == "",
+                NA_character_,
+                paste0(terra::crs(rast_obj, describe=TRUE)$authority, ":",
+                       terra::crs(rast_obj, describe=TRUE)$code))
  )
  
  if (!is.null(units)) {

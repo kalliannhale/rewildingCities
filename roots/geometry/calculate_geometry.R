@@ -16,7 +16,7 @@ input_path  <- get_input(args$inputs, "features")
 output_path <- args$output
 id_field    <- get_param(args$params, "id_field", NULL)
 
-w <- warnings_collector()
+w <- warnings_collector("calculate_geometry")
 
 with_primitive_error_handling({
 

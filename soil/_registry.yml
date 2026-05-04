@@ -395,3 +395,197 @@ primitives:
     repairs: []
     
     may_exclude_features: false
+  
+  # ────────────────────────────────────────────────────────────
+  # Added Sprint 5: primitives needed by park cooling experiment
+  # ────────────────────────────────────────────────────────────
+
+  filter_by_area:
+    path: filter/filter_by_area.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Filter vector features by area threshold. Following Xiao et al. (2023),
+      parks smaller than 0.09 ha may not generate measurable cooling signatures
+      at Landsat resolution.
+
+    inputs:
+      - name: features
+        semantic_types:
+          - park_boundaries
+          - water_boundaries
+          - forest_boundaries
+        required: true
+        description: Vector features to filter by area
+
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: Features meeting area criteria
+
+    params:
+      min_area_ha:
+        type: number
+        default: 0
+        description: Exclude features below this area (hectares)
+      max_area_ha:
+        type: number
+        default: null
+        description: Exclude features above this area (hectares)
+
+    validates:
+      - id: features_remain
+        description: At least one feature passes the filter
+        severity_if_failed: critical
+
+    repairs: []
+    may_exclude_features: true
+    exclusion_documented_in: warnings
+
+  scale_raster:
+    path: convert/scale_raster.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Apply scale/offset conversion to raster values.
+      new = (old * scale) + offset. Primary use: Landsat DN to Celsius.
+      Documents the unit transformation in the envelope.
+
+    inputs:
+      - name: raster
+        semantic_types:
+          - land_surface_temperature
+          - ndvi
+        required: true
+        description: Raster to convert
+
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: raster
+      description: Raster with converted values
+
+    params:
+      scale:
+        type: number
+        default: 1
+        description: Multiplicative scale factor
+      offset:
+        type: number
+        default: 0
+        description: Additive offset (applied after scale)
+      from_unit:
+        type: string
+        default: "unknown"
+        description: Source unit (e.g., "landsat_dn", "kelvin")
+      to_unit:
+        type: string
+        default: "unknown"
+        description: Target unit (e.g., "celsius")
+      conversion:
+        type: string
+        default: null
+        description: Named conversion shortcut (e.g., "kelvin_to_celsius")
+
+    validates:
+      - id: values_finite
+        description: Output values are not all NaN/Inf
+        severity_if_failed: warning
+
+    repairs: []
+    may_exclude_features: false
+
+  reproject_raster:
+    path: transform/reproject_raster.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Reproject a raster to a target CRS. Documents source and target CRS
+      in envelope metadata.
+
+    inputs:
+      - name: raster
+        semantic_types:
+          - land_surface_temperature
+          - ndvi
+          - land_cover
+        required: true
+        description: Raster to reproject
+
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: raster
+      description: Raster transformed to target CRS
+
+    params:
+      target_crs:
+        type: string
+        required: true
+        description: Target CRS (e.g., "EPSG:2263")
+      method:
+        type: string
+        default: "bilinear"
+        options: ["near", "bilinear", "cubic", "cubicspline"]
+        description: Resampling method
+
+    validates:
+      - id: source_crs_present
+        description: Input raster has defined CRS
+        severity_if_failed: critical
+      - id: target_crs_valid
+        description: Target CRS can be parsed
+        severity_if_failed: critical
+
+    repairs: []
+    may_exclude_features: false
+
+  crop_to_boundary:
+    path: scope/crop_to_boundary.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Crop a raster to a vector boundary extent with optional buffer.
+      Ensures the raster covers the analysis area without excess data.
+
+    inputs:
+      - name: raster
+        semantic_types:
+          - land_surface_temperature
+          - ndvi
+          - land_cover
+        required: true
+        description: Raster to crop
+      - name: boundary
+        semantic_types:
+          - park_boundaries
+          - study_boundary
+          - neighborhood_boundaries
+        required: true
+        description: Vector boundary defining crop extent
+
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: raster
+      description: Raster cropped to boundary extent
+
+    params:
+      buffer_m:
+        type: number
+        default: 0
+        description: Buffer distance (meters) to add around boundary before cropping
+      snap:
+        type: string
+        default: "out"
+        options: ["out", "in", "near"]
+        description: How to snap crop extent to raster grid
+
+    validates:
+      - id: crs_match
+        description: Raster and boundary CRS are compatible
+        severity_if_failed: critical
+      - id: spatial_overlap
+        description: Boundary falls within raster extent
+        severity_if_failed: critical
+
+    repairs: []
+    may_exclude_features: false
+  

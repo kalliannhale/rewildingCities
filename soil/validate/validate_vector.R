@@ -21,7 +21,7 @@ features_path <- get_input(args$inputs, "features", required = TRUE)
 params <- args$params
 
 # --- Initialize warnings collector ---
-w <- warnings_collector()
+w <- warnings_collector("validate_vector")
 
 # --- Load vector data ---
 sf_obj <- tryCatch(

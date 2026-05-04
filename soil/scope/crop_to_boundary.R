@@ -5,6 +5,7 @@
 
 library(rewildr)
 library(terra)
+terra::terraOptions(progress=0)
 library(sf)
 
 args <- parse_primitive_args()
@@ -14,7 +15,7 @@ boundary_path <- get_input(args$inputs, "boundary")
 output_path   <- args$output
 buffer_m      <- as.numeric(get_param(args$params, "buffer_m", 0))
 
-w <- warnings_collector()
+w <- warnings_collector("crop_to_boundary")
 
 with_primitive_error_handling({
 

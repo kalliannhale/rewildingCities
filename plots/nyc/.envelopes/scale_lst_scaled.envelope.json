@@ -1,0 +1,119 @@
+{
+  "data": {
+    "path": "plots/nyc/experiments/../.data/scale_lst_scaled.tiff",
+    "format": "tiff",
+    "secondary": {}
+  },
+  "metadata": {
+    "resolution_m": 30,
+    "dimensions": {
+      "rows": 7781,
+      "cols": 7661
+    },
+    "bbox": [
+      527085,
+      756915,
+      4348785,
+      4582215
+    ],
+    "band_count": 1,
+    "nodata_percentage": 31.62,
+    "value_range": {
+      "min": 149.0314,
+      "max": 149.189
+    },
+    "dtype": "",
+    "crs": "EPSG:32618",
+    "scale_factor": 0.0034,
+    "offset": 149,
+    "from_unit": "landsat_dn",
+    "to_unit": "celsius",
+    "value_range_before": [
+      9.1767,
+      55.2892
+    ],
+    "value_range_after": [
+      149.0314,
+      149.189
+    ],
+    "semantic_type": "lst_scaled",
+    "data_category": "raster"
+  },
+  "provenance": [
+    {
+      "primitive": "validate_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:29.755039+00:00",
+      "params": {
+        "max_nodata_percent": 20
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "land_surface_temperature",
+          "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+          "hash": {
+            "value": "31bcb67119675065fced8be7bd4518d5",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.698,
+      "lineage_branch": "raster"
+    },
+    {
+      "primitive": "scale_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:34.515361+00:00",
+      "params": {
+        "scale": 0.00341802,
+        "offset": 149.0,
+        "from_unit": "landsat_dn",
+        "to_unit": "celsius",
+        "conversion": "kelvin_to_celsius"
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "lst_checked",
+          "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+          "hash": {
+            "value": "31bcb67119675065fced8be7bd4518d5",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 4.759,
+      "lineage_branch": null
+    }
+  ],
+  "warnings": [
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "CRS: EPSG:32618 (WGS 84 / UTM zone 18N)"
+    },
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "Resolution: 30.00 x 30.00 map units"
+    },
+    {
+      "level": "critical",
+      "primitive": "validate_raster",
+      "message": "NoData is 31.6% (threshold: 20%). Results may be unreliable."
+    },
+    {
+      "level": "info",
+      "primitive": "scale_raster",
+      "message": "Converted from landsat_dn to celsius: values [9.18, 55.29] -> [149.03, 149.19]"
+    },
+    {
+      "level": "warning",
+      "primitive": "scale_raster",
+      "message": "Converted values [149.0, 149.2] seem extreme for Celsius. Verify scale/offset."
+    }
+  ]
+}

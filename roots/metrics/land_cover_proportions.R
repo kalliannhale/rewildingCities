@@ -33,7 +33,7 @@ output_path    <- args$output
 crosswalk_path <- get_param(args$params, "crosswalk_path", NULL)
 id_fields      <- get_param(args$params, "id_fields", c("feature_id", "distance_m"))
 
-w <- warnings_collector()
+w <- warnings_collector("land_cover_proportions")
 
 with_primitive_error_handling({
 

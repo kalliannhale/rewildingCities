@@ -1,0 +1,138 @@
+{
+  "data": {
+    "path": "plots/nyc/experiments/../.data/reproject_lst_reprojected.tiff",
+    "format": "tiff",
+    "secondary": {}
+  },
+  "metadata": {
+    "resolution_m": 98.4439,
+    "dimensions": {
+      "rows": 7866,
+      "cols": 7749
+    },
+    "bbox": [
+      790027.4072,
+      1552868.9614,
+      -327565.3568,
+      446794.1302
+    ],
+    "band_count": 1,
+    "nodata_percentage": 33.13,
+    "value_range": {
+      "min": 149.0314,
+      "max": 149.1882
+    },
+    "dtype": "",
+    "crs": "EPSG:2263",
+    "source_crs": "EPSG:32618",
+    "target_crs": "EPSG:2263",
+    "resampling_method": "bilinear",
+    "semantic_type": "lst_reprojected",
+    "data_category": "raster"
+  },
+  "provenance": [
+    {
+      "primitive": "validate_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:29.755039+00:00",
+      "params": {
+        "max_nodata_percent": 20
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "land_surface_temperature",
+          "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+          "hash": {
+            "value": "31bcb67119675065fced8be7bd4518d5",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.698,
+      "lineage_branch": "raster"
+    },
+    {
+      "primitive": "scale_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:34.515361+00:00",
+      "params": {
+        "scale": 0.00341802,
+        "offset": 149.0,
+        "from_unit": "landsat_dn",
+        "to_unit": "celsius",
+        "conversion": "kelvin_to_celsius"
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "lst_checked",
+          "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+          "hash": {
+            "value": "31bcb67119675065fced8be7bd4518d5",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 4.759,
+      "lineage_branch": "raster"
+    },
+    {
+      "primitive": "reproject_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:55.290355+00:00",
+      "params": {
+        "target_crs": "EPSG:2263",
+        "method": "bilinear"
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "lst_scaled",
+          "path": "plots/nyc/experiments/../.data/scale_lst_scaled.tiff",
+          "hash": {
+            "value": "2bbfad8412f799e88307d6fdd11453c4",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 20.774,
+      "lineage_branch": null
+    }
+  ],
+  "warnings": [
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "CRS: EPSG:32618 (WGS 84 / UTM zone 18N)"
+    },
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "Resolution: 30.00 x 30.00 map units"
+    },
+    {
+      "level": "critical",
+      "primitive": "validate_raster",
+      "message": "NoData is 31.6% (threshold: 20%). Results may be unreliable."
+    },
+    {
+      "level": "info",
+      "primitive": "scale_raster",
+      "message": "Converted from landsat_dn to celsius: values [9.18, 55.29] -> [149.03, 149.19]"
+    },
+    {
+      "level": "warning",
+      "primitive": "scale_raster",
+      "message": "Converted values [149.0, 149.2] seem extreme for Celsius. Verify scale/offset."
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_raster",
+      "message": "Reprojecting from EPSG:32618 to EPSG:2263 using bilinear resampling."
+    }
+  ]
+}

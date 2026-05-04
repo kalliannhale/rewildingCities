@@ -24,6 +24,9 @@ class DependencyResolver:
     # Pattern to extract step dependencies from references
     STEPS_PATTERN = re.compile(r'\$steps\.([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)')
     
+    # Pattern to extract manifest dataset references
+    MANIFEST_PATTERN = re.compile(r'^\$manifest\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
         self.steps_by_id = {step.id: step for step in experiment.steps}
@@ -203,6 +206,97 @@ class DependencyResolver:
             dependency_graph=graph
         )
     
+    # ═══════════════════════════════════════════════════════════════════════
+    # IMPACT ANALYSIS — what breaks when data is missing?
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def collect_manifest_refs(self) -> dict[str, list[str]]:
+        """Collect all $manifest.* references from experiment steps.
+        
+        Returns:
+            Dict of {dataset_name: [step_ids that directly reference it]}
+        """
+        refs: dict[str, list[str]] = {}
+        for step in self.experiment.steps:
+            for input_name, ref in step.inputs.items():
+                match = self.MANIFEST_PATTERN.match(ref)
+                if match:
+                    dataset_name = match.group(1)
+                    if dataset_name not in refs:
+                        refs[dataset_name] = []
+                    refs[dataset_name].append(step.id)
+        return refs
+
+    def trace_impact(self, missing_datasets: set[str]) -> dict[str, list[str]]:
+        """Trace which steps are orphaned by missing manifest datasets.
+        
+        Walks the DAG forward from directly-blocked steps to find all
+        transitively orphaned steps.
+        
+        Args:
+            missing_datasets: Set of dataset names (e.g., {"land_surface_temperature"})
+        
+        Returns:
+            Dict of {dataset_name: [all orphaned step IDs, sorted]}
+        """
+        graph = self.build_dependency_graph()
+        manifest_refs = self.collect_manifest_refs()
+        
+        # Find steps directly blocked by each missing dataset
+        directly_blocked: dict[str, set[str]] = {}
+        for dataset_name in missing_datasets:
+            direct = set(manifest_refs.get(dataset_name, []))
+            directly_blocked[dataset_name] = direct
+        
+        # All orphaned steps (union across all missing datasets)
+        all_orphaned: set[str] = set()
+        for steps in directly_blocked.values():
+            all_orphaned.update(steps)
+        
+        # Walk forward through DAG: any step depending on an orphaned step
+        # is also orphaned
+        changed = True
+        while changed:
+            changed = False
+            for step_id, deps in graph.items():
+                if step_id not in all_orphaned and deps & all_orphaned:
+                    all_orphaned.add(step_id)
+                    changed = True
+        
+        # Map back: for each missing dataset, which steps are traceable to it
+        result: dict[str, list[str]] = {}
+        for dataset_name, direct in directly_blocked.items():
+            traceable = set(direct)
+            frontier = set(direct)
+            while frontier:
+                next_frontier: set[str] = set()
+                for step_id, deps in graph.items():
+                    if step_id not in traceable and deps & frontier:
+                        traceable.add(step_id)
+                        next_frontier.add(step_id)
+                frontier = next_frontier
+            result[dataset_name] = sorted(traceable)
+        
+        return result
+
+    def runnable_steps(self, missing_datasets: set[str]) -> list[str]:
+        """Determine which steps CAN run despite missing datasets.
+        
+        Returns steps in execution order that are not orphaned.
+        """
+        plan = self.create_execution_plan()
+        impact = self.trace_impact(missing_datasets)
+        
+        all_orphaned: set[str] = set()
+        for steps in impact.values():
+            all_orphaned.update(steps)
+        
+        return [s for s in plan.steps_in_order if s not in all_orphaned]
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # VISUALIZATION
+    # ═══════════════════════════════════════════════════════════════════════
+
     def visualize(self) -> str:
         """
         Generate ASCII visualization of the execution plan.

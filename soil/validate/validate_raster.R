@@ -13,6 +13,7 @@
 
 library(rewildr)
 library(terra)
+terra::terraOptions(progress=0)
 
 args <- parse_primitive_args()
 

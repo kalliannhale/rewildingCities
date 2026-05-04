@@ -36,7 +36,7 @@ method             <- get_param(args$params, "method", "TPM-M")
 min_rings          <- as.integer(get_param(args$params, "min_rings", 2))
 lst_col            <- get_param(args$params, "lst_column", "lst_median")
 
-w <- warnings_collector()
+w <- warnings_collector("calculate_pci")
 
 with_primitive_error_handling({
 

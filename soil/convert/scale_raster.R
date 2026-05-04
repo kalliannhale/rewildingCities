@@ -12,6 +12,7 @@
 
 library(rewildr)
 library(terra)
+terra::terraOptions(progress=0)
 
 args <- parse_primitive_args()
 
@@ -22,7 +23,7 @@ offset <- as.numeric(get_param(args$params, "offset", 0))
 from_unit <- get_param(args$params, "from_unit", "unknown")
 to_unit <- get_param(args$params, "to_unit", "unknown")
 
-w <- warnings_collector()
+w <- warnings_collector("scale_raster")
 
 with_primitive_error_handling({
 

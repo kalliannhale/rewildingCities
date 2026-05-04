@@ -33,7 +33,7 @@ output_path     <- args$output
 id_field        <- get_param(args$params, "id_field", NULL)
 compute_fragstats <- as.logical(get_param(args$params, "compute_fragstats", FALSE))
 
-w <- warnings_collector()
+w <- warnings_collector("landscape_metrics")
 
 with_primitive_error_handling({
 

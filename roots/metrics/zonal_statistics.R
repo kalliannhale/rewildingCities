@@ -24,7 +24,7 @@ stat        <- get_param(args$params, "statistic", "median")
 id_fields   <- get_param(args$params, "id_fields", c("feature_id", "distance_m"))
 band        <- as.integer(get_param(args$params, "band", 1))
 
-w <- warnings_collector()
+w <- warnings_collector("zonal_statistics")
 
 with_primitive_error_handling({
 

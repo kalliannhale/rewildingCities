@@ -71,22 +71,14 @@ def visualize_experiment(experiment_path: str | Path) -> str:
 
 @dataclass
 class ManifestDataset:
-    """A dataset declared in a manifest.
-    
-    Stores everything the provider system and resolution engine need:
-    - Whether the data is available
-    - How to acquire it (source config)  
-    - Where it lives locally (cache config)
-    - What it means (semantic type)
-    - Quality and temporal context
-    """
+    """A dataset declared in a manifest."""
     name: str
-    path: str                           # relative cache path
+    path: str
     semantic_type: str
     format: str
     available: bool = False
-    source: dict | None = None          # full source config from manifest
-    cache: dict | None = None           # cache config
+    source: dict | None = None
+    cache: dict | None = None
     description: str = ""
     temporal: dict | None = None
     quality: dict | None = None
@@ -94,28 +86,24 @@ class ManifestDataset:
 
     @property
     def source_type(self) -> str | None:
-        """The acquisition source type (api, url, manual, earthengine, local)."""
         if self.source is None:
             return None
         return self.source.get("type")
     
     @property
     def provider_name(self) -> str | None:
-        """The provider name for API sources (socrata, arcgis_rest, etc.)."""
         if self.source is None:
             return None
         return self.source.get("provider")
     
     @property
     def is_auto_acquirable(self) -> bool:
-        """Whether this dataset can be acquired programmatically."""
         if self.source is None:
             return False
         return self.source_type in ("api", "url", "local", "stac", "s3")
     
     @property
     def requires_auth(self) -> bool:
-        """Whether acquisition requires authentication."""
         if self.source is None:
             return False
         auth = self.source.get("auth", {})
@@ -123,7 +111,6 @@ class ManifestDataset:
     
     @property 
     def requires_manual_action(self) -> bool:
-        """Whether this dataset needs human intervention to acquire."""
         return self.source_type in ("manual",)
 
 
@@ -131,19 +118,14 @@ class ManifestDataset:
 class ManifestInconsistency:
     """A detected inconsistency in the manifest's state."""
     dataset_name: str
-    issue: str          # "available_but_missing", "file_exists_but_unavailable"
+    issue: str
     path: str
     suggestion: str
 
 
 @dataclass
 class Manifest:
-    """A parsed city manifest.
-    
-    The manifest is the community's declaration of what data their 
-    pipeline contains — what it means, where it came from, and how
-    to get more of it.
-    """
+    """A parsed city manifest."""
     city_name: str
     city_id: str
     datasets: dict[str, ManifestDataset]
@@ -154,54 +136,35 @@ class Manifest:
     raw: dict = field(default_factory=dict)
 
     def available_datasets(self) -> dict[str, ManifestDataset]:
-        """Return only datasets marked as available."""
         return {k: v for k, v in self.datasets.items() if v.available}
     
     def unavailable_datasets(self) -> dict[str, ManifestDataset]:
-        """Return only datasets marked as unavailable."""
         return {k: v for k, v in self.datasets.items() if not v.available}
     
     def acquirable_datasets(self) -> dict[str, ManifestDataset]:
-        """Return unavailable datasets that can be auto-acquired."""
         return {k: v for k, v in self.datasets.items() 
                 if not v.available and v.is_auto_acquirable}
     
     def datasets_by_semantic_type(self, semantic_type: str) -> list[ManifestDataset]:
-        """Find all datasets matching a semantic type."""
         return [ds for ds in self.datasets.values() 
                 if ds.semantic_type == semantic_type]
     
     def check_consistency(self) -> list[ManifestInconsistency]:
-        """Check manifest state against filesystem reality.
-        
-        Returns list of inconsistencies found. Empty list = consistent.
-        """
         issues = []
         for name, ds in self.datasets.items():
             full_path = self.data_dir / ds.path
-            
             if ds.available and not full_path.exists():
                 issues.append(ManifestInconsistency(
-                    dataset_name=name,
-                    issue="available_but_missing",
+                    dataset_name=name, issue="available_but_missing",
                     path=str(full_path),
-                    suggestion=(
-                        f"File not found at {ds.path}. Either acquire the data "
-                        f"or set available: false in the manifest."
-                    )
+                    suggestion=f"File not found at {ds.path}. Either acquire the data or set available: false."
                 ))
-            
             if not ds.available and full_path.exists():
                 issues.append(ManifestInconsistency(
-                    dataset_name=name,
-                    issue="file_exists_but_unavailable",
+                    dataset_name=name, issue="file_exists_but_unavailable",
                     path=str(full_path),
-                    suggestion=(
-                        f"File exists at {ds.path} but manifest says unavailable. "
-                        f"Set available: true if this data is ready for analysis."
-                    )
+                    suggestion=f"File exists at {ds.path} but manifest says unavailable. Set available: true if ready."
                 ))
-        
         return issues
 
 
@@ -209,11 +172,11 @@ class Manifest:
 class StepDefinition:
     """A step in an experiment."""
     id: str
-    primitive: str  # e.g., "soil/validate_boundaries" or "roots/generate_buffers"
+    primitive: str
     version: str
     description: str
-    inputs: dict[str, str]   # input_name -> reference string
-    outputs: dict[str, str]  # output_name -> semantic_type
+    inputs: dict[str, str]
+    outputs: dict[str, str]
     params: dict[str, Any]
 
 
@@ -244,7 +207,7 @@ class Experiment:
 class PrimitiveSpec:
     """A primitive's specification from a registry."""
     name: str
-    path: str  # relative path within layer
+    path: str
     version: str
     inputs: list[dict]
     outputs: dict
@@ -297,14 +260,8 @@ class Method:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def parse_manifest(path: str | Path) -> Manifest:
-    """Parse a city manifest YAML file.
-    
-    Loads ALL datasets — available and unavailable — preserving 
-    full source configuration so the provider system can attempt
-    acquisition when needed.
-    """
+    """Parse a city manifest YAML file. Loads ALL datasets."""
     path = Path(path)
-    
     with open(path, 'r') as f:
         data = yaml.safe_load(f)
     
@@ -312,10 +269,8 @@ def parse_manifest(path: str | Path) -> Manifest:
     for name, ds_data in data.get("datasets", {}).items():
         cache_config = ds_data.get("cache", {})
         cache_path = cache_config.get("path", f".data/{name}.geojson")
-        
         datasets[name] = ManifestDataset(
-            name=name,
-            path=cache_path,
+            name=name, path=cache_path,
             semantic_type=ds_data.get("semantic_type", name),
             format=ds_data.get("format", "geojson"),
             available=ds_data.get("available", False),
@@ -329,30 +284,22 @@ def parse_manifest(path: str | Path) -> Manifest:
     
     crs_data = data.get("crs", {})
     gee_data = data.get("gee", {})
-    
     return Manifest(
-        city_name=data["city"]["name"],
-        city_id=data["city"]["id"],
-        datasets=datasets,
-        data_dir=path.parent,
-        manifest_path=path,
+        city_name=data["city"]["name"], city_id=data["city"]["id"],
+        datasets=datasets, data_dir=path.parent, manifest_path=path,
         crs_working=crs_data.get("working", ""),
-        gee_project=gee_data.get("project"),
-        raw=data,
+        gee_project=gee_data.get("project"), raw=data,
     )
 
 
 def parse_experiment(path: str | Path) -> Experiment:
     """Parse an experiment YAML file."""
     path = Path(path)
-    
     with open(path, 'r') as f:
         data = yaml.safe_load(f)
     
-    # Parse lineage from curiosity/method refs
     curiosity_data = data.get("curiosity", {})
     method_data = data.get("method", {})
-    
     lineage = Lineage(
         curiosity_ref=curiosity_data.get("ref", ""),
         sub_question=curiosity_data.get("sub_question"),
@@ -360,12 +307,10 @@ def parse_experiment(path: str | Path) -> Experiment:
         choices=data.get("choices", {})
     )
     
-    # Parse steps
     steps = []
     for step_data in data.get("steps", []):
         steps.append(StepDefinition(
-            id=step_data["id"],
-            primitive=step_data["primitive"],
+            id=step_data["id"], primitive=step_data["primitive"],
             version=step_data.get("version", "1.0.0"),
             description=step_data.get("description", ""),
             inputs=step_data.get("inputs", {}),
@@ -374,11 +319,9 @@ def parse_experiment(path: str | Path) -> Experiment:
         ))
     
     return Experiment(
-        id=data["id"],
-        name=data["name"],
+        id=data["id"], name=data["name"],
         description=data.get("description", ""),
-        lineage=lineage,
-        city=data["city"],
+        lineage=lineage, city=data["city"],
         manifest_path=data["manifest"],
         choices=data.get("choices", {}),
         parameters=data.get("parameters", {}),
@@ -389,7 +332,6 @@ def parse_experiment(path: str | Path) -> Experiment:
 def parse_method(path: str | Path) -> Method:
     """Parse a method YAML file."""
     path = Path(path)
-    
     with open(path, 'r') as f:
         data = yaml.safe_load(f)
     
@@ -416,21 +358,7 @@ class Orchestrator:
     """
     Executes experiments against city manifests.
     
-    Example:
-        orchestrator = Orchestrator(
-            experiment_path="garden/experiments/nyc_park_cooling_pedestrian.yml",
-            profile="dev"
-        )
-        
-        result = orchestrator.run()
-        
-        if result.success:
-            print(f"Completed {len(result.completed_steps)} steps")
-            for step_id, envelope in result.final_envelopes.items():
-                print(f"  {step_id}: {envelope.data['path']}")
-        else:
-            print(f"Failed at step: {result.failed_step}")
-            print(f"Error: {result.error}")
+    Three-phase execution: validate → resolve data → execute steps.
     """
     
     def __init__(
@@ -440,15 +368,6 @@ class Orchestrator:
         project_root: str | Path | None = None,
         output_dir: str | Path | None = None
     ):
-        """
-        Initialize the orchestrator.
-        
-        Args:
-            experiment_path: Path to experiment YAML file
-            profile: Execution profile ("full", "dev", "test")
-            project_root: Project root directory (defaults to cwd)
-            output_dir: Override output directory (defaults to plot's .data/)
-        """
         self.project_root = Path(project_root) if project_root else Path.cwd()
         self.experiment_path = Path(experiment_path)
         self.profile = profile
@@ -456,16 +375,15 @@ class Orchestrator:
         # Parse experiment
         self.experiment = parse_experiment(experiment_path)
         
-        # Parse manifest (path is relative to project root)
+        # Parse manifest
         manifest_path = self.experiment_path.parent / self.experiment.manifest_path
         self.manifest = parse_manifest(manifest_path)
         
-        # Set up output directories
+        # Output directories
         if output_dir:
             self.output_dir = Path(output_dir)
         else:
             self.output_dir = self.manifest.data_dir / ".data"
-        
         self.envelope_dir = self.manifest.data_dir / ".envelopes"
         
         # Initialize managers
@@ -475,10 +393,10 @@ class Orchestrator:
         )
         
         # Build execution plan
-        dependency_resolver = DependencyResolver(self.experiment)
-        self.plan = dependency_resolver.create_execution_plan()
+        self._dependency_resolver = DependencyResolver(self.experiment)
+        self.plan = self._dependency_resolver.create_execution_plan()
         
-        # Reference resolver (populated as steps complete)
+        # Reference resolver
         self.reference_resolver = ReferenceResolver(
             manifest=self.manifest,
             experiment=self.experiment
@@ -488,26 +406,28 @@ class Orchestrator:
         self.envelope_builder = EnvelopeBuilder(
             profile=profile,
             project_root=self.project_root
-            )
+        )
         
-        # Track timing
+        # Provider registry
+        from canopy.providers import create_default_registry
+        self.provider_registry = create_default_registry()
+        
+        # Track timing and resolution
         self._run_started: datetime | None = None
+        self._resolution_report = None
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 1: VALIDATION
+    # ═══════════════════════════════════════════════════════════════════════
     
     def validate(self) -> tuple[list[str], list[str]]:
-        """
-        Validate the experiment before running.
-        
-        Returns:
-            Tuple of (errors, warnings). Errors are fatal; warnings are informational.
-        """
+        """Validate the experiment before running."""
         errors = []
         warnings = []
         
-        # Validate all primitives exist
         primitive_errors = self.registry.validate_all_primitives(self.experiment)
         errors.extend(primitive_errors)
         
-        # Validate manifest has required datasets
         for step in self.experiment.steps:
             for input_name, ref in step.inputs.items():
                 if ref.startswith("$manifest."):
@@ -518,38 +438,24 @@ class Orchestrator:
                             f"but manifest has no dataset '{dataset_name}'"
                         )
         
-        # Validate choices exist for all $choices references
         for step in self.experiment.steps:
             self._validate_param_references(step, errors)
         
-        # Validate choices against method (warnings, not errors)
         self._validate_method_choices(warnings)
         
         return errors, warnings
     
-    def _validate_param_references(
-        self, 
-        step: StepDefinition, 
-        errors: list[str]
-    ) -> None:
-        """Check that all $choices and $parameters references are valid."""
-        
+    def _validate_param_references(self, step: StepDefinition, errors: list[str]) -> None:
         def check_value(value: Any, path: str) -> None:
             if isinstance(value, str):
                 if value.startswith("$choices."):
                     choice_name = value.replace("$choices.", "")
                     if choice_name not in self.experiment.choices:
-                        errors.append(
-                            f"Step '{step.id}' param {path} references "
-                            f"$choices.{choice_name}, but no such choice exists"
-                        )
+                        errors.append(f"Step '{step.id}' param {path} references $choices.{choice_name}, but no such choice exists")
                 elif value.startswith("$parameters."):
                     param_name = value.replace("$parameters.", "")
                     if param_name not in self.experiment.parameters:
-                        errors.append(
-                            f"Step '{step.id}' param {path} references "
-                            f"$parameters.{param_name}, but no such parameter exists"
-                        )
+                        errors.append(f"Step '{step.id}' param {path} references $parameters.{param_name}, but no such parameter exists")
             elif isinstance(value, list):
                 for i, item in enumerate(value):
                     check_value(item, f"{path}[{i}]")
@@ -561,86 +467,101 @@ class Orchestrator:
             check_value(param_value, param_name)
     
     def _validate_method_choices(self, warnings: list[str]) -> None:
-        """Check experiment choices against method's declared options."""
         method_ref = self.experiment.lineage.method_ref
-        
         if not method_ref:
             return
         
-        # Resolve method path from reference
-        # Reference format: $methods/thermal/buffer_gradient_analysis
         method_path = self._resolve_method_path(method_ref)
-        
         if not method_path.exists():
-            warnings.append(
-                f"Method file not found: {method_path}. "
-                f"Choice validation skipped."
-            )
+            warnings.append(f"Method file not found: {method_path}. Choice validation skipped.")
             return
         
         try:
             method = parse_method(method_path)
         except Exception as e:
-            warnings.append(
-                f"Could not parse method file {method_path}: {e}. "
-                f"Choice validation skipped."
-            )
+            warnings.append(f"Could not parse method file {method_path}: {e}. Choice validation skipped.")
             return
         
-        # Check each experiment choice against method options
         for choice_name, choice_value in self.experiment.choices.items():
             if choice_name not in method.choices:
-                warnings.append(
-                    f"Choice '{choice_name}' not declared in method '{method.name}'. "
-                    f"This may be intentional experimentation."
-                )
+                warnings.append(f"Choice '{choice_name}' not declared in method '{method.name}'.")
             elif choice_value not in method.choices[choice_name].options:
-                warnings.append(
-                    f"Choice '{choice_name}: {choice_value}' not in method options "
-                    f"{method.choices[choice_name].options}. "
-                    f"Proceeding anyway."
-                )
+                warnings.append(f"Choice '{choice_name}: {choice_value}' not in method options {method.choices[choice_name].options}.")
         
-        # Check for required method choices not provided
         for choice_name in method.choices:
             if choice_name not in self.experiment.choices:
-                warnings.append(
-                    f"Method '{method.name}' declares choice '{choice_name}', "
-                    f"but experiment does not provide it. Default may be used."
-                )
+                warnings.append(f"Method '{method.name}' declares choice '{choice_name}', but experiment does not provide it.")
     
     def _resolve_method_path(self, method_ref: str) -> Path:
-        """Resolve a method reference to a file path."""
-        # Strip $methods/ prefix if present
         if method_ref.startswith("$methods/"):
             method_ref = method_ref[9:]
-        
-        # Add .yml extension if not present
         if not method_ref.endswith(".yml"):
             method_ref = f"{method_ref}.yml"
-        
         return self.project_root / "garden" / "methods" / method_ref
     
-    def run(self) -> OrchestrationResult:
-        """
-        Execute the experiment.
+    def _load_method_data(self) -> dict:
+        """Load raw method YAML for the Resolution Engine."""
+        method_ref = self.experiment.lineage.method_ref
+        if not method_ref:
+            return {}
+        method_path = self._resolve_method_path(method_ref)
+        if not method_path.exists():
+            return {}
+        try:
+            with open(method_path, 'r') as f:
+                return yaml.safe_load(f)
+        except Exception:
+            return {}
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 2: DATA RESOLUTION
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    def resolve_data(self):
+        """Check data availability, acquire missing, produce advisory report.
+        
+        Delegates to the Resolution Engine, which composes answers from
+        the manifest, DAG, method, and provider registry.
         
         Returns:
-            OrchestrationResult with success status, completed steps, 
-            and final envelopes (or error information if failed)
+            ResolutionReport
         """
+        from .resolution import ResolutionEngine
+        
+        engine = ResolutionEngine(
+            manifest=self.manifest,
+            experiment=self.experiment,
+            provider_registry=self.provider_registry,
+            dependency_resolver=self._dependency_resolver,
+            method_data=self._load_method_data(),
+        )
+        
+        report = engine.resolve()
+        self._resolution_report = report
+        
+        # Commit manifest transaction if there were successful acquisitions
+        if report.transaction and report.transaction.has_changes:
+            tx_result = report.transaction.commit()
+            if not tx_result.success:
+                report.summary += f" (Warning: manifest update had failures: {tx_result.changes_failed})"
+        
+        return report
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 3: EXECUTION
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    def run(self) -> OrchestrationResult:
+        """Execute the experiment in three phases: validate → resolve → execute."""
         self._run_started = datetime.now(timezone.utc)
         
-        # Validate first
+        # ── Phase 1: Validate ──
         validation_errors, validation_warnings = self.validate()
         
         if validation_errors:
             result = OrchestrationResult(
-                success=False,
-                completed_steps=[],
-                failed_step=None,
-                step_results={},
-                final_envelopes={},
+                success=False, completed_steps=[], failed_step=None,
+                step_results={}, final_envelopes={},
                 lineage=self.experiment.lineage,
                 warnings=validation_warnings,
                 error="Validation failed:\n" + "\n".join(f"  - {e}" for e in validation_errors)
@@ -648,26 +569,50 @@ class Orchestrator:
             self._write_run_log(result)
             return result
         
-        # Ensure output directories exist
+        # ── Phase 2: Resolve data ──
+        data_report = self.resolve_data()
+        
+        if not data_report.can_proceed:
+            error_lines = [data_report.summary, ""]
+            for r in data_report.failed:
+                error_lines.append(f"  ✗ {r.dataset_name} ({r.semantic_type}): {r.message}")
+                if r.instructions:
+                    for line in r.instructions.strip().split("\n"):
+                        error_lines.append(f"    {line}")
+                if r.orphaned_steps:
+                    error_lines.append(f"    Blocks steps: {', '.join(r.orphaned_steps)}")
+                error_lines.append("")
+            
+            result = OrchestrationResult(
+                success=False, completed_steps=[], failed_step=None,
+                step_results={}, final_envelopes={},
+                lineage=self.experiment.lineage,
+                warnings=validation_warnings + [data_report.summary],
+                error="\n".join(error_lines)
+            )
+            self._write_run_log(result)
+            return result
+        
+        # Log acquisitions
+        for r in data_report.acquired:
+            validation_warnings.append(f"Acquired '{r.dataset_name}': {r.message}")
+        
+        # ── Phase 3: Execute steps ──
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.envelope_dir.mkdir(parents=True, exist_ok=True)
         
-        # Execute steps in order
         step_results: dict[str, StepResult] = {}
         completed_steps: list[str] = []
         
         for step_id in self.plan.steps_in_order:
             step = self._get_step(step_id)
-            
             step_result = self._execute_step(step)
             step_results[step_id] = step_result
             
             if not step_result.success:
                 result = OrchestrationResult(
-                    success=False,
-                    completed_steps=completed_steps,
-                    failed_step=step_id,
-                    step_results=step_results,
+                    success=False, completed_steps=completed_steps,
+                    failed_step=step_id, step_results=step_results,
                     final_envelopes=self._collect_final_envelopes(step_results),
                     lineage=self.experiment.lineage,
                     warnings=validation_warnings,
@@ -678,153 +623,93 @@ class Orchestrator:
             
             completed_steps.append(step_id)
         
-        # Success — enrich final envelopes with lineage
+        # Success
         final_envelopes = self._collect_final_envelopes(step_results)
         self._enrich_with_lineage(final_envelopes)
         
         result = OrchestrationResult(
-            success=True,
-            completed_steps=completed_steps,
-            failed_step=None,
-            step_results=step_results,
+            success=True, completed_steps=completed_steps,
+            failed_step=None, step_results=step_results,
             final_envelopes=final_envelopes,
             lineage=self.experiment.lineage,
-            warnings=validation_warnings,
-            error=None
+            warnings=validation_warnings, error=None
         )
         self._write_run_log(result)
         return result
     
+    # ═══════════════════════════════════════════════════════════════════════
+    # STEP EXECUTION
+    # ═══════════════════════════════════════════════════════════════════════
+    
     def _get_step(self, step_id: str) -> StepDefinition:
-        """Get step definition by ID."""
         for step in self.experiment.steps:
             if step.id == step_id:
                 return step
         raise ValueError(f"Unknown step: {step_id}")
     
     def _execute_step(self, step: StepDefinition) -> StepResult:
-        """Execute a single step."""
-        
-        # Resolve primitive path
         try:
             primitive_path, primitive_spec = self.registry.resolve_primitive(step.primitive)
         except (ValueError, FileNotFoundError) as e:
-            return StepResult(
-                step_id=step.id,
-                success=False,
-                envelope=None,
-                output_paths={},
-                error="Primitive resolution failed",
-                message=str(e)
-            )
+            return StepResult(step_id=step.id, success=False, envelope=None, output_paths={}, error="Primitive resolution failed", message=str(e))
         
-        # Resolve inputs
         try:
             resolved_inputs = self.reference_resolver.resolve_step_inputs(step)
         except (ValueError, FileNotFoundError) as e:
-            return StepResult(
-                step_id=step.id,
-                success=False,
-                envelope=None,
-                output_paths={},
-                error="Input resolution failed",
-                message=str(e)
-            )
+            return StepResult(step_id=step.id, success=False, envelope=None, output_paths={}, error="Input resolution failed", message=str(e))
         
-        # Build EnvelopeInputs
         envelope_inputs = []
         for input_name, (path, semantic_type, envelope) in resolved_inputs.items():
             envelope_inputs.append(EnvelopeInput(
-                name=input_name,
-                envelope=envelope,
+                name=input_name, envelope=envelope,
                 path=path if envelope is None else None,
                 semantic_type=semantic_type if envelope is None else None
             ))
         
-        # Resolve params
         try:
             resolved_params = self.reference_resolver.resolve_step_params(step)
         except ValueError as e:
-            return StepResult(
-                step_id=step.id,
-                success=False,
-                envelope=None,
-                output_paths={},
-                error="Parameter resolution failed",
-                message=str(e)
-            )
+            return StepResult(step_id=step.id, success=False, envelope=None, output_paths={}, error="Parameter resolution failed", message=str(e))
         
-        # Determine output path and format
         if len(step.outputs) != 1:
-            return StepResult(
-                step_id=step.id,
-                success=False,
-                envelope=None,
-                output_paths={},
-                error="Invalid step definition",
-                message=f"Currently only single-output steps supported. "
-                        f"Step '{step.id}' has {len(step.outputs)} outputs."
-            )
+            return StepResult(step_id=step.id, success=False, envelope=None, output_paths={}, error="Invalid step definition", message=f"Currently only single-output steps supported. Step '{step.id}' has {len(step.outputs)} outputs.")
         
         output_name, output_semantic_type = list(step.outputs.items())[0]
         output_format = self._infer_format(output_semantic_type)
         output_path = self.output_dir / f"{step.id}_{output_name}.{output_format}"
         
-        # Run the primitive via EnvelopeBuilder
         build_result = self.envelope_builder.run(
-            primitive=primitive_path,
-            version=step.version,
-            inputs=envelope_inputs,
-            output_path=output_path,
-            output_format=output_format,
-            output_semantic_type=output_semantic_type,
+            primitive=primitive_path, version=step.version,
+            inputs=envelope_inputs, output_path=output_path,
+            output_format=output_format, output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
-            params=resolved_params,
-            passthrough=primitive_spec.passthrough
+            params=resolved_params, passthrough=primitive_spec.passthrough
         )
         
         if not build_result.success:
-            return StepResult(
-                step_id=step.id,
-                success=False,
-                envelope=None,
-                output_paths={},
-                error=build_result.error,
-                message=build_result.message
-            )
+            return StepResult(step_id=step.id, success=False, envelope=None, output_paths={}, error=build_result.error, message=build_result.message)
         
-        # Register output for future steps
         self.reference_resolver.register_step_output(
-            step_id=step.id,
-            output_name=output_name,
-            path=str(output_path),
-            envelope=build_result.envelope
+            step_id=step.id, output_name=output_name,
+            path=str(output_path), envelope=build_result.envelope
         )
         
-        # Write envelope
         envelope_path = self.envelope_dir / f"{step.id}_{output_name}.envelope.json"
         write_envelope(build_result.envelope, envelope_path)
         
-        return StepResult(
-            step_id=step.id,
-            success=True,
-            envelope=build_result.envelope,
-            output_paths={output_name: str(output_path)}
-        )
+        return StepResult(step_id=step.id, success=True, envelope=build_result.envelope, output_paths={output_name: str(output_path)})
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    # HELPERS
+    # ═══════════════════════════════════════════════════════════════════════
     
     def _infer_format(self, semantic_type: str) -> str:
-        """Get output format from semantic type registry."""
         return self.semantic_types.get_format(semantic_type)
     
     def _infer_category(self, semantic_type: str) -> str:
-        """Get data category from semantic type registry."""
         return self.semantic_types.get_category(semantic_type)
     
-    def _collect_final_envelopes(
-        self,
-        step_results: dict[str, StepResult]
-    ) -> dict[str, Envelope]:
-        """Collect all successfully produced envelopes."""
+    def _collect_final_envelopes(self, step_results: dict[str, StepResult]) -> dict[str, Envelope]:
         envelopes = {}
         for step_id, result in step_results.items():
             if result.success and result.envelope:
@@ -832,7 +717,7 @@ class Orchestrator:
         return envelopes
     
     def _enrich_with_lineage(self, envelopes: dict[str, Envelope]) -> None:
-        """Add scientific lineage to final envelopes' metadata."""
+        """Add scientific lineage and resolution context to final envelopes."""
         lineage_dict = {
             "curiosity": self.experiment.lineage.curiosity_ref,
             "sub_question": self.experiment.lineage.sub_question,
@@ -841,55 +726,40 @@ class Orchestrator:
             "parameters": self.experiment.parameters
         }
         
+        # Add resolution context if available
+        if self._resolution_report:
+            lineage_dict["data_resolution"] = self._resolution_report.to_envelope_context()
+        
         for envelope in envelopes.values():
             envelope.metadata["lineage"] = lineage_dict
     
     def _write_run_log(self, result: OrchestrationResult) -> None:
-        """Write run log to compost/logs/."""
         timestamp_str = self._run_started.strftime("%Y%m%d_%H%M%S")
         
-        # Build step summaries
         step_summaries = []
         for step_id in self.plan.steps_in_order:
             if step_id not in result.step_results:
                 continue
-            
             step_result = result.step_results[step_id]
-            
-            # Extract duration from envelope provenance if available
             duration = None
             warning_count = 0
             if step_result.envelope:
                 if step_result.envelope.provenance:
                     duration = step_result.envelope.provenance[-1].duration_seconds
                 warning_count = len(step_result.envelope.warnings)
-            
             step_summaries.append({
-                "id": step_id,
-                "success": step_result.success,
-                "duration_seconds": duration,
-                "warning_count": warning_count,
+                "id": step_id, "success": step_result.success,
+                "duration_seconds": duration, "warning_count": warning_count,
                 "error": step_result.error
             })
         
         log = {
             "run_id": f"{self.experiment.id}_{timestamp_str}",
-            "experiment": {
-                "id": self.experiment.id,
-                "name": self.experiment.name,
-                "path": str(self.experiment_path)
-            },
+            "experiment": {"id": self.experiment.id, "name": self.experiment.name, "path": str(self.experiment_path)},
             "city": self.experiment.city,
             "profile": self.profile,
-            "timing": {
-                "started": self._run_started.isoformat(),
-                "completed": datetime.now(timezone.utc).isoformat()
-            },
-            "result": {
-                "success": result.success,
-                "failed_step": result.failed_step,
-                "error": result.error
-            },
+            "timing": {"started": self._run_started.isoformat(), "completed": datetime.now(timezone.utc).isoformat()},
+            "result": {"success": result.success, "failed_step": result.failed_step, "error": result.error},
             "validation_warnings": result.warnings,
             "steps": step_summaries,
             "summary": {
@@ -899,10 +769,8 @@ class Orchestrator:
             }
         }
         
-        # Write to compost/logs/
         log_dir = self.project_root / "compost" / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / f"{log['run_id']}.yml"
-        
         with open(log_path, 'w') as f:
             yaml.dump(log, f, default_flow_style=False, sort_keys=False)

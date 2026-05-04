@@ -1,0 +1,79 @@
+{
+  "data": {
+    "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+    "format": "tiff",
+    "secondary": {}
+  },
+  "metadata": {
+    "resolution_m": 30,
+    "dimensions": {
+      "rows": 7781,
+      "cols": 7661
+    },
+    "bbox": [
+      527085,
+      756915,
+      4348785,
+      4582215
+    ],
+    "band_count": 1,
+    "nodata_percentage": 31.62,
+    "value_range": {
+      "min": "Inf",
+      "max": "-Inf"
+    },
+    "dtype": "FLT4S",
+    "crs": "EPSG:32618",
+    "nodata_percent": 31.6,
+    "value_range.1": [
+      9.1767,
+      55.2892
+    ],
+    "expected_units": {},
+    "passthrough": true,
+    "original_path": "plots/nyc/experiments/../.data/lst_summer.tif",
+    "semantic_type": "lst_checked",
+    "data_category": "raster"
+  },
+  "provenance": [
+    {
+      "primitive": "validate_raster",
+      "version": "1.0.0",
+      "timestamp": "2026-05-04T02:42:29.755039+00:00",
+      "params": {
+        "max_nodata_percent": 20
+      },
+      "inputs": [
+        {
+          "name": "raster",
+          "semantic_type": "land_surface_temperature",
+          "path": "plots/nyc/experiments/../.data/lst_summer.tif",
+          "hash": {
+            "value": "31bcb67119675065fced8be7bd4518d5",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.698,
+      "lineage_branch": null
+    }
+  ],
+  "warnings": [
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "CRS: EPSG:32618 (WGS 84 / UTM zone 18N)"
+    },
+    {
+      "level": "info",
+      "primitive": "validate_raster",
+      "message": "Resolution: 30.00 x 30.00 map units"
+    },
+    {
+      "level": "critical",
+      "primitive": "validate_raster",
+      "message": "NoData is 31.6% (threshold: 20%). Results may be unreliable."
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 {
   "data": {
-    "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/repair_parks_repaired.geojson",
+    "path": "plots/nyc/experiments/../.data/repair_parks_repaired.geojson",
     "format": "geojson",
     "secondary": {}
   },
   "metadata": {
-    "feature_count": 2055,
+    "feature_count": 2058,
     "geometry_type": [
-      "MULTIPOLYGON",
-      "POLYGON"
+      "POLYGON",
+      "MULTIPOLYGON"
     ],
     "bbox": [
       -74.2561,
@@ -16,94 +16,89 @@
       -73.7091,
       40.9113
     ],
+    "crs": "EPSG:4326",
     "attribute_fields": [
-      "X.id",
-      "X.version",
-      "X.created_at",
-      "X.updated_at",
-      "acquisitiondate",
-      "acres",
-      "address",
-      "borough",
-      "class",
-      "communityboard",
-      "councildistrict",
-      "department",
-      "eapply",
-      "gisobjid",
-      "gispropnum",
-      "globalid",
       "jurisdiction",
-      "location",
       "mapped",
-      "name311",
+      "zipcode",
+      "acres",
+      "location",
       "nys_assembly",
-      "nys_senate",
-      "objectid",
-      "omppropid",
-      "parentid",
-      "permit",
-      "permitdistrict",
-      "permitparent",
-      "pip_ratable",
-      "precinct",
-      "retired",
-      "signname",
-      "subcategory",
+      "councildistrict",
       "typecategory",
       "us_congress",
-      "waterfront",
-      "zipcode"
+      "parentid",
+      "gispropnum",
+      "retired",
+      "communityboard",
+      "objectid",
+      "globalid",
+      "name311",
+      "department",
+      "pip_ratable",
+      "subcategory",
+      "precinct",
+      "permit",
+      "acquisitiondate",
+      "omppropid",
+      "gisobjid",
+      "signname",
+      "address",
+      "permitparent",
+      "class",
+      "nys_senate",
+      "permitdistrict",
+      "borough",
+      "waterfront"
     ],
-    "total_area_m2": 117215859.2585,
-    "crs": "EPSG:4326",
+    "total_area_m2": 117128680.8996,
     "repair": {
       "invalid_before": 14,
       "invalid_after": 0,
       "repaired_count": 14
     },
-    "semantic_type": "park_boundaries",
+    "semantic_type": "park_boundaries_repaired",
     "data_category": "vector"
   },
   "provenance": [
     {
       "primitive": "validate_vector",
       "version": "1.0.0",
-      "timestamp": "2025-12-11T09:02:49.433058+00:00",
+      "timestamp": "2026-05-04T02:42:55.898628+00:00",
       "params": {},
       "inputs": [
         {
           "name": "features",
           "semantic_type": "park_boundaries",
-          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+          "path": "plots/nyc/experiments/../.data/parks.geojson",
           "hash": {
-            "value": "f5b956d6ef71e62bf3c5cdbf1c715239",
+            "value": "75e568631850cf3254098fdbc972b0b1",
             "method": "metadata",
             "algorithm": "md5"
           }
         }
       ],
-      "duration_seconds": 1.257,
+      "duration_seconds": 0.607,
       "lineage_branch": "features"
     },
     {
       "primitive": "repair_geometry",
       "version": "1.0.0",
-      "timestamp": "2025-12-11T09:02:51.252779+00:00",
+      "timestamp": "2026-05-04T02:42:56.756693+00:00",
       "params": {},
       "inputs": [
         {
           "name": "features",
-          "semantic_type": "park_boundaries",
-          "path": "/Users/kalliann/rewildingCities/plots/nyc/.data/parks.geojson",
+          "semantic_type": "park_boundaries_checked",
+          "path": "plots/nyc/experiments/../.data/parks.geojson",
           "hash": {
-            "value": "f5b956d6ef71e62bf3c5cdbf1c715239",
+            "value": "75e568631850cf3254098fdbc972b0b1",
             "method": "metadata",
             "algorithm": "md5"
           }
         }
       ],
-      "duration_seconds": 1.816,
+      "duration_seconds": 0.857,
       "lineage_branch": null
     }
   ],
@@ -111,7 +106,7 @@
     {
       "level": "info",
       "primitive": "validate_vector",
-      "message": "Feature count: 2055"
+      "message": "Feature count: 2058"
     },
     {
       "level": "info",
@@ -131,7 +126,7 @@
     {
       "level": "info",
       "primitive": "repair_geometry",
-      "message": "Loaded 2055 features"
+      "message": "Loaded 2058 features"
     },
     {
       "level": "info",

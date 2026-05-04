@@ -34,7 +34,7 @@ control_vars <- get_param(args$params, "control_vars", NULL)
 n_boot       <- as.integer(get_param(args$params, "n_boot", 1000))
 conf_level   <- as.numeric(get_param(args$params, "conf_level", 0.95))
 
-w <- warnings_collector()
+w <- warnings_collector("correlation_analysis")
 
 with_primitive_error_handling({
 

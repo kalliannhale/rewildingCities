@@ -87,20 +87,20 @@ types:
   
   land_surface_temperature:
     category: raster
-    format: tif
+    format: tiff
     description: LST derived from thermal satellite imagery
     typical_units: celsius
   
   ndvi:
     category: raster
-    format: tif
+    format: tiff
     description: Normalized Difference Vegetation Index
     typical_units: index
     value_range: [-1, 1]
   
   land_cover:
     category: raster
-    format: tif
+    format: tiff
     description: Categorical land cover classification
     measurement_type: categorical
   
@@ -135,3 +135,76 @@ types:
     category: tabular
     format: parquet
     description: Proportional area of each land cover class within zones
+
+  # ────────────────────────────────────────────────────────────
+  # Intermediate processing types
+  # Track data through the soil preparation pipeline.
+  # The provenance chain documents what happened; the semantic
+  # type documents what state the data is in.
+  # ────────────────────────────────────────────────────────────
+
+  # Park boundary processing states
+  park_boundaries_checked:
+    category: vector
+    format: geojson
+    description: Park boundaries after validation diagnostic (passthrough)
+    parent_type: park_boundaries
+
+  park_boundaries_repaired:
+    category: vector
+    format: geojson
+    description: Park boundaries with invalid geometries repaired via st_make_valid
+    parent_type: park_boundaries
+
+  park_boundaries_reprojected:
+    category: vector
+    format: geojson
+    description: Park boundaries transformed to analysis CRS
+    parent_type: park_boundaries
+
+  park_boundaries_filtered:
+    category: vector
+    format: geojson
+    description: Park boundaries filtered by area threshold
+    parent_type: park_boundaries
+
+  # LST processing states
+  lst_checked:
+    category: raster
+    format: tiff
+    description: LST raster after validation diagnostic (passthrough)
+    parent_type: land_surface_temperature
+
+  lst_scaled:
+    category: raster
+    format: tiff
+    description: LST raster with DN values converted to Celsius
+    typical_units: celsius
+    parent_type: land_surface_temperature
+
+  lst_reprojected:
+    category: raster
+    format: tiff
+    description: LST raster transformed to analysis CRS
+    typical_units: celsius
+    parent_type: land_surface_temperature
+
+  lst_cropped:
+    category: raster
+    format: tiff
+    description: LST raster cropped to study area extent
+    typical_units: celsius
+    parent_type: land_surface_temperature
+
+  # Zonal statistics variants
+  park_temperatures:
+    category: tabular
+    format: parquet
+    description: Temperature statistics inside park boundaries (baseline for PCI)
+    parent_type: zonal_statistics
+
+  buffer_temperatures:
+    category: tabular
+    format: parquet
+    description: Temperature statistics per buffer ring (gradient for PCI)
+    parent_type: zonal_statistics

@@ -21,7 +21,7 @@ output_path <- args$output
 params <- args$params
 
 # --- Initialize warnings collector ---
-w <- warnings_collector()
+w <- warnings_collector("repair_geometry")
 
 # --- Load vector data ---
 sf_obj <- tryCatch(

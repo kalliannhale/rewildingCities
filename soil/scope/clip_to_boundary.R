@@ -17,7 +17,7 @@ boundary_path <- get_input(args$inputs, "boundary")
 output_path   <- args$output
 method        <- get_param(args$params, "method", "filter")
 
-w <- warnings_collector()
+w <- warnings_collector("clip_to_boundary")
 
 with_primitive_error_handling({
 

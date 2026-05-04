@@ -30,7 +30,7 @@ if (is.null(target_crs)) {
 }
 
 # --- Initialize warnings collector ---
-w <- warnings_collector()
+w <- warnings_collector("reproject_vector")
 
 # --- Load vector data ---
 sf_obj <- tryCatch(
