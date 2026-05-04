@@ -216,25 +216,68 @@ class ReferenceResolver:
         dataset_name: str, 
         context: str = ""
     ) -> tuple[str, str, None]:
-        """Resolve a reference to a manifest dataset."""
+        """Resolve a reference to a manifest dataset.
+        
+        Now checks the available flag and provides clear advisory
+        messages when data is unavailable or missing from disk.
+        """
         context_msg = f" (in {context})" if context else ""
         
+        # Check if dataset is declared at all
         if dataset_name not in self.manifest.datasets:
-            available = ", ".join(sorted(self.manifest.datasets.keys())) or "(none)"
+            declared = ", ".join(sorted(self.manifest.datasets.keys())) or "(none)"
             raise ValueError(
                 f"Manifest has no dataset '{dataset_name}'{context_msg}. "
-                f"Available datasets in {self.manifest.city_id} manifest: {available}"
+                f"Declared datasets in {self.manifest.city_id} manifest: {declared}"
             )
         
         dataset = self.manifest.datasets[dataset_name]
+        
+        # Check availability flag
+        if not dataset.available:
+            # Build helpful message based on what we know about the source
+            if dataset.is_auto_acquirable:
+                hint = (
+                    f"This dataset can be auto-acquired. "
+                    f"Run the experiment with --resolve-only to attempt acquisition."
+                )
+            elif dataset.requires_auth:
+                hint = (
+                    f"This dataset requires authentication "
+                    f"(source type: {dataset.source_type}). "
+                    f"Run with --resolve-only for setup instructions."
+                )
+            elif dataset.requires_manual_action:
+                notes = dataset.source.get("notes", "") if dataset.source else ""
+                hint = (
+                    f"This dataset requires manual acquisition. "
+                    f"{notes}"
+                )
+            elif dataset.source is None:
+                hint = (
+                    f"No source configuration exists for this dataset. "
+                    f"Add a 'source:' block to the manifest to enable acquisition."
+                )
+            else:
+                hint = (
+                    f"Source type: {dataset.source_type}. "
+                    f"Run with --resolve-only to attempt acquisition."
+                )
+            
+            raise ValueError(
+                f"Dataset '{dataset_name}' is declared but not available{context_msg}. "
+                f"{hint}"
+            )
+        
+        # Dataset is available — check file exists on disk
         path = str(self.manifest.data_dir / dataset.path)
         
-        # Validate file exists
         if not Path(path).exists():
             raise FileNotFoundError(
-                f"Dataset '{dataset_name}' declared in manifest but file not found{context_msg}. "
+                f"Dataset '{dataset_name}' is marked available but file not found{context_msg}. "
                 f"Expected path: {path}\n"
-                f"Run data fetch/download first, or check manifest cache path."
+                f"The manifest and filesystem are inconsistent. "
+                f"Run with --resolve-only to reconcile, or verify the cache path in the manifest."
             )
         
         return path, dataset.semantic_type, None

@@ -1,0 +1,96 @@
+# ============================================================
+# ESA WorldCover 10m → Blue/Green/Grey Crosswalk
+# seeds/crosswalks/land_cover/esa_worldcover_to_standard.yml
+# ============================================================
+# Maps ESA WorldCover 2021 (v200) 11-class global land cover
+# to the 3-class system used for buffer zone characterization.
+#
+# This is the DEFAULT crosswalk for any city worldwide.
+# City-specific high-resolution crosswalks (NYC LiDAR, MassGIS)
+# can override this when available.
+# ============================================================
+
+from: "ESA WorldCover 2021 v200"
+to: "Blue-Green-Grey (Xiao et al. 2023)"
+
+description: >
+  Maps the ESA WorldCover 10m global land cover product to three
+  landscape categories for thermal analysis. This crosswalk works
+  for any city on Earth, making it the default for communities
+  that don't have city-specific high-resolution land cover data.
+
+source_scheme:
+  name: "ESA WorldCover 2021 v200"
+  provider: "ESA / Esri / Impact Observatory"
+  year: 2021
+  resolution: "10m"
+  url: "https://esa-worldcover.org/"
+  classes:
+    10: "Tree cover"
+    20: "Shrubland"
+    30: "Grassland"
+    40: "Cropland"
+    50: "Built-up"
+    60: "Bare / sparse vegetation"
+    70: "Snow and ice"
+    80: "Permanent water bodies"
+    90: "Herbaceous wetland"
+    95: "Mangroves"
+    100: "Moss and lichen"
+
+target_scheme:
+  name: "Blue-Green-Grey"
+  reference: "Xiao, Y. et al. (2023). Science of the Total Environment, 868, 161463."
+  classes:
+    vegetation: "Green landscape — trees, shrubs, grass, crops, wetlands"
+    water: "Blue landscape — permanent water bodies"
+    impervious: "Grey landscape — built-up surfaces"
+
+mappings:
+  vegetation:
+    - 10   # Tree cover
+    - 20   # Shrubland
+    - 30   # Grassland
+    - 40   # Cropland
+    - 90   # Herbaceous wetland
+    - 95   # Mangroves
+  water:
+    - 80   # Permanent water bodies
+  impervious:
+    - 50   # Built-up
+
+unmapped:
+  60:
+    name: "Bare / sparse vegetation"
+    rationale: >
+      Thermally similar to impervious surfaces (high albedo, no
+      evapotranspiration) but ecologically distinct. In urban
+      contexts often represents vacant lots or construction sites.
+    alternative_mappings:
+      - target: impervious
+        rationale: "Thermal behavior closer to grey"
+      - target: vegetation
+        rationale: "Ecologically, bare soil is potential green space"
+  70:
+    name: "Snow and ice"
+    rationale: >
+      Not relevant for summer thermal analysis in most cities.
+      Excluded from proportions. Envelope will note if present.
+  100:
+    name: "Moss and lichen"
+    rationale: >
+      Rare in urban contexts. Thermally closer to vegetation.
+    alternative_mappings:
+      - target: vegetation
+        rationale: "Living ground cover, provides some evapotranspiration"
+
+notes: >
+  ESA WorldCover at 10m is coarser than NYC's 6-inch LiDAR but
+  covers the entire planet. For cities with high-resolution local
+  data, use a city-specific crosswalk instead. The manifest can
+  declare which crosswalk to use.
+  
+  At 10m resolution, mixed pixels are common in dense urban areas.
+  A pixel classified as "built-up" may contain street trees, and a
+  "tree cover" pixel may contain buildings. This is a fundamental
+  limitation of 10m classification that the envelope should document.

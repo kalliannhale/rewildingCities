@@ -4,6 +4,8 @@ canopy/orchestrator/orchestrator.py
 Experiment-based orchestrator for the rewildingCities pipeline.
 """
 
+from __future__ import annotations
+
 import yaml
 import re
 from pathlib import Path
@@ -33,7 +35,7 @@ def run_experiment(
     experiment_path: str | Path,
     profile: str = "full",
     project_root: str | Path | None = None
-) -> "OrchestrationResult":
+) -> OrchestrationResult:
     """
     Convenience function to run an experiment.
     
@@ -63,24 +65,144 @@ def visualize_experiment(experiment_path: str | Path) -> str:
     return resolver.visualize()
 
 
-# === Data Structures ===
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATA STRUCTURES
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @dataclass
 class ManifestDataset:
-    """A dataset declared in a manifest."""
+    """A dataset declared in a manifest.
+    
+    Stores everything the provider system and resolution engine need:
+    - Whether the data is available
+    - How to acquire it (source config)  
+    - Where it lives locally (cache config)
+    - What it means (semantic type)
+    - Quality and temporal context
+    """
     name: str
-    path: str
+    path: str                           # relative cache path
     semantic_type: str
     format: str
+    available: bool = False
+    source: dict | None = None          # full source config from manifest
+    cache: dict | None = None           # cache config
+    description: str = ""
+    temporal: dict | None = None
+    quality: dict | None = None
+    provenance: dict | None = None
+
+    @property
+    def source_type(self) -> str | None:
+        """The acquisition source type (api, url, manual, earthengine, local)."""
+        if self.source is None:
+            return None
+        return self.source.get("type")
+    
+    @property
+    def provider_name(self) -> str | None:
+        """The provider name for API sources (socrata, arcgis_rest, etc.)."""
+        if self.source is None:
+            return None
+        return self.source.get("provider")
+    
+    @property
+    def is_auto_acquirable(self) -> bool:
+        """Whether this dataset can be acquired programmatically."""
+        if self.source is None:
+            return False
+        return self.source_type in ("api", "url", "local", "stac", "s3")
+    
+    @property
+    def requires_auth(self) -> bool:
+        """Whether acquisition requires authentication."""
+        if self.source is None:
+            return False
+        auth = self.source.get("auth", {})
+        return auth.get("type", "none") != "none" or self.source_type == "earthengine"
+    
+    @property 
+    def requires_manual_action(self) -> bool:
+        """Whether this dataset needs human intervention to acquire."""
+        return self.source_type in ("manual",)
+
+
+@dataclass
+class ManifestInconsistency:
+    """A detected inconsistency in the manifest's state."""
+    dataset_name: str
+    issue: str          # "available_but_missing", "file_exists_but_unavailable"
+    path: str
+    suggestion: str
 
 
 @dataclass
 class Manifest:
-    """A parsed city manifest."""
+    """A parsed city manifest.
+    
+    The manifest is the community's declaration of what data their 
+    pipeline contains — what it means, where it came from, and how
+    to get more of it.
+    """
     city_name: str
     city_id: str
     datasets: dict[str, ManifestDataset]
     data_dir: Path
+    manifest_path: Path | None = None
+    crs_working: str = ""
+    gee_project: str | None = None
+    raw: dict = field(default_factory=dict)
+
+    def available_datasets(self) -> dict[str, ManifestDataset]:
+        """Return only datasets marked as available."""
+        return {k: v for k, v in self.datasets.items() if v.available}
+    
+    def unavailable_datasets(self) -> dict[str, ManifestDataset]:
+        """Return only datasets marked as unavailable."""
+        return {k: v for k, v in self.datasets.items() if not v.available}
+    
+    def acquirable_datasets(self) -> dict[str, ManifestDataset]:
+        """Return unavailable datasets that can be auto-acquired."""
+        return {k: v for k, v in self.datasets.items() 
+                if not v.available and v.is_auto_acquirable}
+    
+    def datasets_by_semantic_type(self, semantic_type: str) -> list[ManifestDataset]:
+        """Find all datasets matching a semantic type."""
+        return [ds for ds in self.datasets.values() 
+                if ds.semantic_type == semantic_type]
+    
+    def check_consistency(self) -> list[ManifestInconsistency]:
+        """Check manifest state against filesystem reality.
+        
+        Returns list of inconsistencies found. Empty list = consistent.
+        """
+        issues = []
+        for name, ds in self.datasets.items():
+            full_path = self.data_dir / ds.path
+            
+            if ds.available and not full_path.exists():
+                issues.append(ManifestInconsistency(
+                    dataset_name=name,
+                    issue="available_but_missing",
+                    path=str(full_path),
+                    suggestion=(
+                        f"File not found at {ds.path}. Either acquire the data "
+                        f"or set available: false in the manifest."
+                    )
+                ))
+            
+            if not ds.available and full_path.exists():
+                issues.append(ManifestInconsistency(
+                    dataset_name=name,
+                    issue="file_exists_but_unavailable",
+                    path=str(full_path),
+                    suggestion=(
+                        f"File exists at {ds.path} but manifest says unavailable. "
+                        f"Set available: true if this data is ready for analysis."
+                    )
+                ))
+        
+        return issues
 
 
 @dataclass
@@ -127,7 +249,7 @@ class PrimitiveSpec:
     inputs: list[dict]
     outputs: dict
     params: dict
-    passthrough: bool = False  # ← add this
+    passthrough: bool = False
 
 
 @dataclass
@@ -150,7 +272,7 @@ class OrchestrationResult:
     step_results: dict[str, StepResult]
     final_envelopes: dict[str, Envelope]
     lineage: Lineage | None = None
-    warnings: list[str] = field(default_factory=list)  # Orchestration-level warnings
+    warnings: list[str] = field(default_factory=list)
     error: str | None = None
 
 
@@ -170,10 +292,17 @@ class Method:
     choices: dict[str, MethodChoice]
 
 
-# === Parsing ===
+# ═══════════════════════════════════════════════════════════════════════════════
+# PARSING
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def parse_manifest(path: str | Path) -> Manifest:
-    """Parse a city manifest YAML file."""
+    """Parse a city manifest YAML file.
+    
+    Loads ALL datasets — available and unavailable — preserving 
+    full source configuration so the provider system can attempt
+    acquisition when needed.
+    """
     path = Path(path)
     
     with open(path, 'r') as f:
@@ -181,20 +310,35 @@ def parse_manifest(path: str | Path) -> Manifest:
     
     datasets = {}
     for name, ds_data in data.get("datasets", {}).items():
-        if ds_data.get("available", True):
-            cache_path = ds_data.get("cache", {}).get("path", f".data/{name}.geojson")
-            datasets[name] = ManifestDataset(
-                name=name,
-                path=cache_path,
-                semantic_type=ds_data.get("semantic_type", name),
-                format=ds_data.get("format", "geojson")
-            )
+        cache_config = ds_data.get("cache", {})
+        cache_path = cache_config.get("path", f".data/{name}.geojson")
+        
+        datasets[name] = ManifestDataset(
+            name=name,
+            path=cache_path,
+            semantic_type=ds_data.get("semantic_type", name),
+            format=ds_data.get("format", "geojson"),
+            available=ds_data.get("available", False),
+            source=ds_data.get("source"),
+            cache=cache_config if cache_config else None,
+            description=ds_data.get("description", ""),
+            temporal=ds_data.get("temporal"),
+            quality=ds_data.get("quality"),
+            provenance=ds_data.get("provenance"),
+        )
+    
+    crs_data = data.get("crs", {})
+    gee_data = data.get("gee", {})
     
     return Manifest(
         city_name=data["city"]["name"],
         city_id=data["city"]["id"],
         datasets=datasets,
-        data_dir=path.parent
+        data_dir=path.parent,
+        manifest_path=path,
+        crs_working=crs_data.get("working", ""),
+        gee_project=gee_data.get("project"),
+        raw=data,
     )
 
 
@@ -264,7 +408,9 @@ def parse_method(path: str | Path) -> Method:
     )
 
 
-# === Orchestrator ===
+# ═══════════════════════════════════════════════════════════════════════════════
+# ORCHESTRATOR
+# ═══════════════════════════════════════════════════════════════════════════════
 
 class Orchestrator:
     """
@@ -634,7 +780,7 @@ class Orchestrator:
             output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
             params=resolved_params,
-            passthrough=primitive_spec.passthrough  # ← add this
+            passthrough=primitive_spec.passthrough
         )
         
         if not build_result.success:

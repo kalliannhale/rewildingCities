@@ -17,6 +17,12 @@ stewardship:
   initialized: '2025-08-01'
   last_verified: '2026-03-28'
   community_partners: []
+gee:
+  project: rewildingcities
+  notes: >
+    Google Earth Engine project for Tier 2 data acquisition.
+    Requires: earthengine-api + authentication via
+    'earthengine authenticate'
 scope:
   study_area:
     type: full
@@ -33,13 +39,14 @@ datasets:
     source:
       type: api
       provider: socrata
-      endpoint: https://data.cityofnewyork.us/resource/enfk-w5i2.geojson
+      endpoint: https://data.cityofnewyork.us/resource/enfh-gkve.geojson
       query_params:
         $limit: 50000
       notes: NYC Parks Properties from NYC Open Data (Socrata)
     cache:
       path: .data/parks.geojson
       refresh_policy: manual
+      fetched_at: '2026-04-30T23:45:17.784863+00:00'
     temporal:
       type: snapshot
       year: 2024
@@ -60,7 +67,7 @@ datasets:
     source:
       type: api
       provider: socrata
-      endpoint: https://data.cityofnewyork.us/resource/7t3b-ywvw.geojson
+      endpoint: https://data.cityofnewyork.us/resource/gthc-hcne.geojson
       query_params:
         $limit: 10
       notes: NYC Borough Boundaries from NYC Open Data
@@ -154,47 +161,71 @@ datasets:
       confidence: medium
       spatial_resolution: 30m
   nighttime_lights:
-    available: true
+    available: false
     description: VIIRS nighttime lights annual composite
     semantic_type: nighttime_lights
     format: geotiff
     source:
-      type: url
-      url: https://eogdata.mines.edu/nighttime_light/annual/v22/2023/VNL_v22_npp-j01_2023_global_vcmslcfg_c202502121300.average_masked.dat.tif.gz
-      notes: "Earth Observation Group VIIRS annual composite. Global file \u2014 will\
-        \ need cropping to NYC extent.\n"
+      type: earthengine
+      collection: NOAA/VIIRS/DNB/ANNUAL_V22
+      band: average_masked
+      notes: "Acquired via acquire_gee.py"
     cache:
       path: .data/ntl.tif
       refresh_policy: manual
-      fetched_at: '2026-04-10T19:48:56.957563+00:00'
     temporal:
       type: annual_average
       year: 2023
     provenance:
-      source: Earth Observation Group, Colorado School of Mines
-      source_url: https://eogdata.mines.edu/products/vnl/
+      source: NOAA/EOG via Google Earth Engine
+      source_url: https://developers.google.com/earth-engine/datasets/catalog/NOAA_VIIRS_DNB_ANNUAL_V22
     quality:
       confidence: high
       spatial_resolution: 500m
   roads:
     available: true
-    description: NYC street centerlines
+    description: NYC LION street centerlines
     semantic_type: roads
     format: geojson
     source:
       type: api
-      provider: socrata
-      endpoint: https://data.cityofnewyork.us/resource/8rma-cm9c.geojson
+      provider: arcgis_rest
+      endpoint: https://services5.arcgis.com/GfwWNkhOj9bNBqoJ/arcgis/rest/services/LION/FeatureServer/0
       query_params:
-        $limit: 200000
-      notes: LION street centerline data from NYC DoT
+        where: "1=1"
+        outFields: "*"
+        limit: 10000
+      notes: "NYC LION street centerline from ArcGIS REST. 243k segments — fetched in pages."
     cache:
       path: .data/roads.geojson
       refresh_policy: manual
     provenance:
-      source: NYC Open Data
-      source_url: https://data.cityofnewyork.us/City-Government/NYC-Street-Centerline-CSCL-/exjm-f27b
+      source: NYC Department of City Planning
+      source_url: https://www.nyc.gov/content/planning/pages/resources/datasets/lion
+      license: NYC Open Data Terms of Use
     quality:
       confidence: high
       known_issues:
-      - "Very large dataset \u2014 may need spatial subsetting"
+        - "Very large dataset (243k segments) — fetch takes several minutes"
+        - "Includes non-street features (boardwalks, ferries, ramps)"
+  population_density:
+    available: false
+    description: WorldPop population density
+    semantic_type: population_density
+    format: geotiff
+    source:
+      type: earthengine
+      collection: WorldPop/GP/100m/pop
+      notes: "UN-adjusted population count per 100m pixel. Acquired via acquire_gee.py"
+    cache:
+      path: .data/population.tif
+      refresh_policy: manual
+    temporal:
+      type: annual_estimate
+      year: 2020
+    provenance:
+      source: WorldPop via Google Earth Engine
+      source_url: https://developers.google.com/earth-engine/datasets/catalog/WorldPop_GP_100m_pop
+    quality:
+      confidence: high
+      spatial_resolution: 100m

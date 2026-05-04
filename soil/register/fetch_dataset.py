@@ -120,75 +120,45 @@ def fetch_socrata(source: dict, cache_path: Path, dataset_name: str) -> FetchRes
     is_geojson = ext in (".geojson", ".json") or endpoint.endswith(".geojson")
 
     try:
-        if is_geojson:
-            # GeoJSON: paginate and merge features
-            all_features = []
-            page_size = int(params.pop("$limit", 2000))
-            offset = 0
+        # Use a single large request with streaming to handle big responses.
+        # Socrata SODA 2.0 supports $limit up to 50,000 in one request.
+        # We stream directly to disk so we don't hold everything in memory.
+        # Ensure $limit is set — default to 50000 if not in manifest query_params
+        if "$limit" not in params:
+            params["$limit"] = 50000
+        limit = params["$limit"]
 
-            logger.info(f"  Fetching {dataset_name} from Socrata (paginated, {page_size}/page): {endpoint}")
+        logger.info(f"  Fetching {dataset_name} from Socrata (limit={limit}): {endpoint}")
 
-            while True:
-                page_params = dict(params)
-                page_params["$limit"] = page_size
-                page_params["$offset"] = offset
+        resp = requests.get(endpoint, params=params, timeout=300, stream=True)
+        resp.raise_for_status()
 
-                resp = requests.get(endpoint, params=page_params, timeout=120)
-                resp.raise_for_status()
-                page_data = resp.json()
-
-                # GeoJSON response has "features" array
-                if isinstance(page_data, dict) and "features" in page_data:
-                    features = page_data["features"]
-                    if not features:
-                        break
-                    all_features.extend(features)
-                    logger.info(f"    Page {offset // page_size + 1}: {len(features)} features (total: {len(all_features)})")
-                    if len(features) < page_size:
-                        break
-                    offset += page_size
-                # Plain JSON array response (non-geo Socrata)
-                elif isinstance(page_data, list):
-                    if not page_data:
-                        break
-                    all_features.extend(page_data)
-                    logger.info(f"    Page {offset // page_size + 1}: {len(page_data)} records (total: {len(all_features)})")
-                    if len(page_data) < page_size:
-                        break
-                    offset += page_size
-                else:
-                    # Single-page response, no pagination needed
-                    all_features = page_data
-                    break
-
-            # Write merged GeoJSON
-            if isinstance(all_features, list) and len(all_features) > 0:
-                if isinstance(all_features[0], dict) and "geometry" in all_features[0]:
-                    # It's GeoJSON features — wrap in FeatureCollection
-                    merged = {
-                        "type": "FeatureCollection",
-                        "features": all_features
-                    }
-                else:
-                    # Plain JSON records
-                    merged = all_features
-            else:
-                merged = all_features
-
-            with open(cache_path, "w") as f:
-                json.dump(merged, f)
-
-        else:
-            # Non-GeoJSON (raster, CSV, etc): single request with high limit
-            params.setdefault("$limit", 50000)
-            logger.info(f"  Fetching {dataset_name} from Socrata: {endpoint}")
-            resp = requests.get(endpoint, params=params, timeout=120)
-            resp.raise_for_status()
-            with open(cache_path, "wb") as f:
-                f.write(resp.content)
+        # Stream response to disk
+        bytes_written = 0
+        with open(cache_path, "wb") as f:
+            for chunk in resp.iter_content(chunk_size=65536):
+                f.write(chunk)
+                bytes_written += len(chunk)
+                # Progress indicator every 5MB
+                if bytes_written % (5 * 1024 * 1024) < 65536:
+                    logger.info(f"    Downloaded {bytes_written / (1024*1024):.1f} MB...")
 
         size_mb = cache_path.stat().st_size / (1024 * 1024)
-        n_features = len(all_features) if is_geojson and isinstance(all_features, list) else "unknown"
+        logger.info(f"    Total: {size_mb:.1f} MB")
+
+        # Count features if GeoJSON
+        n_features = "unknown"
+        if is_geojson and size_mb < 500:
+            try:
+                with open(cache_path) as f:
+                    data = json.load(f)
+                if isinstance(data, dict) and "features" in data:
+                    n_features = len(data["features"])
+                elif isinstance(data, list):
+                    n_features = len(data)
+            except Exception:
+                pass
+
         return FetchResult(dataset_name, True, path=str(cache_path),
             message=f"Fetched {size_mb:.1f} MB from Socrata ({n_features} features)")
 
@@ -351,9 +321,33 @@ def fetch_all(
             config["cache"]["fetched_at"] = datetime.now(timezone.utc).isoformat()
             config["cache"]["path"] = cache_rel
 
-    # Write updated manifest (with fetched_at timestamps)
-    with open(manifest_path, "w") as f:
-        yaml.dump(manifest, f, default_flow_style=False, sort_keys=False)
+    # Write fetch metadata to a SEPARATE file — never rewrite the manifest.
+    # The manifest is a carefully authored document. We don't touch it.
+    fetch_log_path = plot_dir / ".data" / "fetch_log.yml"
+    fetch_log = {}
+    if fetch_log_path.exists():
+        with open(fetch_log_path) as f:
+            fetch_log = yaml.safe_load(f) or {}
+
+    for name, result in results.items():
+        if result.success:
+            fetch_log[name] = {
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                "path": result.path,
+                "message": result.message
+            }
+
+    fetch_log_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(fetch_log_path, "w") as f:
+        yaml.dump(fetch_log, f, default_flow_style=False, sort_keys=False)
+
+    # Update 'available' flags in manifest for successful downloads
+    try:
+        from soil.register.manifest_utils import set_multiple_available
+        updates = {name: result.success for name, result in results.items()}
+        set_multiple_available(manifest_path, updates)
+    except ImportError:
+        pass  # manifest_utils not yet available — skip silently
 
     return results
 
