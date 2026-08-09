@@ -161,18 +161,47 @@ requires_primitives:
       purpose: "Compute Getis-Ord Gi* and classify clusters"
 
 requires_data:
+
   - name: surface_temperature
     type: raster
     semantic_types:
       - land_surface_temperature
+    critical: true
     description: "LST raster for the study area"
-  
+    role: |
+      [KALLI TO REWRITE]
+      The values whose spatial clustering is being tested. The Gi*
+      statistic asks: are pixels of similar temperature found
+      together more than random chance predicts? Without this
+      raster, there are no values to cluster.
+    uncertainty_without: |
+      [KALLI TO REWRITE]
+      The method cannot run without temperature values to compare.
+      No degradation mode exists — this is the dependent variable.
+
   - name: study_boundary
     type: vector
     semantic_types:
       - study_boundary
       - city_boundary
+    critical: false
     description: "Boundary to constrain the analysis"
+    role: |
+      [KALLI TO REWRITE]
+      Defines what counts as the study area for the global
+      statistical comparison. The Gi* z-score for any pixel is
+      computed against the global mean of values *within this
+      boundary*. A different boundary changes the global mean,
+      which changes every local z-score.
+    uncertainty_without: |
+      [KALLI TO REWRITE]
+      If absent, the analysis uses the LST raster's bounding box
+      as the study area. This usually overstates the study region
+      (raster extents tend to include suburban or non-urban areas)
+      and inflates the global mean, which shifts the threshold for
+      what counts as a 'hot' versus 'cold' cluster. Results remain
+      interpretable but lose the meaning that comes from a
+      deliberately-chosen boundary.
 
 produces:
   - name: hotspot_classification

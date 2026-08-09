@@ -116,6 +116,32 @@ properties:
           description: Advice on selecting appropriate data
     description: Data this method needs to execute
 
+    critical:
+          type: boolean
+          default: true
+          description: >
+            Whether the method can produce meaningful results without
+            this data. If true (default), absence blocks the method; if
+            false, the method can run in a degraded mode and should
+            document what that means in `uncertainty_without`.
+        role:
+          type: string
+          description: >
+            What this data contributes to the analysis. Written for a
+            community researcher deciding whether they have the data
+            to ask this question. Surfaced in (a) the resolution
+            engine's missing-data advisory, (b) the future catalog
+            application's method browser, and (c) embedded in envelope
+            provenance.
+        uncertainty_without:
+          type: string
+          description: >
+            What is lost when this data is missing. For critical: true
+            data, this is informational ("this is what we couldn't
+            tell you"). For critical: false data, this is what the
+            degraded run actually means. Same audience and venues as
+            `role`.
+
   # ───────────────────────────────────────────────────────────────────────────
   # OUTPUTS
   # ───────────────────────────────────────────────────────────────────────────

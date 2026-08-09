@@ -1,0 +1,53 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROFILES v1.0
+# Pre-configured scope settings for different contexts
+# ═══════════════════════════════════════════════════════════════════════════════
+
+profiles:
+
+  full:
+    description: "Complete analysis, no subsetting"
+    study_area:
+      type: full
+    feature_sampling:
+      enabled: false
+    resolution:
+      mode: native
+
+  dev:
+    description: "Fast iteration for development"
+    study_area:
+      type: full
+    feature_sampling:
+      enabled: true
+      method: stratified
+      stratify_by: "auto"
+      n_per_stratum: 5
+      seed: 42
+    resolution:
+      mode: target
+      target_meters: 30
+
+  test:
+    description: "Minimal subset for automated testing"
+    study_area:
+      type: bbox
+      bbox: "auto_small"
+    feature_sampling:
+      enabled: true
+      method: random
+      n: 10
+      seed: 12345
+    resolution:
+      mode: target
+      target_meters: 100
+
+  neighborhood:
+    description: "Single neighborhood analysis"
+    study_area:
+      type: buffer
+      radius_km: 2
+    feature_sampling:
+      enabled: false
+    resolution:
+      mode: native

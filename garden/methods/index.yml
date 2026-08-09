@@ -1,23 +1,46 @@
 # Methods Index
-# Registry of analytical approaches
+# Registry of analytical approaches available across the commons.
+#
+# This index is the authoritative router from a method id to its file.
+# The orchestrator's _resolve_method_path() reads this at experiment time
+# to find a method by id. The future catalog/discover layer (Sprint 10's
+# GET /methods endpoint) reads this to enumerate what the system can do.
+#
+# Schema:
+#   methods:
+#     <domain>:
+#       - id:     machine-readable identifier (matches the id field in the
+#                 method file itself; this is what experiments reference)
+#         path:   path relative to garden/methods/, including .yml extension
+#         name:   human-readable name (also in the method file; duplicated
+#                 here so the index can be enumerated without opening every
+#                 file)
+#         answers: optional, list of question-type tags this method handles
+#                  (mirrors `answers_question_types` in the method file;
+#                  duplicated here for catalog-time filtering)
 
 methods:
 
   thermal:
     - id: buffer_gradient_analysis
-      path: thermal/buffer_gradient_analysis.yml
+      path: thermal/thermal_gradient_analysis.yml
       name: "Buffer-Based Thermal Gradient Analysis"
-      answers: [spatial_gradient, influence_extent, intensity_measurement]
+      answers: [spatial_gradient, influence_extent, intensity_measurement, feature_comparison]
 
     - id: hot_cold_spot_analysis
-      path: thermal/hot_cold_spot_analysis
+      path: thermal/hot_cold_spot_analysis.yml
       name: "Getis-Ord Hot/Cold Spot Analysis"
+      answers: [spatial_clustering, spatial, clustering, heat, thermal, analysis, thermal_analysis, hot_cold_spot_analysis, temperature, hotspot_identification, hot_spot_identification, cold_spot_identification, thermal_landscape_classification thermal_equity
+      ]
 
+  # Future domains slot in alongside `thermal:` — no structural change to
+  # the orchestrator or the resolution engine when adding them.
+  #
   # landscape:
   #   - id: fragstats_metrics
   #     path: landscape/fragstats_metrics.yml
   #     name: "Landscape Pattern Metrics (FRAGSTATS)"
-
+  #
   # statistical:
   #   - id: correlation_analysis
   #     path: statistical/correlation_analysis.yml

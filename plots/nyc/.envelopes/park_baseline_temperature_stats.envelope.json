@@ -1,48 +1,158 @@
 {
   "data": {
-    "path": "plots/nyc/experiments/../.data/crop_lst_cropped.tiff",
-    "format": "tiff",
+    "path": "plots/nyc/experiments/../.data/park_baseline_temperature_stats.parquet",
+    "format": "parquet",
     "secondary": {}
   },
   "metadata": {
-    "resolution_m": 98.4439,
-    "dimensions": {
-      "rows": 1283,
-      "cols": 1159
-    },
-    "bbox": [
-      931195.9178,
-      1045292.364,
-      129607.9788,
-      255911.4649
+    "semantic_type": "park_temperatures",
+    "data_category": "tabular",
+    "crs": null,
+    "n_zones": 25,
+    "n_valid": 25,
+    "n_na": 0,
+    "statistic": "median",
+    "value_range": [
+      26.1135,
+      35.9884
     ],
-    "band_count": 1,
-    "nodata_percentage": 99.41,
-    "value_range": {
-      "min": 23.0237,
-      "max": 39.5614
-    },
-    "dtype": "",
-    "crs": "EPSG:2263",
-    "extent_before": {
-      "xmin": 790027.4072,
-      "xmax": 1552868.9614,
-      "ymin": -327565.3568,
-      "ymax": 446794.1302
-    },
-    "extent_after": {
-      "xmin": 931195.9178,
-      "xmax": 1045292.364,
-      "ymin": 129607.9788,
-      "ymax": 255911.4649
-    },
-    "buffer_m": 500,
-    "cells_before": 40759780,
-    "cells_after": 8773,
-    "semantic_type": "lst_cropped",
-    "data_category": "raster"
+    "id_fields": "feature_id"
   },
   "provenance": [
+    {
+      "primitive": "validate_vector",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:35.751682+00:00",
+      "params": {},
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries",
+          "path": "plots/nyc/experiments/../.data/parks.geojson",
+          "hash": {
+            "value": "75e568631850cf3254098fdbc972b0b1",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.804,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "repair_geometry",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:38.270803+00:00",
+      "params": {},
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_checked",
+          "path": "plots/nyc/experiments/../.data/parks.geojson",
+          "hash": {
+            "value": "75e568631850cf3254098fdbc972b0b1",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.516,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "reproject_vector",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:40.429930+00:00",
+      "params": {
+        "target_crs": "EPSG:2263"
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_repaired",
+          "path": "plots/nyc/experiments/../.data/repair_parks_repaired.geojson",
+          "hash": {
+            "value": "3a6c7f9638900ac205793a5f6b08ecef",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.157,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "filter_by_area",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:42.811206+00:00",
+      "params": {
+        "min_area_ha": 0.09
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_reprojected",
+          "path": "plots/nyc/experiments/../.data/reproject_parks_reprojected.geojson",
+          "hash": {
+            "value": "8d51b4bed1105123c217e769a0478f27",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.379,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "assign_feature_id",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:44.867792+00:00",
+      "params": {
+        "source_field": "globalid"
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/filter_parks_filtered.geojson",
+          "hash": {
+            "value": "8c0f5798e24d592f63baf8b5b44adedc",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.054,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "sample_features",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:46.857148+00:00",
+      "params": {
+        "method": "stratified",
+        "n": 50,
+        "n_per_stratum": 5,
+        "stratify_by": "auto",
+        "seed": 42,
+        "filter": null,
+        "feature_ids": null
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/assign_feature_id_identified.geojson",
+          "hash": {
+            "value": "5c74a6cc3d7ace068aea964124f93a2e",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.987,
+      "lineage_branch": "zones"
+    },
     {
       "primitive": "validate_raster",
       "version": "1.0.0",
@@ -278,10 +388,135 @@
         }
       ],
       "duration_seconds": 5.182,
+      "lineage_branch": "raster"
+    },
+    {
+      "primitive": "zonal_statistics",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:07:05.254352+00:00",
+      "params": {
+        "stats": [
+          "median"
+        ],
+        "prefix": "park"
+      },
+      "inputs": [
+        {
+          "name": "zones",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/sample_after_assign_feature_id_sampled.geojson",
+          "hash": {
+            "value": "c92ee3ba7471fb410c85ecd6f942f2de",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        },
+        {
+          "name": "raster",
+          "semantic_type": "lst_cropped",
+          "path": "plots/nyc/experiments/../.data/crop_lst_cropped.tiff",
+          "hash": {
+            "value": "3382bed78c8ba6792ece5b81499d5def",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 4.028,
       "lineage_branch": null
     }
   ],
   "warnings": [
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "Feature count: 2058"
+    },
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "CRS: EPSG:4326"
+    },
+    {
+      "level": "warning",
+      "primitive": "validate_vector",
+      "message": "14 geometries invalid (0.7%). Consider running repair_geometry."
+    },
+    {
+      "level": "info",
+      "primitive": "validate_vector",
+      "message": "Geometry type: MULTIPOLYGON"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Loaded 2058 features"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Found 14 invalid geometries (0.7%)"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Repaired 14 geometries"
+    },
+    {
+      "level": "info",
+      "primitive": "repair_geometry",
+      "message": "Wrote repaired features to repair_parks_repaired.geojson"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Loaded 2058 features"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Transforming from EPSG:4326 to EPSG:2263"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Transformation complete"
+    },
+    {
+      "level": "info",
+      "primitive": "reproject_vector",
+      "message": "Wrote transformed features to reproject_parks_reprojected.geojson"
+    },
+    {
+      "level": "warning",
+      "primitive": "filter_by_area",
+      "message": "Excluded 88 of 2058 features outside [0.09, Inf] ha range."
+    },
+    {
+      "level": "info",
+      "primitive": "filter_by_area",
+      "message": "Excluded feature areas: min=0.0026 ha, max=0.09 ha, median=0.0364 ha."
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Loaded 1970 features"
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Stamped feature_id from 'globalid' (1970 unique values)"
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Wrote identified features to assign_feature_id_identified.geojson"
+    },
+    {
+      "level": "info",
+      "primitive": "sample_features",
+      "message": "Sampled 25 of 1970 features using method='stratified'."
+    },
     {
       "level": "info",
       "primitive": "validate_raster",
@@ -406,6 +641,11 @@
       "level": "info",
       "primitive": "crop_to_boundary",
       "message": "Cropped from 40759780 to 8773 valid cells (0.0% retained)."
+    },
+    {
+      "level": "info",
+      "primitive": "zonal_statistics",
+      "message": "Extracting 'median' from 25 zones."
     }
   ]
 }

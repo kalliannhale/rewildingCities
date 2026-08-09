@@ -8,6 +8,16 @@
 # proportions, and any future zonal workflow.
 #
 # Output: CSV with zone identifiers + extracted values
+#
+# Sprint 8 patches (2026-05):
+#   1. id_fields coerced via unlist() + as.character() to handle
+#      jsonlite deserializing JSON arrays as R lists. Without this,
+#      `zones[, j]` where j is a list crashes with
+#      "Can't subset columns with `j`."
+#   2. metadata now emits crs = NULL. The envelope schema requires
+#      `crs` in the metadata block; for tabular outputs (no CRS),
+#      explicit null is the schema-mandated way to declare absence.
+#      Sentinel-driven honesty, not silent omission.
 # ============================================================
 
 library(rewildr)
@@ -21,7 +31,9 @@ raster_path <- get_input(args$inputs, "raster")
 zones_path  <- get_input(args$inputs, "zones")
 output_path <- args$output
 stat        <- get_param(args$params, "statistic", "median")
-id_fields   <- get_param(args$params, "id_fields", c("feature_id", "distance_m"))
+# Sprint 8 patch 1: coerce to atomic character.
+id_fields   <- as.character(unlist(
+                  get_param(args$params, "id_fields", c("feature_id", "distance_m"))))
 band        <- as.integer(get_param(args$params, "band", 1))
 
 w <- warnings_collector("zonal_statistics")
@@ -86,6 +98,7 @@ with_primitive_error_handling({
     metadata = list(
       semantic_type = "zonal_statistics",
       data_category = "tabular",
+      crs = NA,  # Sprint 8 patch 2: explicit-null for non-spatial tabular output
       n_zones = nrow(zones),
       n_valid = sum(!is.na(extracted)),
       n_na = n_na,

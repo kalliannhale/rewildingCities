@@ -22,12 +22,12 @@
       "min": "Inf",
       "max": "-Inf"
     },
-    "dtype": "FLT4S",
+    "dtype": "INT2U",
     "crs": "EPSG:32618",
     "nodata_percent": 31.6,
     "value_range.1": [
-      9.1767,
-      55.2892
+      39007,
+      52498
     ],
     "expected_units": {},
     "passthrough": true,
@@ -39,7 +39,7 @@
     {
       "primitive": "validate_raster",
       "version": "1.0.0",
-      "timestamp": "2026-05-04T02:42:29.755039+00:00",
+      "timestamp": "2026-08-09T02:05:40.435603+00:00",
       "params": {
         "max_nodata_percent": 20
       },
@@ -49,13 +49,13 @@
           "semantic_type": "land_surface_temperature",
           "path": "plots/nyc/experiments/../.data/lst_summer.tif",
           "hash": {
-            "value": "31bcb67119675065fced8be7bd4518d5",
+            "value": "f2ef1fa6a5e1759b45db6207a1300cbb",
             "method": "metadata",
             "algorithm": "md5"
           }
         }
       ],
-      "duration_seconds": 2.698,
+      "duration_seconds": 6.987,
       "lineage_branch": null
     }
   ],

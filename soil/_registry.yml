@@ -589,3 +589,64 @@ primitives:
     repairs: []
     may_exclude_features: false
   
+  # --- sample/ ---
+  # Subsampling primitives for fast iteration. Injected by the
+  # orchestrator when a profile enables feature_sampling.
+
+  sample_features:
+    path: scope/sample_features.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Subsample vector features for faster iteration. Supports
+      random, stratified, first_n, filtered, and explicit selection.
+      Documents sampling method, resolved field names, and parameters
+      in the envelope for full reproducibility.
+
+      Typically injected by the orchestrator when a profile enables
+      feature_sampling, but can be used directly in an experiment
+      step if a user wants explicit control over the sampling DAG
+      position.
+    inputs:
+      - name: features
+        semantic_types:
+          - park_boundaries
+          - park_boundaries_filtered
+          - park_boundaries_reprojected
+          - park_boundaries_repaired
+          - park_boundaries_checked
+          - water_boundaries
+          - forest_boundaries
+          - study_boundary
+          - city_boundary
+        required: true
+    outputs:
+      semantic_type: null   # preserves input semantic type
+      data_category: vector
+    params:
+      method:
+        type: string
+        default: "random"
+        options: [random, stratified, first_n, filtered, explicit]
+      n:
+        type: integer
+        default: 50
+      n_per_stratum:
+        type: integer
+        default: 5
+      stratify_by:
+        type: string
+        default: "auto"
+      seed:
+        type: integer
+        default: 42
+      filter:
+        type: string
+        default: null
+      feature_ids:
+        type: array
+        default: null
+    validates: []
+    repairs: []
+    may_exclude_features: true
+    exclusion_documented_in: warnings

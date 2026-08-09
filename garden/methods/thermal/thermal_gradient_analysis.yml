@@ -184,23 +184,56 @@ requires_primitives:
 
 # What data this method need?
 requires_data:
+
   - name: feature_boundaries
     type: vector
-    semantic_types: 
+    semantic_types:
       - park_boundaries
       - water_boundaries
       - forest_boundaries
+    critical: true
     description: "Polygons defining the features to analyze"
-  
+    role: |
+      [KALLI TO REWRITE]
+      Define the things whose cooling influence you're measuring.
+      Without these polygons, there's nothing to draw buffer rings
+      around — the entire gradient analysis is a measurement *of*
+      these features. Common choices: city parks for the standard
+      Xiao et al. analysis, water bodies for blue-infrastructure
+      studies, forest patches for canopy cooling assessment.
+    uncertainty_without: |
+      [KALLI TO REWRITE]
+      The method cannot run at all without feature boundaries — this
+      is structural, not graceful-degradation territory.
+    guidance: >
+      Sourcing matters: municipal park boundaries vary in quality
+      and definition (some include parking lots, some don't; some
+      include adjacent street trees, some don't). The boundary you
+      use is the boundary the analysis measures from.
+
   - name: surface_temperature
     type: raster
     semantic_types:
       - land_surface_temperature
+    critical: true
     description: "LST raster, ideally summer daytime acquisition"
+    role: |
+      [KALLI TO REWRITE]
+      The temperature surface across which the gradient is measured.
+      Each buffer ring's zonal statistic comes from this raster.
+      Resolution, acquisition season, and time-of-day directly shape
+      what 'cooling' means in the result: Landsat 30m summer-daytime
+      LST tells a different story than nighttime or shoulder-season
+      data.
+    uncertainty_without: |
+      [KALLI TO REWRITE]
+      Without LST, the gradient cannot be measured — only the
+      geometry of the buffers exists, with no temperature signal
+      to attach to it.
     guidance: >
-      Use cloud-free summer imagery when heat stress is highest. 
-      Landsat 8 TIRS provides 30m resolution suitable for park-scale 
-      analysis. Consider using median composite over multiple dates 
+      Use cloud-free summer imagery when heat stress is highest.
+      Landsat 8 TIRS provides 30m resolution suitable for park-scale
+      analysis. Consider using median composite over multiple dates
       to reduce single-acquisition artifacts.
 
 # Outputs this method produces

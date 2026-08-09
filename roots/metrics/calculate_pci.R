@@ -200,6 +200,7 @@ with_primitive_error_handling({
     metadata = list(
       semantic_type = "pci_results",
       data_category = "tabular",
+      crs = NA,  # Sprint 8: explicit-null for non-spatial tabular output
       method = method,
       n_features = n_features,
       n_success = n_success,

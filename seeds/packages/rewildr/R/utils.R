@@ -62,7 +62,7 @@ safe_write_sf <- function(obj, path, warnings = NULL) {
  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
  
  tryCatch(
-   sf::write_sf(obj, path),
+   sf::write_sf(obj, path, delete_dsn = TRUE),
    error = function(e) {
      primitive_failure(
        error = "Failed to write vector data",

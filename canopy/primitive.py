@@ -2,11 +2,22 @@
 canopy/primitive.py
 
 Handles invocation of R primitives and response parsing.
+
+Sprint 8 patch (2026-05): _parse_response is now tolerant of stdout
+pollution. The rewildr contract is that primitives emit exactly one
+JSON object on stdout (via primitive_success / primitive_failure),
+but some R packages — notably terra under conda — write progress bars
+and other chatter to stdout that breaks the previous whole-stdout
+json.loads() approach. The new parser tries the clean parse first,
+then falls back to scanning for the last JSON object in stdout.
+The rewildr contract has not changed; this patch makes the Python
+side robust to imperfect compliance from upstream R libraries.
 """
 
 import subprocess
 import json
 import tempfile
+import re
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any
@@ -125,28 +136,109 @@ class PrimitiveRunner:
             raise FileNotFoundError(f"Primitive not found: {path}")
         
         return path
-    
+
+    @staticmethod
+    def _extract_trailing_json(stdout: str) -> dict | None:
+        """Find the last valid JSON object in stdout, scanning from the end.
+
+        rewildr emits the protocol response as the final stdout write of the
+        primitive. Anything before it — terra progress bars, sf load messages,
+        R warnings printed via message() — is chatter that should be ignored.
+
+        Strategy: walk stdout in reverse looking for the start of a JSON object
+        ('{'), and try to parse from each candidate start to the matching end.
+        Returns the first successful parse (which, walking from the end, is
+        the last JSON object emitted). Returns None if no parse succeeds.
+
+        We scan line-by-line first because the rewildr contract typically
+        emits JSON on its own line. If that fails (e.g. the JSON got
+        line-wrapped by a progress callback), we fall back to a character-
+        level scan.
+        """
+        if not stdout or not stdout.strip():
+            return None
+
+        # Strategy 1: scan lines from the end, each candidate is the line + everything after it.
+        # Cheap and handles the common case where JSON is its own line.
+        lines = stdout.splitlines()
+        for i in range(len(lines) - 1, -1, -1):
+            line = lines[i].strip()
+            if not line.startswith('{'):
+                continue
+            # Try the line by itself first
+            try:
+                obj = json.loads(line)
+                if isinstance(obj, dict):
+                    return obj
+            except json.JSONDecodeError:
+                pass
+            # Then try the line plus everything after (in case JSON spans lines)
+            candidate = "\n".join(lines[i:]).strip()
+            try:
+                obj = json.loads(candidate)
+                if isinstance(obj, dict):
+                    return obj
+            except json.JSONDecodeError:
+                pass
+
+        # Strategy 2 (fallback): character-level scan from the last '{' backwards.
+        # Handles edge case where progress bar interleaved with JSON on the same line.
+        last_brace = stdout.rfind('{')
+        while last_brace >= 0:
+            candidate = stdout[last_brace:].strip()
+            # Try shrinking from the right to find balanced braces
+            for end in range(len(candidate), 0, -1):
+                try:
+                    obj = json.loads(candidate[:end])
+                    if isinstance(obj, dict):
+                        return obj
+                except json.JSONDecodeError:
+                    continue
+            last_brace = stdout.rfind('{', 0, last_brace)
+
+        return None
+
     def _parse_response(
         self, 
         result: subprocess.CompletedProcess,
         output_path: str | Path
     ) -> PrimitiveResult:
-        """Parse subprocess result into PrimitiveResult."""
+        """Parse subprocess result into PrimitiveResult.
+
+        Sprint 8: tolerant of stdout chatter from R packages. Tries clean
+        whole-stdout parse first; on failure, falls back to extracting the
+        trailing JSON object via _extract_trailing_json.
+        """
         
-        # Try to parse stdout as JSON
-        try:
-            response = json.loads(result.stdout) if result.stdout.strip() else {}
-        except json.JSONDecodeError:
-            # If stdout isn't valid JSON, treat as failure
+        stdout = result.stdout or ""
+
+        # Fast path: stdout is clean JSON (the historical case).
+        response: dict | None = None
+        if stdout.strip():
+            try:
+                parsed = json.loads(stdout)
+                if isinstance(parsed, dict):
+                    response = parsed
+            except json.JSONDecodeError:
+                # Slow path: stdout has chatter; extract the trailing JSON.
+                response = self._extract_trailing_json(stdout)
+
+        # If we still don't have a response object, the primitive truly
+        # produced nothing parseable — that's an Invalid response.
+        if response is None:
+            # An empty stdout with successful exit is also "no response",
+            # but distinguishable enough from "garbage stdout" that we
+            # preserve the message-truncation behavior for diagnosis.
+            tail = stdout[-500:] if stdout else "(empty stdout)"
             return PrimitiveResult(
                 success=False,
                 output_path=None,
                 metadata={},
                 warnings=[],
                 error="Invalid response",
-                message=f"Primitive returned non-JSON output: {result.stdout[:500]}"
+                message=f"Primitive returned no parseable JSON. Last 500 chars of stdout:\n{tail}\n--- stderr ---\n{(result.stderr or '')[-500:]}"
             )
-        
+
         # Check exit code
         if result.returncode != 0:
             return PrimitiveResult(
@@ -157,7 +249,20 @@ class PrimitiveRunner:
                 error=response.get("error", "Unknown error"),
                 message=response.get("message", result.stderr or "Primitive failed")
             )
-        
+
+        # An R primitive might emit a JSON response with status="failure"
+        # while still exiting with code 0 (rewildr's primitive_failure path
+        # may or may not exit non-zero depending on version). Surface this.
+        if response.get("status") == "failure":
+            return PrimitiveResult(
+                success=False,
+                output_path=None,
+                metadata={},
+                warnings=response.get("warnings", []),
+                error=response.get("error", "Unknown error"),
+                message=response.get("message", "Primitive reported failure")
+            )
+
         # Success
         return PrimitiveResult(
             success=True,

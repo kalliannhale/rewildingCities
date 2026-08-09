@@ -80,6 +80,25 @@ primitives:
       id_field:
         type: string
         default: null
+
+  assign_feature_id:
+    path: geometry/assign_feature_id.R
+    version: 1.0.0
+    description: >
+      Stamp a uniform feature_id onto features from a declared source
+      column. Validates the column exists and is unique and non-missing,
+      so downstream joins can trust feature_id as the identity key.
+    inputs:
+      - name: features
+        semantic_types: [park_boundaries]
+        required: true
+    outputs:
+      semantic_type: park_boundaries_filtered
+      data_category: vector
+    params:
+      source_field:
+        type: string
+        # no default — identity is never guessed
   
   # metrics/
 

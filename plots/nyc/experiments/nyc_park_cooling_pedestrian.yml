@@ -147,17 +147,16 @@ steps:
   - id: scale_lst
     primitive: soil/scale_raster
     version: "1.0.0"
-    description: "Convert Landsat DN values to Celsius"
+    description: "Convert raw Landsat C2 L2 surface-temperature DN to Celsius"
     inputs:
       raster: $steps.validate_lst.checked
     outputs:
       scaled: lst_scaled
     params:
       scale: 0.00341802
-      offset: 149.0
+      offset: -124.15
       from_unit: "landsat_dn"
       to_unit: "celsius"
-      conversion: "kelvin_to_celsius"
 
   - id: reproject_lst
     primitive: soil/reproject_raster
@@ -177,12 +176,23 @@ steps:
     description: "Crop LST to park extent with buffer for analysis"
     inputs:
       raster: $steps.reproject_lst.reprojected
-      boundary: $steps.filter_parks.filtered
+      boundary: $steps.assign_feature_id.identified
     outputs:
       cropped: lst_cropped
     params:
       buffer_m: 500
       snap: "out"
+
+  - id: assign_feature_id
+    primitive: roots/assign_feature_id
+    version: "1.0.0"
+    description: "Mint a uniform feature_id from gispropnum so identity survives the fan-out and the final join"
+    inputs:
+      features: $steps.filter_parks.filtered
+    outputs:
+      identified: park_boundaries_filtered
+    params:
+      source_field: globalid
 
   # ─────────────────────────────────────────────────────────────────────────────
   # ROOTS: Analysis
@@ -193,7 +203,7 @@ steps:
     version: "1.0.0"
     description: "Generate concentric buffer rings around each park"
     inputs:
-      features: $steps.filter_parks.filtered
+      features: $steps.assign_feature_id.identified
     outputs:
       buffers: park_buffers
     params:
@@ -206,7 +216,7 @@ steps:
     version: "1.0.0"
     description: "Extract baseline temperature inside each park"
     inputs:
-      zones: $steps.filter_parks.filtered
+      zones: $steps.assign_feature_id.identified
       raster: $steps.crop_lst.cropped
     outputs:
       stats: park_temperatures
@@ -232,14 +242,13 @@ steps:
     version: "1.0.0"
     description: "Calculate Park Cooling Intensity using TPM-M method"
     inputs:
-      park_temps: $steps.park_baseline_temperature.stats
-      buffer_temps: $steps.buffer_temperatures.stats
+      ring_stats: $steps.buffer_temperatures.stats
+      feature_stats: $steps.park_baseline_temperature.stats
     outputs:
       pci: pci_results
     params:
       method: $choices.intensity_measure
-      statistic: $choices.central_tendency
-      min_buffers_for_turning_point: 3
+      min_rings: 3
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # EXPECTED OUTPUTS

@@ -1,60 +1,34 @@
 {
   "data": {
-    "path": "plots/nyc/experiments/../.data/filter_parks_filtered.geojson",
+    "path": "plots/nyc/experiments/../.data/generate_buffers_buffers.geojson",
     "format": "geojson",
     "secondary": {}
   },
   "metadata": {
-    "feature_count": 1970,
-    "geometry_type": "MULTIPOLYGON",
+    "feature_count": 250,
+    "geometry_type": [
+      "MULTIPOLYGON",
+      "POLYGON"
+    ],
     "bbox": [
-      913033.1985,
-      119521.6429,
-      1064870.6384,
-      271316.9822
+      931381.4959,
+      129849.8445,
+      1045046.9335,
+      255735.8368
     ],
     "crs": "EPSG:2263",
     "attribute_fields": [
-      "jurisdiction",
-      "mapped",
-      "zipcode",
-      "acres",
-      "location",
-      "nys_assembly",
-      "councildistrict",
-      "typecategory",
-      "us_congress",
-      "parentid",
-      "gispropnum",
-      "retired",
-      "communityboard",
-      "objectid",
-      "globalid",
-      "name311",
-      "department",
-      "pip_ratable",
-      "subcategory",
-      "precinct",
-      "permit",
-      "acquisitiondate",
-      "omppropid",
-      "gisobjid",
-      "signname",
-      "address",
-      "permitparent",
-      "class",
-      "nys_senate",
-      "permitdistrict",
-      "borough",
-      "waterfront"
+      "feature_id",
+      "distance_m"
     ],
-    "total_area_m2": 1260721667.797,
-    "n_before": 2058,
-    "n_after": 1970,
-    "n_excluded": 88,
-    "min_area_ha": 0.09,
-    "max_area_ha": {},
-    "semantic_type": "park_boundaries_filtered",
+    "total_area_m2": 32442461.8858,
+    "n_features": 25,
+    "n_distances": 10,
+    "interval_m": 30,
+    "max_distance_m": 300,
+    "n_rings_produced": 250,
+    "id_field": "feature_id",
+    "semantic_type": "park_buffers",
     "data_category": "vector"
   },
   "provenance": [
@@ -140,6 +114,80 @@
         }
       ],
       "duration_seconds": 2.379,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "assign_feature_id",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:44.867792+00:00",
+      "params": {
+        "source_field": "globalid"
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/filter_parks_filtered.geojson",
+          "hash": {
+            "value": "8c0f5798e24d592f63baf8b5b44adedc",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 2.054,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "sample_features",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:46.857148+00:00",
+      "params": {
+        "method": "stratified",
+        "n": 50,
+        "n_per_stratum": 5,
+        "stratify_by": "auto",
+        "seed": 42,
+        "filter": null,
+        "feature_ids": null
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/assign_feature_id_identified.geojson",
+          "hash": {
+            "value": "5c74a6cc3d7ace068aea964124f93a2e",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 1.987,
+      "lineage_branch": "features"
+    },
+    {
+      "primitive": "generate_buffers",
+      "version": "1.0.0",
+      "timestamp": "2026-08-09T02:06:56.750750+00:00",
+      "params": {
+        "interval_m": 30,
+        "max_distance_m": 300,
+        "ring_type": "donut"
+      },
+      "inputs": [
+        {
+          "name": "features",
+          "semantic_type": "park_boundaries_filtered",
+          "path": "plots/nyc/experiments/../.data/sample_after_assign_feature_id_sampled.geojson",
+          "hash": {
+            "value": "c92ee3ba7471fb410c85ecd6f942f2de",
+            "method": "metadata",
+            "algorithm": "md5"
+          }
+        }
+      ],
+      "duration_seconds": 4.706,
       "lineage_branch": null
     }
   ],
@@ -213,6 +261,31 @@
       "level": "info",
       "primitive": "filter_by_area",
       "message": "Excluded feature areas: min=0.0026 ha, max=0.09 ha, median=0.0364 ha."
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Loaded 1970 features"
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Stamped feature_id from 'globalid' (1970 unique values)"
+    },
+    {
+      "level": "info",
+      "primitive": "assign_feature_id",
+      "message": "Wrote identified features to assign_feature_id_identified.geojson"
+    },
+    {
+      "level": "info",
+      "primitive": "sample_features",
+      "message": "Sampled 25 of 1970 features using method='stratified'."
+    },
+    {
+      "level": "info",
+      "primitive": "generate_buffers",
+      "message": "Generating 10 rings (30m to 300m at 30m intervals) for 25 features."
     }
   ]
 }
