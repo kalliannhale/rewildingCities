@@ -1,0 +1,201 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# garden/methods/perception/inverse_perspective_composition.yml
+# HOW to answer image_composition_validity: recover the ground plane from a board,
+# classify the surface, warp the labels to the ground, and score raw vs rectified
+# vs a known truth. The choice points below are epistemological, not cosmetic.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: inverse_perspective_composition
+name: "Inverse Perspective Composition (IPM Falsification)"
+domain: perception
+
+description: >
+  A calibrated single-image pipeline. Solve the camera once; per frame, recover
+  the ground-plane pose from a flat board; segment the surface into land-cover
+  classes; warp the label mask to the ground plane over a bounded extent; then
+  measure class composition three ways over one region: raw (image plane),
+  rectified (ground plane), and truth. If rectified composition is not closer to
+  truth than raw, the correction has failed. The method is falsifiable by design.
+
+diagram: |
+  intrinsics (once) ─┐
+                     v
+  scene frame ─> recover_ground_pose ─> pose ─┐
+  scene frame ─> segment_rf ─> image-plane labels ─> rectify_to_ground ─> ground labels
+                                                                              │
+                        board footprint (known area) ── truth ──┐            │
+                                                                 v            v
+                                              raw fraction   truth   rectified fraction
+                                                      └──── score_composition ────┘
+                                                                 │
+                                                    supported / inconclusive
+
+answers_question_types:
+  - measurement_validity
+  - perspective_bias_correction
+  - classifier_agreement
+
+choices:
+
+  segmenter:
+    name: "Which segmenter produces the label mask"
+    description: >
+      Determines whether the headline number measures geometry alone or the whole
+      system. A hand-label carries no classifier error, so it isolates the IPM
+      claim; the RF or deep model reintroduce classifier error, giving an
+      end-to-end number. Reporting both separates the two effects.
+    options:
+      hand_label:
+        name: "Hand label"
+        description: The class-id mask painted by a human, decoded via crosswalk.
+        interpretation: Isolates the geometric correction from classifier noise.
+        when_to_use: ["the clean falsification of IPM on real data"]
+      classical_rf:
+        name: "Random forest"
+        description: The Xiao-style RF over visible-band indices plus texture.
+        interpretation: End-to-end number with an interpretable, light classifier.
+      deep:
+        name: "Deep segmenter"
+        description: The deep model (currently a frozen interface stub).
+        limitations: ["untrained placeholder until a head is retrained"]
+
+  truth_source:
+    name: "What counts as ground truth composition"
+    description: >
+      The independent measurement rectified/raw are scored against. Without one,
+      only the raw-to-rectified shift is observable, not a signed error.
+    options:
+      known_geometry_target:
+        name: "Known-geometry target (the board)"
+        description: >
+          The calibration board is a known 15 in square; its exact area fraction
+          within a ground rectangle sized in board units is computable from
+          geometry alone, no field measurement.
+        interpretation: A real quantitative truth available on every frame with a board.
+        when_to_use: ["no measured quadrat exists (the common case here)"]
+      measured_quadrat:
+        name: "Measured quadrat"
+        description: A taped known-size ground patch with recorded composition.
+        interpretation: Truth for actual land-cover fractions, not just board area.
+        limitations: ["requires field measurement not collected this session"]
+
+  region_of_comparison:
+    name: "Over what region composition is counted"
+    description: >
+      Raw, rectified, and truth must describe the same physical ground patch or
+      the comparison is not apples-to-apples.
+    options:
+      ground_extent_footprint:
+        name: "Image footprint of the ground extent"
+        description: >
+          Count raw only inside the image-plane quadrilateral that maps to the
+          ground rectangle; rectified and truth over that same rectangle.
+        interpretation: The honest choice; excludes sky, horizon, and background.
+      whole_frame:
+        name: "Whole frame"
+        description: Count raw over every classified pixel.
+        limitations: ["contaminates raw with sky/background; valid only when the frame IS the ROI (synthetic case)"]
+
+  comparison_metric:
+    name: "How composition error is scored"
+    description: How the gap between two compositions is summarized.
+    options:
+      l1_composition:
+        name: "L1 composition error"
+        description: Sum of absolute differences in class fractions.
+        interpretation: The headline scalar; robust and simple.
+      per_class:
+        name: "Per-class error"
+        description: Signed error per class.
+        interpretation: Localizes which surface the bias distorts most.
+
+  resolution_policy:
+    name: "How mask and pose resolutions are reconciled"
+    description: >
+      The pose/intrinsics are full-resolution; the RF works downscaled. Warping a
+      downscaled mask with a full-res homography samples the wrong pixels silently.
+    options:
+      segment_full_res:
+        name: "Segment at full resolution"
+        description: Set the segmenter's work_max to the long edge.
+        limitations: ["slower over millions of pixels"]
+      upsample_mask:
+        name: "Upsample the mask before warping"
+        description: Nearest-neighbor upsample the predicted mask to full res.
+        interpretation: Preferred; same result spatially, far cheaper.
+
+requires_primitives:
+  resolve_scribble_labels:
+    from: soil/classify
+    purpose: Decode painted scribbles into the canonical class-id mask (hand-label path).
+  recover_ground_pose:
+    from: soil/calibrate
+    purpose: Recover the ground-plane pose from the board in the scene frame.
+  segment_rf:
+    from: soil/classify
+    purpose: Produce the image-plane land-cover prediction (classifier path).
+  rectify_to_ground:
+    from: soil/transform
+    purpose: Warp the label mask to the ground plane over the bounded extent.
+  score_composition:
+    from: roots/metrics
+    purpose: >
+      Count raw/rectified/truth fractions over one region, apply the coverage
+      guard, and return the verdict. NOTE: not yet a registered primitive; the
+      logic currently lives in garden/experiments/falsification_test.py and must
+      be factored into a roots metric to become an orchestrated step.
+
+requires_data:
+  - name: scene_frame
+    type: raster
+    semantic_types: [ground_photograph]
+    role: The frame to analyze; a calibration board must be flat and fully visible.
+    critical: true
+    uncertainty_without: No ground plane can be anchored; the method cannot run.
+  - name: intrinsics
+    type: tabular
+    semantic_types: [camera_intrinsics]
+    role: The solved camera; sets focal length and distortion for pose and warp.
+    critical: true
+    uncertainty_without: Pose and rectification are undefined.
+  - name: labels
+    type: raster
+    semantic_types: [scribble_labels, land_cover_labels]
+    role: Training/hand-truth labels for the surface classes in this frame.
+    critical: true
+    uncertainty_without: No composition to compare; only a rectified image, unscored.
+  - name: quadrat_truth
+    type: tabular
+    semantic_types: [composition_falsification]
+    role: An optional measured ground-truth composition.
+    critical: false
+    uncertainty_without: >
+      Fall back to the known-geometry (board) truth; land-cover fractions are
+      then shown as a raw-to-rectified shift rather than a signed error.
+
+produces:
+  - name: falsification
+    semantic_type: composition_falsification
+    data_category: tabular
+    description: Raw/rectified/truth fractions, L1 errors, coverage, verdict. The headline.
+  - name: comparison
+    semantic_type: segmenter_comparison
+    data_category: tabular
+    description: RF vs deep per-class accuracy, mIoU, Kappa (secondary).
+  - name: rectified
+    semantic_type: rectified_land_cover
+    data_category: raster
+    description: The bird's-eye label mask, for visual sanity-checking the pose.
+
+references:
+  - citation: "Xiao, Y., et al. (2023). Science of the Total Environment, 868, 161463."
+    note: Land-cover trichotomy and classical feature basis for the RF baseline.
+  - citation: "Maxwell, B. A. (2026). CS 5330 Pattern Recognition and Computer Vision (course notes)."
+    note: >
+      Camera calibration, intrinsic/extrinsic geometry, and rectification follow
+      the standard multi-view geometry developed there.
+
+version: "1.0.0"
+created: "2026-08-12"
+contributors:
+  - Kalli A. Hale

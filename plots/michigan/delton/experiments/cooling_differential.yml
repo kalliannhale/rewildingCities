@@ -1,0 +1,79 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# plots/michigan/delton/experiments/predict_temperature_from_landcover.yml
+# The thermal anchor for Delton: is forest cooler than open turf, from Landsat?
+# A single-step orchestrated experiment (unlike the segmenter comparison, this
+# one fits the DAG cleanly: two manifest rasters in, one differential out).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: delton_cooling_differential
+name: "Delton Forest-vs-Open Cooling Differential"
+description: >
+  Anchors the perception work in a climate measurement: whether the land-cover
+  distinctions we read from ground photos correspond to a real surface-
+  temperature difference. Masks Delton's summer Landsat LST by ESA WorldCover
+  class and reports how much cooler tree cover is than open grassland/cropland.
+
+tags: [thermal, delton, cooling, land_cover, anchor]
+
+curiosity:
+  ref: "$curiosity-space/thermal/thermal_landscape_analysis"
+  sub_question: heat_island
+
+method:
+  ref: "$methods/thermal/land_cover_cooling_differential"
+
+choices:
+  forest_definition: tree_only
+  open_definition: grass_and_crop
+  central_tendency: median
+  grid_reconciliation: land_cover_to_lst_majority
+
+rationale: >
+  Tree-only forest for the cleanest cool signal; grassland+cropland for open,
+  since the photographed site is an irrigated golf course whose turf reads as
+  grassland in WorldCover. Median to resist a few hot edge pixels. Land cover is
+  majority-resampled onto the LST grid so no thermal resolution is fabricated.
+
+city: delton
+manifest: plots/michigan/delton/manifest.yml
+
+parameters:
+  forest_classes: [10]          # ESA WorldCover tree cover
+  open_classes: [30, 40]        # grassland + cropland
+  central_tendency: median
+
+steps:
+  - id: cooling
+    primitive: roots/cooling_differential
+    description: Mask LST by land-cover class and compute the forest-vs-open differential.
+    inputs:
+      lst: "$manifest.land_surface_temperature"
+      land_cover: "$manifest.land_cover"
+    outputs:
+      differential: cooling_differential
+    params:
+      forest_classes: "$parameters.forest_classes"
+      open_classes: "$parameters.open_classes"
+      central_tendency: "$parameters.central_tendency"
+
+expected_outputs:
+  primary:
+    semantic_type: cooling_differential
+    description: Per-class LST summaries and the open-minus-forest differential.
+
+interpretation_guidance: >
+  A positive open-minus-forest value means forest is cooler, the expected
+  direction. Read it as an anchor: direction and rough magnitude, not a precise
+  per-site figure. Check the pixel counts; at ~30 m over a small CDP, forest and
+  open may each be only tens of pixels.
+
+limitations:
+  - "Landsat thermal is ~30 m; ~70 px across Delton. Differential anchor only."
+  - "The site is an irrigated golf course; turf reads as grassland, not generic open land."
+  - "Summer multi-year composite; not a single-date measurement."
+  - "WorldCover is 10 m and majority-resampled to 30 m; small classes may vanish."
+
+version: "1.0.0"
+created: "2026-08-12"
+contributors:
+  - Kalli A. Hale

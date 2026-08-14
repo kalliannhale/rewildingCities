@@ -3,7 +3,7 @@
 from canopy.orchestrator import run_experiment
 
 result = run_experiment(
-    "garden/experiments/test_soil_pipeline.yml",
+    "garden/experiments/in-the-cloud/test_soil_pipeline.yml",
     profile="dev"
 )
 

@@ -5,6 +5,7 @@ Envelope construction, reading, writing, and validation.
 """
 
 import json
+import re
 import time
 import hashlib
 import warnings as python_warnings
@@ -500,7 +501,7 @@ class EnvelopeBuilder:
         
         # Build provenance entry
         provenance_entry = ProvenanceEntry(
-            primitive=primitive.split('/')[-1].replace('.R', ''),
+            primitive=re.sub(r'\.(R|py)$', '', primitive.split('/')[-1]),
             version=version,
             timestamp=datetime.now(timezone.utc).isoformat(),
             params=params,
@@ -534,7 +535,7 @@ class EnvelopeBuilder:
             data={
                 "path": final_path,
                 "format": output_format,
-                "secondary": {}
+                "secondary": result.metadata.get("secondary", {})
             },
             metadata=metadata,
             provenance=merged_provenance,
@@ -631,7 +632,7 @@ class EnvelopeBuilder:
                 merged.extend(inp.envelope.warnings)
         
         # Add warnings from this primitive
-        primitive_short = primitive_name.split('/')[-1].replace('.R', '')
+        primitive_short = re.sub(r'\.(R|py)$', '', primitive_name.split('/')[-1])
         for w in primitive_warnings:
             merged.append(Warning(
                 level=w["level"],
@@ -666,7 +667,7 @@ class EnvelopeBuilder:
         # Capacity to report both primary and secondary outputs
         secondary = primitive_metadata.get("secondary", {})
         if secondary:
-            data["secondary"] = secondary
+            metadata["secondary"] = secondary
         
         return metadata
 

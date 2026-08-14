@@ -14,10 +14,8 @@ curiosities:
       question: "How do we analyze the thermal landscape of our community?"
       sub_questions: [climate_resilience, public_health, heat, urban_planning, thermal, heat_island, temperature]
 
-
-  # Future curiosities
-  # landscape:
-  #   - id: vegetation_connectivity
-  #     question: "How connected are urban vegetation patches?"
-  #   - id: habitat_fragmentation
-  #     question: "How fragmented are potential wildlife corridors?"
+  perception:
+    - id: image_composition_validity
+      path: perception/image_composition_validity.yml
+      question: "Is image-plane surface composition a trustworthy estimate of ground-plane composition?"
+      sub_questions: [perspective_bias, rectification_recovery, classifier_agreement, remote_sensing, land_cover]

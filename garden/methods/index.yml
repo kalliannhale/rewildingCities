@@ -33,6 +33,13 @@ methods:
       answers: [spatial_clustering, spatial, clustering, heat, thermal, analysis, thermal_analysis, hot_cold_spot_analysis, temperature, hotspot_identification, hot_spot_identification, cold_spot_identification, thermal_landscape_classification thermal_equity
       ]
 
+    - id: inverse_perspective_composition
+      path: perception/inverse_perspective_composition.yml
+      name: "Inverse Perspective Composition (IPM Falsification)"
+      answers: [
+        measurement_validity, perspective_bias_correction, classifier_agreement
+      ]
+
   # Future domains slot in alongside `thermal:` — no structural change to
   # the orchestrator or the resolution engine when adding them.
   #

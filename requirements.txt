@@ -1,5 +1,4 @@
 # rewildingCities Python dependencies
-# Install: pip install -r requirements.txt
 
 # Core
 pyyaml>=6.0

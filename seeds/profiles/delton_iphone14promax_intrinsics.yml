@@ -1,0 +1,92 @@
+camera_matrix:
+- - 3288.1007455686936
+  - 0.0
+  - 2064.808723245635
+- - 0.0
+  - 3286.3995411305286
+  - 1417.5098438263124
+- - 0.0
+  - 0.0
+  - 1.0
+distortion_coefficients:
+- 0.14797630946354542
+- -0.200441981089491
+- -0.00489286667314749
+- 0.0028057120481302738
+- 0.4231484098943021
+image_width: 4032
+image_height: 3024
+rms_reproj_px: 1.178
+board_internal_corners:
+- 7
+- 7
+square_size: 1.0
+square_units: board_squares
+fix_aspect_ratio: false
+n_frames_used: 26
+n_frames_total: 31
+frames_used:
+- kalli_calibration_001.png
+- kalli_calibration_002.png
+- kalli_calibration_003.png
+- kalli_calibration_004.png
+- kalli_calibration_005.png
+- kalli_calibration_006.png
+- kalli_calibration_008.png
+- kalli_calibration_009.png
+- kalli_calibration_010.png
+- kalli_calibration_012.png
+- kalli_calibration_015.png
+- kalli_calibration_016.png
+- kalli_calibration_017.png
+- kalli_calibration_018.png
+- kalli_calibration_019.png
+- kalli_calibration_020.png
+- kalli_calibration_021.png
+- kalli_calibration_022.png
+- kalli_calibration_023.png
+- kalli_calibration_024.png
+- kalli_calibration_025.png
+- kalli_calibration_026.png
+- kalli_calibration_027.png
+- kalli_calibration_028.png
+- kalli_calibration_030.png
+- kalli_calibration_031.png
+per_frame_rms_px:
+  kalli_calibration_007.png: 4.682
+  kalli_calibration_014.png: 3.9821
+  kalli_calibration_013.png: 3.5111
+  kalli_calibration_011.png: 3.0789
+  kalli_calibration_008.png: 2.3929
+  kalli_calibration_009.png: 2.3393
+  kalli_calibration_010.png: 1.9629
+  kalli_calibration_031.png: 1.9243
+  kalli_calibration_005.png: 1.7434
+  kalli_calibration_022.png: 1.6755
+  kalli_calibration_016.png: 1.3375
+  kalli_calibration_012.png: 1.2964
+  kalli_calibration_017.png: 1.1344
+  kalli_calibration_015.png: 1.0635
+  kalli_calibration_006.png: 1.0331
+  kalli_calibration_019.png: 1.0186
+  kalli_calibration_024.png: 0.9167
+  kalli_calibration_027.png: 0.9137
+  kalli_calibration_021.png: 0.8328
+  kalli_calibration_030.png: 0.8194
+  kalli_calibration_028.png: 0.7184
+  kalli_calibration_018.png: 0.6977
+  kalli_calibration_004.png: 0.6578
+  kalli_calibration_026.png: 0.6472
+  kalli_calibration_003.png: 0.6342
+  kalli_calibration_001.png: 0.6089
+  kalli_calibration_020.png: 0.6038
+  kalli_calibration_023.png: 0.5928
+  kalli_calibration_002.png: 0.5134
+  kalli_calibration_025.png: 0.4866
+rms_before_drop_px: 1.8172
+frames_dropped:
+- kalli_calibration_007.png
+- kalli_calibration_011.png
+- kalli_calibration_013.png
+- kalli_calibration_014.png
+source_dir: /Users/kallia.hale/rewildingCities/plots/michigan/delton/.data/stills/calibration

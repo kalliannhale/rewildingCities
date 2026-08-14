@@ -1,0 +1,88 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# garden/curiosity-space/perception/image_composition_validity.yml
+# A perception-domain curiosity: can a single ground-level photograph be trusted
+# as a measurement of ground-surface composition? Method-agnostic; the IPM method
+# is one way to answer it.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: image_composition_validity
+domain: perception
+tags:
+  - remote_sensing
+  - land_cover
+  - perspective
+  - measurement_validity
+  - street_level
+
+question: >
+  Is the surface composition measured from a single ground-level photograph a
+  trustworthy estimate of the actual ground-plane composition, or is it biased
+  by the camera's perspective in a way we must correct before believing it?
+
+description: >
+  Every land-cover analysis downstream of imagery inherits the trust we place
+  in the imagery. A tilted phone photo does not see the ground as a map sees it:
+  surfaces near the camera are over-represented and far surfaces are compressed,
+  so a naive pixel count is a biased estimator of what is actually on the ground.
+  This curiosity asks whether that bias is real, whether it is predictable from
+  camera geometry, and whether inverse perspective mapping removes it. It sits
+  upstream of the thermal work: only once image-derived land cover is a credible
+  measurement can it stand alongside satellite land cover in a cooling analysis.
+
+significance: >
+  If street-level imagery can be made an unbiased measurement, communities can
+  characterize their own ground surfaces with a phone, not only with satellites
+  that are too coarse for a small site. If it cannot, any land cover read from a
+  photo must carry that caveat. Either answer is worth knowing plainly.
+
+sub_questions:
+
+  perspective_bias:
+    question: >
+      Does image-plane composition systematically differ from ground-plane
+      composition, and is the difference predictable from camera geometry?
+    interpretation: >
+      A measured gap between raw image-plane fractions and a known ground truth,
+      in the direction geometry predicts (near surfaces over-counted), confirms
+      the bias is real and structured rather than random noise.
+    answers_for:
+      - whether a raw photo can be believed as-is
+
+  rectification_recovery:
+    question: >
+      Does inverse perspective mapping, under a fixed capture protocol, recover
+      the true ground composition better than the raw image does?
+    interpretation: >
+      The kill switch. If the rectified composition is not closer to a known
+      target than the raw composition, the correction is not doing the work
+      claimed of it, regardless of how plausible the rectified image looks.
+    depends_on:
+      - perspective_bias
+
+  classifier_agreement:
+    question: >
+      Where do a classical (random-forest) and a deep segmenter agree on the
+      surface labels, and where do they diverge?
+    interpretation: >
+      Divergence localizes where the composition estimate is fragile (typically
+      shadowed or thin-boundary surfaces), separating classifier uncertainty
+      from geometric bias.
+
+related_phenomena:
+  - perspective_projection
+  - foreshortening
+  - inverse_perspective_mapping
+  - image_plane_vs_ground_plane
+  - urban_heat_island   # the downstream analysis this feeds
+
+foundational_research:
+  - citation: >
+      Xiao, Y., et al. (2023). Science of the Total Environment, 868, 161463.
+    contribution: >
+      Establishes the blue-green-grey land-cover trichotomy this platform
+      reconciles to, and the classical feature basis for the RF baseline.
+
+version: "1.0.0"
+created: "2026-08-12"
+contributors:
+  - Kalli A. Hale

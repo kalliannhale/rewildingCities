@@ -116,16 +116,18 @@ def acquire_for_city(manifest_path):
 
     output_path = data_dir / "land_cover.tif"
 
+    def mark_available():
+        try:
+            from soil.register.manifest_utils import set_available
+            set_available(manifest_path, "land_cover", True)
+        except ImportError:
+            pass
+
+    # Cache hit: a real file is already on disk, so the flag reflects reality.
     if output_path.exists():
         logger.info("Land cover already exists. Use --force to re-acquire.")
-        # Update 'available' flag in manifest
-    try:
-        from soil.register.manifest_utils import set_available
-        set_available(manifest_path, "land_cover", True)
-    except ImportError:
-        pass
-
-    return True
+        mark_available()
+        return True
 
     # Get bounding box
     bbox = get_bbox_from_data(data_dir)
@@ -226,6 +228,7 @@ def acquire_for_city(manifest_path):
         pct = count / total_pixels * 100
         logger.info(f"    {val:>3} {name:<30} {pct:>5.1f}%")
 
+    mark_available()   # flag set ONLY after bytes are on disk
     return True
 
 

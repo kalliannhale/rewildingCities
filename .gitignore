@@ -2,9 +2,9 @@
 # 🌱 rewildingCities .gitignore
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# city data (large files, local to each gardener)
-plots/*/.data/*
-!plots/*/.data/.gitkeep
+**/.data/
+**/.envelope/
+**/.envelopes/
 
 # harvest outputs (regenerable)
 harvest/reports/*
@@ -18,6 +18,12 @@ compost/logs/*
 compost/archive/*
 !compost/**/.gitkeep
 
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
 # R artifacts
 .Rproj.user
 .Rhistory
@@ -26,11 +32,18 @@ compost/archive/*
 *.Rproj
 
 # Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/*.tfvars
-!terraform/*.example.tfvars
+# Unanchored (**/) so these apply to every terraform dir, not just the root one.
+# A pattern containing a slash is anchored to this file's directory, which is why
+# garden/experiments/in-the-cloud/terraform/ slipped through the old rules.
+**/.terraform/
+**/.terraform.tfstate.lock.info
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfvars
+!**/*.example.tfvars
+# localstack.tfvars is all dummy values (account 000000000000, test@localhost);
+# it is the worked example for local runs, so it stays tracked.
+!**/localstack.tfvars
 
 # system files
 .DS_Store
@@ -38,4 +51,7 @@ Thumbs.db
 
 # environment
 .env
-.env.local
+.env.localplots/**/.data/
+*.joblib
+*.pt
+*.DNG

@@ -1,0 +1,5 @@
+{
+  "image": "plots/michigan/delton/.data/stills/labeled/kalli_impervious_002.png",
+  "intrinsics": "seeds/profiles/delton_iphone14promax_intrinsics.yml",
+  "pose": "plots/michigan/delton/.data/pose_impervious_002.yml"
+}

@@ -25,8 +25,6 @@ with_primitive_error_handling({
   
   n_before <- nrow(features)
 
-  cat(sprintf("[filter_by_area DEBUG] read: %s | rows=%d | unique globalid=%d\n", input_path, n_before, length(unique(features$globalid))), file = stderr())
-
   areas_ha <- as.numeric(st_area(features)) / 10000
 
   keep <- areas_ha >= min_area_ha

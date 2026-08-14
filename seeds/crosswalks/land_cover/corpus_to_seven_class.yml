@@ -1,0 +1,74 @@
+# ============================================================
+# seeds/crosswalks/land_cover/corpus_to_seven_class.yml
+# ============================================================
+# Maps an external scene-parsing corpus's classes to the rewildingCities
+# 7-class image-derived scheme, to build a training corpus for the deep
+# segmenter (transfer learning). This crosswalk runs UPWARD (a corpus's
+# vocabulary into ours), which is the dangerous direction: a coarse source
+# class must never be split into a finer target it cannot justify. Coarse or
+# ambiguous sources are quarantined in `unmapped`, not force-assigned.
+#
+# Name-based on purpose: binds to ADE20K label NAMES, not indices, which vary
+# by release. The training loader resolves names against the corpus's own
+# label map; a name here that the corpus doesn't have is skipped with a warning.
+# ============================================================
+
+from: "ADE20K SceneParse150"
+to: "rewildingCities 7-class image-derived"
+
+description: >
+  Reconciles ADE20K scene-parsing labels to the seven land-cover classes so a
+  pretrained backbone's head can be retrained toward our scheme. ADE20K is
+  chosen over Cityscapes/Mapillary because it separates tree, grass, and plant
+  rather than lumping them into one vegetation class; the viewpoint gap
+  (ADE20K is mixed-scene, our frames are ground-level) is what fine-tuning on
+  our own labeled frames addresses.
+
+mappings:
+  1_tree_canopy:
+    sources: [tree, palm]
+    confidence: high
+  2_shrub:
+    sources: [plant, bush, hedge]
+    confidence: low          # ADE20K 'plant' is looser than our 'shrub'
+  3_grass:
+    sources: [grass]
+    confidence: high
+  4_soil:
+    sources: [earth, sand, dirt track, land]
+    confidence: low          # soil/sand proxies; not an exact match
+  5_impervious:
+    sources: [road, sidewalk, path, runway, floor]
+    confidence: high
+  6_water:
+    sources: [water, river, sea, lake, pool, fountain, swimming pool]
+    confidence: high
+  7_building:
+    sources: [building, house, hut, skyscraper, tower]
+    confidence: high
+
+unmapped:
+  ambiguous_too_coarse:
+    rationale: >
+      Source classes that conflate distinctions our scheme keeps separate.
+      They CANNOT be assigned to a single target without inventing a
+      distinction the corpus never made, so they are dropped from training
+      rather than guessed. (Relevant when using Cityscapes/Mapillary, whose
+      single 'vegetation' class collapses tree/shrub/grass; listed here so the
+      guard is explicit even though ADE20K avoids it.)
+    sources: [vegetation, terrain]
+
+ignore:
+  rationale: >
+    Not ground-surface land cover. Excluded from training (mapped to an ignore
+    index the loss skips), not treated as any of the seven classes.
+  sources: [sky, person, car, truck, bus, bicycle, animal, boat, chair,
+            table, signboard, pole, streetlight, fence, wall, window, door]
+
+notes: >
+  Two mappings are explicitly low-confidence: shrub<-plant and soil<-earth/
+  sand. Report per-class metrics for these with that caveat, and expect them to
+  be the weakest classes, mirroring the shrub/grass and soil tensions that
+  already recur in the platform. Verify the `sources` names against the exact
+  ADE20K release in use; unknown names are skipped with a warning by the loader,
+  never silently mapped.

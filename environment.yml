@@ -10,4 +10,10 @@ dependencies:
   - shapely
   - earthengine-api
   - jsonschema
+  - pillow-heif
+  - boto3
+  - scikit-learn
+  - pandas
+  - pytorch
+  - torchvision
 prefix: /Users/kallia.hale/miniconda3/envs/rewilding

@@ -27,7 +27,7 @@ properties:
 
   domain:
     type: string
-    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality]
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, remote_sensing, perception, policy, information]
     description: Scientific domain this curiosity belongs to
 
   tags:
@@ -39,6 +39,12 @@ properties:
       - "climate_resilience"
       - "public_health"
       - "environmental_justice"
+      - "perception"
+      - "biodiversity"
+      - "land_cover"
+      - "equity"
+      - "legislation"
+      - "information"
 
   # ───────────────────────────────────────────────────────────────────────────
   # THE QUESTION

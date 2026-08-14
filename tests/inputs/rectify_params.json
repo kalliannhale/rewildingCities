@@ -1,0 +1,6 @@
+{
+  "input_kind": "rgb",
+  "ground_extent": [-11.25, 22.5, -22.5, 11.25],
+  "output_scale": 30,
+  "undistort": true
+}

@@ -1,0 +1,49 @@
+# ============================================================
+# seeds/crosswalks/land_cover/scribble_rgb_to_seven_class.yml
+# ============================================================
+# Decodes hand-painted scribble masks (flat RGB stamps) into the seven
+# image-derived land-cover codes the segmentation stage consumes. This is the
+# input-side companion to seven_class_to_blue_green_grey.yml:
+#
+#     paint RGB  ->  7-class  ->  Blue-Green-Grey
+#
+# Keeping the paint vocabulary here as data, rather than as literals inside a
+# primitive, is the same source-vocabulary reconciliation the platform already
+# uses for Landsat band names (lwir vs lwir11) and land-cover schemes. The
+# codes below are identical to source_scheme in seven_class_to_blue_green_grey,
+# so the two crosswalks compose.
+# ============================================================
+
+from: "rewildingCities scribble RGB palette"
+to: "rewildingCities 7-class image-derived"
+
+description: >
+  Maps the flat RGB colors a human paints when hand-labeling a street-level
+  frame to the canonical seven-class integer codes. Color is only a handle for
+  the labeler's eye; the code is the meaning. 0 is unlabeled, not a class.
+
+palette:
+  - {rgb: [0, 0, 0],       code: 0, name: unlabeled}
+  - {rgb: [255, 0, 255],   code: 1, name: tree_canopy}
+  - {rgb: [255, 128, 0],   code: 2, name: shrub}
+  - {rgb: [255, 255, 0],   code: 3, name: grass}
+  - {rgb: [255, 0, 0],     code: 4, name: soil}
+  - {rgb: [0, 255, 255],   code: 5, name: impervious}
+  - {rgb: [0, 0, 255],     code: 6, name: water}
+  - {rgb: [255, 255, 255], code: 7, name: building}
+
+snap:
+  tolerance: 30
+  policy: >
+    A painted pixel that is not an exact palette color is snapped to the
+    nearest palette color only if it is within `tolerance` (Euclidean RGB).
+    Anything further, an ambiguous anti-aliased mid-blend, is assigned
+    0/unlabeled. Because a yellow-to-black edge can pass near orange, a naive
+    nearest-color rule would silently invent shrub; the tolerance plus the
+    phantom-class check in the primitive prevent assigning any class that was
+    not painted exactly somewhere in the mask.
+
+notes: >
+  Painting is expected to be hard-edged (Pencil, no anti-aliasing). Soft edges
+  raise the ambiguous-pixel count, which the primitive reports so a sloppy
+  export is visible rather than silent.

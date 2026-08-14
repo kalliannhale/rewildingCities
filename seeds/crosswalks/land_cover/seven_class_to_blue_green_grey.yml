@@ -1,0 +1,72 @@
+# ============================================================
+# seeds/crosswalks/land_cover/seven_class_to_blue_green_grey.yml
+# ============================================================
+# Maps the seven image-derived land-cover classes (produced by the
+# segmentation stage) to the canonical Blue-Green-Grey vocabulary
+# (Xiao et al. 2023), the same trichotomy every other land-cover
+# source reconciles to. This is what lets an image-derived
+# classification enter the pipeline as a first-class citizen
+# alongside ESA WorldCover, NYC LiDAR, etc.
+# ============================================================
+
+from: "rewildingCities 7-class image-derived"
+to: "Blue-Green-Grey (Xiao et al. 2023)"
+
+description: >
+  Reconciles the seven thermally-relevant surface classes segmented
+  from street-level photographs to the three-class canonical scheme
+  used for cooling analysis. Bare soil resists the trichotomy and is
+  recorded as unmapped with explicit rationale, carried in the
+  envelope rather than silently discarded.
+
+source_scheme:
+  name: "rewildingCities 7-class image-derived"
+  provider: "rewildingCities segmentation stage (RF and deep model)"
+  classes:
+    1: "tree_canopy"
+    2: "shrub"
+    3: "grass"
+    4: "bare_soil"
+    5: "impervious"
+    6: "water"
+    7: "building"
+
+target_scheme:
+  name: "Blue-Green-Grey"
+  reference: "Xiao, Y. et al. (2023). Science of the Total Environment, 868, 161463."
+  classes:
+    vegetation: "Green landscape — trees, shrubs, grass"
+    water: "Blue landscape — permanent water"
+    impervious: "Grey landscape — built and paved surfaces"
+
+mappings:
+  vegetation:
+    - 1   # tree_canopy
+    - 2   # shrub
+    - 3   # grass
+  water:
+    - 6   # water
+  impervious:
+    - 5   # impervious
+    - 7   # building
+
+unmapped:
+  4:
+    name: "bare_soil"
+    rationale: >
+      Thermally similar to impervious (high albedo, no evapotranspiration)
+      but ecologically distinct: often potential green space. Kept explicit
+      so the community can decide its treatment, rather than folding it
+      silently into grey. The same choice ESA WorldCover's bare/sparse
+      class faces.
+    alternative_mappings:
+      - target: impervious
+        rationale: "Thermal behavior closer to grey"
+      - target: vegetation
+        rationale: "Ecologically, bare soil is latent green space"
+
+notes: >
+  A street-level photograph carries no coordinate system, so the
+  classification enters as an observation product reconciled through
+  this crosswalk, not as a georeferenced raster. The bare_soil decision
+  is the one interpretive choice that must not be made silently.

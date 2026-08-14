@@ -1,0 +1,106 @@
+city:
+  name: Delton
+  id: delton
+  region: Michigan
+  country: US
+  timezone: America/Detroit
+  notes: >
+    Rural CDP, ~2.6 sq mi. This plot was initialized for the street-level
+    photograph experiment (in-pipeline land-cover classification). The raster
+    datasets below support the forest-vs-open cooling differential ANCHOR only,
+    which needs direction and approximate magnitude, not fine spatial detail.
+    The photographed site is a golf course: irrigated turf and a pond, which
+    reads as cool, well-watered vegetation. Characterize it as that specific
+    land use, not as generic open land.
+
+crs:
+  working: EPSG:32616
+  notes: >
+    UTM zone 16N (WGS84). Delton sits at ~85.41W, within zone 16. Metric,
+    suitable for area and distance at this site scale.
+
+stewardship:
+  maintainers:
+    - name: Kalli A. Hale
+      organization: rewildingCities
+  initialized: '2026-08-11'
+  community_partners: []
+
+scope:
+  study_area:
+    type: full
+  feature_sampling:
+    enabled: false
+  resolution:
+    mode: native
+
+datasets:
+
+  study_boundary:
+    available: true
+    description: Delton CDP boundary (single polygon)
+    semantic_type: study_boundary
+    format: geojson
+    source:
+      type: file
+      provider: census
+      notes: >
+        Extracted from Michigan Census Designated Places. WGS84 (CRS84).
+    cache:
+      path: .data/city_boundary.geojson
+      refresh_policy: manual
+    provenance:
+      source: US Census / Michigan CDP layer
+      license: Public domain (US Census)
+    quality:
+      confidence: high
+      known_issues:
+        - CDP boundary is administrative, larger than the photographed site.
+
+  land_cover:
+    available: true
+    description: ESA WorldCover 10m land cover, cropped to Delton
+    semantic_type: land_cover
+    format: tiff
+    source:
+      type: s3
+      provider: esa_worldcover
+      version: v200
+      year: 2021
+      notes: Public AWS S3 tiles, no auth. Bbox derived from study_boundary.
+    cache:
+      path: .data/land_cover.tif
+      refresh_policy: manual
+    provenance:
+      source: ESA WorldCover 2021 v200
+      source_url: https://esa-worldcover.org/
+      license: CC-BY 4.0
+    quality:
+      confidence: medium
+      known_issues:
+        - 10m resolution is coarse for a 2.6 sq mi CDP; anchor use only.
+
+  land_surface_temperature:
+    available: true
+    description: Landsat 8/9 Collection 2 L2 summer LST, Celsius
+    semantic_type: land_surface_temperature
+    format: tiff
+    source:
+      type: stac
+      provider: planetary_computer
+      collection: landsat-c2-l2
+      year_start: 2021
+      year_end: 2024
+      months: [6, 7, 8, 9]
+      max_cloud: 15
+      notes: Microsoft Planetary Computer STAC, no auth. Bbox from study_boundary.
+    cache:
+      path: .data/lst_summer.tif
+      refresh_policy: manual
+    provenance:
+      source: USGS Landsat 8/9 via Microsoft Planetary Computer
+      license: Public domain (USGS)
+    quality:
+      confidence: medium
+      known_issues:
+        - 30m thermal resolution; ~70 px across Delton. Differential anchor only.

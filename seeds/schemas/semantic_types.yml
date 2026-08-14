@@ -208,3 +208,243 @@ types:
     format: parquet
     description: Temperature statistics per buffer ring (gradient for PCI)
     parent_type: zonal_statistics
+  
+
+  # --- perception / computer-vision types ---
+
+  ground_photograph:
+    category: image
+    format: png
+    description: >
+      A ground-level RGB photograph of a space, optionally with a calibration
+      board flat on the ground for pose recovery.
+
+  camera_intrinsics:
+    category: tabular
+    format: yaml
+    description: >
+      Pinhole camera matrix and distortion coefficients from checkerboard
+      calibration (keys camera_matrix, distortion_coefficients).
+
+  ground_pose:
+    category: tabular
+    format: yaml
+    description: >
+      Ground-plane pose (rotation/translation) recovered from a flat board,
+      anchoring the image to a metric ground coordinate frame.
+
+  scribble_labels:
+    category: raster
+    format: png
+    description: >
+      A painted RGB scribble mask of sparse human annotations, decoded to
+      canonical class ids by a crosswalk.
+
+  land_cover_labels:
+    category: raster
+    format: png
+    description: >
+      Canonical 7-class land-cover id mask (0 = unlabeled, 1..7 = classes),
+      the ground truth for segmentation.
+
+  land_cover_prediction:
+    category: raster
+    format: png
+    description: >
+      A predicted 7-class land-cover id mask from a segmenter (image-plane).
+
+  rectified_land_cover:
+    category: raster
+    format: png
+    description: >
+      A land-cover mask warped to a top-down ground view via IPM, so
+      composition reflects ground area rather than perspective.
+
+  feature_table:
+    category: tabular
+    format: parquet
+    description: >
+      Per-sample feature rows (numeric predictors) with optional id/coords and
+      a label or target column. Input to the learning primitives.
+
+  classifier_model:
+    category: tabular
+    format: joblib
+    description: >
+      A trained classifier bundle (estimator, feature_cols, label mapping,
+      sklearn model). Binary artifact.
+
+  regressor_model:
+    category: tabular
+    format: joblib
+    description: >
+      A trained regressor bundle (estimator, feature_cols, target_col, sklearn
+      model). Binary artifact.
+
+  predictions:
+    category: tabular
+    format: csv
+    description: >
+      Model predictions per sample (id + predicted class or value).
+
+  sample_index:
+    category: tabular
+    format: csv
+    description: >
+      An abstract table of samples (id, optional coords/labels) to be split
+      into partitions.
+
+  dataset_partition:
+    category: tabular
+    format: csv
+    description: >
+      Sample ids tagged with a train/test/val partition from a leakage-aware
+      split strategy.
+
+  # --- metrics / analysis types ---
+
+  segmentation_metrics:
+    category: tabular
+    format: json
+    description: >
+      Per-class and macro accuracy, mIoU, and Cohen's Kappa for one or more
+      segmenters against truth.
+
+  composition_validity:
+    category: tabular
+    format: json
+    description: >
+      IPM falsification verdict: image-plane vs rectified land-cover fractions
+      and whether the perspective view misrepresents composition.
+
+  regression_skill:
+    category: tabular
+    format: json
+    description: >
+      Held-out regression skill (R2, RMSE, MAE) on a spatial test split.
+
+  disagreement_map:
+    category: raster
+    format: png
+    description: >
+      Where two segmenters agree (255) or contest the label (0) over the valid
+      region; an epistemic-contestedness layer.
+
+  cooling_differential:
+    category: tabular
+    format: json
+    description: >
+      Forest-vs-open land-cover surface-temperature differential (per-class LST
+      summaries and the open-minus-forest value; positive = forest cooler). A
+      relative anchor, robust to absolute LST calibration.
+
+  space_cooling_estimate:
+    category: tabular
+    format: json
+    description: >
+      A photographed space's land-cover composition and estimated relative
+      cooling index (7-class weighted). An estimate from composition x an
+      external land-cover/temperature relationship, not a measured temperature.
+
+  counterfactual_cooling:
+    category: tabular
+    format: json
+    description: >
+      A projected cooling shift under a hypothetical land-cover conversion
+      applied to a space_cooling_estimate. A projection, not a promise.
+
+  sample_index:
+    category: tabular
+    format: parquet
+    description: >
+      Abstract table of sample records (an id, plus optional label, group,
+      coordinates, time) that split_dataset partitions. Domain-agnostic.
+
+  dataset_partition:
+    category: tabular
+    format: parquet
+    description: >
+      A sample_index plus a `partition` column (train/test/val). The seed and
+      strategy live in the envelope, so the split is reproducible.
+
+  feature_table:
+    category: tabular
+    format: parquet
+    description: >
+      Per-sample feature rows (feature columns + optional label + meta such as
+      frame/x/y) that train_classifier and apply_classifier consume.
+
+  classifier_model:
+    category: tabular
+    format: joblib
+    description: >
+      A trained classifier bundle (estimator, feature_cols, label_col, classes,
+      sklearn model). Binary artifact; format is joblib, not a table.
+
+  predictions:
+    category: tabular
+    format: parquet
+    description: >
+      Per-sample predictions (id + pred + optional confidence) from
+      apply_classifier.
+
+  # --- thermal (cooling differential) ---
+  cooling_differential:
+    category: tabular
+    format: json
+    description: >
+      Forest-vs-open land-cover surface-temperature differential: per-class LST
+      summaries, forest and open group summaries, and the open-minus-forest
+      value (positive => forest is cooler). A relative anchor, robust to
+      absolute LST calibration.
+
+# seeds/schemas/semantic_types.yml
+# Additions for the general ML toolkit (split / featurize / train / apply / score).
+# Append under the existing `types:` block. Category vocabulary is
+# raster/vector/tabular; a model artifact and a partition table are closest to
+# tabular, noted honestly rather than inventing a category.
+
+  sample_index:
+    category: tabular
+    format: parquet
+    description: >
+      Abstract table of sample records (an id, plus optional label, group,
+      coordinates, time) that split_dataset partitions. Domain-agnostic.
+
+  dataset_partition:
+    category: tabular
+    format: parquet
+    description: >
+      A sample_index plus a `partition` column (train/test/val). The seed and
+      strategy live in the envelope, so the split is reproducible.
+
+  feature_table:
+    category: tabular
+    format: parquet
+    description: >
+      Per-sample feature rows (feature columns + optional label + meta such as
+      frame/x/y) that train_classifier and apply_classifier consume.
+
+  classifier_model:
+    category: tabular
+    format: joblib
+    description: >
+      A trained classifier bundle (estimator, feature_cols, label_col, classes,
+      sklearn model). Binary artifact; format is joblib, not a table.
+
+  predictions:
+    category: tabular
+    format: parquet
+    description: >
+      Per-sample predictions (id + pred + optional confidence) from
+      apply_classifier.
+
+  # --- thermal (cooling differential) ---
+  cooling_differential:
+    category: tabular
+    format: json
+    description: >
+      Forest-vs-open land-cover surface-temperature differential: per-class LST
+      summaries, forest and open group summaries, and the open-minus-forest
+      value (positive => forest is cooler). A relative anchor, robust to
+      absolute LST calibration.

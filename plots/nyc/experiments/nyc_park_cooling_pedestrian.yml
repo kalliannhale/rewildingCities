@@ -184,7 +184,7 @@ steps:
       snap: "out"
 
   - id: assign_feature_id
-    primitive: roots/assign_feature_id
+    primitive: soil/assign_feature_id
     version: "1.0.0"
     description: "Mint a uniform feature_id from gispropnum so identity survives the fan-out and the final join"
     inputs:

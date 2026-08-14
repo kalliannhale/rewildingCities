@@ -1,0 +1,6 @@
+{
+  "ground_extent": [-11.25, 22.5, -22.5, 11.25],
+  "target_extent": [0, 11.25, -11.25, 0],
+  "coverage_fraction": 0.9994,
+  "target_name": "board"
+}

@@ -33,7 +33,7 @@ properties:
 
   domain:
     type: string
-    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, statistical]
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, statistical, perception, remote_sensing, policy]
     description: Scientific domain this method belongs to
 
   description:

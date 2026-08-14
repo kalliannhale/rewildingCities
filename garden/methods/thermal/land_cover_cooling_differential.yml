@@ -1,0 +1,126 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/methods/thermal/land_cover_cooling_differential.yml
+# HOW to answer "do our land-cover types differ in surface temperature": mask
+# satellite LST by land-cover class and compare the cool (forest) against the
+# open classes. The choices below are epistemological, not cosmetic.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: land_cover_cooling_differential
+name: "Land-Cover Cooling Differential"
+domain: thermal
+
+description: >
+  Measure how much cooler forest land cover is than open land cover, from
+  satellite surface temperature. LST (coarse) and land cover (fine) are on
+  different grids; land cover is resampled onto the LST grid by majority vote so
+  each temperature pixel is counted once with its dominant class. The result is
+  a RELATIVE differential (open minus forest), robust to absolute LST
+  calibration, and an anchor at Landsat resolution: direction and approximate
+  magnitude, not fine spatial detail.
+
+diagram: |
+  LST (~30 m) ───────────────┐
+  land cover (10 m) ─majority─> onto LST grid ─┐
+                                               v
+                     per-pixel: (temperature, dominant class)
+                                               │
+                    group by class ── forest ──┤── open
+                                               v
+                        differential = open_LST - forest_LST  (+ => forest cooler)
+
+answers_question_types:
+  - feature_comparison
+  - cooling_intensity
+
+choices:
+
+  forest_definition:
+    name: "Which land-cover classes count as forest"
+    description: >
+      The cool baseline. Tree cover alone is the strict reading; adding shrub
+      broadens it but mixes in a warmer, sparser canopy.
+    options:
+      tree_only:
+        name: "Tree cover only"
+        description: ESA WorldCover class 10.
+        interpretation: Strictest forest; cleanest cool signal.
+      tree_and_shrub:
+        name: "Tree + shrub"
+        description: ESA classes 10 and 20.
+        limitations: ["shrub is warmer and sparser; dilutes the forest signal"]
+
+  open_definition:
+    name: "Which land-cover classes count as open"
+    description: >
+      The warm comparison. Grassland is the core; cropland and bare add warmer,
+      drier surfaces.
+    options:
+      grassland_only:
+        name: "Grassland only"
+        description: ESA class 30. Irrigated turf reads here.
+      grass_and_crop:
+        name: "Grassland + cropland"
+        description: ESA classes 30 and 40.
+        interpretation: Broader open surface; the usual choice.
+      grass_crop_bare:
+        name: "Grassland + cropland + bare"
+        description: ESA classes 30, 40, 60.
+        limitations: ["bare ground runs hottest; inflates the differential"]
+
+  central_tendency:
+    name: "How each group's temperature is summarized"
+    description: Median resists a few hot edge pixels; mean is the familiar average.
+    type: string
+    default: "median"
+
+  grid_reconciliation:
+    name: "How the two resolutions are reconciled"
+    description: >
+      The load-bearing methodological choice. LST is ~30 m, land cover 10 m.
+    options:
+      land_cover_to_lst_majority:
+        name: "Resample land cover onto the LST grid (majority)"
+        description: >
+          Each 30 m temperature pixel gets its dominant land-cover class, counted
+          once. No thermal detail is invented.
+        interpretation: The honest default; used here.
+      lst_to_land_cover_interp:
+        name: "Resample LST onto the land-cover grid (interpolate)"
+        description: Upsample temperature to 10 m by interpolation.
+        limitations:
+          - "fabricates thermal resolution the sensor never had"
+          - "repeats each LST value ~9x, biasing pixel-count statistics"
+
+requires_primitives:
+  cooling_differential:
+    from: roots/metrics
+    purpose: Mask LST by land-cover class and compute the group differential.
+
+requires_data:
+  - name: lst
+    type: raster
+    semantic_types: [land_surface_temperature]
+    role: Surface temperature; the quantity being compared across land cover.
+    critical: true
+    uncertainty_without: No temperature, no differential; the method cannot run.
+  - name: land_cover
+    type: raster
+    semantic_types: [land_cover]
+    role: The classes to group temperature by.
+    critical: true
+    uncertainty_without: No way to separate forest from open.
+
+produces:
+  - name: differential
+    semantic_type: cooling_differential
+    data_category: tabular
+    description: Per-class LST summaries and the open-minus-forest differential.
+
+references:
+  - citation: "Xiao, Y., et al. (2023). Science of the Total Environment, 868, 161463."
+    note: Land-cover/temperature relationship and the cooling framing.
+
+version: "1.0.0"
+created: "2026-08-12"
+contributors:
+  - Kalli A. Hale
