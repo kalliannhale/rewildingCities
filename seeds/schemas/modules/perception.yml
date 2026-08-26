@@ -1,0 +1,60 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/schemas/modules/perception.yml
+# Module vocabulary: land-cover segmentation + IPM falsification.
+# Merged on top of the base file. Loader stamps module = "perception".
+# The reusable CV primitives (camera_intrinsics, ground_pose, ground_photograph)
+# live in base, not here, because any imagery module reuses them.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+types:
+
+  # ----- raster -----
+
+  scribble_labels:
+    category: raster
+    format: png
+    description: >
+      A painted RGB scribble mask of sparse human annotations, decoded to
+      canonical class ids by a crosswalk.
+
+  land_cover_labels:
+    category: raster
+    format: png
+    description: >
+      Canonical 7-class land-cover id mask (0 = unlabeled, 1..7 = classes), the
+      ground truth for segmentation.
+
+  land_cover_prediction:
+    category: raster
+    format: png
+    description: A predicted 7-class land-cover id mask from a segmenter (image-plane).
+
+  rectified_land_cover:
+    category: raster
+    format: png
+    description: >
+      A land-cover mask warped to a top-down ground view via IPM, so composition
+      reflects ground area rather than perspective.
+
+  disagreement_map:
+    category: raster
+    format: png
+    description: >
+      Where two segmenters agree (255) or contest the label (0) over the valid
+      region; an epistemic-contestedness layer.
+
+  # ----- tabular -----
+
+  segmentation_metrics:
+    category: tabular
+    format: json
+    description: >
+      Per-class and macro accuracy, mIoU, and Cohen's Kappa for one or more
+      segmenters against truth.
+
+  composition_validity:
+    category: tabular
+    format: json
+    description: >
+      IPM falsification verdict: image-plane vs rectified land-cover fractions
+      and whether the perspective view misrepresents composition.

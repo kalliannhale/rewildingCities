@@ -1,19 +1,53 @@
 name: rewilding
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.13
+
+  # --- config + validation ---
   - pyyaml
-  - requests
+  - jsonschema
+  - referencing          # ADDED: envelope.py resolves schema $refs through this
+
+  # --- numerical / tabular ---
+  - numpy                # made explicit (imported in ~27 files, was only transitive)
+  - pandas
+  - scipy                # ADDED: used in a metrics primitive
+  - pyarrow              # ADDED: every to_parquet / read_parquet needs an engine
+
+  # --- geospatial (conda-forge pulls the shared GDAL / GEOS / PROJ) ---
   - rasterio
   - shapely
-  - earthengine-api
-  - jsonschema
-  - pillow-heif
-  - boto3
+
+  # --- computer vision ---
+  - opencv               # ADDED: cv2 is load-bearing in 5 calibration / IPM files
+  - pillow               # made explicit (PIL used in ~9 files)
+
+  # --- learning ---
   - scikit-learn
-  - pandas
+  - joblib               # explicit (bundled model artifacts)
   - pytorch
   - torchvision
-prefix: /Users/kallia.hale/miniconda3/envs/rewilding
+
+  # --- acquisition ---
+  - requests
+  - earthengine-api
+
+  # --- R runtime + spatial stack (shares the same GDAL/GEOS/PROJ as rasterio) ---
+  - r-base
+  - r-sf
+  - r-terra
+  - r-spdep
+  - r-exactextractr
+  - r-landscapemetrics
+  - r-mass
+  - r-car
+  - r-lmtest
+  - r-dplyr
+  - r-jsonlite
+
+# rewildr (the local R package) is installed on top of this env, not from conda:
+#   R CMD INSTALL seeds/packages/rewildr      # or: bash seeds/packages/rewildr/rebuild.sh
+#
+# NOTE: no `prefix:` line. A hardcoded prefix pins the env to one machine and
+# breaks `mamba env create` for everyone else, including you on a new laptop.

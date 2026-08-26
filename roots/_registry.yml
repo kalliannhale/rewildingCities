@@ -651,3 +651,23 @@ primitives:
       space_id:
         type: string
         default: null
+  
+  concentration_index:
+    path: metrics/concentration_index.py
+    version: 0.1.0
+    description: HHI ownership concentration per unit, over attributed outlets, with coverage and small-n flags.
+    inputs:
+      - name: outlets
+        semantic_types: [formal_outlet]
+        required: true
+    outputs:
+      semantic_type: ownership_concentration
+      data_category: tabular
+    params:
+      unit_field: {type: string, default: "feature_id"}
+      owner_field: {type: string, default: "owner_entity"}
+      unrecorded_label: {type: string, default: "Not recorded"}
+      min_outlets: {type: integer, default: 3}
+      min_coverage: {type: number, default: 0.5}
+    preconditions:
+      provenance_contains: resolve_owner_entity

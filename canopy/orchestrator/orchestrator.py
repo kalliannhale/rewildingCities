@@ -746,7 +746,8 @@ class Orchestrator:
             inputs=envelope_inputs, output_path=output_path,
             output_format=output_format, output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
-            params=resolved_params, passthrough=primitive_spec.passthrough
+            params=resolved_params, passthrough=primitive_spec.passthrough,
+            preconditions=primitive_spec.preconditions,
         )
 
         if not build_result.success:

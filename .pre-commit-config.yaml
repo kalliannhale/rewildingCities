@@ -1,0 +1,27 @@
+# Pre-commit hooks for rewildingCities.
+# Install once:  pip install pre-commit  &&  pre-commit install
+# Run on all files:  pre-commit run --all-files
+#
+# The point of the gitleaks hook: a leak becomes LOUD at commit time
+# instead of a surprise on GitHub. This is "no silent choices" applied
+# to what leaves the repo.
+
+repos:
+  # --- secrets: the reason this file exists ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # --- basic hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: detect-private-key            # catches committed private keys
+      - id: check-added-large-files       # blocks accidental big-file commits
+        args: ["--maxkb=5000"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict

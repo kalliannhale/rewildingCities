@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/schemas/modules/information.yml
+# Module vocabulary: information-ecosystem mapping (the Maine project).
+# Merged on top of the base file. Loader stamps module = "information".
+#
+# Every type here previously had an empty `format:` (which crashed the loader,
+# since format is required). Formats are assigned by category. The
+# resolution_tier values are advisory metadata until an exposure gate exists
+# to enforce them.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+types:
+
+  # ----- vector: information nodes -----
+
+  formal_outlet:
+    category: vector
+    format: geojson
+    description: Print, broadcast, digital, radio outlets.
+    resolution_tier: public
+
+  institutional_node:
+    category: vector
+    format: geojson
+    description: Libraries, town halls, schools, government websites.
+    resolution_tier: public
+
+  relational_hub:
+    category: vector
+    format: geojson
+    description: Forums, groups, listservs, mutual-aid networks.
+    resolution_tier: aggregate-only   # was aggregate-optionally; never shown as named individuals
+
+  # ----- raster -----
+
+  access_infrastructure:
+    category: raster
+    format: tiff
+    description: Broadband, cell, cable coverage.
+    resolution_tier: public
+
+  # ----- tabular -----
+
+  flow_edges:
+    category: tabular
+    format: parquet
+    description: Pathways between node types.
+    resolution_tier: excluded   # safe default until node/edge modeling + exposure gate exist; then aggregate-only. Flow data does not exist yet (Tier 3).
+
+  community_context:
+    category: tabular
+    format: parquet
+    description: Demographics, rurality, language, civic participation.
+    resolution_tier: custom   # potentially public; unit-level public-source aggregate. Field-level sensitivity deferred to per-field tiers. FLAG for review.
+
+  information_sufficiency:
+    category: tabular
+    format: parquet
+    description: Whether a unit's information lifecycle meets its needs.
+    resolution_tier: public
+
+  financial_resilience:
+    category: tabular
+    format: parquet
+    description: Derived score of financial and staffing stability per unit.
+    resolution_tier: public   # supersedes the earlier "resilience_score" name; keep registry and curiosities in sync
+
+  ownership_concentration:
+    category: tabular
+    format: parquet
+    description: Derived score of ownership consolidation per unit.
+    resolution_tier: public   # output type of concentration_index (already wired)

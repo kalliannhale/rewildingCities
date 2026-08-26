@@ -1,0 +1,81 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/schemas/modules/thermal.yml
+# Module vocabulary: park / cooling analysis. Merged on top of the base file.
+# The loader stamps module = "thermal" on every type below.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+types:
+
+  # ----- vector -----
+
+  park_boundaries:
+    category: vector
+    format: geojson
+    description: Raw park boundary polygons from municipal data.
+
+  park_buffers:
+    category: vector
+    format: geojson
+    description: Concentric buffer rings for gradient analysis.
+
+  # ----- raster -----
+
+  thermal_hotspot_classification:
+    category: raster
+    format: tiff
+    description: >
+      Integer-classified raster of thermal clusters. Codes: 99/-99 = hot/cold
+      spot at 99% confidence, 95/-95 = 95% (exclusive of 99%), 90/-90 = 90%
+      (exclusive of 95%), 0 = not significant.
+    typical_units: classification code
+    value_range: [-99, 99]
+
+  # ----- tabular -----
+
+  cooling_differential:
+    category: tabular
+    format: json
+    description: >
+      Forest-vs-open land-cover surface-temperature differential: per-class LST
+      summaries, forest and open group summaries, and the open-minus-forest
+      value (positive => forest is cooler). A relative anchor, robust to
+      absolute LST calibration.
+
+  space_cooling_estimate:
+    category: tabular
+    format: json
+    description: >
+      A photographed space's land-cover composition and estimated relative
+      cooling index. An estimate from composition x an external
+      land-cover/temperature relationship, not a measured temperature.
+
+  counterfactual_cooling:
+    category: tabular
+    format: json
+    description: >
+      A projected cooling shift under a hypothetical land-cover conversion
+      applied to a space_cooling_estimate. A projection, not a promise.
+
+  thermal_cluster_summary:
+    category: tabular
+    format: csv
+    description: >
+      Summary statistics for thermal cluster classification. Rows per confidence
+      tier with cell counts and percentages. Tiers are exclusive.
+
+  pci_results:
+    category: tabular
+    format: parquet
+    description: Park Cooling Intensity calculated via TPM-M or TPM-A method.
+
+  park_temperatures:
+    category: tabular
+    format: parquet
+    description: Temperature statistics inside park boundaries (baseline for PCI).
+    parent_type: zonal_statistics
+
+  buffer_temperatures:
+    category: tabular
+    format: parquet
+    description: Temperature statistics per buffer ring (gradient for PCI).
+    parent_type: zonal_statistics

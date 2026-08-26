@@ -1,37 +1,42 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🌱 rewildingCities .gitignore
+# rewildingCities .gitignore
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# --- data + envelopes (regenerable, sometimes sensitive) ---
 **/.data/
 **/.envelope/
 **/.envelopes/
 
-# harvest outputs (regenerable)
+# --- harvest outputs (regenerable) ---
 harvest/reports/*
 harvest/maps/*
 harvest/exports/*
 harvest/dashboards/*
 !harvest/**/.gitkeep
 
-# compost (logs accumulate locally)
+# --- compost (logs accumulate locally) ---
 compost/logs/*
 compost/archive/*
 !compost/**/.gitkeep
 
-# Python caches and build artifacts
+# --- Python caches and build artifacts ---
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
 
-# R artifacts
+# --- R artifacts ---
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 *.Rproj
 
-# Terraform
+# --- Terraform ---
 # Unanchored (**/) so these apply to every terraform dir, not just the root one.
 # A pattern containing a slash is anchored to this file's directory, which is why
 # garden/experiments/in-the-cloud/terraform/ slipped through the old rules.
@@ -45,13 +50,28 @@ __pycache__/
 # it is the worked example for local runs, so it stays tracked.
 !**/localstack.tfvars
 
-# system files
+# --- secrets + credentials  ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.keystore
+*.p12
+.aws/
+credentials
+*_credentials.json
+*service-account*.json
+.secrets/
+
+# --- notebooks ---
+.ipynb_checkpoints/
+
+# --- system files ---
 .DS_Store
 Thumbs.db
 
-# environment
-.env
-.env.localplots/**/.data/
+# --- large / binary artifacts ---
 *.joblib
 *.pt
 *.DNG

@@ -1,223 +1,112 @@
-# ============================================================
+# ═══════════════════════════════════════════════════════════════════════════════
 # seeds/schemas/semantic_types.yml
-# Additions for the thermal analysis toolkit
-# Append these to the existing types block
-# ============================================================
+# BASE vocabulary: types reused across every domain.
+#
+# Domain-specific types live in seeds/schemas/modules/<domain>.yml and are
+# merged on top of this file at load time. The loader stamps each type's
+# `module` from its source (base here; the filename stem for module files) and
+# errors loudly on any cross-file name collision. Names stay flat.
+# ═══════════════════════════════════════════════════════════════════════════════
 
 types:
 
-  # --- Thermal analysis types ---
+  # ----- vector -----
 
-  gi_star_z_scores:
-    category: raster
-    format: tiff
-    description: >
-      Getis-Ord Gi* z-scores per raster cell. Positive values
-      indicate local clustering of high values (potential hot spot),
-      negative values indicate clustering of low values (potential
-      cold spot). The magnitude indicates statistical strength.
-    typical_units: z-score (standard deviations)
-    value_range: [-10, 10]
-
-  thermal_hotspot_classification:
-    category: raster
-    format: tiff
-    description: >
-      Integer-classified raster of thermal clusters. Codes:
-      99/-99 = hot/cold spot at 99% confidence,
-      95/-95 = 95% (exclusive of 99%),
-      90/-90 = 90% (exclusive of 95%),
-      0 = not significant.
-    typical_units: classification code
-    value_range: [-99, 99]
-
-  thermal_cluster_summary:
-    category: tabular
-    format: csv
-    description: >
-      Summary statistics for thermal cluster classification.
-      Rows per confidence tier with cell counts and percentages.
-      Tiers are exclusive (no double-counting).
+  study_area:
+    category: vector
+    format: geojson
+    description: Boundary defining the extent of analysis.
 
   study_boundary:
     category: vector
     format: geojson
     description: >
-      Boundary polygon defining the spatial extent of analysis.
-      May be a city boundary, neighborhood, watershed, or any
-      user-defined area of interest.
+      Boundary polygon defining the spatial extent of analysis. May be a city
+      boundary, neighborhood, watershed, or any user-defined area of interest.
 
   city_boundary:
     category: vector
     format: geojson
     description: >
-      Administrative boundary of a city or municipality.
-      Commonly used as the study boundary for city-wide analyses.
-      
+      Administrative boundary of a city or municipality. Commonly used as the
+      study boundary for city-wide analyses.
 
-  # === Vector Types ===
-  
-  
-  park_boundaries:
-    category: vector
-    format: geojson
-    description: Raw park boundary polygons from municipal data
-  
-  park_buffers:
-    category: vector
-    format: geojson
-    description: Concentric buffer rings for gradient analysis
-  
-  study_area:
-    category: vector
-    format: geojson
-    description: Boundary defining the extent of analysis
-  
   buffer_zones:
     category: vector
     format: geojson
-    description: Buffer rings with park association removed (donut shapes)
-  
+    description: Buffer rings with parent association removed (donut shapes).
+
   clipped_features:
     category: vector
     format: geojson
-    description: Features clipped to a study boundary
-  
-  # === Raster Types ===
-  
+    description: Features clipped to a study boundary.
+
+  governance_unit:
+    category: vector
+    format: geojson
+    description: Town, district, county, state boundaries; carries the minted feature_id.
+    resolution_tier: public
+
+  sovereign_boundary:
+    category: vector
+    format: geojson
+    description: >
+      A boundary carrying sovereign or self-determined authority, held apart
+      from public administrative units (governance_unit) precisely because its
+      exposure rules differ. Contexts include Indigenous nations, land trusts,
+      and other authority-bearing or contested jurisdictions.
+    resolution_tier: custom
+
+  # ----- raster -----
+
   land_surface_temperature:
     category: raster
     format: tiff
-    description: LST derived from thermal satellite imagery
+    description: LST derived from thermal satellite imagery.
     typical_units: celsius
-  
+
+  gi_star_z_scores:
+    category: raster
+    format: tiff
+    description: >
+      Getis-Ord Gi* z-scores per raster cell. Positive values indicate local
+      clustering of high values (potential hot spot), negative values indicate
+      clustering of low values (potential cold spot). Magnitude indicates
+      statistical strength.
+    typical_units: z-score (standard deviations)
+    value_range: [-10, 10]
+
   ndvi:
     category: raster
     format: tiff
-    description: Normalized Difference Vegetation Index
+    description: Normalized Difference Vegetation Index.
     typical_units: index
     value_range: [-1, 1]
-  
+
   land_cover:
     category: raster
     format: tiff
-    description: Categorical land cover classification
+    description: Categorical land cover classification.
     measurement_type: categorical
-  
-  # === Tabular Types ===
-  
+
+  # ----- tabular: spatial summaries -----
+
   zonal_statistics:
     category: tabular
     format: parquet
-    description: Summary statistics aggregated by zone
-  
-  pci_results:
-    category: tabular
-    format: parquet
-    description: Park Cooling Intensity calculated via TPM-M or TPM-A method
-  
-  correlation_matrix:
-    category: tabular
-    format: parquet
-    description: Pairwise correlation coefficients between variables
-  
-  regression_results:
-    category: tabular
-    format: parquet
-    description: Regression model outputs with coefficients and diagnostics
-  
+    description: Summary statistics aggregated by zone.
+
   landscape_metrics:
     category: tabular
     format: parquet
-    description: Landscape pattern metrics (LSI, SHAPE_MN, PD, AI, etc.)
-  
+    description: Landscape pattern metrics (LSI, SHAPE_MN, PD, AI, etc.).
+
   land_cover_proportions:
     category: tabular
     format: parquet
-    description: Proportional area of each land cover class within zones
+    description: Proportional area of each land cover class within zones.
 
-  # ────────────────────────────────────────────────────────────
-  # Intermediate processing types
-  # Track data through the soil preparation pipeline.
-  # The provenance chain documents what happened; the semantic
-  # type documents what state the data is in.
-  # ────────────────────────────────────────────────────────────
-
-  # Park boundary processing states
-  park_boundaries_checked:
-    category: vector
-    format: geojson
-    description: Park boundaries after validation diagnostic (passthrough)
-    parent_type: park_boundaries
-
-  park_boundaries_repaired:
-    category: vector
-    format: geojson
-    description: Park boundaries with invalid geometries repaired via st_make_valid
-    parent_type: park_boundaries
-
-  park_boundaries_reprojected:
-    category: vector
-    format: geojson
-    description: Park boundaries transformed to analysis CRS
-    parent_type: park_boundaries
-
-  park_boundaries_filtered:
-    category: vector
-    format: geojson
-    description: Park boundaries filtered by area threshold
-    parent_type: park_boundaries
-
-  # LST processing states
-  lst_checked:
-    category: raster
-    format: tiff
-    description: LST raster after validation diagnostic (passthrough)
-    parent_type: land_surface_temperature
-
-  lst_scaled:
-    category: raster
-    format: tiff
-    description: LST raster with DN values converted to Celsius
-    typical_units: celsius
-    parent_type: land_surface_temperature
-
-  lst_reprojected:
-    category: raster
-    format: tiff
-    description: LST raster transformed to analysis CRS
-    typical_units: celsius
-    parent_type: land_surface_temperature
-
-  lst_cropped:
-    category: raster
-    format: tiff
-    description: LST raster cropped to study area extent
-    typical_units: celsius
-    parent_type: land_surface_temperature
-
-  # Zonal statistics variants
-  park_temperatures:
-    category: tabular
-    format: parquet
-    description: Temperature statistics inside park boundaries (baseline for PCI)
-    parent_type: zonal_statistics
-
-  buffer_temperatures:
-    category: tabular
-    format: parquet
-    description: Temperature statistics per buffer ring (gradient for PCI)
-    parent_type: zonal_statistics
-  
-
-  # --- perception / computer-vision types ---
-
-  ground_photograph:
-    category: image
-    format: png
-    description: >
-      A ground-level RGB photograph of a space, optionally with a calibration
-      board flat on the ground for pose recovery.
+  # ----- tabular: perception primitives (reusable across imagery work) -----
 
   camera_intrinsics:
     category: tabular
@@ -233,46 +122,36 @@ types:
       Ground-plane pose (rotation/translation) recovered from a flat board,
       anchoring the image to a metric ground coordinate frame.
 
-  scribble_labels:
-    category: raster
-    format: png
-    description: >
-      A painted RGB scribble mask of sparse human annotations, decoded to
-      canonical class ids by a crosswalk.
+  # ----- tabular: learning scaffolding (domain-agnostic) -----
 
-  land_cover_labels:
-    category: raster
-    format: png
+  sample_index:
+    category: tabular
+    format: parquet
     description: >
-      Canonical 7-class land-cover id mask (0 = unlabeled, 1..7 = classes),
-      the ground truth for segmentation.
+      Abstract table of sample records (an id, plus optional label, group,
+      coordinates, time) that split_dataset partitions. Domain-agnostic.
+      (csv is also accepted at I/O; parquet is canonical.)
 
-  land_cover_prediction:
-    category: raster
-    format: png
+  dataset_partition:
+    category: tabular
+    format: parquet
     description: >
-      A predicted 7-class land-cover id mask from a segmenter (image-plane).
-
-  rectified_land_cover:
-    category: raster
-    format: png
-    description: >
-      A land-cover mask warped to a top-down ground view via IPM, so
-      composition reflects ground area rather than perspective.
+      A sample_index plus a `partition` column (train/test/val). The seed and
+      strategy live in the envelope, so the split is reproducible.
 
   feature_table:
     category: tabular
     format: parquet
     description: >
-      Per-sample feature rows (numeric predictors) with optional id/coords and
-      a label or target column. Input to the learning primitives.
+      Per-sample feature rows (feature columns + optional label + meta such as
+      frame/x/y) that train_classifier and apply_classifier consume.
 
   classifier_model:
     category: tabular
     format: joblib
     description: >
-      A trained classifier bundle (estimator, feature_cols, label mapping,
-      sklearn model). Binary artifact.
+      A trained classifier bundle (estimator, feature_cols, label_col, classes,
+      sklearn model). Binary artifact; format is joblib, not a table.
 
   regressor_model:
     category: tabular
@@ -283,168 +162,33 @@ types:
 
   predictions:
     category: tabular
-    format: csv
+    format: parquet
     description: >
-      Model predictions per sample (id + predicted class or value).
+      Per-sample predictions (id + pred + optional confidence). (csv also
+      accepted at I/O; parquet is canonical.)
 
-  sample_index:
-    category: tabular
-    format: csv
-    description: >
-      An abstract table of samples (id, optional coords/labels) to be split
-      into partitions.
-
-  dataset_partition:
-    category: tabular
-    format: csv
-    description: >
-      Sample ids tagged with a train/test/val partition from a leakage-aware
-      split strategy.
-
-  # --- metrics / analysis types ---
-
-  segmentation_metrics:
-    category: tabular
-    format: json
-    description: >
-      Per-class and macro accuracy, mIoU, and Cohen's Kappa for one or more
-      segmenters against truth.
-
-  composition_validity:
-    category: tabular
-    format: json
-    description: >
-      IPM falsification verdict: image-plane vs rectified land-cover fractions
-      and whether the perspective view misrepresents composition.
+  # ----- tabular: analysis outputs -----
 
   regression_skill:
     category: tabular
     format: json
-    description: >
-      Held-out regression skill (R2, RMSE, MAE) on a spatial test split.
+    description: Held-out regression skill (R2, RMSE, MAE) on a spatial test split.
 
-  disagreement_map:
-    category: raster
+  correlation_matrix:
+    category: tabular
+    format: parquet
+    description: Pairwise correlation coefficients between variables.
+
+  regression_results:
+    category: tabular
+    format: parquet
+    description: Regression model outputs with coefficients and diagnostics.
+
+  # ----- image -----
+
+  ground_photograph:
+    category: image
     format: png
     description: >
-      Where two segmenters agree (255) or contest the label (0) over the valid
-      region; an epistemic-contestedness layer.
-
-  cooling_differential:
-    category: tabular
-    format: json
-    description: >
-      Forest-vs-open land-cover surface-temperature differential (per-class LST
-      summaries and the open-minus-forest value; positive = forest cooler). A
-      relative anchor, robust to absolute LST calibration.
-
-  space_cooling_estimate:
-    category: tabular
-    format: json
-    description: >
-      A photographed space's land-cover composition and estimated relative
-      cooling index (7-class weighted). An estimate from composition x an
-      external land-cover/temperature relationship, not a measured temperature.
-
-  counterfactual_cooling:
-    category: tabular
-    format: json
-    description: >
-      A projected cooling shift under a hypothetical land-cover conversion
-      applied to a space_cooling_estimate. A projection, not a promise.
-
-  sample_index:
-    category: tabular
-    format: parquet
-    description: >
-      Abstract table of sample records (an id, plus optional label, group,
-      coordinates, time) that split_dataset partitions. Domain-agnostic.
-
-  dataset_partition:
-    category: tabular
-    format: parquet
-    description: >
-      A sample_index plus a `partition` column (train/test/val). The seed and
-      strategy live in the envelope, so the split is reproducible.
-
-  feature_table:
-    category: tabular
-    format: parquet
-    description: >
-      Per-sample feature rows (feature columns + optional label + meta such as
-      frame/x/y) that train_classifier and apply_classifier consume.
-
-  classifier_model:
-    category: tabular
-    format: joblib
-    description: >
-      A trained classifier bundle (estimator, feature_cols, label_col, classes,
-      sklearn model). Binary artifact; format is joblib, not a table.
-
-  predictions:
-    category: tabular
-    format: parquet
-    description: >
-      Per-sample predictions (id + pred + optional confidence) from
-      apply_classifier.
-
-  # --- thermal (cooling differential) ---
-  cooling_differential:
-    category: tabular
-    format: json
-    description: >
-      Forest-vs-open land-cover surface-temperature differential: per-class LST
-      summaries, forest and open group summaries, and the open-minus-forest
-      value (positive => forest is cooler). A relative anchor, robust to
-      absolute LST calibration.
-
-# seeds/schemas/semantic_types.yml
-# Additions for the general ML toolkit (split / featurize / train / apply / score).
-# Append under the existing `types:` block. Category vocabulary is
-# raster/vector/tabular; a model artifact and a partition table are closest to
-# tabular, noted honestly rather than inventing a category.
-
-  sample_index:
-    category: tabular
-    format: parquet
-    description: >
-      Abstract table of sample records (an id, plus optional label, group,
-      coordinates, time) that split_dataset partitions. Domain-agnostic.
-
-  dataset_partition:
-    category: tabular
-    format: parquet
-    description: >
-      A sample_index plus a `partition` column (train/test/val). The seed and
-      strategy live in the envelope, so the split is reproducible.
-
-  feature_table:
-    category: tabular
-    format: parquet
-    description: >
-      Per-sample feature rows (feature columns + optional label + meta such as
-      frame/x/y) that train_classifier and apply_classifier consume.
-
-  classifier_model:
-    category: tabular
-    format: joblib
-    description: >
-      A trained classifier bundle (estimator, feature_cols, label_col, classes,
-      sklearn model). Binary artifact; format is joblib, not a table.
-
-  predictions:
-    category: tabular
-    format: parquet
-    description: >
-      Per-sample predictions (id + pred + optional confidence) from
-      apply_classifier.
-
-  # --- thermal (cooling differential) ---
-  cooling_differential:
-    category: tabular
-    format: json
-    description: >
-      Forest-vs-open land-cover surface-temperature differential: per-class LST
-      summaries, forest and open group summaries, and the open-minus-forest
-      value (positive => forest is cooler). A relative anchor, robust to
-      absolute LST calibration.
+      A ground-level RGB photograph of a space, optionally with a calibration
+      board flat on the ground for pose recovery.
