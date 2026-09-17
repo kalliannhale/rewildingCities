@@ -126,9 +126,7 @@ def test_raster_only_no_injection():
     fake = FakeOrch()
     fake.experiment = exp
     fake.manifest = manifest
-    fake.semantic_types = SemanticTypeRegistry(
-        path=project_root / "seeds/schemas/semantic_types.yml"
-    )
+    fake.semantic_types = Vocabulary.load(project_root / "seeds/schemas")
     
     # Call the actual method, bound to fake.
     from canopy.orchestrator.orchestrator import Orchestrator

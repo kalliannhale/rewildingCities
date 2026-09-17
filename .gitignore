@@ -75,3 +75,5 @@ Thumbs.db
 *.joblib
 *.pt
 *.DNG
+# re-derivable, never committed
+plots/*/.loam/
