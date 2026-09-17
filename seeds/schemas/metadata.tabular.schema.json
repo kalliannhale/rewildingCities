@@ -8,6 +8,7 @@
 
   "properties": {
     "row_count": {
+      "tier": "expected",
       "type": "integer",
       "minimum": 0,
       "description": "Number of rows in the dataset",
@@ -15,12 +16,14 @@
     },
 
     "column_count": {
+      "tier": "optional",
       "type": "integer",
       "minimum": 1,
       "description": "Number of columns in the dataset"
     },
 
     "variables": {
+      "tier": "expected",
       "type": "array",
       "description": "List of variable/column names",
       "items": { "type": "string" },
@@ -28,6 +31,7 @@
     },
 
     "variable_details": {
+      "tier": "optional",
       "type": "object",
       "description": "Detailed information about each variable. Keys are variable names.",
       "additionalProperties": {
@@ -84,30 +88,35 @@
     },
 
     "id_field": {
+      "tier": "expected",
       "type": "string",
       "description": "Name of the field that uniquely identifies each row",
       "examples": ["park_id", "buffer_id", "zone_id"]
     },
 
     "spatial_unit": {
+      "tier": "expected",
       "type": "string",
       "description": "What spatial entity does each row represent?",
       "examples": ["park", "buffer_ring", "district", "census_tract", "grid_cell"]
     },
 
     "joins_to": {
+      "tier": "optional",
       "type": "string",
       "description": "Semantic type of the vector dataset this table can join to",
       "examples": ["park_boundaries", "park_buffers", "study_area"]
     },
 
     "analysis_type": {
+      "tier": "optional",
       "type": "string",
       "enum": ["descriptive", "inferential", "predictive", "exploratory", "diagnostic"],
       "description": "What kind of analysis produced this output?"
     },
 
     "statistical_context": {
+      "tier": "optional",
       "type": "object",
       "description": "Context for statistical outputs (correlations, regressions, tests)",
       "properties": {
@@ -157,6 +166,7 @@
     },
 
     "model_fit": {
+      "tier": "optional",
       "type": "object",
       "description": "Model fit statistics (for regression outputs)",
       "properties": {
@@ -207,6 +217,7 @@
     },
 
     "data_quality": {
+      "tier": "optional",
       "type": "object",
       "description": "Quality indicators for the tabular data",
       "properties": {
@@ -237,6 +248,7 @@
     },
 
     "aggregation": {
+      "tier": "optional",
       "type": "object",
       "description": "For aggregated outputs, how was aggregation performed?",
       "properties": {
@@ -268,6 +280,7 @@
     },
 
     "matrix_structure": {
+      "tier": "optional",
       "type": "object",
       "description": "For matrix outputs (correlation matrices, distance matrices)",
       "properties": {
@@ -298,6 +311,7 @@
     },
 
     "interpretation_notes": {
+      "tier": "optional",
       "type": "array",
       "items": { "type": "string" },
       "description": "Human-readable notes to aid interpretation of results",

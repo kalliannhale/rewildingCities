@@ -64,7 +64,21 @@
         }
       },
       "additionalProperties": true,
-      "$comment": "Additional properties allowed to accommodate category-specific metadata (vector, raster, tabular fields)"
+      "$comment": "Additional properties allowed to accommodate category-specific metadata (vector, raster, tabular fields)",
+      "allOf": [
+        {
+          "if": { "required": ["data_category"], "properties": { "data_category": { "const": "raster" } } },
+          "then": { "$ref": "metadata.raster.schema.json" }
+        },
+        {
+          "if": { "required": ["data_category"], "properties": { "data_category": { "const": "vector" } } },
+          "then": { "$ref": "metadata.vector.schema.json" }
+        },
+        {
+          "if": { "required": ["data_category"], "properties": { "data_category": { "const": "tabular" } } },
+          "then": { "$ref": "metadata.tabular.schema.json" }
+        }
+      ]
     },
 
     "provenance": {

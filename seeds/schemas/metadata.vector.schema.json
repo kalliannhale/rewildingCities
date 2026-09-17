@@ -8,6 +8,7 @@
 
   "properties": {
     "feature_count": {
+      "tier": "expected",
       "type": "integer",
       "minimum": 0,
       "description": "Number of features in the dataset",
@@ -15,12 +16,14 @@
     },
 
     "geometry_type": {
+      "tier": "expected",
       "type": "string",
       "enum": ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection"],
       "description": "OGC geometry type"
     },
 
     "bbox": {
+      "tier": "expected",
       "type": "array",
       "items": { "type": "number" },
       "minItems": 4,
@@ -30,18 +33,21 @@
     },
 
     "total_area_m2": {
+      "tier": "optional",
       "type": "number",
       "minimum": 0,
       "description": "Sum of all feature areas in square meters. Useful for quick sanity checks."
     },
 
     "id_field": {
+      "tier": "optional",
       "type": "string",
       "description": "Name of the attribute field that uniquely identifies features",
       "examples": ["park_id", "OBJECTID", "gid"]
     },
 
     "attribute_fields": {
+      "tier": "optional",
       "type": "array",
       "items": { "type": "string" },
       "description": "List of attribute field names present in the dataset",

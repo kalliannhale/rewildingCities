@@ -2,6 +2,7 @@
 # CURIOSITY SCHEMA v1.0
 # A curiosity declares what we want to know — domain-specific but method-agnostic.
 # Pure inquiry, no implementation details.
+# seeds/schemas/curiosity.schema.yml
 # ═══════════════════════════════════════════════════════════════════════════════
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
@@ -27,7 +28,7 @@ properties:
 
   domain:
     type: string
-    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, remote_sensing, perception, policy, information]
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, perception, policy, information]
     description: Scientific domain this curiosity belongs to
 
   tags:

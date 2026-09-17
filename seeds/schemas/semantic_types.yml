@@ -2,7 +2,7 @@
 # seeds/schemas/semantic_types.yml
 # BASE vocabulary: types reused across every domain.
 #
-# Domain-specific types live in seeds/schemas/modules/<domain>.yml and are
+# Domain-specific types live in seeds/schemas/domains/<domain>.yml and are
 # merged on top of this file at load time. The loader stamps each type's
 # `module` from its source (base here; the filename stem for module files) and
 # errors loudly on any cross-file name collision. Names stay flat.
@@ -58,12 +58,6 @@ types:
     resolution_tier: custom
 
   # ----- raster -----
-
-  land_surface_temperature:
-    category: raster
-    format: tiff
-    description: LST derived from thermal satellite imagery.
-    typical_units: celsius
 
   gi_star_z_scores:
     category: raster

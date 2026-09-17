@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# seeds/schemas/modules/information.yml
+# seeds/schemas/domains/information.yml
 # Module vocabulary: information-ecosystem mapping (the Maine project).
 # Merged on top of the base file. Loader stamps module = "information".
 #

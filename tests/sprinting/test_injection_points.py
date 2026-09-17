@@ -64,7 +64,7 @@ def test_raster_only_no_injection():
     from canopy.orchestrator.dependencies import DependencyResolver
     from canopy.orchestrator.references import ReferenceResolver
     from canopy.orchestrator.registry import RegistryManager
-    from canopy.orchestrator.semantic_types import SemanticTypeRegistry
+    from canopy.vocabulary import Vocabulary
     
     # Minimal raster-only experiment: one step consuming LST, producing
     # a classified raster.

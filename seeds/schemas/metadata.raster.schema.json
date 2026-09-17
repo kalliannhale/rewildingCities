@@ -8,6 +8,7 @@
 
   "properties": {
     "resolution_m": {
+      "tier": "expected",
       "type": "number",
       "minimum": 0,
       "description": "Cell size in meters. For non-square cells, use the smaller dimension.",
@@ -15,6 +16,7 @@
     },
 
     "dimensions": {
+      "tier": "expected",
       "type": "object",
       "description": "Raster dimensions",
       "properties": {
@@ -32,6 +34,7 @@
     },
 
     "bbox": {
+      "tier": "expected",
       "type": "array",
       "items": { "type": "number" },
       "minItems": 4,
@@ -41,6 +44,7 @@
     },
 
     "band_count": {
+      "tier": "optional",
       "type": "integer",
       "minimum": 1,
       "description": "Number of bands in the raster",
@@ -48,18 +52,21 @@
     },
 
     "units": {
+      "tier": "expected",
       "type": "string",
       "description": "Measurement units for cell values",
       "examples": ["celsius", "kelvin", "fahrenheit", "index", "class_code", "percent", "meters"]
     },
 
     "measurement_type": {
+      "tier": "expected",
       "type": "string",
       "enum": ["absolute", "relative", "anomaly", "categorical"],
       "description": "How cell values should be interpreted. absolute: real-world measurement. relative: normalized index. anomaly: deviation from baseline. categorical: discrete classes."
     },
 
     "statistic": {
+      "tier": "optional",
       "type": "string",
       "enum": ["mean", "median", "max", "min", "sum", "composite", "single_acquisition"],
       "description": "For derived products, what statistic the values represent",
@@ -67,6 +74,7 @@
     },
 
     "value_range": {
+      "tier": "optional",
       "type": "object",
       "description": "Actual data value range (excluding NoData)",
       "properties": {
@@ -79,12 +87,14 @@
     },
 
     "nodata_value": {
+      "tier": "optional",
       "type": ["number", "null"],
       "description": "The value representing NoData/missing cells. Null if no NoData value is set.",
       "examples": [-9999, 0, null]
     },
 
     "nodata_percentage": {
+      "tier": "expected",
       "type": "number",
       "minimum": 0,
       "maximum": 100,
@@ -93,6 +103,7 @@
     },
 
     "dtype": {
+      "tier": "optional",
       "type": "string",
       "description": "Data type of cell values",
       "enum": ["uint8", "int8", "uint16", "int16", "uint32", "int32", "float32", "float64"],
@@ -100,18 +111,21 @@
     },
 
     "source_sensor": {
+      "tier": "optional",
       "type": "string",
       "description": "Satellite or sensor that captured the source imagery",
       "examples": ["Landsat 8 OLI/TIRS", "Sentinel-2 MSI", "MODIS", "VIIRS", "Google Earth"]
     },
 
     "processing_level": {
+      "tier": "optional",
       "type": "string",
       "description": "Processing level of the source data",
       "examples": ["L1C", "L2A", "Surface Reflectance", "Analysis Ready"]
     },
 
     "acquisition_context": {
+      "tier": "optional",
       "type": "object",
       "description": "Context about when/how the imagery was acquired",
       "properties": {
@@ -136,6 +150,7 @@
     },
 
     "classification_scheme": {
+      "tier": "optional",
       "type": "object",
       "description": "For categorical rasters (land cover), documents the class mapping",
       "properties": {

@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# seeds/schemas/modules/thermal.yml
+# seeds/schemas/domains/thermal.yml
 # Module vocabulary: park / cooling analysis. Merged on top of the base file.
 # The loader stamps module = "thermal" on every type below.
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -12,6 +12,11 @@ types:
     category: vector
     format: geojson
     description: Raw park boundary polygons from municipal data.
+    aliases:                        # retired names, resolved forward. history is read, never refused.
+      - park_boundaries_checked
+      - park_boundaries_repaired
+      - park_boundaries_reprojected
+      - park_boundaries_filtered
 
   park_buffers:
     category: vector
@@ -29,6 +34,16 @@ types:
       (exclusive of 95%), 0 = not significant.
     typical_units: classification code
     value_range: [-99, 99]
+  
+  land_surface_temperature:
+    category: raster
+    format: tiff
+    description: ...  
+    aliases:
+      - lst_checked
+      - lst_cropped
+      - lst_reprojected
+      - lst_scaled
 
   # ----- tabular -----
 

@@ -1,5 +1,6 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # MANIFEST SCHEMA v1.1
+# seeds/schemas/manifest.schema.yml
 # A manifest declares what data a city has, what it means, and where it lives.
 # The manifest is the source of truth for semantic typing — when you declare
 # a dataset, you declare what it means.

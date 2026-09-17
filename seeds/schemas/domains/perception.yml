@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# seeds/schemas/modules/perception.yml
+# seeds/schemas/domains/perception.yml
 # Module vocabulary: land-cover segmentation + IPM falsification.
 # Merged on top of the base file. Loader stamps module = "perception".
 # The reusable CV primitives (camera_intrinsics, ground_pose, ground_photograph)

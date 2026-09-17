@@ -1,5 +1,6 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # METHOD SCHEMA v1.0
+# seeds/schemas/method.schema.yml
 # A method declares HOW to answer certain types of questions, with explicit
 # choice points that change meaning. Abstract approach, not instantiated.
 # ═══════════════════════════════════════════════════════════════════════════════

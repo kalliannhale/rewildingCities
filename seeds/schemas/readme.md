@@ -1,6 +1,6 @@
 # seeds/schemas — what each file is
 
-This drawer currently holds three *different kinds* of thing plus a couple of
+This drawer currently holds three *different kinds* of things plus a couple of
 strays. That mix is why it feels confusing. Nothing here is broken; it is just
 un-sorted. This guide names each file by kind. No files need to move for the
 code to keep working (the loaders read them by exact path), so treat any

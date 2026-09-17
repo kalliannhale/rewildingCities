@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from .references import ReferenceResolver
 from .dependencies import DependencyResolver, ExecutionPlan
 from .registry import RegistryManager
-from .semantic_types import SemanticTypeRegistry
+from ..vocabulary import Vocabulary
 from .models import (
     Manifest,
     ManifestDataset,
@@ -199,9 +199,7 @@ class Orchestrator:
         self.envelope_dir = self.manifest.data_dir / ".envelopes"
 
         self.registry = RegistryManager(project_root=self.project_root)
-        self.semantic_types = SemanticTypeRegistry(
-            path=self.project_root / "seeds/schemas/semantic_types.yml"
-        )
+        self.semantic_types = Vocabulary.load(self.project_root / "seeds/schemas")
 
         self._dependency_resolver = DependencyResolver(self.experiment)
         self.plan = self._dependency_resolver.create_execution_plan()
@@ -690,6 +688,8 @@ class Orchestrator:
         final_envelopes = self._collect_final_envelopes(step_results)
         self._enrich_with_lineage(final_envelopes)
 
+        validation_warnings.extend(w.message for w in self._gap_scars(self._resolution_report))
+
         result = OrchestrationResult(
             success=True, completed_steps=completed_steps,
             failed_step=None, step_results=step_results,
@@ -747,7 +747,6 @@ class Orchestrator:
             output_format=output_format, output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
             params=resolved_params, passthrough=primitive_spec.passthrough,
-            preconditions=primitive_spec.preconditions,
         )
 
         if not build_result.success:
@@ -820,8 +819,32 @@ class Orchestrator:
         if self._resolution_report:
             lineage_dict["data_resolution"] = self._resolution_report.to_envelope_context()
 
+        scars = self._gap_scars(self._resolution_report)
         for envelope in envelopes.values():
             envelope.metadata["lineage"] = lineage_dict
+            envelope.warnings.extend(scars)
+
+    @staticmethod
+    def _gap_scars(report) -> list["Warning"]:
+        """The graduated wide-door, made into a scar. For each NON-critical
+        dataset the run proceeded without, a schema-legal Warning so the caveat
+        travels in the envelope. A critical gap never reaches here: it blocks
+        upfront (can_proceed) or fails the step that needs it, so the door stays
+        open for a caveated result but never dresses a wrong answer as a right one."""
+        if not report:
+            return []
+        from ..envelope import Warning
+        scars: list["Warning"] = []
+        for r in report.failed:
+            if not r.critical:
+                detail = f": {r.uncertainty_without.strip()}" if r.uncertainty_without else ""
+                scars.append(Warning(
+                    level="warning",
+                    primitive="resolution",
+                    message=(f"Ran without '{r.dataset_name}'{detail}. "
+                             f"The result is real but caveated."),
+                ))
+        return scars
 
     def _write_run_log(self, result: OrchestrationResult) -> None:
         timestamp_str = self._run_started.strftime("%Y%m%d_%H%M%S")
