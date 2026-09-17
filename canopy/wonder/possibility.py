@@ -38,6 +38,8 @@ from pathlib import Path
 
 import yaml
 
+from canopy.loam.readiness import holdings_by_type
+
 
 def _root() -> Path:
 
@@ -83,7 +85,7 @@ def present_types(loam, plot: str) -> set[str]:
     return have
 
 
-def present_holdings(loam, plot: str) -> dict[str, str]:
+def present_holdings(loam, plot: str, holdings=None) -> dict[str, str]:
     """
     what this ground holds, in plain words; from the projected metadata ~
     coverage, what each row is, the scheme it was classified under, its frame.
@@ -101,9 +103,16 @@ def present_holdings(loam, plot: str) -> dict[str, str]:
             if not st or st in out:
                 continue
             bits: list[str] = []
-            cov = row.get("coverage")
-            if cov is not None:
-                bits.append(f"{cov:.0%} coverage")
+            # coverage is spoken as the RANGE across every artifact wearing
+            # this name, never whichever row happened to come first. one
+            # thin artifact among four should be visible, not decisive. ~
+            h = holdings.get(st) if holdings else None
+            if h is not None and h.best_coverage is not None:
+                if h.count > 1 and h.worst_coverage != h.best_coverage:
+                    bits.append(f"coverage {h.worst_coverage:.0%}-{h.best_coverage:.0%} "
+                                f"across {h.count} artifacts")
+                else:
+                    bits.append(f"{h.best_coverage:.0%} coverage")
             unit = row.get("unit_key")
             if unit:
                 bits.append(f"one row per {unit}")
@@ -213,20 +222,42 @@ class MethodPossibility:
 _VERDICT_ORDER = {"ready": 0, "partial": 1, "not_yet": 2}
 
 
-def _weigh(method: dict, present: set[str]) -> tuple[str, list[str], list[Gap]]:
+def _weigh(method: dict, present: set[str],
+           holdings=None, floor: float = 0.5) -> tuple[str, list[str], list[Gap]]:
+    """
+    weigh a method against this ground ~ what it needs, what is held, and
+    whether what is held is full enough to answer anything. a type can be
+    present by name and empty in fact; thin ground never blocks, it only
+    steps a possibility down from ready to partial, saying why. ~
+    """
     hits: list[str] = []
     gaps: list[Gap] = []
+    thin: list[str] = []
     for req in method.get("requires_data", []) or []:
         types = req.get("semantic_types") or ([req["type"]] if req.get("type") else [])
         hit = next((t for t in types if t in present), None)
         if hit:
             hits.append(hit)
+            h = holdings.get(hit) if holdings else None
+            if h is not None and h.is_thin(floor):
+                thin.append(hit)
         else:
             gaps.append(Gap(
                 label=(types[0] if types else req.get("name", "?")),
                 why_it_matters=(req.get("role") or "").strip(),
                 what_you_lose=(req.get("uncertainty_without") or "").strip(),
                 critical=req.get("critical", True)))
+    for t_name in thin:
+        h = holdings[t_name]
+        gaps.append(Gap(
+            label=f"{t_name} (present but thin)",
+            why_it_matters="Held, but too empty to answer confidently.",
+            what_you_lose=(
+                f"The fullest of {h.count} artifact(s) covers only "
+                f"{h.best_coverage:.0%}, below the floor of {floor:.0%}. "
+                f"An answer can still be grown here, but it will be uncertain."),
+            critical=False))
+
     if any(g.critical for g in gaps):
         verdict = "not_yet"
     elif gaps:
@@ -254,7 +285,9 @@ def explore(loam, plot: str, question: str | None = None,
     curiosities = _load_dir(base / "garden" / "curiosity-space")
     methods = _load_dir(base / "garden" / "methods")
     have = present_types(loam, plot)
-    holdings = present_holdings(loam, plot)
+    measured = holdings_by_type(loam, plot)
+    floor = getattr(loam, "coverage_floor", 0.5)
+    holdings = present_holdings(loam, plot, measured)
 
     q_words = set((question or "").lower().split())
 
@@ -273,7 +306,7 @@ def explore(loam, plot: str, question: str | None = None,
                 for n, s in (cur.get("sub_questions") or {}).items()]
 
         for method in _candidate_methods(cur, methods):
-            verdict, hits, gaps = _weigh(method, have)
+            verdict, hits, gaps = _weigh(method, have, measured, floor)
             possibilities.append((relevance, MethodPossibility(
                 plot=plot,
                 curiosity_id=cur.get("id", "?"),

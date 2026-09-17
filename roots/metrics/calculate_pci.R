@@ -35,6 +35,8 @@ output_path        <- args$output
 method             <- get_param(args$params, "method", "TPM-M")
 min_rings          <- as.integer(get_param(args$params, "min_rings", 2))
 lst_col            <- get_param(args$params, "lst_column", "lst_median")
+# Sprint 9: what ONE ROW of this table IS. declared, never inferred.
+spatial_unit       <- get_param(args$params, "spatial_unit", NULL)
 
 w <- warnings_collector("calculate_pci")
 
@@ -187,17 +189,36 @@ with_primitive_error_handling({
   n_negative <- sum(valid_pci < 0)
   if (n_negative > 0) {
     pct_neg <- round(n_negative / length(valid_pci) * 100, 1)
+    # Sprint 9: this message was built with two placeholders and four
+    # arguments, so the guidance that mattered most ("mask water") was
+    # dropped on the floor. paste0 carries the whole sentence.
     w$add("warning", "calculate_pci",
-      sprintf("%d features (%.1f%%) have negative PCI. These may be near water bodies ",
-        n_negative, pct_neg,
-        "or other cool features that contaminate the buffer. ",
-        "Consider masking water from buffer zones."))
+      paste0(
+        sprintf("%d features (%.1f%%) have negative PCI. ", n_negative, pct_neg),
+        "These may be near water bodies or other cool features that ",
+        "contaminate the buffer. Consider masking water from buffer zones."))
   }
 
   write.csv(pci_df, output_path, row.names = FALSE)
 
+  # Sprint 9: the tabular contract, extracted from the frame we just wrote,
+  # then overlaid with what only this primitive knows. row_count and
+  # data_quality$complete_cases are what loam projects coverage from; until
+  # now that column rested empty because nothing emitted them. here a
+  # complete case is a feature whose PCI actually resolved, so coverage
+  # reads as "what fraction of parks produced a usable answer".
+  tab <- extract_tabular_metadata(pci_df, id_field = "feature_id",
+                                  spatial_unit = spatial_unit)
+
+  if (is.null(spatial_unit)) {
+    w$add("warning", "calculate_pci",
+      paste("No spatial_unit declared: this table does not say what ONE ROW IS.",
+            "Downstream joins and commensurability checks cannot verify it",
+            "against another table. Declare spatial_unit in the experiment step."))
+  }
+
   primitive_success(
-    metadata = list(
+    metadata = modifyList(tab, list(
       semantic_type = "pci_results",
       data_category = "tabular",
       crs = NA,  # Sprint 8: explicit-null for non-spatial tabular output
@@ -216,7 +237,7 @@ with_primitive_error_handling({
         round(median(valid_pci), 4) else NULL,
       min_rings = min_rings,
       lst_column = lst_col
-    ),
+    )),
     warnings = w
   )
 
