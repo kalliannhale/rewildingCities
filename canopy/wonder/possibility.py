@@ -281,43 +281,62 @@ def explore(loam, plot: str, question: str | None = None,
     curiosities and their methods, and return every honest possibility,
     readiest first so a person starts where they are. an optional plain
     question ranks the curiosities by simple word-overlap; without one, we
-    show everything this place can ask. ~"""
-    base = Path(root) if root else _root()
-    curiosities = _load_dir(base / "garden" / "curiosity-space")
-    methods = _load_dir(base / "garden" / "methods")
-    have = present_types(loam, plot)
-    measured = holdings_by_type(loam, plot)
-    floor = getattr(loam, "coverage_floor", 0.5)
-    holdings = present_holdings(loam, plot, measured)
+    show everything this place can ask. ~
+
+    this is now a RENDERING of the read-model rather than a second
+    measurement of the same ground. it used to weigh requirements itself,
+    which meant the CLI and anything else that asked would each compute an
+    answer and drift. read_plot measures once; this speaks. P-03. ~
+    """
+    from .reading import read_plot
+
+    reading = read_plot(loam, plot, root=root)
+    holdings = present_holdings(loam, plot, holdings_by_type(loam, plot))
+
+    # the read-model speaks in verdicts; the warm telling speaks in weather.
+    weather = {"runnable": "ready",
+               "runnable_with_uncertainty": "partial",
+               "blocked": "not_yet"}
 
     q_words = set((question or "").lower().split())
-
     possibilities: list[tuple[float, MethodPossibility]] = []
-    for cur in curiosities.values():
-        # a real curiosity is defined by its question (schema: required [id,
-        # question]); skip index files and malformed docs that a bare *.yml glob
-        # would otherwise render as empty "?" possibilities.
-        if not cur.get("question"):
-            continue
-        text = " ".join(str(cur.get(k, "")) for k in ("question", "description", "significance"))
-        text += " " + " ".join(map(str, cur.get("tags", []) or []))
-        relevance = len(q_words & set(text.lower().split())) if q_words else 0
 
-        subs = [(n, (s or {}).get("question", n))
-                for n, s in (cur.get("sub_questions") or {}).items()]
+    for cur in reading.curiosities:
+        text = " ".join([cur.question, cur.description, cur.significance,
+                         " ".join(cur.tags)]).lower()
+        relevance = len(q_words & set(text.split())) if q_words else 0
 
-        for method in _candidate_methods(cur, methods):
-            verdict, hits, gaps = _weigh(method, have, measured, floor)
+        for m in cur.methods:
+            gaps: list[Gap] = []
+            for req in m.requirements:
+                if not req.satisfied_by:
+                    gaps.append(Gap(
+                        label=req.accepts[0],
+                        why_it_matters=req.role,
+                        what_you_lose=req.uncertainty_without,
+                        critical=req.critical))
+                elif req.thin:
+                    gaps.append(Gap(
+                        label=f"{req.satisfied_by} (present but thin)",
+                        why_it_matters="Held, but too empty to answer confidently.",
+                        what_you_lose=next(
+                            (u for u in m.uncertainties
+                             if u.startswith(req.satisfied_by)), ""),
+                        critical=False))
+
             possibilities.append((relevance, MethodPossibility(
                 plot=plot,
-                curiosity_id=cur.get("id", "?"),
-                curiosity_question=cur.get("question", cur.get("id", "?")),
-                significance=cur.get("significance", ""),
-                method_id=method.get("id", "?"),
-                method_name=method.get("name", method.get("id", "?")),
-                verdict=verdict, sub_questions=subs, present=hits,
-                present_detail=holdings, gaps=gaps,
-                choices=_choices_of(method))))
+                curiosity_id=cur.curiosity_id,
+                curiosity_question=cur.question,
+                significance=cur.significance,
+                method_id=m.method_id,
+                method_name=m.method_name,
+                verdict=weather.get(m.verdict, "not_yet"),
+                sub_questions=[(q, q) for q in cur.sub_questions],
+                present=m.present,
+                present_detail=holdings,
+                gaps=gaps,
+                choices=[(c["name"], c["description"]) for c in m.choices])))
 
     possibilities.sort(key=lambda pair: (-pair[0], _VERDICT_ORDER[pair[1].verdict],
                                          pair[1].curiosity_id, pair[1].method_id))

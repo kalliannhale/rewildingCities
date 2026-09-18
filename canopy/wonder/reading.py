@@ -58,6 +58,10 @@ class RequirementReading:
     accepts: list[str]          # alternatives ~ ANY of these satisfies it
     satisfied_by: str | None
     critical: bool
+    # the method author's own words: what this datum is FOR, and what its
+    # absence costs. the pedagogy lives in the seeds, and a reading carries
+    # it rather than paraphrasing it.
+    role: str = ""
     uncertainty_without: str = ""
     thin: bool = False
 
@@ -94,6 +98,8 @@ class CuriosityReading:
     question: str
     domain: str = ""
     significance: str = ""
+    description: str = ""
+    tags: list[str] = field(default_factory=list)
     sub_questions: list[str] = field(default_factory=list)
     methods: list[MethodReading] = field(default_factory=list)
 
@@ -197,6 +203,7 @@ def _read_method(method: dict, conformed, floor: float) -> MethodReading:
         requirements.append(RequirementReading(
             name=item.get("name", accepts[0]), accepts=list(accepts),
             satisfied_by=hit, critical=critical,
+            role=(item.get("role") or "").strip(),
             uncertainty_without=uncertainty, thin=thin))
 
         if not hit and uncertainty:
@@ -257,6 +264,8 @@ def read_plot(loam, plot: str, *, plot_name: str = "",
             question=cur["question"],
             domain=cur.get("domain", ""),
             significance=cur.get("significance", ""),
+            description=cur.get("description", ""),
+            tags=[str(x) for x in (cur.get("tags") or [])],
             sub_questions=subs,
             methods=[_read_method(m, conformed, floor)
                      for m in _candidate_methods(cur, methods)]))
