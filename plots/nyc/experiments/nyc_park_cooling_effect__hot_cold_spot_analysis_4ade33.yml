@@ -1,0 +1,58 @@
+# ════════════════════════════════════════════════════════════
+# Composed by wonder ~ nyc_park_cooling_effect__hot_cold_spot_analysis_4ade33
+# The door does not lock: this experiment runs as composed so its
+# limits can be discovered through honest provenance, not refused.
+# Steps are a composed draft; the orchestrator validates them.
+# Readiness: ready
+# ════════════════════════════════════════════════════════════
+
+id: nyc_park_cooling_effect__hot_cold_spot_analysis_4ade33
+name: How effectively do urban parks cool their surroundings?
+description: 'Composed by wonder from curiosity ''park_cooling_effect'' and method
+  ''hot_cold_spot_analysis'' for plot ''nyc''. The door does not lock: this runs as
+  composed so its limits can be discovered honestly.'
+curiosity:
+  ref: $curiosity-space/thermal/park_cooling_effect
+method:
+  ref: $methods/thermal/hot_cold_spot_analysis
+city: nyc
+manifest: plots/nyc/manifest.yml
+choices:
+  confidence_thresholds: standard_three_tier
+  spatial_weights: queen_contiguity
+  output_format: classified_raster
+parameters:
+  target_crs: EPSG:4326
+steps:
+- id: conform_surface_temperature
+  primitive: soil/validate_raster
+  inputs:
+    features: $manifest.land_surface_temperature
+  outputs:
+    validated: surface_temperature_validated
+  params: {}
+- id: conform_study_boundary
+  primitive: soil/validate_vector
+  inputs:
+    features: $manifest.study_boundary
+  outputs:
+    validated: study_boundary_validated
+  params: {}
+- id: conform_study_boundary_frame
+  primitive: soil/reproject_vector
+  inputs:
+    features: $steps.conform_study_boundary.validated
+  outputs:
+    reprojected: study_boundary_reprojected
+  params:
+    target_crs: EPSG:4326
+- id: analyze
+  primitive: roots/statistics/hotspot_analysis
+  description: Compute Getis-Ord Gi* and classify clusters
+  inputs:
+    surface_temperature: $steps.conform_surface_temperature.validated
+    study_boundary: $steps.conform_study_boundary_frame.reprojected
+  outputs:
+    hotspot_classification: hotspot_classification
+    cluster_summary: cluster_summary
+  params: {}
