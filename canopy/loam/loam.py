@@ -253,6 +253,12 @@ class Loam:
         # order-independent string, so two tables keyed on the same set of
         # fields match in joinable() no matter the order they listed them.
         id_fields_raw = f.get("id_fields")
+        # a single-element list serializes as a bare string (jsonlite drops
+        # length-1 vectors to scalars), and sorting a string iterates its
+        # CHARACTERS: "feature_id" became "_|a|d|e|e|f|i|r|t|u". normalize
+        # to a list first, so one key and many keys are handled the same way.
+        if isinstance(id_fields_raw, str):
+            id_fields_raw = [id_fields_raw]
         id_fields = "|".join(sorted(id_fields_raw)) if id_fields_raw else None
         name = clump_name(f["plot"], declared, f.get("content_hash"), f.get("data_path"))
         row = LoamRow(
