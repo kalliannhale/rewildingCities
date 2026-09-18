@@ -44,13 +44,14 @@ import yaml
 
 
 def _root(root=None) -> Path:
+    """
+    the garden's root ~ an explicit root wins; otherwise canopy.paths, which
+    raises rather than falling back to the cwd. C-04. ~
+    """
     if root:
         return Path(root)
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / "seeds").is_dir() and (parent / "garden").is_dir():
-            return parent
-    return Path.cwd()
+    from canopy.paths import project_root
+    return project_root()
 
 
 def _load_by_id(folder: Path) -> dict[str, dict]:

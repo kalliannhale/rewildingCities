@@ -4,7 +4,7 @@
 from __future__ import annotations
 from pathlib import Path
 import yaml
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class PrimitiveSpec:
@@ -15,11 +15,58 @@ class PrimitiveSpec:
     inputs: list[dict]
     outputs: dict
     params: dict
-    passthrough: bool = False  # ← add this
+    passthrough: bool = False
+    # declared per-primitive under `preconditions:`; normalized to a list of
+    # single-key dicts, which is what check_preconditions() contracts for.
+    # a YAML mapping cannot hold two predicates of the same kind, so a list
+    # is the honest shape: `provenance_contains` twice is a legitimate ask.
+    preconditions: list = field(default_factory=list)
+
+def _normalize_preconditions(raw, primitive_name: str, layer: str) -> list:
+    """
+    Accept either shape a registry might declare and return the list form.
+
+        preconditions:                  ->  [{"provenance_contains": "x"}]
+          provenance_contains: x
+
+        preconditions:                  ->  [{"provenance_contains": "x"},
+          - provenance_contains: x           {"no_unresolved_critical": True}]
+          - no_unresolved_critical: true
+
+    A mapping is convenient but cannot express the same predicate twice, so
+    the list is authoritative and a mapping is converted. An unusable shape
+    raises rather than silently declaring no preconditions: a gate that
+    quietly guards nothing is worse than no gate.
+    """
+    if not raw:
+        return []
+    if isinstance(raw, dict):
+        return [{k: v} for k, v in raw.items()]
+    if isinstance(raw, list):
+        out = []
+        for item in raw:
+            if isinstance(item, dict):
+                out.extend({k: v} for k, v in item.items())
+            else:
+                raise ValueError(
+                    f"primitive '{primitive_name}' ({layer}/_registry.yml): each "
+                    f"precondition must be a mapping like "
+                    f"'- provenance_contains: validate_vector', got {item!r}")
+        return out
+    raise ValueError(
+        f"primitive '{primitive_name}' ({layer}/_registry.yml): "
+        f"`preconditions:` must be a mapping or a list of mappings, "
+        f"got {type(raw).__name__}")
+
 
 def load_registry(layer: str, project_root: Path | None = None) -> dict[str, PrimitiveSpec]:
     """Load a layer's primitive registry."""
-    project_root = project_root or Path.cwd()
+    # Path.cwd() was the old default and it only worked from a checkout;
+    # canopy.paths resolves from the installed package and raises rather than
+    # guessing. C-04.
+    if project_root is None:
+        from canopy.paths import project_root as _resolve_root
+        project_root = _resolve_root()
     registry_path = project_root / layer / "_registry.yml"
     
     if not registry_path.exists():
@@ -37,7 +84,9 @@ def load_registry(layer: str, project_root: Path | None = None) -> dict[str, Pri
             inputs=spec_data.get("inputs", []),
             outputs=spec_data.get("outputs", {}),
             params=spec_data.get("params", {}),
-            passthrough=spec_data.get("passthrough", False)  # ← add this
+            passthrough=spec_data.get("passthrough", False),
+            preconditions=_normalize_preconditions(
+                spec_data.get("preconditions"), name, layer)
         )
     
     return specs
@@ -51,7 +100,13 @@ class RegistryManager:
     """
     
     def __init__(self, project_root: Path | None = None):
-        self.project_root = project_root or Path.cwd()
+        if project_root is None:
+            # resolved from the installed package rather than the cwd, and
+            # raising rather than guessing. a wrong root here means every
+            # read lands somewhere unrelated with no error to show. C-04.
+            from canopy.paths import project_root as _resolve_root
+            project_root = _resolve_root()
+        self.project_root = Path(project_root)
         self._registries: dict[str, dict[str, PrimitiveSpec]] = {}
     
     def _ensure_registry_loaded(self, layer: str) -> None:

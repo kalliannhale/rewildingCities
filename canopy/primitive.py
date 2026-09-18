@@ -73,7 +73,16 @@ class PrimitiveRunner:
 
     def __init__(self, primitives_dir: str | Path = "roots", project_root: str | Path | None = None):
         self.primitives_dir = Path(primitives_dir)
-        self.project_root = Path(project_root) if project_root else Path.cwd()
+        if project_root:
+            self.project_root = Path(project_root)
+        else:
+            # primitives are launched with cwd=self.project_root, so an
+            # incorrect root here means every primitive runs in the wrong
+            # directory. resolve from the package, and raise if the garden
+            # cannot be found, rather than defaulting to wherever we happen
+            # to be. C-04.
+            from canopy.paths import project_root as _resolve_root
+            self.project_root = _resolve_root()
 
     def run(
         self,

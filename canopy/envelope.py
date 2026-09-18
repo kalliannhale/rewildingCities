@@ -499,7 +499,14 @@ class EnvelopeBuilder:
     project_root: str | Path | None = None
 ):
         self.profile = profile
-        self.project_root = Path(project_root) if project_root else Path.cwd()
+        if project_root:
+            self.project_root = Path(project_root)
+        else:
+            # resolved from the installed package rather than the cwd, and
+            # raising rather than guessing. a wrong root here means every
+            # read lands somewhere unrelated with no error to show. C-04.
+            from canopy.paths import project_root as _resolve_root
+            self.project_root = _resolve_root()
         self.hasher = Hasher(profile=profile)
         self.runner = PrimitiveRunner(
             primitives_dir=primitives_dir,

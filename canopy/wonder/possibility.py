@@ -42,13 +42,14 @@ from canopy.loam.readiness import holdings_by_type
 
 
 def _root() -> Path:
-
-    here = Path(__file__).resolve()
-    for parent in here.parents:
-        if (parent / "seeds").is_dir() and (parent / "garden").is_dir():
-            return parent
-        
-    return Path.cwd()
+    """
+    the garden's root ~ delegated to canopy.paths, which raises rather than
+    falling back to Path.cwd(). the old fallback meant a failed search
+    returned an unrelated directory and every read came back empty, with no
+    error to show for it. C-04. ~
+    """
+    from canopy.paths import project_root
+    return project_root()
 
 
 def _load_dir(folder: Path) -> dict[str, dict]:

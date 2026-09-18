@@ -72,7 +72,14 @@ parameters:
     New York State Plane (Long Island), feet. Standard CRS for 
     NYC municipal data, ensures accurate area and distance calculations.
   
-  max_nodata_percent: 20
+  # A Landsat scene is acquired along a rotated orbit path, so storing it in
+  # a north-up projected grid leaves the corners nodata by construction:
+  # roughly 25-30% for a typical path rotation, before any cloud or edge
+  # effect. A threshold of 20 can therefore never be met by a full scene, and
+  # this one measures the whole footprint rather than the region analyzed
+  # (the cropped extent is 0% nodata). 45 is a scene-level sanity bound.
+  # The better fix is to validate AFTER scoping as well. C-51 / P-16.
+  max_nodata_percent: 45
   max_nodata_rationale: >
     Allow up to 20% NoData coverage in LST raster before flagging 
     as critical. Some cloud contamination is expected in composites.
@@ -176,12 +183,17 @@ steps:
     description: "Crop LST to park extent with buffer for analysis"
     inputs:
       raster: $steps.reproject_lst.reprojected
-      boundary: $steps.assign_feature_id.identified
+      # the STUDY AREA, not the analysis features. cropping against the park
+      # polygons masked away 99.4% of the raster, deleting the very
+      # surroundings the buffer rings measure. C-40.
+      boundary: $manifest.study_boundary
     outputs:
       cropped: land_surface_temperature
     params:
       buffer_m: 500
-      snap: "out"
+      # reduce the extent; keep the surroundings. a cooling gradient is
+      # measured AWAY from the parks, so the land around them must survive.
+      mask: false
 
   - id: assign_feature_id
     primitive: soil/assign_feature_id

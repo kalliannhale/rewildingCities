@@ -31,6 +31,7 @@ from datetime import datetime, timezone
 from .references import ReferenceResolver
 from .dependencies import DependencyResolver, ExecutionPlan
 from .registry import RegistryManager
+from .preconditions import check_preconditions
 from ..vocabulary import Vocabulary
 from .models import (
     Manifest,
@@ -182,7 +183,14 @@ class Orchestrator:
                 (Sprint 6/7 behavior). Set False only when working with
                 method files outside the commons index.
         """
-        self.project_root = Path(project_root) if project_root else Path.cwd()
+        if project_root:
+            self.project_root = Path(project_root)
+        else:
+            # resolved from the installed package rather than the cwd, and
+            # raising rather than guessing. a wrong root here means every
+            # read lands somewhere unrelated with no error to show. C-04.
+            from canopy.paths import project_root as _resolve_root
+            self.project_root = _resolve_root()
         self.experiment_path = Path(experiment_path)
         self.profile = profile
         self.strict_method_path = strict_method_path
@@ -207,6 +215,10 @@ class Orchestrator:
         self.profile_config = self._load_profile_config()
         self.injection_log: list[dict] = []
         self._steps_injected = False
+        # what the precondition gate APPROVED, per step. refusals fail the
+        # step loudly; approvals would otherwise be invisible, and a gate
+        # whose judgments cannot be audited is a gate you cannot trust.
+        self._precondition_notes: dict[str, list[str]] = {}
         self._inject_profile_steps()
 
         if self._steps_injected:
@@ -460,12 +472,31 @@ class Orchestrator:
         steps_by_id = {s.id: s for s in self.experiment.steps}
         injection_points: list[str] = []
 
+        def _emits_vector(step_id: str) -> bool:
+            """
+            Feature sampling samples VECTOR FEATURES, so an injection point
+            must be a step whose OUTPUT is a vector. The walk below follows
+            graph shape alone, and a step can take a vector in and emit a
+            raster out (crop_to_boundary takes a study boundary and returns a
+            cropped raster). Without this guard, sample_features.R is handed a
+            GeoTIFF and fails to read it as vector data. C-43.
+            """
+            step = steps_by_id.get(step_id)
+            if step is None or len(step.outputs) != 1:
+                return False
+            output_semantic_type = list(step.outputs.values())[0]
+            try:
+                return self._infer_category(output_semantic_type) == "vector"
+            except KeyError:
+                return False
+
         for dataset_name, head_id in manifest_chain_heads.items():
             current_id = head_id
             while True:
                 downstream = consumers[current_id]
                 if len(downstream) >= 2:
-                    injection_points.append(current_id)
+                    if _emits_vector(current_id):
+                        injection_points.append(current_id)
                     break
                 if len(downstream) == 0:
                     break
@@ -475,7 +506,8 @@ class Orchestrator:
                     if ref.startswith("$steps.")
                 ]
                 if len(step_refs) > 1:
-                    injection_points.append(current_id)
+                    if _emits_vector(current_id):
+                        injection_points.append(current_id)
                     break
                 current_id = next_step.id
 
@@ -729,6 +761,41 @@ class Orchestrator:
                 path=path if envelope is None else None,
                 semantic_type=semantic_type if envelope is None else None
             ))
+
+        # ── the precondition gate ──────────────────────────────────────
+        # Semantic ordering lives here now that state is carried by
+        # provenance rather than by type suffixes. A primitive declares what
+        # must already be true of its inputs (`preconditions:` in the layer
+        # registry) and this refuses to run it otherwise.
+        #
+        # It is a hard block, deliberately. The graduated wide door governs
+        # MISSING DATA: a non-critical gap proceeds and leaves a scar. It does
+        # not govern a KNOWN-BAD input. An unresolved critical warning means an
+        # upstream step already said its output may be unreliable, and running
+        # on it produces a result that looks clean and is not. Today a
+        # critical warning rode through fourteen steps and produced a
+        # plausible, fully-provenanced, meaningless table. That is the failure
+        # this gate exists to refuse.
+        #
+        # Satisfied predicates are recorded as notes, so the gate's approvals
+        # are as auditable as its refusals. No silent choices includes no
+        # silent approvals.
+        outcome = check_preconditions(primitive_spec.preconditions, envelope_inputs)
+        if not outcome.ok:
+            return StepResult(
+                step_id=step.id, success=False, envelope=None, output_paths={},
+                error="Precondition not satisfied",
+                message=(
+                    f"Step '{step.id}' ({step.primitive}) declares preconditions "
+                    f"its inputs do not meet:\n"
+                    + "\n".join(f"  - {f}" for f in outcome.failures)
+                    + "\n\nThis is a hard block: the inputs are present but an "
+                      "upstream step has already reported they may be unreliable, "
+                      "or a required earlier step never ran. Resolve the upstream "
+                      "warning, or reorder the experiment."
+                ),
+            )
+        self._precondition_notes[step.id] = outcome.notes
 
         try:
             resolved_params = self.reference_resolver.resolve_step_params(step)
