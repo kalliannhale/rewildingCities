@@ -212,7 +212,8 @@ def wonder_method(loam, plot: str, curiosity_name: str, method_path: str,
     return Readiness(curiosity_name, verdict, present, missing_c, missing_e, unc, thin)
 
 
-def acquisition_gap(loam, plot: str, method_path: str) -> list[str]:
+def acquisition_gap(loam, plot: str, method_path: str,
+                    *, include_enriching: bool = False) -> list[str]:
     """
 
     rewilding wonders (backward) ~ the acquisition list: each critical
@@ -221,15 +222,25 @@ def acquisition_gap(loam, plot: str, method_path: str) -> list[str]:
 
     absence only. a held-but-thin type is a quality problem the forward
     read names, not an absence ~ whether thin critical ground should also
-    ask for re-acquisition is a live question, deliberately left alone
-    until the ring is actually wired. ~
+    ask for re-acquisition is a live question (D-02), deliberately left
+    alone until the ring is actually wired.
+
+    by default this names only what BLOCKS a method, because that is the
+    acquisition the resolution engine must satisfy for a run to be possible
+    at all. include_enriching widens it to what would merely IMPROVE the
+    answer, which is a different and equally real question: a person
+    choosing what to go and get wants both lists, distinguished. a method
+    can declare water_boundaries as enriching and a plot can lack it
+    entirely, and the strict list stays silent about something well worth
+    acquiring. ~
 
     """
     reqs = load_method_requirements(method_path)
     have = _present_holdings(loam, plot)
+    roles = ("critical", "enriching") if include_enriching else ("critical",)
     return [_as_list(req.semantic_type)[0]
             for req in reqs
-            if req.role == "critical" and _met(req.semantic_type, have) is None]
+            if req.role in roles and _met(req.semantic_type, have) is None]
 
 
 # the measurement, named publicly ~ possibility renders it warmly and the

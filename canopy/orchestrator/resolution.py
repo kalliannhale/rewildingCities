@@ -178,11 +178,17 @@ class ResolutionEngine:
     def __init__(
         self,
         manifest,           # Manifest (from orchestrator)
-        experiment,         # Experiment
-        provider_registry,  # ProviderRegistry
-        dependency_resolver,  # DependencyResolver
+        experiment=None,    # Experiment ~ absent for a gap-driven acquire
+        provider_registry=None,  # ProviderRegistry
+        dependency_resolver=None,  # DependencyResolver ~ absent likewise
         method_data: dict | None = None,  # parsed method YAML (raw dict)
     ):
+        # experiment and dag are optional because acquisition can precede
+        # composition. resolve() and dry_resolve() answer "this experiment
+        # names these datasets, are they here?" and need both. acquire_types()
+        # answers "a method requires these semantic types, can this plot get
+        # them?", which is asked BEFORE an experiment exists ~ that is the
+        # whole point of reading the mart backward. S-01.
         self.manifest = manifest
         self.experiment = experiment
         self.providers = provider_registry
@@ -265,6 +271,189 @@ class ResolutionEngine:
             uncertainty_summary=uncertainty_summary,
             transaction=transaction if (transaction and transaction.has_changes) else None,
         )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # TYPE-DRIVEN ACQUISITION — closing the ring
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def datasets_providing(self, semantic_type: str) -> list:
+        """
+
+        which declared datasets provide this semantic type ~ a LIST, because a
+        plot may legitimately declare more than one (lst_summer_2023 and
+        lst_summer_2019 are both land_surface_temperature). when several
+        answer, that is a choice for a person, not something to resolve
+        silently by picking the first. ~
+
+        the manifest is keyed by dataset NAME and readiness speaks in
+        semantic TYPES; in the nyc manifest those happen to coincide for
+        every dataset, which is why the two keyspaces went unnoticed. this is
+        the translation between them. ~
+
+        """
+        return [d for d in self.manifest.datasets.values()
+                if d.semantic_type == semantic_type]
+
+    def acquire_types(self, semantic_types, *, dry: bool = True,
+                      loam=None, plot: str | None = None) -> dict:
+        """
+
+        rewilding closes the ring ~ given the semantic types a method needs
+        and the mart cannot satisfy (readiness.acquisition_gap), say what it
+        would take to get each one HERE, and optionally get it.
+
+        readiness computed this list and nothing ever read it: the backward
+        reader and the acquirer were both built and never joined. this is the
+        join. four honest outcomes per type:
+
+          ~ present     the manifest declares it and the file is here
+          ~ acquirable  declared, and a provider on this machine can fetch it
+          ~ blocked     declared, but it needs credentials or a human hand
+          ~ undeclared  nothing in this manifest provides this type at all,
+                        which is the case discover(bbox) exists to answer:
+                        propose a source rather than report a dead end
+
+        dry=True senses only and moves no bytes, the same courtesy
+        dry_resolve() extends. dry=False acquires what it can. ~
+
+        """
+        from canopy.manifest.transaction import ManifestTransaction
+
+        transaction = None
+        if not dry and self.manifest.manifest_path:
+            transaction = ManifestTransaction(self.manifest.manifest_path)
+
+        present, acquirable, blocked, undeclared, ambiguous = [], [], [], [], []
+        acquired_unconformed = []
+
+        for semantic_type in semantic_types:
+            candidates = self.datasets_providing(semantic_type)
+
+            if not candidates:
+                undeclared.append({
+                    "semantic_type": semantic_type,
+                    "message": (f"no dataset in the {self.manifest.city_name} "
+                                f"manifest provides '{semantic_type}'."),
+                    "next_step": ("declare one, or ask the providers to discover "
+                                  "a source for this bbox"),
+                })
+                continue
+
+            if len(candidates) > 1:
+                ambiguous.append({
+                    "semantic_type": semantic_type,
+                    "datasets": [d.name for d in candidates],
+                    "message": (f"{len(candidates)} datasets provide "
+                                f"'{semantic_type}'; which one is a choice for "
+                                f"you, not for the engine."),
+                })
+
+            for dataset in candidates:
+                if not dataset.is_usable:
+                    blocked.append({
+                        "semantic_type": semantic_type,
+                        "dataset": dataset.name,
+                        "reason": "underspecified declaration",
+                        "detail": "; ".join(dataset.underspecified),
+                    })
+                    continue
+
+                full_path = self.manifest.data_dir / dataset.path
+                if dataset.available and full_path.exists():
+                    # present is not the same as ANALYSABLE. a holding can be
+                    # declared, acquired, and sitting on disk while never
+                    # having been through the pipeline ~ arrived but never
+                    # tended. readiness reads the conformed tiers and calls
+                    # that a gap; acquisition reads the manifest and calls it
+                    # present. both are right, and the instruction they imply
+                    # is completely different: "go fetch this" versus "you
+                    # already have this, run something on it". when a mart is
+                    # offered, say which. S-01.
+                    conformed = None
+                    if loam is not None and plot is not None:
+                        conformed = any(
+                            row.get("semantic_type") == semantic_type
+                            for tier in ("tended", "gathered")
+                            for row in loam.find(plot=plot, tier=tier))
+
+                    record = {
+                        "semantic_type": semantic_type,
+                        "dataset": dataset.name,
+                        "path": str(dataset.path),
+                    }
+                    if conformed is False:
+                        record["next_step"] = (
+                            "acquired but never conformed ~ this needs an "
+                            "experiment run on it, not acquisition")
+                        acquired_unconformed.append(record)
+                    else:
+                        present.append(record)
+                    continue
+
+                if dataset.requires_manual_action:
+                    blocked.append({
+                        "semantic_type": semantic_type,
+                        "dataset": dataset.name,
+                        "reason": "manual",
+                        "detail": ((dataset.source or {}).get("notes")
+                                   or "this source must be placed by hand."),
+                    })
+                    continue
+
+                if dataset.requires_auth:
+                    blocked.append({
+                        "semantic_type": semantic_type,
+                        "dataset": dataset.name,
+                        "reason": "credentials",
+                        "detail": (f"source type '{dataset.source_type}' needs "
+                                   f"credentials this machine does not carry."),
+                    })
+                    continue
+
+                if not dataset.is_auto_acquirable:
+                    blocked.append({
+                        "semantic_type": semantic_type,
+                        "dataset": dataset.name,
+                        "reason": "not auto-acquirable",
+                        "detail": (f"source type '{dataset.source_type}' is not "
+                                   f"fetched without a person asking."),
+                    })
+                    continue
+
+                entry = {
+                    "semantic_type": semantic_type,
+                    "dataset": dataset.name,
+                    "source_type": dataset.source_type,
+                    "provider": dataset.provider_name,
+                    "path": str(dataset.path),
+                }
+
+                if dry:
+                    acquirable.append(entry)
+                else:
+                    resolution = self._resolve_dataset(dataset.name, [], transaction)
+                    entry["status"] = resolution.status
+                    entry["message"] = resolution.message
+                    if resolution.status in ("available", "acquired"):
+                        acquirable.append(entry)
+                    else:
+                        blocked.append({**entry, "reason": resolution.status,
+                                        "detail": resolution.message})
+
+        if transaction and transaction.has_changes:
+            transaction.commit()
+
+        return {
+            "plot": self.manifest.city_id,
+            "dry": dry,
+            "requested": list(semantic_types),
+            "present": present,
+            "acquired_unconformed": acquired_unconformed,
+            "acquirable": acquirable,
+            "blocked": blocked,
+            "undeclared": undeclared,
+            "ambiguous": ambiguous,
+        }
 
     # ─────────────────────────────────────────────────────────────────────────
     # DRY RESOLUTION — sense feasibility without acquiring

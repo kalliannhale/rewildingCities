@@ -20,7 +20,7 @@ from __future__ import annotations
 import argparse
 import importlib
 
-_COMMANDS = ("init", "wonder", "sows", "map")
+_COMMANDS = ("init", "wonder", "sows", "map", "acquire")
 
 
 def build_parser() -> argparse.ArgumentParser:
