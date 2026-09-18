@@ -15,11 +15,27 @@ from ..envelope import Envelope
 
 @dataclass
 class ManifestDataset:
-    """A dataset declared in a manifest."""
+    """
+    A dataset declared in a manifest.
+
+    One model, read by both halves of the system. The orchestrator needs its
+    richness (source, availability, provenance); loam needs its strictness
+    (a holding that does not declare what it is cannot be planted). Two
+    separate readers used to supply one each: parse_manifest invented
+    defaults a dataset never declared, and plant_manifest refused the same
+    dataset outright. The same file yielded two different pictures of
+    itself. P-01.
+
+    `underspecified` carries the reasons a declaration is unusable, so a
+    dataset stays visible to the reader that wants to REPORT the gap while
+    remaining unusable to the one that would act on it. Declared-and-
+    incomplete is a real state and deserves a name, rather than being
+    papered over with a default or dropped on the floor.
+    """
     name: str
-    path: str
-    semantic_type: str
-    format: str
+    path: str | None
+    semantic_type: str | None
+    format: str | None
     available: bool = False
     source: dict | None = None
     cache: dict | None = None
@@ -27,6 +43,23 @@ class ManifestDataset:
     temporal: dict | None = None
     quality: dict | None = None
     provenance: dict | None = None
+    # the declared classification scheme, which parse_manifest used to drop
+    # entirely while plant_manifest read it as conformed_by. the orchestrator
+    # cannot crosswalk a scheme it cannot see.
+    classification: dict | None = None
+    # why this declaration cannot be used, if it cannot. empty means usable.
+    underspecified: list[str] = field(default_factory=list)
+
+    @property
+    def is_usable(self) -> bool:
+        """A complete declaration ~ nothing was guessed on its behalf."""
+        return not self.underspecified
+
+    @property
+    def classification_scheme(self) -> str | None:
+        if not self.classification:
+            return None
+        return self.classification.get("scheme")
 
     @property
     def source_type(self) -> str | None:

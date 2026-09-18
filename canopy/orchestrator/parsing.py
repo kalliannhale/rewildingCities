@@ -22,32 +22,66 @@ from .models import (
 
 
 def parse_manifest(path: str | Path) -> Manifest:
-    """Parse a city manifest YAML file. Loads ALL datasets."""
+    """
+    Parse a plot's manifest. Loads ALL datasets, including incomplete ones.
+
+    The single reader for both halves of the system. It does NOT invent
+    values a manifest never declared: the old defaults turned a dataset with
+    no `format` into a geojson and a dataset with no `cache.path` into
+    `.data/<name>.geojson`, so a raster that forgot to say so was silently
+    looked for under the wrong name. A missing declaration is recorded in
+    `underspecified` instead, which keeps the dataset visible to a reader
+    that wants to report the gap while making it unusable to one that would
+    act on it.
+
+    Plot identity stays lenient, because it can be: a manifest may name
+    itself under `city`, or `plot`, or simply by living in a directory. That
+    is a real convenience rather than a guess about data. P-01.
+    """
     path = Path(path)
     with open(path, 'r') as f:
-        data = yaml.safe_load(f)
+        data = yaml.safe_load(f) or {}
 
     datasets = {}
-    for name, ds_data in data.get("datasets", {}).items():
-        cache_config = ds_data.get("cache", {})
-        cache_path = cache_config.get("path", f".data/{name}.geojson")
+    for name, ds_data in (data.get("datasets") or {}).items():
+        ds_data = ds_data or {}
+        cache_config = ds_data.get("cache") or {}
+        cache_path = cache_config.get("path")
+        semantic_type = ds_data.get("semantic_type")
+        fmt = ds_data.get("format")
+
+        missing = []
+        if not semantic_type:
+            missing.append("semantic_type ~ a holding must name what it is")
+        if not fmt:
+            missing.append("format ~ never assumed; a raster is not a geojson")
+        if not cache_path:
+            missing.append("cache.path ~ where the data rests once acquired")
+
         datasets[name] = ManifestDataset(
             name=name, path=cache_path,
-            semantic_type=ds_data.get("semantic_type", name),
-            format=ds_data.get("format", "geojson"),
+            semantic_type=semantic_type,
+            format=fmt,
             available=ds_data.get("available", False),
             source=ds_data.get("source"),
-            cache=cache_config if cache_config else None,
+            cache=cache_config or None,
             description=ds_data.get("description", ""),
             temporal=ds_data.get("temporal"),
             quality=ds_data.get("quality"),
             provenance=ds_data.get("provenance"),
+            classification=ds_data.get("classification"),
+            underspecified=missing,
         )
 
-    crs_data = data.get("crs", {})
-    gee_data = data.get("gee", {})
+    # a manifest may name itself three ways; the directory is a fair last word
+    city = data.get("city") or {}
+    plot_id = city.get("id") or data.get("plot") or path.parent.name
+    plot_name = city.get("name") or plot_id
+
+    crs_data = data.get("crs") or {}
+    gee_data = data.get("gee") or {}
     return Manifest(
-        city_name=data["city"]["name"], city_id=data["city"]["id"],
+        city_name=plot_name, city_id=plot_id,
         datasets=datasets, data_dir=path.parent, manifest_path=path,
         crs_working=crs_data.get("working", ""),
         gee_project=gee_data.get("project"), raw=data,

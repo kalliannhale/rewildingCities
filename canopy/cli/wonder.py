@@ -20,6 +20,7 @@ def run(args) -> int:
     from canopy.vocabulary import Vocabulary
     from canopy.loam.loam import Loam
     from canopy.loam.envelope_reader import till_envelopes
+    from canopy.loam.manifest_reader import plant_manifest
     from canopy.wonder.possibility import explore
 
     plot, question = args.plot, args.question
@@ -44,6 +45,18 @@ def run(args) -> int:
 
     vocab = Vocabulary.load(str(schemas))
     loam = Loam(vocab, str(bed))
+
+    # plant first: the manifest is the bronze registry, and a declared-but-
+    # unacquired holding is invisible to everything downstream until it is
+    # planted. that gap between declared and acquired is exactly what the
+    # backward read calls the seed still missing. S-04.
+    manifest_path = plot_dir / "manifest.yml"
+    if manifest_path.is_file():
+        planted = plant_manifest(loam, str(manifest_path))
+        line = f"planted {len(planted['planted'])} declared holding(s) from the manifest"
+        if planted["refused"]:
+            line += f", {len(planted['refused'])} refused"
+        print(line)
 
     if envelopes_dir.is_dir():
         report = till_envelopes(loam, str(envelopes_dir), vocab, plot)
