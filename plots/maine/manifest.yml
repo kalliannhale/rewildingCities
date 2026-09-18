@@ -84,24 +84,34 @@ datasets:
     source:
       type: api
       provider: arcgis_rest
-      # the DISSOLVED layer, deliberately: it merges each town's
-      # disconnected pieces (Maine has a great many islands) into one
-      # multipart polygon, so there is ONE FEATURE PER TOWN. the
-      # undissolved layer would give a town with three islands three
-      # features, and count_by_unit would triple its denominator.
-      # verified 2026-09-18: Maine_Town_and_Townships_Boundary_Polygons_
-      # Dissolved/FeatureServer, layer 0, METWP24PD.
-      item_id: b0c7b943162f45e48b3a829b7f35709a
-      layer: 0
+      # the UNDISSOLVED layer, and this was a reversal worth recording.
+      # the dissolved layer (b0c7b943..., METWP24PD) has the right grain ~
+      # 923 distinct towns in 924 polygons ~ but it carries ONLY the TOWN
+      # name: no GEOCODE, no CNTYCODE, no county. a town layer with no keys
+      # cannot join to Census, cannot roll up to county, and cannot be
+      # reconciled against any authority. it is a map without join grammar.
+      #
+      # the undissolved layer carries TOWN, COUNTY, GEOCODE and CNTYCODE,
+      # so soil/transform/dissolve_by_field gets us the correct grain AND
+      # the keys. a transformation we perform and record beats a
+      # convenience we accept and cannot verify.
+      # verified 2026-09-18: item 289a91e8..., METWP24P.
+      item_id: 289a91e826fd4f518debdd824d5dd16d
       query_params:
         where: "1=1"
         outFields: "*"
         outSR: 4326
       notes: >
-        Maine GeoLibrary municipal boundaries, dissolved (METWP24PD).
-        Roughly 490 municipalities and unorganized territories. The service
-        enforces maxRecordCount 2000, so this fetches in a single page ~ but
-        the provider pages regardless and refuses to write a partial layer.
+        Maine GeoLibrary town and township boundary polygons (METWP24P),
+        undissolved so the join keys survive. Dissolve on TOWN (or GEOCODE,
+        which is the authoritative MCD code) to reach one feature per civil
+        division.
+
+        Counts are what the layer actually holds, not what I assumed: the
+        dissolved companion reports 923 distinct towns across 924 polygons,
+        which is Maine's complete set of civil divisions ~ organized
+        municipalities, unorganized territories, townships, gores and
+        plantations ~ rather than the ~490 organized municipalities alone.
     cache:
       path: .data/maine_towns.geojson
       refresh_policy: manual

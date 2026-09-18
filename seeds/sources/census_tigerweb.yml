@@ -1,0 +1,416 @@
+# ============================================================================
+# seeds/sources/census_tigerweb.yml
+# ============================================================================
+# A national source catalogue. Census TIGERweb serves every geographic level
+# the Bureau publishes, for every state, through one ArcGIS REST API with one
+# identifier scheme (GEOID). A plot in any state can declare a governance
+# unit from here without needing to know that its own state GIS portal
+# exists ~ which is the difference between a wide door and a door that opens
+# only for people who already know where the handle is.
+#
+# Three things this catalogue exists to keep honest.
+#
+# 1. A UNIT IS NOT A GOVERNMENT JUST BECAUSE IT IS A POLYGON.
+#
+#    Census county subdivisions are functioning governments in roughly twenty
+#    states and statistical tabulation areas in the rest. Measured, not
+#    asserted:
+#
+#      Maine    529 county subdivisions  A=459  S=42  F=27  N=1
+#      Georgia  586 county subdivisions  S=586
+#      Texas    862 county subdivisions  S=862
+#
+#    Not one active government among 1,448 subdivisions in Georgia and Texas.
+#    A national "towns without local news" map would render those polygons
+#    with the same weight as Maine's towns, and would be comparing a
+#    governance failure to a category error. Both would look like findings.
+#
+#    The answer is in the data: FUNCSTAT, one letter per feature. So this
+#    catalogue does not carry a hardcoded list of MCD states, which would
+#    rot. It points at the field, and each fetched unit declares its own
+#    status.
+#
+# 2. A LEVEL IS AN ADDRESS IN SPACE AND TIME.
+#
+#    TIGERweb publishes every vintage back to 2010 through one service, and
+#    the LAYER INDEX encodes when. Layer 1 and layer 55 are both "Counties"
+#    and they are different boundaries: Knox and Waldo counties in Maine
+#    changed by law in March 2023. Layer 1 of Legislative is the 2026 upper
+#    chamber; layer 13 is 2018. Nothing stops a join between 2024 outlet data
+#    and 2018 districts, and the result would be clean, plausible and wrong.
+#
+#    So every level here declares its vintage, and `vintage` is part of a
+#    declaration rather than a footnote to one.
+#
+# 3. SOME OF THIS IS NOT OURS TO PUBLISH.
+#
+#    American Indian / Alaska Native / Native Hawaiian areas are in this
+#    catalogue because pretending otherwise would not protect anyone: the
+#    data is public, national, and two lines of code away. It is tiered
+#    `custom` here so the barrier is CONSENT rather than difficulty. It
+#    enters an analysis on terms a nation sets, nation-led, under CARE and
+#    OCAP. The exposure gate that will enforce this structurally is not built
+#    yet; until it is, this tier and this paragraph are the enforcement.
+# ============================================================================
+
+id: census_tigerweb
+name: US Census Bureau TIGERweb
+authority: United States Census Bureau, Geography Division
+national: true
+
+provider:
+  type: api
+  provider: arcgis_rest
+  base: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb
+
+# ~ how an identifier is built, so a join is DERIVED rather than matched on a
+# name string. verified for Maine: MEGIS CNTYCODE is the Census county FIPS
+# zero-padded, and '01' -> '23001' held across all sixteen counties. a shared
+# national standard both sources implement is not a crosswalk; it is
+# arithmetic, and it belongs nowhere near seeds/crosswalks/.
+geoid:
+  state: 2          # digits
+  county: 3         # appended to state   -> 23001
+  cousub: 5         # appended to county  -> 2300508430
+  place: 5          # appended to state   -> 2321730
+  note: >
+    GEOID nests, so a finer unit carries its parents. A town-level result can
+    be rolled up to county by string prefix without a lookup table, which is
+    what makes a statewide or national aggregation possible at all.
+
+# ~ the field that says whether a polygon is a government. checked, not
+# assumed: present on every layer probed.
+governance_field:
+  name: FUNCSTAT
+  values:
+    A: active government ~ has officials, records, and someone to hold to account
+    S: statistical entity ~ Census-drawn for tabulation; nobody governs it
+    F: fictitious entity ~ a placeholder, often water or a boundary artifact
+    N: nonfunctioning or not applicable ~ a legal entity without its own government
+    E: >
+      a legal or administrative entity that is not a general-purpose
+      government. school districts report E: they govern schools, not
+      territory, and they have a board and records without having
+      jurisdiction over the ground.
+  note: >
+    This list was written from the four values observed on the first levels
+    probed, and E turned up later on school districts ~ which is to say the
+    enumeration was plausible rather than authoritative. Census publishes
+    the full FUNCSTAT domain in its TIGER/Line technical documentation; any
+    value not listed here should be treated as unknown and reported, never
+    silently read as statistical.
+  usage: >
+    Filter on FUNCSTAT = 'A' for governing units. soil/transform/
+    dissolve_by_field already takes attribute filters, so this needs no new
+    machinery: filters: {FUNCSTAT: "A"}.
+
+levels:
+
+  state:
+    service: State_County
+    layer: 0
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE]
+    description: The fifty states, DC, and the territories.
+
+  county:
+    service: State_County
+    layer: 1
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, COUNTY]
+    verified:
+      maine: 16 counties, FUNCSTAT all A, names matching MEGIS modulo " County"
+    description: >
+      Counties and county equivalents (parishes in Louisiana, boroughs and
+      census areas in Alaska, independent cities in Virginia). A governing
+      unit nearly everywhere, and the honest default denominator for a
+      regional analysis: media markets operate regionally, so a county is
+      usually the right grain for ownership concentration.
+
+  county_subdivision:
+    service: Places_CouSub_ConCity_SubMCD
+    layer: 1
+    vintage: current
+    unit_kind: varies          # ← READ FUNCSTAT. this is the whole point.
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, COUNTY, COUSUB]
+    measured:
+      maine: {total: 529, A: 459, S: 42, F: 27, N: 1}
+      georgia: {total: 586, S: 586}
+      texas: {total: 862, S: 862}
+    description: >
+      Towns, townships, and other minor civil divisions. FUNCSTAT decides
+      whether these are governments or tabulation areas, and it decides
+      differently by state. A town-level analysis is meaningful in New
+      England and structurally meaningless in Georgia, where the county is
+      the operative local unit.
+
+      Note also that Census and a state's own GIS may disagree about what a
+      civil division IS. Census counts 529 in Maine; MEGIS counts 923,
+      because MEGIS treats unorganized territories, townships and gores as
+      separate divisions where Census aggregates many of them. Neither is
+      wrong. An analysis has to declare which definition it used.
+
+  incorporated_place:
+    service: Places_CouSub_ConCity_SubMCD
+    layer: 4
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, PLACE]
+    measured:
+      maine: {total: 23, A: 23}
+    description: >
+      Cities, towns and villages that are incorporated under state law. Where
+      they exist they are real governments. Coverage is uneven: Maine has 23,
+      because most Maine municipalities are towns (county subdivisions)
+      rather than incorporated places.
+
+  census_designated_place:
+    service: Places_CouSub_ConCity_SubMCD
+    layer: 5
+    vintage: current
+    unit_kind: statistical     # never a government. not once, anywhere.
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, PLACE]
+    measured:
+      maine: {total: 132, S: 132}
+    caution: >
+      A CDP is a blob the Census draws around an unincorporated settlement so
+      it has something to tabulate. It has no government, no officials, no
+      records, and nobody to hold to account. It is useful for describing
+      where people live and misleading as a unit of accountability. Every
+      Maine CDP is FUNCSTAT=S, as is every CDP everywhere.
+
+  congressional_district:
+    service: Legislative
+    layer: 0
+    vintage: "120th Congress"
+    unit_kind: representational
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, CD]
+    redistricted: true
+    description: >
+      A district is a legal entity with no government of its own ~ hence
+      FUNCSTAT=N ~ that elects a representative to a government elsewhere.
+      Legitimate as an aggregation unit and a different question from a
+      governing unit: representation rather than administration.
+    vintages:
+      "120th Congress": {layer: 0}
+      "119th Congress": {layer: 4, note: also at layer 8 under ACS 2025}
+      "116th Congress": {layer: 12}
+
+  state_legislative_upper:
+    service: Legislative
+    layer: 1
+    vintage: "2026"
+    unit_kind: representational
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, SLDU]
+    redistricted: true
+    measured:
+      maine: {total: 35, N: 35}
+    vintages:
+      "2026": {layer: 1}
+      "2024": {layer: 5, note: also at layer 9 under ACS 2025}
+      "2018": {layer: 13}
+    caution: >
+      Redistricted after each census. Joining current outlet data to a
+      superseded district layer produces a clean, plausible, wrong map ~ the
+      same district count, different boundaries. Declare the vintage.
+
+  state_legislative_lower:
+    service: Legislative
+    layer: 2
+    vintage: "2026"
+    unit_kind: representational
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, SLDL]
+    redistricted: true
+    vintages:
+      "2026": {layer: 2}
+      "2024": {layer: 6}
+      "2018": {layer: 14}
+
+  tract:
+    service: Tracts_Blocks
+    layer: 0
+    vintage: current
+    unit_kind: statistical
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, COUNTY, TRACT]
+    caution: >
+      A tabulation unit, drawn to hold roughly 4,000 people and redrawn each
+      census. Appropriate for demographic joins, wrong for anything about
+      accountability: no tract has ever had a government.
+
+  block_group:
+    service: Tracts_Blocks
+    layer: 1
+    vintage: current
+    unit_kind: statistical
+    semantic_type: governance_unit
+    resolution_tier: public
+    caution: Same as tract, finer.
+
+  zcta:
+    service: PUMA_TAD_TAZ_UGA_ZCTA
+    layer: 1
+    vintage: "2020"
+    unit_kind: statistical
+    semantic_type: governance_unit
+    resolution_tier: public
+    caution: >
+      A ZIP Code Tabulation Area APPROXIMATES a ZIP code and is not a postal
+      service boundary, not a government, and not stable between censuses.
+      Aggregating anything "by ZIP" is common and structurally misleading:
+      ZIP codes were drawn for mail delivery routes and cut across every
+      administrative boundary that matters.
+
+  school_district_unified:
+    service: School
+    layer: 0
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, SDUNI]
+    grade_fields: [LOGRADE, HIGRADE]
+    measured:
+      maine: FUNCSTAT=E throughout; Regional School Units (RSUs)
+    description: >
+      School districts govern, elect boards, and keep public records, on a
+      geography that matches no other unit. For an information-access
+      question they deserve their own look: a school board is often the most
+      locally consequential body a community can attend and the hardest to
+      find coverage of.
+
+      FUNCSTAT=E rather than A ~ a district is a legal entity governing
+      schools, not a general-purpose government over territory.
+    caution: >
+      "School district" is NOT one tessellation. Census publishes unified,
+      secondary and elementary districts as separate layers, and the latter
+      two OVERLAP the same ground with different grade ranges. Aggregating
+      "by school district" across layers double-counts. Maine appears
+      unified-only; a national rollup cannot assume that.
+    vintages:
+      current: {layer: 0}
+      "ACS 2025": {layer: 5}
+      "Census 2020": {layer: 10}
+
+  school_district_secondary:
+    service: School
+    layer: 1
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, SDUNI]
+    caution: Overlaps elementary districts. See school_district_unified.
+
+  school_district_elementary:
+    service: School
+    layer: 2
+    vintage: current
+    unit_kind: governing
+    semantic_type: governance_unit
+    resolution_tier: public
+    geoid_fields: [STATE, SDUNI]
+    caution: Overlaps secondary districts. See school_district_unified.
+
+  tribal_area:
+    service: AIANNHA
+    layer: null                    # ← unresolved ON PURPOSE. see below.
+    vintage: current
+    unit_kind: sovereign
+    semantic_type: sovereign_boundary
+    resolution_tier: custom        # ← not public. deliberately.
+    consent: >
+      American Indian, Alaska Native and Native Hawaiian areas. Catalogued
+      here rather than omitted, because the data is public and national and
+      leaving it out of a catalogue would not protect anyone ~ it would only
+      make the protection invisible.
+
+      Tiered `custom`: this does not enter an analysis, a map, or a published
+      layer without terms a nation sets, nation-led, under CARE and OCAP
+      principles. The barrier is consent, not difficulty. The exposure gate
+      that will enforce this structurally is not built (P-22); until it is,
+      this tier and this paragraph are the enforcement, and they are weaker
+      than code.
+    layer_unresolved: >
+      The service exposes ELEVEN distinct area types and they do not mean the
+      same thing. Federal and State American Indian Reservations and
+      Off-Reservation Trust Lands are JURISDICTIONS. The types ending in
+      "Statistical Area" ~ State Designated Tribal, Tribal Designated,
+      Alaska Native Village, Oklahoma Tribal ~ are Census constructs drawn
+      for tabulation where no reservation exists, sometimes designated by a
+      STATE rather than by a nation.
+
+      So the statistical-versus-governing distinction that runs through the
+      rest of this catalogue runs through sovereign data too, and conflating
+      a reservation with a state-designated statistical area would
+      misrepresent sovereignty itself. A single `layer:` and a single tier
+      for eleven different things is a blunt instrument.
+
+      Resolving which layers a plot may use, and on what terms, is not a
+      schema decision to be made from a layer listing. It is a conversation
+      with the nations concerned. Until that conversation happens this stays
+      null, which means nothing can declare against it.
+    layers_observed:
+      jurisdictions:
+        - {id: 2, name: Federal American Indian Reservations}
+        - {id: 3, name: Off-Reservation Trust Lands}
+        - {id: 4, name: State American Indian Reservations}
+        - {id: 5, name: Hawaiian Home Lands}
+        - {id: 1, name: Tribal Subdivisions}
+        - {id: 0, name: Alaska Native Regional Corporations}
+        - {id: 10, name: American Indian Joint-Use Areas}
+      census_statistical_constructs:
+        - {id: 6, name: Alaska Native Village Statistical Areas}
+        - {id: 7, name: Oklahoma Tribal Statistical Areas}
+        - {id: 8, name: State Designated Tribal Statistical Areas}
+        - {id: 9, name: Tribal Designated Statistical Areas}
+    note: >
+      Layer names were read from service metadata. No features were fetched
+      from any of these layers while writing this catalogue.
+
+# ============================================================================
+# how a plot declares against this
+# ============================================================================
+# a manifest entry, with the vintage explicit and the governance filter
+# applied downstream by the dissolve:
+#
+#   census_county:
+#     available: false
+#     semantic_type: governance_unit
+#     format: geojson
+#     source:
+#       type: api
+#       provider: arcgis_rest
+#       endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1
+#       query_params:
+#         where: "STATE='23'"
+#         outFields: "GEOID,NAME,STATE,COUNTY,FUNCSTAT,LSADC"
+#         outSR: 4326
+#     cache:
+#       path: .data/census_counties.geojson
+#
+# and a plot that wants governing towns only runs the fetched layer through
+# soil/transform/dissolve_by_field with filters: {FUNCSTAT: "A"} ~ the same
+# mechanism that dropped 7,156 islands from Maine's county layer. one
+# primitive, two entirely different semantic filters, because a filter that
+# names what it keeps is a filter that can be read.
+# ============================================================================
