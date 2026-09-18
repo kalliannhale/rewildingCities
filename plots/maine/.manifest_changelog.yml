@@ -1,0 +1,75 @@
+- timestamp: '2026-09-18T06:06:19.714540+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: governance_unit_county
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 12.2 MB from ArcGIS REST ~ resolved item b47e1e44ce70411f91fe4c1c3f4c7cd6
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_County_Boundary_Polygons/FeatureServer;
+      using layer 1; 2000 features in 1 page(s)
+  - dataset: governance_unit_county
+    field: fetched_at
+    value: '''2026-09-18T06:06:14.699747+00:00'''
+    reason: Cache timestamp updated
+  - dataset: governance_unit_town
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 14.4 MB from ArcGIS REST ~ resolved item b0c7b943162f45e48b3a829b7f35709a
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_Town_and_Townships_Boundary_Polygons_Dissolved/FeatureServer;
+      using layer 0; 924 features in 1 page(s)
+  - dataset: governance_unit_town
+    field: fetched_at
+    value: '''2026-09-18T06:06:19.712623+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-09-18T06:08:07.417333+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: governance_unit_county
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 40.2 MB from ArcGIS REST ~ resolved item b47e1e44ce70411f91fe4c1c3f4c7cd6
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_County_Boundary_Polygons/FeatureServer;
+      using layer 1; 7196 features in 4 page(s)
+  - dataset: governance_unit_county
+    field: fetched_at
+    value: '''2026-09-18T06:08:05.851795+00:00'''
+    reason: Cache timestamp updated
+  - dataset: governance_unit_town
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 14.4 MB from ArcGIS REST ~ resolved item b0c7b943162f45e48b3a829b7f35709a
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_Town_and_Townships_Boundary_Polygons_Dissolved/FeatureServer;
+      using layer 0; 924 features in 1 page(s)
+  - dataset: governance_unit_town
+    field: fetched_at
+    value: '''2026-09-18T06:08:07.415258+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-09-18T06:09:57.865899+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: governance_unit_county
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 40.2 MB from ArcGIS REST ~ resolved item b47e1e44ce70411f91fe4c1c3f4c7cd6
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_County_Boundary_Polygons/FeatureServer;
+      using layer 1; 7196 features in 4 page(s)
+  - dataset: governance_unit_county
+    field: fetched_at
+    value: '''2026-09-18T06:09:56.360100+00:00'''
+    reason: Cache timestamp updated
+  - dataset: governance_unit_town
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 14.4 MB from ArcGIS REST ~ resolved item b0c7b943162f45e48b3a829b7f35709a
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_Town_and_Townships_Boundary_Polygons_Dissolved/FeatureServer;
+      using layer 0; 924 features in 1 page(s)
+  - dataset: governance_unit_town
+    field: fetched_at
+    value: '''2026-09-18T06:09:57.864165+00:00'''
+    reason: Cache timestamp updated

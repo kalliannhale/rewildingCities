@@ -242,6 +242,64 @@ primitives:
     may_exclude_features: false
     exclusion_documented_in: warnings
 
+  dissolve_by_field:
+    path: transform/dissolve_by_field.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Dissolve polygons into one multipart feature per attribute value.
+      Source boundary data is often held as arc-derived polygons ~ one per
+      landmass, per tidal split, per island ~ while an analysis wants one
+      feature per administrative unit. This is a REDUCTION: feature count
+      collapses, geometry becomes multipart, and attributes that varied
+      within a group are dropped. All of it is measured and reported,
+      because a denominator built from the wrong grain divides by the wrong
+      number and every rate inherits the error.
+
+    inputs:
+      - name: features
+        semantic_types:
+          - governance_unit
+          - sovereign_boundary
+          - study_area
+          - study_boundary
+          - neighborhood_boundaries
+          - park_boundaries
+          - water_boundaries
+          - forest_boundaries
+        required: true
+        description: Vector features to aggregate
+
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: >
+        One multipart feature per distinct value of the dissolve field. The
+        dissolve field becomes the output's id_field and spatial_unit,
+        because after a dissolve it IS the key by construction.
+
+    params:
+      field:
+        type: string
+        required: true
+        description: >
+          The attribute to group by. No default: dissolving on the wrong
+          field yields a plausible, silent, wrong answer.
+      filters:
+        type: object
+        default: null
+        description: >
+          Attribute filters applied BEFORE the dissolve, as field -> kept
+          value. Each is a semantic choice (exclude islands, exclude water)
+          and each is reported with how many features it removed.
+      drop_blank:
+        type: boolean
+        default: true
+        description: >
+          Drop features with no value in the dissolve field. They cannot
+          belong to a unit and would otherwise collapse into one anonymous
+          group.
+
   reproject_vector:
     path: transform/reproject_vector.R
     version: 1.0.0

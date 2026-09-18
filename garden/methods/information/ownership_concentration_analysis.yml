@@ -1,0 +1,123 @@
+# ============================================================================
+# garden/methods/information/ownership_concentration_analysis.yml
+# ============================================================================
+# a method is HOW you might answer a curiosity, with its choice points named
+# in the open and its data needs declared honestly ~ including what the
+# absence of each datum costs the answer. the teaching is the tool: the words
+# written here are what wonder says to a person. ~
+# ============================================================================
+
+id: ownership_concentration_analysis
+domain: information
+name: "Ownership Concentration of Local Information Outlets"
+
+description: >
+  Attributes each formal outlet to the entity that owns it, then computes a
+  concentration index per governance unit. High concentration means editorial
+  independence and local coverage depth are structurally constrained in that
+  place, whatever the number of mastheads suggests.
+
+  This method measures ownership of outlets. It does not measure whether a
+  community is informed, and it is declared so that it cannot quietly be read
+  that way: the institutional and access requirements below are enriching
+  rather than critical precisely so that their absence is reported as a
+  limitation on the finding instead of passing unremarked.
+
+requires_data:
+  - name: outlets
+    type: vector
+    semantic_types: [formal_outlet]
+    critical: true
+    role: >
+      The outlets whose ownership is measured: print, broadcast, digital and
+      radio. Each needs an owning entity resolvable from public records.
+    uncertainty_without: >
+      There is nothing to concentrate. The method cannot run.
+
+  - name: aggregation_unit
+    type: vector
+    semantic_types: [governance_unit]
+    critical: true
+    role: >
+      The unit concentration is computed PER. A concentration index is
+      meaningless without a denominator, and the choice of denominator is
+      itself the analysis: a statewide figure hides every local monopoly,
+      while a tract-level one fragments a market that operates regionally.
+    uncertainty_without: >
+      No denominator. The method cannot run, and forcing one (the study
+      extent, say) would silently answer a different question than the one
+      asked.
+
+  - name: institutions
+    type: vector
+    semantic_types: [institutional_node]
+    critical: false
+    role: >
+      Libraries, town halls, schools and government sites ~ the channels that
+      carry information work no outlet census records.
+    uncertainty_without: >
+      A high concentration score will read as an information vacuum when
+      institutional channels may be carrying the load. Without this, the
+      finding is a claim about OUTLETS, not about whether people here can
+      find out what is happening. Report it that way.
+
+  - name: access
+    type: raster
+    semantic_types: [access_infrastructure]
+    critical: false
+    role: >
+      Broadband, cell and cable coverage ~ whether what exists can actually
+      be reached.
+    uncertainty_without: >
+      Outlet presence overstates reach. A digital-only outlet in a place with
+      poor connectivity counts as present and is not access. The result
+      describes what is published, not what arrives.
+
+choices:
+  concentration_measure:
+    options: [hhi, top_owner_share, top_three_share]
+    default: hhi
+    description: >
+      HHI sums the squared market shares of every owner, so it responds to
+      the whole distribution and is the standard in antitrust work. A
+      top-owner share answers a blunter and more legible question ~ how much
+      does the largest owner hold ~ and is easier to say aloud. They can
+      disagree: many small owners plus one large one reads differently under
+      each.
+
+  aggregation_unit_level:
+    options: [county, town, tract]
+    default: county
+    description: >
+      Which governance unit to compute per. Media markets often operate
+      regionally, so a county is usually the honest grain; a town-level
+      figure can look like monopoly simply because one paper covers several
+      towns. Finer is not more truthful here.
+
+  outlet_weighting:
+    options: [count, circulation, staffing]
+    default: count
+    description: >
+      Counting outlets treats a weekly with two reporters the same as a daily
+      with forty. Circulation or staffing weight by actual reach or capacity,
+      when that data exists. Unweighted counts overstate the presence of
+      small outlets and understate consolidation.
+
+requires_primitives:
+  - roots/resolve_ownership
+  - roots/count_by_unit
+  - roots/concentration_index
+
+produces:
+  semantic_type: ownership_concentration
+  data_category: tabular
+  description: >
+    Concentration score per governance unit, with outlet counts, owner
+    counts, and the coverage and small-n flags the index primitive emits.
+
+interpretation: >
+  A high score is a statement about ownership structure, not about how
+  informed a place is. Read it beside the institutional and access layers
+  when they exist, and name their absence when they do not. A unit with few
+  outlets will produce an extreme score from thin evidence; the small-n flag
+  exists to keep that from being read as a strong finding.

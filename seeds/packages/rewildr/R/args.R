@@ -119,3 +119,25 @@ get_param <- function(params, name, default = NULL) {
 #' Null coalescing operator
 #' @keywords internal
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
+#' Require a Parameter
+#'
+#' A parameter with no safe default. Fails loudly rather than guessing,
+#' because a wrong silent default is the worst failure mode: it produces a
+#' plausible answer to a question nobody asked. The Python side of the
+#' contract (canopy/pr_io.py) has carried this since August; the R side did
+#' not, and the asymmetry only surfaced when a primitive needed it.
+#'
+#' @param params The parsed params list
+#' @param name The parameter name
+#' @return The parameter value
+#' @export
+require_param <- function(params, name) {
+  val <- if (is.list(params)) params[[name]] else NULL
+  if (is.null(val)) {
+    primitive_failure(
+      "Missing required parameter",
+      sprintf("Parameter '%s' is required and has no safe default.", name))
+  }
+  val
+}

@@ -1,0 +1,201 @@
+# ============================================================================
+# plots/maine/manifest.yml ~ Maine's bronze registry
+# ============================================================================
+# declare each dataset this community holds or seeks. a declared-but-absent
+# dataset is honest: `wonder maine` names it and what its absence costs.
+# nothing here is acquired until you ask.
+#
+# WHAT IS DELIBERATELY NOT DECLARED HERE
+#
+#   Wabanaki nation boundaries and any layer carrying sovereign or
+#   self-determined authority (semantic type `sovereign_boundary`, consent
+#   tier `custom`) are absent from this manifest by choice, not by oversight.
+#   They enter only on terms a nation sets, led by that nation, under CARE
+#   and OCAP principles. This manifest is a public document and the
+#   commitment belongs in it rather than in a design note.
+#
+#   Relational layers ~ mutual aid networks, listservs, community forums
+#   (`relational_hub`, tier `aggregate-only`) ~ are likewise undeclared.
+#   They are never auto-acquirable and never published as named features.
+#   The exposure gate that would enforce this structurally is not built yet,
+#   so for now the enforcement is this absence and this paragraph.
+# ============================================================================
+
+city:
+  name: Maine
+  id: maine
+
+crs:
+  # the interchange frame: vectors rest here, portable and lossless.
+  working: "EPSG:4326"
+  # metric work (areas, distances, density per unit) reprojects to a local
+  # projected CRS. Maine CRS 2000 East is the state standard; UTM 19N also
+  # covers the state cleanly. rasters are NOT reprojected for storage ~
+  # resampling a measurement alters the measurement.
+  metric: "EPSG:26983"
+
+datasets:
+
+  # ── the denominator ───────────────────────────────────────────────────────
+  # a concentration index is computed PER UNIT, so the unit is not a detail:
+  # it is the analysis. both grains are declared, which means the acquire
+  # report will flag the choice as ambiguous rather than quietly picking one.
+  # Maine has 16 counties and roughly 490 municipalities. media markets
+  # operate regionally, so county is usually the honest grain; town is finer
+  # and noisier, and can read as monopoly simply because one paper covers
+  # several towns.
+
+  governance_unit_county:
+    available: true
+    description: Maine county boundaries ~ the regional grain for media markets
+    semantic_type: governance_unit
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      # the ITEM ID is the durable identifier. a FeatureServer url is a
+      # derived, re-mintable address: republish the layer and the url
+      # changes while the item id does not. the provider resolves item ->
+      # url at acquisition and records which url it used, so provenance
+      # carries the address actually fetched. verified 2026-09-18:
+      # Maine_County_Boundary_Polygons/FeatureServer, layer 1, CNTY24P.
+      item_id: b47e1e44ce70411f91fe4c1c3f4c7cd6
+      layer: 1
+      query_params:
+        where: "1=1"
+        outFields: "*"
+        outSR: 4326
+      notes: >
+        Maine GeoLibrary county boundaries (CNTY24P). 16 counties. The
+        service enforces maxRecordCount 2000, well above what this needs.
+    cache:
+      path: .data/maine_counties.geojson
+      refresh_policy: manual
+      fetched_at: '2026-09-18T06:09:56.360100+00:00'
+    provenance:
+      source: Maine Office of GIS (MEGIS) / Maine GeoLibrary
+      source_url: https://www.maine.gov/geolib/
+
+  governance_unit_town:
+    available: true
+    description: Maine municipal boundaries ~ the finer, noisier grain
+    semantic_type: governance_unit
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      # the DISSOLVED layer, deliberately: it merges each town's
+      # disconnected pieces (Maine has a great many islands) into one
+      # multipart polygon, so there is ONE FEATURE PER TOWN. the
+      # undissolved layer would give a town with three islands three
+      # features, and count_by_unit would triple its denominator.
+      # verified 2026-09-18: Maine_Town_and_Townships_Boundary_Polygons_
+      # Dissolved/FeatureServer, layer 0, METWP24PD.
+      item_id: b0c7b943162f45e48b3a829b7f35709a
+      layer: 0
+      query_params:
+        where: "1=1"
+        outFields: "*"
+        outSR: 4326
+      notes: >
+        Maine GeoLibrary municipal boundaries, dissolved (METWP24PD).
+        Roughly 490 municipalities and unorganized territories. The service
+        enforces maxRecordCount 2000, so this fetches in a single page ~ but
+        the provider pages regardless and refuses to write a partial layer.
+    cache:
+      path: .data/maine_towns.geojson
+      refresh_policy: manual
+      fetched_at: '2026-09-18T06:09:57.864165+00:00'
+    provenance:
+      source: Maine Office of GIS (MEGIS) / Maine GeoLibrary
+      source_url: https://www.maine.gov/geolib/
+
+  # ── what is measured ──────────────────────────────────────────────────────
+
+  formal_outlet:
+    available: false
+    description: >
+      Maine local news outlets ~ print, broadcast, digital and radio, each
+      with the entity that owns it
+    semantic_type: formal_outlet
+    format: geojson
+    source:
+      type: manual
+      notes: >
+        Assembled rather than fetched: there is no single authoritative
+        register of local news outlets, which is part of why ownership
+        concentration is hard to see. Sources to reconcile: the Maine Press
+        Association membership list, FCC broadcast licences (public, by
+        state), the Maine Trust for Local News masthead list, and known
+        independents absent from all three.
+
+        Each outlet needs a name, a location (an address is enough; the
+        pipeline will geocode it), a medium, and an owning entity. If the
+        inventory carries addresses rather than coordinates, run
+        soil/geocode_to_unit before this can settle as a vector ~ an
+        un-geocoded outlet list is a table, not a map layer.
+
+        Ownership must come from public records and be traceable. An outlet
+        whose owner cannot be sourced should carry that explicitly rather
+        than be attributed on inference.
+    cache:
+      path: .data/maine_outlets.geojson
+      refresh_policy: manual
+    provenance:
+      source: Maine Press Association; FCC licence records; publisher mastheads
+      notes: >
+        Assembled from public records. Each attribution should be traceable
+        to a specific source, because the finding is a claim about ownership
+        and a claim about ownership needs a receipt.
+
+  # ── what keeps the finding honest ─────────────────────────────────────────
+  # these two are ENRICHING in the method, not critical. the analysis runs
+  # without them and says so: without institutions, a high concentration
+  # score reads as an information vacuum when libraries and town offices may
+  # be carrying the load; without access, outlet presence overstates reach.
+
+  institutional_node:
+    available: false
+    description: >
+      Libraries, town offices, schools and government sites ~ the channels
+      that carry information work no outlet census records
+    semantic_type: institutional_node
+    format: geojson
+    source:
+      type: manual
+      notes: >
+        Assemble from the Maine State Library's public library directory and
+        MEGIS town office locations. Schools via the Maine DOE facilities
+        list. Each node needs a location, a kind, and ideally whether it
+        publishes anything locally (posts minutes, runs a newsletter), since
+        a library that hosts information differs from one that originates it.
+    cache:
+      path: .data/maine_institutions.geojson
+      refresh_policy: manual
+    provenance:
+      source: Maine State Library; MEGIS; Maine Department of Education
+
+  access_infrastructure:
+    available: false
+    description: Broadband availability ~ whether what is published can be reached
+    semantic_type: access_infrastructure
+    format: tiff
+    source:
+      type: manual
+      notes: >
+        FCC National Broadband Map bulk data, filtered to Maine, or the Maine
+        Connectivity Authority's own coverage layers. The FCC data is
+        reported by providers and is known to overstate availability at the
+        block level, which is a limitation to carry in provenance rather than
+        to correct silently.
+
+        Arrives as point or polygon coverage claims and needs rasterizing to
+        a coverage surface before it is an access_infrastructure raster.
+    cache:
+      path: .data/maine_broadband.tif
+      refresh_policy: manual
+    provenance:
+      source: FCC National Broadband Map / Maine Connectivity Authority
+      notes: >
+        Provider-reported availability. Overstates coverage; treat as an
+        upper bound on access, never as measured service.

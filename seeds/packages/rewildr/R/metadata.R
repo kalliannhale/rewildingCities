@@ -64,11 +64,16 @@ extract_vector_metadata <- function(sf_obj, id_field = NULL) {
    NA_character_
  }
 
+ # a length-1 character vector serializes as a SCALAR, not a one-element
+ # array, and the schema types this as an array. as.list() forces the array
+ # form for any length including one ~ the same failure that turned a single
+ # id_field into its sorted characters downstream (C-36), caught here at the
+ # point of emission so no primitive has to remember.
  metadata <- list(
    feature_count = nrow(sf_obj),
    bbox = bbox,
    crs = crs_string,
-   attribute_fields = attr_fields,
+   attribute_fields = as.list(attr_fields),
    geometry_type_native = if (length(geom_types_native) == 1)
                             geom_types_native[1] else geom_types_native
  )
@@ -222,7 +227,8 @@ extract_tabular_metadata <- function(df, id_field = NULL, spatial_unit = NULL) {
  metadata <- list(
    row_count = nrow(df),
    column_count = length(vars),
-   variables = vars
+   # as.list() so a single-column table emits an array, not a scalar
+   variables = as.list(vars)
  )
  
  if (!is.null(id_field) && id_field %in% vars) {

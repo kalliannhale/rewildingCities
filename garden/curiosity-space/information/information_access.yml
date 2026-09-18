@@ -1,0 +1,78 @@
+# ============================================================================
+# garden/curiosity-space/information/information_access.yml
+# ============================================================================
+# a curiosity is a QUESTION. it declares no data and names no method: those
+# are how you might answer it, and there is more than one way. ~
+# ============================================================================
+
+id: information_access
+domain: information
+question: "Can people here find out what is happening where they live?"
+
+description: >
+  The usual framing asks whether a place has a newspaper. That measures the
+  retreat of one funding model, which is a real and consequential thing, but
+  it is not the same question as whether a community can learn what is
+  happening to it. A town with no newspaper, a well-staffed library, an
+  active town clerk who posts minutes, and good broadband is differently
+  situated from a town with none of those. Both would be counted the same
+  way by an outlet census.
+
+  So this asks about the whole information lifecycle: who reports, who
+  hosts, who can reach it, and who owns what remains. Formal outlets are
+  one semantic type among several here, deliberately, because making them
+  the definition of an information ecosystem builds the answer into the
+  measurement.
+
+significance: >
+  When a community cannot find out what is happening where it lives, it
+  cannot deliberate, and it cannot hold anyone to account. That is the
+  stake. But naming a place an "information desert" on an outlet count
+  alone can do its own harm: it erases the institutions and networks people
+  actually rely on, and it points remedy at reviving a business model rather
+  than at strengthening what is already carrying the load.
+
+  Ownership concentration is the sharper question, and a measurable one. When
+  one owner holds most of the outlets in a region, editorial independence and
+  local coverage depth are structurally constrained regardless of how many
+  mastheads remain. That is a fact about power, it can be computed from
+  public records, and it is invisible to a simple count.
+
+sub_questions:
+  ownership_concentration:
+    question: "How concentrated is ownership of the outlets that remain?"
+    why: >
+      A dozen mastheads under one owner is a different information
+      environment from a dozen independent ones, and a count cannot tell
+      them apart.
+
+  institutional_reliance:
+    question: "Which places depend on institutions rather than outlets to know themselves?"
+    why: >
+      Libraries, town halls, and schools carry information work that no
+      outlet census records. Where they are the primary channel, that is
+      worth seeing plainly rather than reading as absence.
+
+  access_divergence:
+    question: "Where does the ability to reach information diverge from its presence?"
+    why: >
+      A digital-only outlet in a place with poor broadband is not access.
+      Presence and reach are different measurements and they come apart.
+
+  lifecycle_sufficiency:
+    question: "Is what exists here sufficient for the decisions people actually face?"
+    why: >
+      Sufficiency is relative to need, not to a national average. A small
+      town may be well served by little; a growing one may be underserved by
+      more.
+
+tags:
+  - information_ecosystem
+  - media_ownership
+  - broadband
+  - civic_infrastructure
+  - rural
+  - democratic_participation
+
+compatible_methods:
+  - information/ownership_concentration_analysis
