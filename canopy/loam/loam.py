@@ -17,7 +17,7 @@ what a receipt already stated. it derives, it never invents.
 
 loam is a catalog, one row per artifact, pointing at the file that holds
 the values. the heavy contents stay in GeoParquet; loam records the frame
-(crs, bbox) and the join grammar (id_field, unit_key) so an explorer can
+(crs, bbox) and the join grammar (id_field, id_fields, unit_key) so an explorer can
 discover how two holdings relate and query them through the pointer. ~
 
 history is read forward, never refused. a receipt may carry a retired name;
@@ -120,6 +120,7 @@ class LoamRow:
     bbox_maxx: float | None
     bbox_maxy: float | None
     id_field: str | None
+    id_fields: str | None
     unit_key: str | None
     parent_ref: str | None
     conformed_by: str | None
@@ -133,8 +134,8 @@ class LoamRow:
 
     COLS = ("name", "tier", "semantic_type", "semantic_type_declared", "spatial_ref",
             "plot", "data_path", "fmt", "crs", "native_crs", "bbox_minx", "bbox_miny",
-            "bbox_maxx", "bbox_maxy", "id_field", "unit_key", "parent_ref", "conformed_by",
-            "crosswalk_version", "coverage", "has_critical", "warnings_count",
+            "bbox_maxx", "bbox_maxy", "id_field", "id_fields", "unit_key", "parent_ref",
+            "conformed_by", "crosswalk_version", "coverage", "has_critical", "warnings_count",
             "content_hash", "receipt_path", "created_at")
 
 
@@ -162,6 +163,7 @@ class Loam:
         native_crs VARCHAR,
         bbox_minx DOUBLE, bbox_miny DOUBLE, bbox_maxx DOUBLE, bbox_maxy DOUBLE,
         id_field VARCHAR,
+        id_fields VARCHAR,
         unit_key VARCHAR,
         parent_ref VARCHAR,
         conformed_by VARCHAR,
@@ -247,6 +249,11 @@ class Loam:
                 f"thin clump ~ coverage {coverage:.0%}; anything grown here will be uncertain"))
 
         bbox = f.get("bbox") or (None, None, None, None)
+        # a composite key (id_fields, a list) is normalized to a stable,
+        # order-independent string, so two tables keyed on the same set of
+        # fields match in joinable() no matter the order they listed them.
+        id_fields_raw = f.get("id_fields")
+        id_fields = "|".join(sorted(id_fields_raw)) if id_fields_raw else None
         name = clump_name(f["plot"], declared, f.get("content_hash"), f.get("data_path"))
         row = LoamRow(
             name=name, tier=tier,
@@ -255,7 +262,7 @@ class Loam:
             spatial_ref=sref, plot=f["plot"], data_path=f["data_path"], fmt=f["fmt"],
             crs=crs, native_crs=f.get("native_crs"),
             bbox_minx=bbox[0], bbox_miny=bbox[1], bbox_maxx=bbox[2], bbox_maxy=bbox[3],
-            id_field=f.get("id_field"), unit_key=f.get("unit_key"),
+            id_field=f.get("id_field"), id_fields=id_fields, unit_key=f.get("unit_key"),
             parent_ref=f.get("parent_ref"), conformed_by=f.get("conformed_by"),
             crosswalk_version=f.get("crosswalk_version"), coverage=coverage,
             has_critical=bool(f.get("upstream_has_critical", False)),
@@ -319,8 +326,8 @@ class Loam:
         """
 
         which clumps could this one relate to ~ relatable when they share a
-        unit_key, an id_field, or a crs. the mart records the grammar; the
-        values live in the pointed-at files. ~
+        unit_key, an id_field, a composite id_fields key, or a crs. the mart
+        records the grammar; the values live in the pointed-at files. ~
 
         """
         r = self.con.execute("SELECT * FROM loam WHERE name = ?", [name]).fetchone()
@@ -333,6 +340,8 @@ class Loam:
             clauses.append("unit_key = ?"); params.append(me["unit_key"])
         if me.get("id_field") is not None:
             clauses.append("id_field = ?"); params.append(me["id_field"])
+        if me.get("id_fields") is not None:
+            clauses.append("id_fields = ?"); params.append(me["id_fields"])
         if me.get("crs") is not None:
             clauses.append("crs = ?"); params.append(me["crs"])
         if not clauses:

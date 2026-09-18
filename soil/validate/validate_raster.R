@@ -86,10 +86,22 @@ with_primitive_error_handling({
   # --- PASSTHROUGH: no file written, report input path as output ---
   meta <- extract_raster_metadata(r)
 
+  # Sprint 9: this used c(), which CONCATENATES two lists rather than
+  # merging them by name. extract_raster_metadata already emits
+  # nodata_percentage and value_range (as {min, max}), so re-emitting them
+  # here produced two elements both named value_range — one an object, one
+  # an array — and a near-duplicate nodata_percent. The envelope carried
+  # a key called "value_range.1" and failed schema validation.
+  # modifyList merges by name; the duplicates are dropped because the
+  # extractor's versions are already correct and schema-shaped. pct_na and
+  # val_range keep doing their real work above, in the warnings.
   primitive_success(
-    metadata = c(meta, list(
-      nodata_percent = pct_na,
-      value_range = as.list(val_range),
+    metadata = modifyList(meta, list(
+      # val_range from range(values(r)) is the TRUE range; the extractor's
+      # terra::minmax reads cached stats and returns Inf/-Inf when a file
+      # carries none. modifyList replaces by name, so this wins correctly
+      # where c() previously produced a duplicate key.
+      value_range = list(min = val_range[1], max = val_range[2]),
       expected_units = expected_units,
       passthrough = TRUE,
       original_path = input_path

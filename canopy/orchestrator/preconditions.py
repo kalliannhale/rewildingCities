@@ -31,8 +31,12 @@ class PreconditionOutcome:
 
 
 def _provenance_primitives(inputs) -> set[str]:
-    """Union of primitive names across every input's provenance chain."""
+    """
+    Union of primitive names across every input's provenance chain.
+    """
+
     seen: set[str] = set()
+
     for inp in inputs:
         env = getattr(inp, "envelope", None)
         if env is None:
@@ -41,12 +45,17 @@ def _provenance_primitives(inputs) -> set[str]:
             name = getattr(entry, "primitive", None)
             if name:
                 seen.add(name)
+
     return seen
 
 
 def _warning_levels(inputs) -> list[str]:
-    """All warning levels across every input's envelope."""
+    """
+    All warning levels across every input's envelope.
+    """
+
     levels: list[str] = []
+
     for inp in inputs:
         env = getattr(inp, "envelope", None)
         if env is None:
@@ -55,6 +64,7 @@ def _warning_levels(inputs) -> list[str]:
             lvl = getattr(w, "level", None)
             if lvl:
                 levels.append(lvl)
+
     return levels
 
 
@@ -64,15 +74,18 @@ def check_preconditions(preconditions, inputs) -> PreconditionOutcome:
 
     Args:
         preconditions: list of single-key dicts, e.g.
-            [{"provenance_contains": "validate_vector"}, {"no_unresolved_critical": True}]
+            [{"provenance_contains": "validate_vector"}, 
+            {"no_unresolved_critical": True}]
         inputs: list of EnvelopeInput-like objects, each optionally carrying an
             `.envelope` with `.provenance[*].primitive` and `.warnings[*].level`.
 
     Returns:
-        PreconditionOutcome(ok, failures, notes). `ok` is True only if every
-        predicate passed; `failures` collects all failures (not just the first)
-        so a caller sees the whole picture; `notes` records satisfied predicates.
+        PreconditionOutcome(ok, failures, notes). `ok` is 
+        True only if every predicate passed; `failures` collects 
+        all failures (not just the first) so a caller sees the whole 
+        picture; `notes` records satisfied predicates.
     """
+    
     failures: list[str] = []
     notes: list[str] = []
 

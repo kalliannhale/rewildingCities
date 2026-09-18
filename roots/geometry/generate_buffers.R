@@ -104,8 +104,13 @@ with_primitive_error_handling({
 
   meta <- extract_vector_metadata(rings)
 
+  # Sprint 9: c() concatenates rather than merging by name, and
+  # extract_vector_metadata already emits id_field when the column exists,
+  # so this produced two elements both named id_field. They agreed here, so
+  # nothing broke; they would not agree if id_field named a column absent
+  # from the table. modifyList merges by name, letting the declared value win.
   primitive_success(
-    metadata = c(meta, list(
+    metadata = modifyList(meta, list(
       n_features = n_features,
       n_distances = n_rings,
       interval_m = interval,

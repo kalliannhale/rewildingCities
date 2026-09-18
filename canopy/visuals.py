@@ -35,7 +35,7 @@ class MapSpec:
     layer: str | None        # the vector semantic_type this (tabular) result draws on (joins_to)
     join_on: str | None      # the key linking rows to that layer (id_field)
     color_by: str | None     # the variable to symbolize ~ the dependent variable
-    geometry_type: str | None
+    geometry_type: str | list[str] | None   # a mixed layer reports every type it holds
     bbox: list | None
     analysis_type: str | None
     title: str

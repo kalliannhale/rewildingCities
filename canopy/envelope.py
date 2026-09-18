@@ -232,7 +232,13 @@ def validate_envelope(
     
     # Pre-load referenced schemas
     registry = Registry()
-    for schema_file in ["provenance.schema.json", "warning.schema.json"]:
+    for schema_file in [
+        "provenance.schema.json",
+        "warning.schema.json",
+        "metadata.raster.schema.json",
+        "metadata.vector.schema.json",
+        "metadata.tabular.schema.json",
+    ]:
         path = schema_dir / schema_file
         if path.exists():
             with open(path, 'r') as f:
@@ -252,6 +258,65 @@ def validate_envelope(
         errors.append(f"{path}: {error.message}")
     
     return errors
+
+
+# === Metadata Completeness Audit ===
+#
+# The per-category metadata schemas mark each field's tier ("expected" or
+# "optional") as an annotation beside the field itself. Expected fields a
+# primitive did not emit are NOT errors (a thin primitive is allowed), but they
+# are not silent either: the builder emits a schema-legal Warning naming each
+# absent expected field, so the omission travels in the envelope.
+#
+# Presence is the "no silent choices" concern handled here. Value-correctness
+# (a malformed field that IS present) is a separate concern, caught as a hard
+# validation error by the per-category $ref in envelope.schema.json.
+
+_expected_cache: dict[str, list[str]] = {}
+
+
+def expected_fields(data_category: str, project_root: Path | None = None) -> list[str]:
+    """The expected (not merely optional) metadata fields for a category, read
+    from the category schema's own `tier` annotations. The schema is the single
+    source of truth; this never hardcodes a field list."""
+    if data_category in _expected_cache:
+        return _expected_cache[data_category]
+
+    schema_dir = _get_schema_dir(project_root)
+    schema_path = schema_dir / f"metadata.{data_category}.schema.json"
+    if not schema_path.exists():
+        _expected_cache[data_category] = []
+        return []
+
+    schema = _load_schema(schema_path)
+    fields = [
+        name for name, spec in (schema.get("properties") or {}).items()
+        if isinstance(spec, dict) and spec.get("tier") == "expected"
+    ]
+    _expected_cache[data_category] = fields
+    return fields
+
+
+def completeness_warnings(
+    metadata: dict,
+    data_category: str,
+    project_root: Path | None = None
+) -> list["Warning"]:
+    """One schema-legal Warning per expected metadata field the primitive did
+    not emit. Absence is documented, never silently defaulted."""
+    out: list[Warning] = []
+    for field_name in expected_fields(data_category, project_root):
+        if field_name not in metadata:
+            out.append(Warning(
+                level="warning",
+                primitive="envelope",
+                message=(
+                    f"{data_category} metadata missing expected field "
+                    f"'{field_name}'; it is not available for downstream steps "
+                    f"to rely on."
+                ),
+            ))
+    return out
 
 
 # === Hashing ===
@@ -516,12 +581,13 @@ class EnvelopeBuilder:
         # Merge warnings from inputs and primitive
         merged_warnings = self._merge_warnings(inputs, result.warnings, primitive)
         
-        # Build metadata
-        metadata = self._build_metadata(
+        # Build metadata, and collect any completeness warnings it raises
+        metadata, completeness = self._build_metadata(
             result.metadata,
             output_semantic_type,
             output_data_category
         )
+        merged_warnings.extend(completeness)
         
         # Determine final data path
         # For passthrough primitives, use the input path (no new file created)
@@ -647,8 +713,11 @@ class EnvelopeBuilder:
         primitive_metadata: dict,
         semantic_type: str,
         data_category: str
-    ) -> dict:
-        """Build envelope metadata from primitive output."""
+    ) -> tuple[dict, list["Warning"]]:
+        """Build envelope metadata from primitive output, and audit it for
+        completeness. Returns (metadata, completeness_warnings). Expected fields
+        the primitive did not emit become schema-legal Warnings; they do not
+        block, but they are never silent."""
         
         # Start with what the primitive returned
         metadata = dict(primitive_metadata)
@@ -661,15 +730,22 @@ class EnvelopeBuilder:
         metadata["semantic_type"] = semantic_type
         metadata["data_category"] = data_category
         
-        # CRS should come from primitive metadata
-        # If not present, it will trigger a validation warning later
+        # CRS should come from primitive metadata. Its absence is not audited
+        # here as "missing expected": crs is required in envelope.schema.json,
+        # so an absent crs is a hard validation error, not a soft warning.
 
         # Capacity to report both primary and secondary outputs
         secondary = primitive_metadata.get("secondary", {})
         if secondary:
             metadata["secondary"] = secondary
         
-        return metadata
+        # Audit completeness against the category's expected fields, read from
+        # the schema's own tier annotations. No silent omissions.
+        audit_warnings = completeness_warnings(
+            metadata, data_category, self.project_root
+        )
+        
+        return metadata, audit_warnings
 
 
 @dataclass

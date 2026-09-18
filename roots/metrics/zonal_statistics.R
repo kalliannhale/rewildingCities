@@ -18,6 +18,20 @@
 #      `crs` in the metadata block; for tabular outputs (no CRS),
 #      explicit null is the schema-mandated way to declare absence.
 #      Sentinel-driven honesty, not silent omission.
+#
+# Sprint 9 patch (2026-09):
+#   3. metadata now flows through extract_tabular_metadata(), the
+#      contract's own extractor, so the output declares row_count,
+#      column_count, variables, and data_quality.complete_cases.
+#      loam projects coverage from complete_cases / row_count; until
+#      now that column rested empty because nothing emitted the
+#      fields it reads. spatial_unit (what ONE ROW IS) becomes a
+#      declared parameter: emitted when given, and named aloud in the
+#      warnings when it is not. this primitive is general-purpose and
+#      cannot know whether a zone is a park, a ring, or a tract; that
+#      is a fact about the experiment's design, not about geometry.
+#      an undeclared unit of analysis is a silent choice, so it is
+#      made visible rather than defaulted.
 # ============================================================
 
 library(rewildr)
@@ -35,6 +49,8 @@ stat        <- get_param(args$params, "statistic", "median")
 id_fields   <- as.character(unlist(
                   get_param(args$params, "id_fields", c("feature_id", "distance_m"))))
 band        <- as.integer(get_param(args$params, "band", 1))
+# Sprint 9 patch 3: what one row IS. declared, never inferred.
+spatial_unit <- get_param(args$params, "spatial_unit", NULL)
 
 w <- warnings_collector("zonal_statistics")
 
@@ -94,19 +110,33 @@ with_primitive_error_handling({
   # Write
   write.csv(result_df, output_path, row.names = FALSE)
 
+  # Sprint 9 patch 3: the tabular contract, extracted from the frame we
+  # just wrote, then overlaid with what only this primitive knows.
+  tab <- extract_tabular_metadata(result_df, spatial_unit = spatial_unit)
+
+  if (is.null(spatial_unit)) {
+    w$add("warning", "zonal_statistics",
+      paste("No spatial_unit declared: this table does not say what ONE ROW IS.",
+            "Downstream joins and commensurability checks cannot verify it against",
+            "another table. Declare spatial_unit in the experiment step's params."))
+  }
+
+  extra <- list(
+    semantic_type = "zonal_statistics",
+    data_category = "tabular",
+    crs = NA,  # Sprint 8 patch 2: explicit-null for non-spatial tabular output
+    n_zones = nrow(zones),
+    n_valid = sum(!is.na(extracted)),
+    n_na = n_na,
+    statistic = stat,
+    id_fields = available_ids
+  )
+  if (any(!is.na(extracted))) {
+    extra$value_range <- as.list(round(range(extracted, na.rm = TRUE), 4))
+  }
+
   primitive_success(
-    metadata = list(
-      semantic_type = "zonal_statistics",
-      data_category = "tabular",
-      crs = NA,  # Sprint 8 patch 2: explicit-null for non-spatial tabular output
-      n_zones = nrow(zones),
-      n_valid = sum(!is.na(extracted)),
-      n_na = n_na,
-      statistic = stat,
-      value_range = if (any(!is.na(extracted)))
-        as.list(round(range(extracted, na.rm = TRUE), 4)) else NULL,
-      id_fields = available_ids
-    ),
+    metadata = modifyList(tab, extra),
     warnings = w
   )
 

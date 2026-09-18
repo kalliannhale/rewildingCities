@@ -1,13 +1,39 @@
 """
-canopy/cli/__init__.py
+canopy/cli/__init__.py ~ the garden's command line
 
-Command-line interface for rewildingCities.
+Run as:  python -m canopy.cli <command> ...
+(To get a bare `rewilding` command, wire a console script once the project is
+packaged; see the note in setup_guide.md.)
 
-Commands:
-    experiment    Run, validate, or resolve data for an experiment
-    
-    Future:
-    init          Found a coven — initialize a plot for a new city/neighborhood
-    verify        Check manifest consistency against filesystem
-    discover      Search for available datasets in a territory
+  init    <plot> [name]          found a plot for a new community
+  wonder  <plot> ["question"]    what can this ground wonder about?
+  sows    <experiment.yml>       run a composed experiment
+
+Each command is its own module exposing register(subparsers). Add a command by
+writing canopy/cli/<name>.py with a register() that calls set_defaults(func=...),
+then listing it in _COMMANDS below. The existing experiment.py runner is left in
+place and still works standalone (python -m canopy.cli.experiment). ~
 """
+
+from __future__ import annotations
+
+import argparse
+import importlib
+
+_COMMANDS = ("init", "wonder", "sows", "map")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="rewilding",
+        description="the garden's command line ~ found, wonder, sow",
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    for name in _COMMANDS:
+        importlib.import_module(f"{__name__}.{name}").register(subparsers)
+    return parser
+
+
+def main(argv=None) -> int:
+    args = build_parser().parse_args(argv)
+    return args.func(args)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""canopy/cli/experiment.py — Run a rewildingCities experiment.
+"""
+canopy/cli/experiment.py
 
+Run a rewildingCities experiment.
 Invoke as a module from the project root:
 
     python -m canopy.cli.experiment <experiment_path>
@@ -25,8 +27,12 @@ from datetime import datetime, timezone
 
 
 def setup_logging(verbose: bool = False):
-    """Configure stderr-bound logging. INFO by default, DEBUG with --verbose."""
+    """
+    Configure stderr-bound logging. INFO by default, DEBUG with --verbose.
+    """
+
     level = logging.DEBUG if verbose else logging.INFO
+
     logging.basicConfig(
         level=level, format="%(message)s",
         handlers=[logging.StreamHandler(sys.stderr)]
@@ -34,7 +40,9 @@ def setup_logging(verbose: bool = False):
 
 
 def print_profile_details(orchestrator):
-    """Surface what the active profile actually did (or didn't) to the experiment.
+    """
+    
+    Surface what the active profile actually did (or didn't) to the experiment.
 
     Called once, after orchestrator construction, before the rest of the
     banner. Two distinct disclosures:
@@ -51,6 +59,7 @@ def print_profile_details(orchestrator):
 
     Glyph convention: ⚙ = what happened. ⓘ = what was asked for but
     didn't happen. Different categories, different glyphs.
+    
     """
     # ── Sprint 6: feature-sampling injection details ──
     # injection_log is populated by Orchestrator._inject_profile_steps;
@@ -198,6 +207,12 @@ def print_result(result):
             print(f"  Failed at step: {result.failed_step}")
         if result.error:
             print(f"\n{result.error}")
+        # the orchestrator already assembles the specific schema violations
+        # into `message`; printing only `error` threw away the diagnosis the
+        # system had already made. no silent choices includes no silent
+        # swallowing of our own error text.
+        if getattr(result, "message", None):
+            print(f"\n{result.message}")
         if result.completed_steps:
             print(f"\n  Completed before failure: {' → '.join(result.completed_steps)}")
 

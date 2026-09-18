@@ -181,6 +181,9 @@ class OrchestrationResult:
     lineage: Lineage | None = None
     warnings: list[str] = field(default_factory=list)
     error: str | None = None
+    # the failing step's detailed diagnosis, carried up so the CLI and the
+    # run log can say WHAT failed and not merely THAT it failed.
+    message: str | None = None
 
 
 @dataclass

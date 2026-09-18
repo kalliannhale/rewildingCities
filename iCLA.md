@@ -1,6 +1,6 @@
 # Individual Contributor License Agreement (iCLA)
 
-> **⚠ DRAFT TEMPLATE — NOT LEGAL ADVICE.** This is adapted from the widely used
+> This is adapted from the widely used
 > Apache Individual CLA structure and is a starting point only. Because this
 > document is what preserves your ability to dual-license (and therefore your
 > revenue model), have a lawyer review it before you ask anyone to sign it. The

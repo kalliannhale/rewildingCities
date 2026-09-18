@@ -7,20 +7,21 @@ dependencies:
   # --- config + validation ---
   - pyyaml
   - jsonschema
-  - referencing          # ADDED: envelope.py resolves schema $refs through this
+  - duckdb
+  - referencing          # envelope.py resolves schema $refs through this
 
   # --- numerical / tabular ---
   - numpy                # made explicit (imported in ~27 files, was only transitive)
   - pandas
-  - scipy                # ADDED: used in a metrics primitive
-  - pyarrow              # ADDED: every to_parquet / read_parquet needs an engine
+  - scipy                # used in a metrics primitive
+  - pyarrow              # every to_parquet / read_parquet needs an engine
 
   # --- geospatial (conda-forge pulls the shared GDAL / GEOS / PROJ) ---
   - rasterio
   - shapely
 
   # --- computer vision ---
-  - opencv               # ADDED: cv2 is load-bearing in 5 calibration / IPM files
+  - opencv               # cv2 is load-bearing in 5 calibration / IPM files
   - pillow               # made explicit (PIL used in ~9 files)
 
   # --- learning ---

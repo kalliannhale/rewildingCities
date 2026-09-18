@@ -3,57 +3,105 @@
   "$id": "https://rewilding.city/schemas/metadata.vector.schema.json",
   "title": "Vector Metadata",
   "description": "Additional metadata fields for vector data. Used when data_category is 'vector'.",
-
   "type": "object",
-
   "properties": {
     "feature_count": {
       "tier": "expected",
       "type": "integer",
       "minimum": 0,
       "description": "Number of features in the dataset",
-      "examples": [2847, 299, 15]
+      "examples": [
+        2847,
+        299,
+        15
+      ]
     },
-
     "geometry_type": {
       "tier": "expected",
-      "type": "string",
-      "enum": ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection"],
-      "description": "OGC geometry type"
+      "description": "OGC geometry type (GeoJSON spelling). A single string when the layer is homogeneous; an array when the layer genuinely holds more than one type, which is common in real vector data. The envelope reports what the layer IS rather than rounding it to one type.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "Point",
+            "MultiPoint",
+            "LineString",
+            "MultiLineString",
+            "Polygon",
+            "MultiPolygon",
+            "GeometryCollection"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Point",
+              "MultiPoint",
+              "LineString",
+              "MultiLineString",
+              "Polygon",
+              "MultiPolygon",
+              "GeometryCollection"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      ]
     },
-
     "bbox": {
       "tier": "expected",
       "type": "array",
-      "items": { "type": "number" },
+      "items": {
+        "type": "number"
+      },
       "minItems": 4,
       "maxItems": 4,
       "description": "Bounding box as [minx, miny, maxx, maxy] in the envelope's CRS",
-      "examples": [[913175.1, 120121.8, 1067382.5, 272844.3]]
+      "examples": [
+        [
+          913175.1,
+          120121.8,
+          1067382.5,
+          272844.3
+        ]
+      ]
     },
-
     "total_area_m2": {
       "tier": "optional",
       "type": "number",
       "minimum": 0,
       "description": "Sum of all feature areas in square meters. Useful for quick sanity checks."
     },
-
     "id_field": {
       "tier": "optional",
       "type": "string",
       "description": "Name of the attribute field that uniquely identifies features",
-      "examples": ["park_id", "OBJECTID", "gid"]
+      "examples": [
+        "park_id",
+        "OBJECTID",
+        "gid"
+      ]
     },
-
     "attribute_fields": {
       "tier": "optional",
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "description": "List of attribute field names present in the dataset",
-      "examples": [["park_id", "name", "borough", "acres", "typecategory"]]
+      "examples": [
+        [
+          "park_id",
+          "name",
+          "borough",
+          "acres",
+          "typecategory"
+        ]
+      ]
     }
   },
-
   "additionalProperties": true
 }

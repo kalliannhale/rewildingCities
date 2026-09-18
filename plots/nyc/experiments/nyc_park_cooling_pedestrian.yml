@@ -140,7 +140,7 @@ steps:
     inputs:
       raster: $manifest.land_surface_temperature
     outputs:
-      checked: lst_checked
+      checked: land_surface_temperature
     params:
       max_nodata_percent: $parameters.max_nodata_percent
 
@@ -151,7 +151,7 @@ steps:
     inputs:
       raster: $steps.validate_lst.checked
     outputs:
-      scaled: lst_scaled
+      scaled: land_surface_temperature
     params:
       scale: 0.00341802
       offset: -124.15
@@ -165,7 +165,7 @@ steps:
     inputs:
       raster: $steps.scale_lst.scaled
     outputs:
-      reprojected: lst_reprojected
+      reprojected: land_surface_temperature
     params:
       target_crs: $parameters.target_crs
       method: "bilinear"
@@ -178,7 +178,7 @@ steps:
       raster: $steps.reproject_lst.reprojected
       boundary: $steps.assign_feature_id.identified
     outputs:
-      cropped: lst_cropped
+      cropped: land_surface_temperature
     params:
       buffer_m: 500
       snap: "out"
@@ -223,6 +223,9 @@ steps:
     params:
       stats: [$choices.central_tendency]
       prefix: "park"
+      # what ONE ROW of the output IS. declared, never inferred: the
+      # primitive is general-purpose and cannot know a zone is a park.
+      spatial_unit: "park"
 
   - id: buffer_temperatures
     primitive: roots/zonal_statistics
@@ -236,6 +239,9 @@ steps:
     params:
       stats: [$choices.central_tendency]
       prefix: "buffer"
+      # a ring is NOT a park: a different unit of analysis, which is
+      # exactly why a naive join between these two tables would lie.
+      spatial_unit: "park buffer ring"
 
   - id: calculate_pci
     primitive: roots/calculate_pci
@@ -249,6 +255,8 @@ steps:
     params:
       method: $choices.intensity_measure
       min_rings: 3
+      # rings collapse back to one row per park
+      spatial_unit: "park"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # EXPECTED OUTPUTS

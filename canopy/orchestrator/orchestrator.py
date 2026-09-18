@@ -678,7 +678,8 @@ class Orchestrator:
                     final_envelopes=self._collect_final_envelopes(step_results),
                     lineage=self.experiment.lineage,
                     warnings=validation_warnings,
-                    error=step_result.error
+                    error=step_result.error,
+                    message=step_result.message
                 )
                 self._write_run_log(result)
                 return result
@@ -863,7 +864,8 @@ class Orchestrator:
             step_summaries.append({
                 "id": step_id, "success": step_result.success,
                 "duration_seconds": duration, "warning_count": warning_count,
-                "error": step_result.error
+                "error": step_result.error,
+                "message": step_result.message
             })
 
         log = {
@@ -872,7 +874,8 @@ class Orchestrator:
             "city": self.experiment.city,
             "profile": self.profile,
             "timing": {"started": self._run_started.isoformat(), "completed": datetime.now(timezone.utc).isoformat()},
-            "result": {"success": result.success, "failed_step": result.failed_step, "error": result.error},
+            "result": {"success": result.success, "failed_step": result.failed_step,
+                       "error": result.error, "message": result.message},
             "validation_warnings": result.warnings,
             "steps": step_summaries,
             "summary": {

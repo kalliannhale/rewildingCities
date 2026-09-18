@@ -69,6 +69,9 @@ class Vocabulary:
                  source: dict[str, str]):
         self._types = types
         self._source = source
+        # retired names answered through history, kept so a caller can
+        # report that an old spelling was read forward rather than matched.
+        self.history_reads: dict[str, Resolution] = {}
         self.canonical: set[str] = set(types.keys())
         self.alias_map: dict[str, str] = alias_map
         self.category: dict[str, str] = {n: t.category for n, t in types.items()}
@@ -168,9 +171,24 @@ class Vocabulary:
                     return Resolution(declared, stem, "suffix_fallback")
         return Resolution(declared, None, "unresolved")
 
-    def get(self, name: str) -> SemanticType:
+    def get(self, name: str, *, follow_history: bool = True) -> SemanticType:
+        """
+        the type this name means. a canonical name answers directly; a
+        retired name answers through what it resolves to, because history
+        is read forward here as everywhere else. the resolution is recorded
+        in `history_reads` so a caller can tell a current name from an old
+        one, and nudge a live experiment toward the canonical spelling
+        rather than freezing a retired name in place. ~
+        """
         if name in self._types:
             return self._types[name]
+
+        if follow_history:
+            res = self.resolve(name)
+            if res.canonical and res.canonical in self._types:
+                self.history_reads.setdefault(name, res)
+                return self._types[res.canonical]
+
         suggestions = self._find_similar(name)
         msg = f"unknown semantic type: '{name}'"
         if suggestions:
@@ -195,7 +213,15 @@ class Vocabulary:
         return self.get(name).aliases
 
     def is_valid(self, name: str) -> bool:
+        """canonical only ~ ask knows_name() to include retired spellings."""
         return name in self._types
+
+    def knows_name(self, name: str) -> bool:
+        """canonical OR resolvable through history."""
+        if name in self._types:
+            return True
+        res = self.resolve(name)
+        return bool(res.canonical and res.canonical in self._types)
 
     def all_types(self) -> list[str]:
         return sorted(self._types.keys())

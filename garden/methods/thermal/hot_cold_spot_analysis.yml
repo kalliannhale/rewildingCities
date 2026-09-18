@@ -168,16 +168,16 @@ requires_data:
       - land_surface_temperature
     critical: true
     description: "LST raster for the study area"
-    role: |
-      [KALLI TO REWRITE]
-      The values whose spatial clustering is being tested. The Gi*
-      statistic asks: are pixels of similar temperature found
-      together more than random chance predicts? Without this
-      raster, there are no values to cluster.
-    uncertainty_without: |
-      [KALLI TO REWRITE]
-      The method cannot run without temperature values to compare.
-      No degradation mode exists — this is the dependent variable.
+    role: >
+      The variable under the lens. Gi* asks whether pixels of similar
+      temperature cluster together more than chance would predict, so
+      this raster is the heat itself, read cell by cell. It is what the
+      statistic tests; every hot and cold spot is a statement about
+      these values and no others.
+    uncertainty_without: >
+      None. This is the dependent variable: with no temperature values
+      there is nothing to cluster and the method cannot run. This is an
+      absence, not a degradation, and no fallback recovers it.
 
   - name: study_boundary
     type: vector
@@ -186,22 +186,20 @@ requires_data:
       - city_boundary
     critical: false
     description: "Boundary to constrain the analysis"
-    role: |
-      [KALLI TO REWRITE]
-      Defines what counts as the study area for the global
-      statistical comparison. The Gi* z-score for any pixel is
-      computed against the global mean of values *within this
-      boundary*. A different boundary changes the global mean,
-      which changes every local z-score.
-    uncertainty_without: |
-      [KALLI TO REWRITE]
-      If absent, the analysis uses the LST raster's bounding box
-      as the study area. This usually overstates the study region
-      (raster extents tend to include suburban or non-urban areas)
-      and inflates the global mean, which shifts the threshold for
-      what counts as a 'hot' versus 'cold' cluster. Results remain
-      interpretable but lose the meaning that comes from a
-      deliberately-chosen boundary.
+    role: >
+      The frame that bounds the question. Gi* scores each pixel against
+      the global mean of all values within this boundary, so the
+      boundary decides which cells belong to the comparison and, through
+      that mean, sets the very threshold between a hot cluster and a cold
+      one. A different boundary is a different global mean, and so a
+      different map.
+    uncertainty_without: >
+      The analysis falls back to the LST raster's bounding box as its
+      study area. That box usually overstates the region, pulling in
+      suburban or non-urban cells that raise the global mean and quietly
+      shift what counts as hot versus cold. The result stays
+      interpretable, but it becomes a statement about the data's edges
+      rather than a place you deliberately chose to study.
 
 produces:
   - name: hotspot_classification
