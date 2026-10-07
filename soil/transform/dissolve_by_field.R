@@ -162,10 +162,39 @@ with_primitive_error_handling({
       paste(varying, collapse = ", ")))
   }
 
+  # one geometry per group, as a LIST. this used to be
+  #   st_sfc(do.call(c, lapply(geoms, function(g) g[[1]])))
+  # and c() on bare geometries (sfg) does not make a list: it MERGES them into
+  # one multipolygon. st_sfc received a single geometry, st_sf recycled it
+  # across every row, and every unit got the whole layer's shape under its own
+  # name. sixteen Maine counties, each the whole state, no warning (GEO-1).
+  merged <- sf::st_sfc(unname(lapply(geoms, function(g) g[[1]])),
+                       crs = sf::st_crs(features))
+
+  # the guard that would have caught it: one geometry per group, and no two
+  # groups the same shape. a dissolve that hands every unit one geometry
+  # is the reduction lying about itself, so it fails rather than warns.
+  if (length(merged) != length(groups)) {
+    primitive_failure(
+      "Dissolve produced the wrong number of geometries",
+      sprintf("%d group(s) but %d geometry(ies).", length(groups), length(merged)),
+      warnings = w)
+  }
+  if (length(groups) > 1) {
+    wkb <- vapply(sf::st_as_binary(merged), function(b) paste(as.character(b), collapse = ""), character(1))
+    dup <- duplicated(wkb)
+    if (any(dup)) {
+      primitive_failure(
+        "Distinct units share one geometry",
+        sprintf("%d of %d unit(s) have a geometry identical to another unit's, e.g. '%s'. Different units of the same layer cannot be the same shape.",
+                sum(dup), length(groups), groups[dup][1]),
+        warnings = w)
+    }
+  }
+
   dissolved <- sf::st_sf(
     c(setNames(list(groups), field), carried),
-    geometry = sf::st_sfc(do.call(c, lapply(geoms, function(g) g[[1]])),
-                          crs = sf::st_crs(features))
+    geometry = merged
   )
 
   n_end <- nrow(dissolved)

@@ -215,6 +215,20 @@ Verified in the sandbox against a copy of the real seeds, curiosities and method
 | **REORG-2** | The hand-moved `indicator_preview.py` (30 725 bytes) was older than the latest (34 079): it lacked PRV-4's format-aware precision and `--match-published-population`. The finished package carries the latest |
 | **D-62 remaining** | `canopy/core/`, `canopy/render/`, `canopy/infra/` still to move, each after its own import grep |
 
+## FIRST COMPOSED RUN, AND WHAT WONDER WOULD HAVE SAID ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **RUN-1** | **The first composed experiment ran end to end**: `maine_broadband_access_subscription__cii_indicator_values_91b5c0`, composed by `wonder.compose` from `broadband_access.subscription` and the `cii_indicator_values` recipe, bound to `acs_us_county_2024`. Two steps, two envelopes, 3 222 rows. All 16 Maine percentiles agree with CII's published broadband percentiles to the four decimals printed (max 0.00005) |
+| **WON-1v, WON-2v** | Verified as the live path: `reading.read_plot` imports `_candidate_methods` from `possibility`, so the binding fix governs `wonder` |
+| **WON-8** | A method's `reference_population` choice does not constrain which source binds. Binding `acs_county_2024` under the default `nation_50_states_dc` would label a Maine-only percentile as national. The choice should constrain the binding, or the binding should set the choice |
+| **WON-9f** | `reading._read_method` met requirements only from conformed tiers, so a raw indicator source, which a derivation reads as it arrived, could never be met and every civic method read as blocked. A requirement may now declare `as_acquired: true`; it is met when the manifest marks the dataset available and its file is on disk, and the reading labels it `as_acquired`. Declared-but-unfetched stays a gap. Both civic methods declare it on their source (and the full method on its locations). `compose` still counts any tier as present, a looser reading than this; the two should converge |
+| **WON-10** | `compose`'s guidance lists every sub-question under "what you will learn" even when composed for one. It should name the chosen sub-question and list the rest as needing other data |
+| **WON-11** | `explore` emitted one possibility per method, so a curiosity declaring `compatible_methods: []` vanished from `wonder`. It is now rendered with the verdict `unanswered`, last in order, saying no method answers it yet |
+| **WON-12** | `read_plot` skips any curiosity without a `question`, silently. `thermal_landscape_analysis` (SCH-1) is therefore absent from `wonder`. Correct to skip, wrong to be silent: the reading should report what it could not read |
+| **D-73** | `assign_geoid` registered in `soil/_registry.yml`. A preparation method, `county_units_for_mapping`, carries the county chain as a recipe (repair, dissolve on COUNTY after filtering ISLAND n and LAND y, GEOID from CNTYCODE). A hand-written experiment, `plots/maine/experiments/maine_county_units.yml`, runs it with `units_*` step ids so the ownership experiment's county artifacts are not overwritten. Preparation answers no curiosity, so it is not composed from one |
+| **MAP-4** | With the GEOID'd counties, `rewilding map maine indicator_standings --indicator cii_broadband --layer units_geoid_with_geoid` should draw Maine's 16 counties colored by national percentile, reporting the other 3 206 rows as unjoined. The publish latch (EXP-1) is still not built; the map writes geojson only |
+
 ## OPEN ~ add
 
 | ID | item |
