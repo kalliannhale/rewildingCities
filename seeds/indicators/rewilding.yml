@@ -1,0 +1,39 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/rewilding.yml
+# Indicators defined by rewildingCities, including deliberate departures
+# from published indices. Each departure says what it departs from and why.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+
+  limited_english_households:
+    name: Limited English speaking households
+    defined_by: rewildingcities
+    measures: limited_english_speaking_households
+    unit: percent_of_households
+    derivation:
+      kind: ratio
+      numerator: [C16002_004E, C16002_007E, C16002_010E, C16002_013E]
+      denominator: C16002_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16002_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    # Household counts matched HDPulse's republication of ACS exactly in all
+    # 16 Maine counties (percentage differences <= 0.045, HDPulse rounding to
+    # one decimal). A `replicates` block naming the HDPulse table goes here
+    # once its exact table name is confirmed.
+    rationale: >
+      Departs from CII's "percent who speak a language other than English at
+      home", which is reversed in the index and so scores multilingualism as
+      worse civic health. This indicator measures an access barrier instead:
+      households where no member 14 or over speaks English very well. It is
+      still a measure of the resident; the stronger question, whether civic
+      information is available in the languages people speak, puts the
+      obligation on institutions and has no existing indicator. C16002
+      collapses French into "Other Indo-European", which in Aroostook is
+      nearly all of it; a B16002 variant naming French should follow.

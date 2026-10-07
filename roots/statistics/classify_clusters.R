@@ -8,7 +8,7 @@
 #
 # Produces:
 #   Primary: classified raster (integer codes)
-#   Secondary: summary CSV (area/proportion per category)
+#   Secondary: summary parquet (area/proportion per category)
 #
 # Classification codes:
 #    99 = hot spot 99%    -99 = cold spot 99%
@@ -23,7 +23,7 @@
 # Contract (rewildr):
 #   Input:  z_scores (gi_star_z_scores raster)
 #   Params: confidence_levels (numeric vector), classification_mode
-#   Output: classified GeoTIFF + secondary summary CSV
+#   Output: classified GeoTIFF + secondary summary parquet
 # ============================================================
 
 library(rewildr)
@@ -134,8 +134,11 @@ with_primitive_error_handling({
   summary_df <- do.call(rbind, summary_rows)
 
   # Write summary as secondary output alongside primary raster
-  summary_path <- sub("\\.tif$", "_summary.csv", output_path)
-  write.csv(summary_df, summary_path, row.names = FALSE)
+  # sibling_path, not sub(): the vocabulary names this output .tiff, so a
+  # pattern for .tif never matched and the summary was written over the
+  # classified raster (CLU-1).
+  summary_path <- sibling_path(output_path, "summary", "parquet", w)
+  safe_write_table(summary_df, summary_path, w)
 
   # --- Log key results ---
   hot_total  <- sum(classification > 0)

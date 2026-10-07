@@ -8,11 +8,18 @@ lets a person ask. ~
     rewilding acquire nyc garden/methods/thermal/land_cover_cooling_differential.yml
     rewilding acquire nyc <method> --enriching     # also what would merely improve it
     rewilding acquire nyc <method> --fetch          # actually acquire what can be
+    rewilding acquire maine --type indicator_source --fetch
+
+a method asks "what would it take to answer this?"; --type asks the narrower
+"what would it take to hold this?", for data that no method requires yet. both
+go through the same resolution engine and the same manifest transaction, so
+`available` is recorded either way. ~
 """
 
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from ._common import find_root
 
@@ -21,7 +28,11 @@ def register(subparsers) -> None:
     p = subparsers.add_parser(
         "acquire", help="what would it take to answer this here?")
     p.add_argument("plot", help="the plot name, e.g. nyc")
-    p.add_argument("method", help="path to a method .yml")
+    p.add_argument("method", nargs="?", default=None,
+                   help="path to a method .yml (or use --type)")
+    p.add_argument("--type", dest="types", action="append", default=[],
+                   metavar="SEMANTIC_TYPE",
+                   help="acquire a semantic type directly; repeatable")
     p.add_argument("--enriching", action="store_true",
                    help="include data that would improve, not just unblock")
     p.add_argument("--fetch", action="store_true",
@@ -44,14 +55,21 @@ def run(args) -> int:
     plot = args.plot
     plot_dir = root / "plots" / plot
     manifest_path = plot_dir / "manifest.yml"
-    method_path = root / args.method if not str(args.method).startswith("/") \
-        else args.method
+    if bool(args.method) == bool(args.types):
+        print("name a method OR one or more --type, not both and not neither",
+              file=sys.stderr)
+        return 2
+
+    method_path = None
+    if args.method:
+        method_path = root / args.method if not str(args.method).startswith("/") \
+            else Path(args.method)
+        if not method_path.is_file():
+            print(f"no method at {args.method}", file=sys.stderr)
+            return 2
 
     if not manifest_path.is_file():
         print(f"no manifest at plots/{plot}/manifest.yml", file=sys.stderr)
-        return 2
-    if not str(method_path):
-        print(f"no method at {args.method}", file=sys.stderr)
         return 2
 
     bed = plot_dir / ".loam" / "loam.duckdb"
@@ -65,10 +83,17 @@ def run(args) -> int:
     if (plot_dir / ".envelopes").is_dir():
         till_envelopes(loam, str(plot_dir / ".envelopes"), vocab, plot)
 
-    gap = acquisition_gap(loam, plot, str(method_path),
-                          include_enriching=args.enriching)
-
-    print(f"\n🌾  what {plot} would need for {method_path.name}\n")
+    if method_path is not None:
+        gap = acquisition_gap(loam, plot, str(method_path),
+                              include_enriching=args.enriching)
+        print(f"\n🌾  what {plot} would need for {method_path.name}\n")
+    else:
+        unknown = [t for t in args.types if not vocab.knows_name(t)]
+        if unknown:
+            print(f"not in the vocabulary: {', '.join(unknown)}", file=sys.stderr)
+            return 2
+        gap = list(args.types)
+        print(f"\n🌾  what {plot} would need to hold {', '.join(gap)}\n")
 
     if not gap:
         print("   nothing missing ~ this ground can answer as it stands.\n")
@@ -105,6 +130,20 @@ def run(args) -> int:
             if item.get("datasets"):
                 print(f"         {', '.join(item['datasets'])}")
         print()
+
+    update = report.get("manifest_update")
+    if update:
+        if update.get("success"):
+            print(f"   manifest updated: {update.get('changes_applied', 0)} change(s) "
+                  f"recorded in plots/{plot}/.manifest_changelog.yml\n")
+        else:
+            print("   ⚠ the manifest did NOT fully record this acquisition:",
+                  file=sys.stderr)
+            for f in update.get("changes_failed") or []:
+                print(f"     ~ {f}", file=sys.stderr)
+            if update.get("error"):
+                print(f"     {update['error']}", file=sys.stderr)
+            print(file=sys.stderr)
 
     if not args.fetch and report.get("acquirable"):
         print("   run again with --fetch to acquire what can be acquired.\n")

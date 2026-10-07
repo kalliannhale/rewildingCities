@@ -52,109 +52,171 @@ class ManifestSurgeon:
     
     def _find_dataset_block_end(self, text: str, dataset_name: str) -> tuple[int, int] | None:
         """Find the start of a dataset header and end of its block.
-        
+
         Returns (header_start, block_end) character positions, or None.
+        The block ends at the next 2-space-indented key OR at the next line
+        that starts in column 0 (a new top-level section), whichever comes
+        first. Comments do not end a block.
         """
         pattern = rf'^  {re.escape(dataset_name)}:\s*$'
         match = re.search(pattern, text, re.MULTILINE)
         if not match:
             return None
-        
+
         start = match.start()
-        
-        # Block ends at next 2-space-indented key or end of file
         rest = text[match.end():]
-        end_match = re.search(r'^  [a-zA-Z_]', rest, re.MULTILINE)
+        end_match = re.search(r'^(?:  [a-zA-Z_]|[^\s#])', rest, re.MULTILINE)
         end = match.end() + end_match.start() if end_match else len(text)
-        
+
         return start, end
-    
+
     def _find_subblock_end(self, block_text: str, parent_field: str) -> tuple[int, int] | None:
-        """Find a sub-block (like 'cache:') end within a dataset block."""
+        """Find a sub-block (like 'cache:') within a dataset block.
+
+        Returns (start, end) positions relative to block_text.
+        """
         pattern = rf'^    {re.escape(parent_field)}:\s*$'
         match = re.search(pattern, block_text, re.MULTILINE)
         if not match:
             return None
-        
+
         start = match.start()
         rest = block_text[match.end():]
         end_match = re.search(r'^    [a-zA-Z_]', rest, re.MULTILINE)
         end = match.end() + end_match.start() if end_match else len(block_text)
-        
+
         return start, end
-    
+
+    @staticmethod
+    def _field_line(field_name: str, indent: int) -> re.Pattern:
+        """A field at exactly this indent, anchored to the start of a line."""
+        return re.compile(
+            rf'^{" " * indent}{re.escape(field_name)}:[ \t]*(.*)$', re.MULTILINE)
+
     def set_field(
-        self, 
-        text: str, 
-        dataset_name: str, 
-        field_name: str, 
+        self,
+        text: str,
+        dataset_name: str,
+        field_name: str,
         value: str
     ) -> tuple[str, bool]:
         """Set a field value within a dataset block.
-        
-        If the field exists, replaces its value. If not, inserts it 
-        at the correct indent level. Handles sub-fields (like fetched_at 
-        inside cache:) automatically.
-            
+
+        If the field exists, replaces its value. If not, inserts it at the
+        correct indent level. Handles sub-fields (like fetched_at inside
+        cache:) automatically.
+
+        Every search is FENCED to the dataset's own block, and cache
+        subfields to that dataset's cache: sub-block. An earlier version
+        searched from the dataset header to the next occurrence of the field
+        name anywhere in the file, so a field missing from one dataset could
+        be "replaced" in the next one, or inside prose, and report success.
+
+        A field whose current value is a block scalar (> or |) is refused:
+        replacing its first line would corrupt the YAML.
+
         Args:
             text: Current manifest content
             dataset_name: Dataset to modify
             field_name: Field to set
             value: New value as string
-            
+
         Returns:
             Tuple of (modified_text, success_bool)
         """
-        # Check dataset exists
         block_range = self._find_dataset_block_end(text, dataset_name)
         if block_range is None:
             logger.warning(f"Dataset '{dataset_name}' not found in manifest")
             return text, False
-        
-        # Try direct replacement first (field already exists)
-        pattern = rf"(  {re.escape(dataset_name)}:.*?)({re.escape(field_name)}: )(.*?)(\n)"
-        new_text, count = re.subn(
-            pattern, rf"\g<1>\g<2>{value}\4", text, count=1, flags=re.DOTALL
-        )
-        if count > 0:
-            return new_text, True
-        
-        # Field doesn't exist — insert it
+
         block_start, block_end = block_range
         block_text = text[block_start:block_end]
-        
+
+        # Where this field lives: the cache sub-block for cache subfields
+        # (when one exists), otherwise the dataset block at 4 spaces.
+        region_start, region_end, indent = 0, len(block_text), 4
         if field_name in self.CACHE_SUBFIELDS:
-            # Insert inside cache: sub-block
             sub_range = self._find_subblock_end(block_text, "cache")
-            if sub_range is None:
+            if sub_range is not None:
+                region_start, region_end, indent = sub_range[0], sub_range[1], 6
+            else:
                 logger.info(
                     f"Inserting '{field_name}' for '{dataset_name}': "
                     f"no 'cache:' block found, creating field at dataset level instead"
                 )
-                # Fall through to top-level insert
-            else:
-                insert_pos = block_start + sub_range[1]
-                insert_line = f"      {field_name}: {value}\n"
-                new_text = text[:insert_pos] + insert_line + text[insert_pos:]
-                logger.debug(
-                    f"Inserted {dataset_name}/cache/{field_name} = {value}"
-                )
-                return new_text, True
-        
-        # Insert as top-level field in dataset block (4-space indent)
-        # Place after the 'available:' line if it exists, otherwise after header
-        avail_match = re.search(r'    available: .*?\n', block_text)
-        if avail_match:
-            insert_pos = block_start + avail_match.end()
+
+        region = block_text[region_start:region_end]
+        found = self._field_line(field_name, indent).search(region)
+
+        if found:
+            current = found.group(1).strip()
+            if current.startswith((">", "|")):
+                logger.warning(
+                    f"Refusing to set {dataset_name}.{field_name}: its value is a "
+                    f"block scalar, and replacing one line would corrupt it")
+                return text, False
+            line = f"{' ' * indent}{field_name}: {value}"
+            abs_start = block_start + region_start + found.start()
+            abs_end = block_start + region_start + found.end()
+            new_text = text[:abs_start] + line + text[abs_end:]
+            return self._verified(new_text, text, dataset_name, field_name, value)
+
+        # Field does not exist: insert it.
+        if indent == 6:
+            insert_pos = block_start + region_end
+            insert_line = f"      {field_name}: {value}\n"
         else:
-            first_newline = block_text.find('\n')
-            insert_pos = block_start + first_newline + 1 if first_newline != -1 else block_end
-        
-        insert_line = f"    {field_name}: {value}\n"
+            avail_match = self._field_line("available", 4).search(block_text)
+            if avail_match:
+                insert_pos = block_start + avail_match.end() + 1
+            else:
+                first_newline = block_text.find('\n')
+                insert_pos = (block_start + first_newline + 1
+                              if first_newline != -1 else block_end)
+            insert_line = f"    {field_name}: {value}\n"
+
         new_text = text[:insert_pos] + insert_line + text[insert_pos:]
-        logger.debug(f"Inserted {dataset_name}/{field_name} = {value}")
+        return self._verified(new_text, text, dataset_name, field_name, value)
+
+    def _verified(self, new_text: str, old_text: str, dataset_name: str,
+                  field_name: str, value: str) -> tuple[str, bool]:
+        """
+        Confirm the edit landed where it claims before reporting success:
+        the result still parses, and the dataset now reads back the value.
+        A regex edit is a guess about structure; this checks the guess.
+        """
+        try:
+            doc = yaml.safe_load(new_text)
+            expected = yaml.safe_load(f"v: {value}")["v"]
+        except yaml.YAMLError as e:
+            logger.warning(
+                f"Edit to {dataset_name}.{field_name} would leave the manifest "
+                f"unparseable ({e}); not applied")
+            return old_text, False
+
+        holders = [v[dataset_name] for v in (doc or {}).values()
+                   if isinstance(v, dict) and isinstance(v.get(dataset_name), dict)]
+        if not holders:
+            logger.warning(
+                f"Could not locate '{dataset_name}' in the parsed manifest to "
+                f"verify the edit; not applied")
+            return old_text, False
+
+        entry = holders[0]
+        actual = entry.get(field_name)
+        if field_name in self.CACHE_SUBFIELDS and isinstance(entry.get("cache"), dict) \
+                and field_name in entry["cache"]:
+            actual = entry["cache"][field_name]
+
+        if actual != expected:
+            logger.warning(
+                f"Edit to {dataset_name}.{field_name} did not read back as "
+                f"{expected!r} (got {actual!r}); not applied")
+            return old_text, False
+
+        logger.debug(f"Set {dataset_name}/{field_name} = {value}")
         return new_text, True
-    
+
     def set_available(
         self, 
         text: str, 

@@ -11,13 +11,14 @@
 #   - Robust standard errors when heteroscedasticity detected
 #
 # Inputs:
-#   data: CSV with response and predictor columns
+#   data: table (parquet or CSV) with response and predictor columns
 # Params:
 #   response, predictors, vif_threshold, log_transform_vars,
 #   validation_method, test_fraction, stepwise_direction,
 #   p_enter, p_remove
 # Output:
-#   CSV with model coefficients + secondary diagnostics CSV
+#   Coefficient table (format from the output extension) +
+#   secondary diagnostics parquet beside it
 # ============================================================
 
 library(rewildr)
@@ -43,7 +44,7 @@ w <- warnings_collector("regression_analysis")
 
 with_primitive_error_handling({
 
-  df <- read.csv(input_path, stringsAsFactors = FALSE)
+  df <- safe_read_table(input_path, w)
 
   # --- Validate columns ---
   all_needed <- c(response, predictors)
@@ -117,12 +118,15 @@ with_primitive_error_handling({
   # --- VIF enforcement ---
   model_vars <- names(coef(model))[-1]  # exclude intercept
 
+  # Defined here, not inside the block below: a model with one predictor or
+  # none skips VIF entirely, and the diagnostics table still reads this.
+  dropped_for_vif <- character(0)
+
   if (length(model_vars) > 1) {
     vifs <- car::vif(model)
 
     # Iteratively drop highest VIF until all below threshold
     max_iterations <- length(model_vars)
-    dropped_for_vif <- character(0)
 
     for (iter in seq_len(max_iterations)) {
       if (max(vifs) <= vif_threshold) break
@@ -242,10 +246,12 @@ with_primitive_error_handling({
     ifelse(coef_table$p_value < 0.01, "**",
       ifelse(coef_table$p_value < 0.05, "*", "")))
 
-  write.csv(coef_table, output_path, row.names = FALSE)
+  safe_write_table(coef_table, output_path, w)
 
   # --- Diagnostics secondary output ---
-  diag_path <- sub("\\.csv$", "_diagnostics.csv", output_path)
+  # sibling_path, not sub(): sub() returned output_path unchanged whenever the
+  # extension was not .csv, so diagnostics overwrote the coefficients (REG-2).
+  diag_path <- sibling_path(output_path, "diagnostics", "parquet", w)
   diag_df <- data.frame(
     metric = c("R_squared", "Adj_R_squared", "F_statistic",
                "Shapiro_Wilk_p", "Residuals_normal",
@@ -254,7 +260,10 @@ with_primitive_error_handling({
                "Test_R_squared", "Test_RMSE",
                "VIF_threshold", "Vars_dropped_VIF",
                "Stepwise_direction"),
-    value = c(round(r_sq, 4), round(adj_r_sq, 4),
+    # Mixed numbers, logicals and a direction string: c() was already
+    # coercing these to character. Said explicitly, so the column type is a
+    # declaration rather than an accident.
+    value = as.character(c(round(r_sq, 4), round(adj_r_sq, 4),
               round(f_stat[1], 2),
               round(sw_test$p.value, 4), resid_normal,
               if (!is.null(bp_test)) round(bp_test$p.value, 4) else NA,
@@ -265,10 +274,10 @@ with_primitive_error_handling({
               if (!is.null(test_rmse)) round(test_rmse, 4) else NA,
               vif_threshold,
               length(dropped_for_vif),
-              direction),
+              direction)),
     stringsAsFactors = FALSE
   )
-  write.csv(diag_df, diag_path, row.names = FALSE)
+  safe_write_table(diag_df, diag_path, w)
 
   primitive_success(
     metadata = list(

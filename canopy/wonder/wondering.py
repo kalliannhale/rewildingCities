@@ -188,9 +188,25 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
             (pname, pspec), = first.items()
             prim_ref = f"{(pspec or {}).get('from', 'roots')}/{pname}"
             purpose = (pspec or {}).get("purpose", "")
+    # `produces` is declared two ways across the garden, and both are
+    # legitimate. Four methods write a LIST of dicts, each naming an output;
+    # one writes a bare MAPPING describing a single product. Iterating a
+    # mapping yields its string KEYS, so prod.get() blew up on the newer
+    # shape ~ and because nothing had ever run a composed experiment, nobody
+    # noticed. Read both rather than legislate one. C-62.
     outputs = {}
-    for prod in method.get("produces", []) or []:
-        outputs[prod.get("name", "result")] = prod.get("name", "result")
+    produces = method.get("produces")
+    if isinstance(produces, dict):
+        # a single product: prefer its own name, else its semantic type
+        name = produces.get("name") or produces.get("semantic_type") or "result"
+        outputs[name] = name
+    else:
+        for prod in produces or []:
+            if isinstance(prod, dict):
+                name = prod.get("name") or prod.get("semantic_type") or "result"
+            else:
+                name = str(prod)
+            outputs[name] = name
     steps.append({
         "id": "analyze",
         "primitive": prim_ref,
@@ -306,7 +322,13 @@ def compose(loam, plot: str, curiosity_id: str, method_id: str,
                       **({"sub_question": sub_question} if sub_question else {})},
         "method": {"ref": f"$methods/{domain}/{method_id}"},
         "city": plot,
-        "manifest": f"plots/{plot}/manifest.yml",
+        # RELATIVE TO THIS FILE, because the orchestrator resolves the
+        # manifest as experiment_path.parent / manifest_path. The
+        # project-root form written here before produced
+        # plots/<plot>/experiments/plots/<plot>/manifest.yml, which meant
+        # every experiment compose had ever written was unrunnable ~ and
+        # neither composed file had ever been run, so it went unseen. C-61.
+        "manifest": "../manifest.yml",
         "choices": resolved_choices,
         "parameters": {"target_crs": target_crs},
         "steps": _compose_steps(method, manifest_types, target_crs),

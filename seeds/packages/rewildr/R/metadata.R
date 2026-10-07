@@ -1,3 +1,5 @@
+# seeds/packages/rewildr/R/metadata.R
+
 #' Extract Vector Metadata
 #'
 #' Extracts metadata from an sf object for the envelope.
@@ -6,8 +8,8 @@
 #' @param id_field Optional name of the ID field
 #' @return A list of metadata fields
 #' @export
-#' seeds/packages/rewildr/R/metadata.R
-extract_vector_metadata <- function(sf_obj, id_field = NULL) {
+extract_vector_metadata <- function(sf_obj, id_field = NULL,
+                                    total_area = FALSE) {
  
  if (!inherits(sf_obj, "sf")) {
    stop("Input must be an sf object")
@@ -47,10 +49,26 @@ extract_vector_metadata <- function(sf_obj, id_field = NULL) {
  # neither is available it errors — killing a whole run over a field the
  # schema does not even require. An unknown rests empty; the reason is
  # reported. C-30.
- total_area <- NULL
+ # total_area_m2 is OPT-IN, not budgeted.
+ #
+ # Two earlier attempts got this wrong. C-30 wrapped it in tryCatch so a
+ # failure could not kill a run ~ right instinct, wrong failure mode, because
+ # tryCatch catches errors and not COST. Then a vertex budget, which failed
+ # because vertices do not predict the cost: NYC's 158,701-vertex parks layer
+ # computes in seconds while 924 dissolved multipart coastlines measured
+ # 161.8 SECONDS. What differs is nesting depth per feature, and measuring
+ # that costs as much as the thing it would guard.
+ #
+ # So the field is off unless a caller asks for it. It is projection-dependent
+ # (geodesic under s2 and planar in a projected CRS are different numbers),
+ # optional in the schema, and derivable downstream in one line by whoever
+ # actually needs it. Making every vector primitive pay for it on every run,
+ # so that a field nobody reads is present, is the wrong trade. L-62.
+ total_area_value <- NULL
  area_unavailable <- NULL
- if (any(grepl("polygon", tolower(geom_types)))) {
-   total_area <- tryCatch(
+
+ if (isTRUE(total_area) && any(grepl("polygon", tolower(geom_types)))) {
+   total_area_value <- tryCatch(
      as.numeric(sum(sf::st_area(sf_obj))),
      error = function(e) { area_unavailable <<- conditionMessage(e); NULL }
    )
@@ -91,8 +109,8 @@ extract_vector_metadata <- function(sf_obj, id_field = NULL) {
    metadata$geometry_type_unmapped <- unmapped
  }
  
- if (!is.null(total_area)) {
-   metadata$total_area_m2 <- total_area
+ if (!is.null(total_area_value)) {
+   metadata$total_area_m2 <- total_area_value
  } else if (!is.null(area_unavailable)) {
    metadata$total_area_unavailable <- area_unavailable
  }

@@ -19,6 +19,7 @@ from .arcgis import ArcGISProvider
 from .stac import STACProvider
 from .s3 import S3Provider
 from .earthengine import EarthEngineProvider
+from .census_acs import CensusACSProvider
 
 
 def create_default_registry() -> ProviderRegistry:
@@ -32,6 +33,7 @@ def create_default_registry() -> ProviderRegistry:
     registry.register(STACProvider())
     registry.register(S3Provider())
     registry.register(EarthEngineProvider())
+    registry.register(CensusACSProvider())
     return registry
 
 
@@ -48,5 +50,6 @@ __all__ = [
     "STACProvider",
     "S3Provider",
     "EarthEngineProvider",
+    "CensusACSProvider",
     "create_default_registry",
 ]

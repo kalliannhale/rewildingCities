@@ -1,0 +1,145 @@
+# ════════════════════════════════════════════════════════════
+# plots/maine/experiments/maine_governance_units.yml
+# ════════════════════════════════════════════════════════════
+# Conform Maine's boundary sources into administrative units.
+#
+# Both sources are arc-derived geometry rather than administrative units:
+# one polygon per landmass, per tidal split, per ledge. The county layer
+# holds 7,196 polygons for 16 counties (7,156 of them islands); the town
+# layer holds 8,421 for 924 civil divisions, and Vinalhaven alone accounts
+# for 430 of them ~ every rock in its municipal waters.
+#
+# So this is not tidying. A denominator built from 8,421 polygons divides by
+# the wrong number and every rate inherits the error with clean provenance.
+# The dissolve is a declared reduction and the envelope records its cost.
+#
+# ON THE TOWN COUNT, which four sources disagree about:
+#   ~490-500  organized municipalities (the commonly cited figure)
+#   463       MEGIS divisions with LURC='n' ~ self-governing
+#   461       MEGIS divisions with LURC='y' ~ unorganized territory under
+#             the state Land Use Planning Commission, NO local government
+#   924       all civil divisions, organized and unorganized
+#   651       the Legislature's list: municipalities plus assigned
+#             unorganized places, because every acre has a representative
+#   529       the Census aggregation of unorganized territory
+#
+# None is wrong; they count different things. LURC is carried through the
+# dissolve so a later analysis can tell a place with no local news from a
+# place with no local GOVERNMENT. Roughly half of Maine's civil divisions
+# have no municipal government at all, and a news-desert map that cannot
+# see that would report 461 uninhabited townships as underserved.
+#
+# TYPE is requested and expected to be REFUSED: it varies within a town
+# (coastal and inland polygons of the same town differ), and the dissolve
+# refuses to carry a varying attribute rather than invent a group value.
+#
+# repair_geometry runs before each dissolve because s2 rejects invalid
+# loops during st_union, and an 8,421-polygon layer digitized from arcs has
+# duplicate vertices. A dissolve should not also be a repair tool.
+# ════════════════════════════════════════════════════════════
+
+id: maine_governance_units
+name: Maine governance units, conformed
+description: >
+  Dissolve Maine's arc-derived boundary polygons into administrative units,
+  carrying the authority codes and the governance flag, so an
+  ownership-concentration analysis has a denominator that counts the right
+  number of places and knows which of them govern themselves.
+
+curiosity:
+  ref: $curiosity-space/information/information_access
+method:
+  ref: $methods/information/ownership_concentration_analysis
+
+city: maine
+# the orchestrator resolves this relative to the experiment's own directory
+# (experiment_path.parent / manifest_path), so it must be relative. compose
+# writes the project-root form and produces an unrunnable file. C-61.
+manifest: ../manifest.yml
+
+choices:
+  concentration_measure: hhi
+  aggregation_unit_level: county
+  outlet_weighting: count
+
+parameters:
+  target_crs: "EPSG:4326"
+
+steps:
+
+  # ── counties: 7,196 arc polygons -> 16 ──────────────────────────────────
+  - id: validate_counties
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: "Diagnose the county source ~ CRS, validity, geometry types"
+    inputs:
+      features: $manifest.governance_unit_county
+    outputs:
+      checked: governance_unit
+    params: {}
+
+  - id: repair_counties
+    primitive: soil/repair_geometry
+    version: "1.0.0"
+    description: "st_make_valid before the union; s2 refuses invalid loops"
+    inputs:
+      features: $steps.validate_counties.checked
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: dissolve_counties
+    primitive: soil/dissolve_by_field
+    version: "1.0.0"
+    description: "mainland land polygons dissolved on COUNTY -> 16 counties"
+    inputs:
+      features: $steps.repair_counties.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: COUNTY
+      filters:
+        ISLAND: "n"
+        LAND: "y"
+      keep_fields:
+        - CNTYCODE
+      drop_blank: true
+
+  # ── towns: 8,421 arc polygons -> 924 civil divisions ────────────────────
+  - id: validate_towns
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: "Diagnose the town source"
+    inputs:
+      features: $manifest.governance_unit_town
+    outputs:
+      checked: governance_unit
+    params: {}
+
+  - id: repair_towns
+    primitive: soil/repair_geometry
+    version: "1.0.0"
+    description: "st_make_valid ~ 8,421 arc-derived polygons carry duplicate vertices"
+    inputs:
+      features: $steps.validate_towns.checked
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: dissolve_towns
+    primitive: soil/dissolve_by_field
+    version: "1.0.0"
+    description: "dissolved on GEOCODE, the authoritative MCD code -> 924 divisions"
+    inputs:
+      features: $steps.repair_towns.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: GEOCODE
+      keep_fields:
+        - TOWN
+        - COUNTY
+        - CNTYCODE
+        - LURC
+        - TYPE
+      drop_blank: true

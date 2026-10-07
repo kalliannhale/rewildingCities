@@ -25,6 +25,7 @@ opens, not after. ~
 
 from __future__ import annotations
 
+import pathlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -43,6 +44,12 @@ app = FastAPI(
         "see what it would take to ask more, compose an experiment, run it."
     ),
 )
+
+# the demo page is served from a different origin (file:// or :8080), so the
+# read face needs CORS. local only, and read-only ~ nothing here writes.
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
 # run records live in memory for now, which is honest about what this is:
 # a single-process local server. a real deployment needs them durable, and
@@ -136,8 +143,15 @@ def methods() -> dict:
     for mid, d in sorted(docs.items()):
         if not d.get("requires_data") and not d.get("choices"):
             continue
+        rel = d.get("_path")
+        if rel:
+            try:
+                rel = str(pathlib.Path(rel).relative_to(project_root()))
+            except Exception:
+                pass
         out.append({
             "id": mid, "name": d.get("name", mid), "domain": d.get("domain"),
+            "path": rel,
             "requires_data": [
                 {"name": r.get("name"),
                  "accepts": r.get("semantic_types") or ([r["type"]] if r.get("type") else []),
@@ -180,6 +194,137 @@ def sense_acquisition(plot: str,
                               provider_registry=create_default_registry())
     return {"plot": plot, "method": method, "gap": gap,
             "report": engine.acquire_types(gap, dry=True, loam=loam, plot=plot)}
+
+
+@app.get("/plots/{plot}/receipts", tags=["read"])
+def plot_receipts(plot: str) -> dict:
+    """
+    every receipt this plot holds, with what each step reported about itself.
+
+    This is the panel nothing else builds. An envelope carries not only what
+    was produced but what it COST: how many features went in and came out,
+    which attributes a reduction had to drop, which were refused for varying
+    within a unit, and every warning at the level the primitive chose. A
+    result is only as trustworthy as the account of how it was made, and that
+    account lives here rather than in a methods section somebody has to take
+    on faith.
+    """
+    import json
+
+    base = project_root() / "plots" / plot / ".envelopes"
+    if not base.is_dir():
+        raise HTTPException(status_code=404, detail=f"no receipts for {plot}")
+
+    out = []
+    totals = {"info": 0, "warning": 0, "critical": 0}
+
+    for path in sorted(base.glob("*.envelope.json")):
+        try:
+            doc = json.loads(path.read_text())
+        except Exception as e:
+            out.append({"receipt": path.name, "unreadable": str(e)})
+            continue
+
+        meta = doc.get("metadata") or {}
+        warns = doc.get("warnings") or []
+        prov = doc.get("provenance") or []
+
+        by_level = {"info": 0, "warning": 0, "critical": 0}
+        for w in warns:
+            lvl = w.get("level")
+            if lvl in by_level:
+                by_level[lvl] += 1
+                totals[lvl] += 1
+
+        before = meta.get("feature_count_before")
+        after = meta.get("feature_count_after")
+        reduction = None
+        if before and after:
+            reduction = {
+                "before": before,
+                "after": after,
+                "after_filters": meta.get("features_after_filters"),
+                "factor": round(before / after, 1) if after else None,
+                "dissolved_by": meta.get("dissolved_by"),
+                "merge_method": meta.get("merge_method"),
+                "carried": meta.get("attributes_carried") or [],
+                "dropped": meta.get("attributes_dropped") or [],
+                "refused_varying": meta.get("attributes_refused_varying") or [],
+            }
+
+        out.append({
+            "receipt": path.name,
+            "semantic_type": meta.get("semantic_type"),
+            "data_category": meta.get("data_category"),
+            "crs": meta.get("crs"),
+            "feature_count": meta.get("feature_count"),
+            "coverage_source": meta.get("value_range_source"),
+            "dtype_native": meta.get("dtype_native"),
+            "geometry_type_native": meta.get("geometry_type_native"),
+            "area_unavailable": meta.get("total_area_unavailable"),
+            "provenance_steps": [s.get("primitive") for s in prov if s.get("primitive")],
+            "warnings": by_level,
+            "messages": [
+                {"level": w.get("level"), "primitive": w.get("primitive"),
+                 "message": w.get("message")}
+                for w in warns
+            ],
+            "reduction": reduction,
+        })
+
+    return {"plot": plot, "totals": totals, "receipts": out}
+
+
+@app.get("/plots/{plot}/trace", tags=["read"])
+def plot_trace(plot: str,
+               clump: str | None = Query(None, description="clump name; omit to list")
+               ) -> dict:
+    """
+    follow one artifact back to its seed, clump by clump, across tiers.
+
+    Provenance answers "how was this made". Without it a number is a claim;
+    with it a number is an account. Omit `clump` to see what this ground
+    holds and which of those can be traced.
+    """
+    try:
+        _vocab, loam, _report = open_plot(plot)
+    except PlotNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    rows = loam.find(plot=plot)
+    index = {r["name"]: r for r in rows}
+
+    if clump is None:
+        return {"plot": plot, "clumps": [
+            {"name": r["name"], "tier": r["tier"],
+             "semantic_type": r["semantic_type"],
+             "declared": r["semantic_type_declared"],
+             "has_parent": bool(r.get("parent_ref"))}
+            for r in sorted(rows, key=lambda x: (x["tier"], x["name"]))]}
+
+    if clump not in index:
+        raise HTTPException(status_code=404, detail=f"no clump '{clump}' in {plot}")
+
+    chain = loam.trace(clump)
+    return {"plot": plot, "clump": clump, "depth": len(chain), "chain": [
+        {
+            "name": name,
+            "present": name in index,
+            "tier": index.get(name, {}).get("tier"),
+            "semantic_type": index.get(name, {}).get("semantic_type"),
+            "declared": index.get(name, {}).get("semantic_type_declared"),
+            "crs": index.get(name, {}).get("crs"),
+            "coverage": index.get(name, {}).get("coverage"),
+            "warnings_count": index.get(name, {}).get("warnings_count"),
+            "has_critical": index.get(name, {}).get("has_critical"),
+            "data_path": index.get(name, {}).get("data_path"),
+            # a parent referenced but absent is honest: the lineage root is a
+            # manifest declaration that has not been planted, and saying so
+            # beats a chain that stops without explanation.
+            "note": None if name in index else
+                    "referenced as a parent but not present in this bed",
+        }
+        for name in chain]}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

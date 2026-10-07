@@ -4,7 +4,7 @@
 \alias{extract_vector_metadata}
 \title{Extract Vector Metadata}
 \usage{
-extract_vector_metadata(sf_obj, id_field = NULL)
+extract_vector_metadata(sf_obj, id_field = NULL, total_area = FALSE)
 }
 \arguments{
 \item{sf_obj}{An sf object}

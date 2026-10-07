@@ -66,8 +66,19 @@ datasets:
         outFields: "*"
         outSR: 4326
       notes: >
-        Maine GeoLibrary county boundaries (CNTY24P). 16 counties. The
-        service enforces maxRecordCount 2000, well above what this needs.
+        Maine GeoLibrary county boundaries (CNTY24P). The LAYER holds 7,196
+        polygons, of which 7,156 are islands: these are arc-derived
+        geometry, not administrative units. Maine has 16 counties, and
+        reaching them takes a filter (ISLAND='n', LAND='y', leaving 40
+        mainland polygons) and then a dissolve on COUNTY.
+
+        The earlier note here said "16 counties", which was the
+        administrative reality rather than the layer's contents ~ a
+        plausible number written instead of a verified one.
+
+        CNTYCODE is the Census county FIPS zero-padded: '01' corresponds to
+        Census GEOID '23001', verified across all sixteen. The join to any
+        national dataset is derivable, not a crosswalk.
     cache:
       path: .data/maine_counties.geojson
       refresh_policy: manual
@@ -115,7 +126,7 @@ datasets:
     cache:
       path: .data/maine_towns.geojson
       refresh_policy: manual
-      fetched_at: '2026-09-18T06:09:57.864165+00:00'
+      fetched_at: '2026-09-18T10:16:44.674983+00:00'
     provenance:
       source: Maine Office of GIS (MEGIS) / Maine GeoLibrary
       source_url: https://www.maine.gov/geolib/
@@ -209,3 +220,40 @@ datasets:
       notes: >
         Provider-reported availability. Overstates coverage; treat as an
         upper bound on access, never as measured service.
+
+  # ── civic indicators ──────────────────────────────────────────────────────
+  # raw published values that indicator derivations read. the acquisition
+  # names INDICATORS, not variable codes: the provider asks the registry
+  # (seeds/indicators/) what each needs, margins of error included, so a
+  # variable code is written in exactly one place. one acquisition per
+  # release and geography; adding an indicator is one word in the list.
+
+  acs_county_2024:
+    available: true
+    description: >
+      ACS 2020-2024 five-year estimates for Maine's sixteen counties, carrying
+      every variable the listed indicators need
+    semantic_type: indicator_source
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      # = 2020-2024 estimates, the window CII 2026 used. the vintage is
+      # load-bearing: at 2019-2023 broadband was off by up to 4.2 points.
+      year: 2024
+      geography: county
+      within:
+        state: "23"
+      indicators: [cii_broadband, limited_english_households]
+      notes: >
+        Requires CENSUS_API_KEY in the environment (free, immediate:
+        https://api.census.gov/data/key_signup.html). The key is sent with
+        the request and never recorded in provenance.
+    cache:
+      path: .data/acs_county_2024.parquet
+      refresh_policy: manual
+      fetched_at: '2026-10-07T03:14:40.445507+00:00'
+    provenance:
+      source: U.S. Census Bureau, American Community Survey
+      authority: us_census_acs

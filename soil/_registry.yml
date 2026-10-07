@@ -97,6 +97,8 @@ primitives:
           - study_area
           - neighborhood_boundaries
           - census_tracts
+          - governance_unit
+          - sovereign_boundary
         required: true
         description: Vector features to diagnose
     
@@ -218,6 +220,8 @@ primitives:
           - water_boundaries
           - forest_boundaries
           - study_area
+          - governance_unit
+          - sovereign_boundary
           - neighborhood_boundaries
         required: true
         description: Vector features to repair
@@ -315,6 +319,8 @@ primitives:
           - water_boundaries
           - forest_boundaries
           - study_area
+          - governance_unit
+          - sovereign_boundary
           - neighborhood_boundaries
           - park_buffers
         required: true

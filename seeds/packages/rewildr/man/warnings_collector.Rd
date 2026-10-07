@@ -4,18 +4,36 @@
 \alias{warnings_collector}
 \title{Create a Warnings Collector}
 \usage{
-warnings_collector()
+warnings_collector(primitive = NULL)
+}
+\arguments{
+\item{primitive}{Name of the primitive using this collector.
+If provided, it becomes the default for all warnings added
+via the shorthand methods (info/warn/critical). Can be
+overridden per-warning via the \code{add} method.}
 }
 \value{
 A warnings collector (list with functions)
 }
 \description{
 Creates a mutable warnings list that can accumulate warnings
-throughout primitive execution.
+throughout primitive execution. Each warning carries a level,
+the primitive that generated it, and a human-readable message.
 }
 \examples{
-w <- warnings_collector()
-w$add("info", "CRS was transformed")
-w$warn("3 features excluded")
+w <- warnings_collector("validate_raster")
+w$info("CRS is EPSG:4326")
+w$warn("14 geometries invalid")
+w$critical("40\% NoData in study area")
 w$get()
+Add a warning with explicit level, primitive, and message.
+This is the full-control method. The shorthand methods
+(info/warn/critical) call this internally.
+Add an info-level warning using the default primitive name.
+Add a warning-level warning using the default primitive name.
+Add a critical-level warning using the default primitive name.
+Get all accumulated warnings as a list.
+Check if any warnings have been added.
+Check if any critical warnings exist.
+Count warnings, optionally filtered by level.
 }

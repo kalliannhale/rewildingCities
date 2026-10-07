@@ -8,7 +8,9 @@ must be:
   1. Batched — multiple changes in one write, not scattered calls
   2. Atomic — the file is never half-written
   3. Logged — every change has a changelog entry
-  4. Reversible — if something fails, nothing is written
+  4. Honest about partial success: an edit that cannot be applied or
+     verified is skipped and reported by name; the edits that did apply
+     are written. Nothing is written if the atomic write itself fails.
 
 Usage:
     tx = ManifestTransaction(manifest_path)
@@ -42,6 +44,7 @@ class PendingChange:
     new_value: str
     reason: str
     old_value: str | None = None  # populated on commit from current file
+    provenance: dict | None = None  # structured record of the event, kept in the changelog
 
 
 @dataclass
@@ -91,14 +94,22 @@ class ManifestTransaction:
         self, 
         dataset_name: str, 
         available: bool, 
-        reason: str = ""
+        reason: str = "",
+        provenance: dict | None = None,
     ) -> None:
-        """Queue a change to a dataset's available flag."""
+        """Queue a change to a dataset's available flag.
+
+        `provenance` is the structured record of what happened (for an
+        acquisition: vintage, variables, request, counts). It goes to the
+        changelog, not the manifest: the manifest is declaration, the
+        changelog is the record of events.
+        """
         self._pending.append(PendingChange(
             dataset_name=dataset_name,
             field_name="available",
             new_value=str(available).lower(),
             reason=reason,
+            provenance=provenance,
         ))
     
     def update_cache_timestamp(
@@ -161,12 +172,15 @@ class ManifestTransaction:
             if ok:
                 text = new_text
                 applied += 1
-                change_records.append({
+                record = {
                     "dataset": change.dataset_name,
                     "field": change.field_name,
                     "value": change.new_value,
                     "reason": change.reason,
-                })
+                }
+                if change.provenance:
+                    record["provenance"] = change.provenance
+                change_records.append(record)
                 logger.debug(
                     f"  Applied: {change.dataset_name}.{change.field_name} "
                     f"= {change.new_value}"

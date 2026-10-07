@@ -40,6 +40,15 @@ methods:
         measurement_validity, perspective_bias_correction, classifier_agreement
       ]
 
+  information:
+    - id: ownership_concentration_analysis
+      path: information/ownership_concentration_analysis.yml
+      name: "Ownership Concentration of Local Information Outlets"
+      answers: [
+        media_ownership, consolidation, information_access, civic_infrastructure,
+        concentration_index, ownership, outlets, local_news, accountability
+      ]
+
   # Future domains slot in alongside `thermal:` — no structural change to
   # the orchestrator or the resolution engine when adding them.
   #

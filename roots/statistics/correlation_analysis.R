@@ -11,7 +11,7 @@
 # and aligns with Xiao et al.'s methodology.
 #
 # Inputs:
-#   data: CSV with response and predictor columns
+#   data: table (parquet or CSV) with response and predictor columns
 # Params:
 #   response: name of the response column (e.g., "PCI")
 #   predictors: character vector of predictor column names
@@ -19,7 +19,8 @@
 #   n_boot: number of bootstrap resamples (0 = skip bootstrap)
 #   conf_level: confidence level for bootstrap CIs
 # Output:
-#   CSV with correlation results (r, p, CI_low, CI_high, partial_r, partial_p)
+#   Table with correlation results (r, p, CI_low, CI_high, partial_r,
+#   partial_p), format from the output extension
 # ============================================================
 
 library(rewildr)
@@ -38,7 +39,7 @@ w <- warnings_collector("correlation_analysis")
 
 with_primitive_error_handling({
 
-  df <- read.csv(input_path, stringsAsFactors = FALSE)
+  df <- safe_read_table(input_path, w)
 
   # Validate columns
   all_needed <- c(response, predictors, control_vars)
@@ -150,7 +151,7 @@ with_primitive_error_handling({
     ifelse(result_df$p_value < 0.01, "**",
       ifelse(result_df$p_value < 0.05, "*", "")))
 
-  write.csv(result_df, output_path, row.names = FALSE)
+  safe_write_table(result_df, output_path, w)
 
   # Top correlates for metadata
   top3 <- head(result_df$variable, 3)

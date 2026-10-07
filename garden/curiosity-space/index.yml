@@ -19,3 +19,14 @@ curiosities:
       path: perception/image_composition_validity.yml
       question: "Is image-plane surface composition a trustworthy estimate of ground-plane composition?"
       sub_questions: [perspective_bias, rectification_recovery, classifier_agreement, remote_sensing, land_cover]
+
+  information:
+    - id: information_access
+      path: information/information_access.yml
+      question: "Can people here find out what is happening where they live?"
+      sub_questions: [
+        ownership_concentration, institutional_reliance, access_divergence,
+        lifecycle_sufficiency, media_ownership, broadband, local_news,
+        civic_infrastructure, information_ecosystem
+      ]
+

@@ -73,3 +73,86 @@
     field: fetched_at
     value: '''2026-09-18T06:09:57.864165+00:00'''
     reason: Cache timestamp updated
+- timestamp: '2026-09-18T10:16:44.677114+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 2
+  changes_failed: 0
+  changes:
+  - dataset: governance_unit_town
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 52.1 MB from ArcGIS REST ~ resolved item 289a91e826fd4f518debdd824d5dd16d
+      -> https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/Maine_Town_and_Townships_Boundary_Polygons/FeatureServer;
+      using layer 0 (service maxRecordCount 2000); 8421 features in 5 page(s)
+  - dataset: governance_unit_town
+    field: fetched_at
+    value: '''2026-09-18T10:16:44.674983+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-10-07T03:14:40.461787+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 2
+  changes_failed: 0
+  changes:
+  - dataset: acs_county_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 16 county(s); vintage 2020-2024
+      (5-year estimates); 14 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county
+      within:
+        state: '23'
+      indicators:
+      - cii_broadband
+      - limited_english_households
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      variables_not_returned: []
+      n_units: 16
+      annotations_emptied: {}
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,C16002_004E,C16002_007E,C16002_010E,C16002_013E,C16002_001E,C16002_004M,C16002_007M,C16002_010M,C16002_013M,C16002_001M
+          for: county:*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-10-07T03:14:40.444124+00:00'
+  - dataset: acs_county_2024
+    field: fetched_at
+    value: '''2026-10-07T03:14:40.445507+00:00'''
+    reason: Cache timestamp updated

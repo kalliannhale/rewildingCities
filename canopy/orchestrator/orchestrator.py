@@ -197,7 +197,25 @@ class Orchestrator:
 
         self.experiment = parse_experiment(experiment_path)
 
-        manifest_path = self.experiment_path.parent / self.experiment.manifest_path
+        # Two conventions for `manifest:` exist in the garden and both are
+        # reasonable: relative to the experiment (../manifest.yml) and
+        # relative to the project root (plots/<plot>/manifest.yml). Resolving
+        # only the first made every composed experiment unrunnable. Try both,
+        # and fail naming both paths rather than the one that happened to be
+        # tried. History is read forward here as elsewhere. C-61.
+        declared = Path(self.experiment.manifest_path)
+        candidates = [self.experiment_path.parent / declared]
+        if not declared.is_absolute():
+            candidates.append(self.project_root / declared)
+        else:
+            candidates.insert(0, declared)
+
+        manifest_path = next((c for c in candidates if c.is_file()), None)
+        if manifest_path is None:
+            raise FileNotFoundError(
+                "could not find the manifest this experiment declares.\n"
+                f"  declared: {self.experiment.manifest_path}\n"
+                + "".join(f"  looked in: {c}\n" for c in candidates))
         self.manifest = parse_manifest(manifest_path)
 
         if output_dir:

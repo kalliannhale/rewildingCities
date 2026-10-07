@@ -1,0 +1,89 @@
+# ════════════════════════════════════════════════════════════
+# Composed by wonder ~ maine_information_access__ownership_concentration_analysis_4a8f59
+# The door does not lock: this experiment runs as composed so its
+# limits can be discovered through honest provenance, not refused.
+# Steps are a composed draft; the orchestrator validates them.
+# Readiness: ready
+# ════════════════════════════════════════════════════════════
+
+id: maine_information_access__ownership_concentration_analysis_4a8f59
+name: Can people here find out what is happening where they live?
+description: 'Composed by wonder from curiosity ''information_access'' and method
+  ''ownership_concentration_analysis'' for plot ''maine''. The door does not lock:
+  this runs as composed so its limits can be discovered honestly.'
+curiosity:
+  ref: $curiosity-space/information/information_access
+method:
+  ref: $methods/information/ownership_concentration_analysis
+city: maine
+manifest: ../manifest.yml
+choices:
+  concentration_measure: hhi
+  aggregation_unit_level: county
+  outlet_weighting: count
+parameters:
+  target_crs: EPSG:4326
+steps:
+- id: conform_outlets
+  primitive: soil/validate_vector
+  inputs:
+    features: $manifest.formal_outlet
+  outputs:
+    validated: outlets_validated
+  params: {}
+- id: conform_outlets_frame
+  primitive: soil/reproject_vector
+  inputs:
+    features: $steps.conform_outlets.validated
+  outputs:
+    reprojected: outlets_reprojected
+  params:
+    target_crs: EPSG:4326
+- id: conform_aggregation_unit
+  primitive: soil/validate_vector
+  inputs:
+    features: $manifest.governance_unit_county
+  outputs:
+    validated: aggregation_unit_validated
+  params: {}
+- id: conform_aggregation_unit_frame
+  primitive: soil/reproject_vector
+  inputs:
+    features: $steps.conform_aggregation_unit.validated
+  outputs:
+    reprojected: aggregation_unit_reprojected
+  params:
+    target_crs: EPSG:4326
+- id: conform_institutions
+  primitive: soil/validate_vector
+  inputs:
+    features: $manifest.institutional_node
+  outputs:
+    validated: institutions_validated
+  params: {}
+- id: conform_institutions_frame
+  primitive: soil/reproject_vector
+  inputs:
+    features: $steps.conform_institutions.validated
+  outputs:
+    reprojected: institutions_reprojected
+  params:
+    target_crs: EPSG:4326
+- id: conform_access
+  primitive: soil/validate_raster
+  inputs:
+    features: $manifest.access_infrastructure
+  outputs:
+    validated: access_validated
+  params: {}
+- id: analyze
+  primitive: roots/analysis
+  description: ''
+  inputs:
+    outlets: $steps.conform_outlets_frame.reprojected
+    aggregation_unit: $steps.conform_aggregation_unit_frame.reprojected
+    institutions: $steps.conform_institutions_frame.reprojected
+    access: $steps.conform_access.validated
+  outputs:
+    ownership_concentration: ownership_concentration
+  params: {}

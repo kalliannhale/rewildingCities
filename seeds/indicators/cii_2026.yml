@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/cii_2026.yml
+# The Civic Information Index, 2026 edition, as we replicate it.
+#
+# Listening Post Collective (Internews) and the Information Futures Lab
+# (Brown). These entries are CII's definitions, recovered from the 2026
+# report's Methodology section and verified against the published data
+# file. Where we depart from CII, the departure lives in rewilding.yml, so
+# the difference is a diff between two files rather than an edit to one.
+#
+# Vintage is not declared here. One definition spans many releases; the year
+# belongs to the plot manifest's acquisition. CII 2026 used ACS 2020-2024.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+
+  cii_broadband:
+    name: Households with broadband of any type
+    defined_by: cii_2026
+    measures: household_broadband_subscription
+    unit: percent_of_households
+    derivation:
+      kind: ratio
+      numerator: [B28002_004E]
+      denominator: B28002_001E
+      scale: 100
+    direction: higher_is_better
+    aggregation: population_weighted_mean
+    weight_by: B28002_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of households with broadband of any type
+    rationale: >
+      Measures subscription, which is adoption, not availability: whether a
+      household pays for a connection, not whether one was built within
+      reach. Any standard about speed or coverage cannot be assessed against
+      this indicator. Verified exact against CII 2026 for all 16 Maine
+      counties (max abs difference 0, correlation 1) at ACS 2020-2024.

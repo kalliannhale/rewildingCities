@@ -33,6 +33,12 @@ class AcquisitionResult:
     auth_instructions: str | None = None
     requires_manual: bool = False
     manual_instructions: str | None = None
+    # A structured record of what was actually fetched: the vintage, the
+    # variables, the request (never a credential), counts of anything
+    # emptied or refused. `message` is for a person reading a log; this is
+    # for the system, which cannot read a sentence. Carried into the
+    # manifest changelog by the resolution engine.
+    provenance: dict = field(default_factory=dict)
 
 
 @dataclass

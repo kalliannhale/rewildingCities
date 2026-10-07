@@ -1,0 +1,90 @@
+# ════════════════════════════════════════════════════════════
+# plots/maine/experiments/maine_counties.yml
+# ════════════════════════════════════════════════════════════
+# Conform Maine's county source into administrative units.
+#
+# The source is arc-derived geometry, not administrative units: 7,196
+# polygons for 16 counties, of which 7,156 are islands. Maine's coast is
+# thousands of islands, each its own polygon, each tagged with its county.
+#
+# This is not tidying. A denominator built from 7,196 polygons divides by
+# the wrong number and every rate computed from it inherits the error with
+# clean provenance. The dissolve is a declared reduction and the envelope
+# records what it cost.
+#
+# The filter is semantic, not an optimization: ISLAND='n' keeps mainland
+# polygons (40 of them, spread across all 16 counties because coastal
+# counties are split by tidal water), LAND='y' drops the 17 water polygons
+# that are legally within a county but are not land. Each exclusion is
+# reported by the primitive with a count.
+#
+# CNTYCODE is carried because it IS the Census county FIPS, zero-padded:
+# '01' corresponds to GEOID '23001', verified across all sixteen. That makes
+# a join to any national dataset derivable rather than a name match.
+#
+# The town grain (924 civil divisions, 463 self-governing and 461 under
+# state land-use jurisdiction) is a separate experiment and a real analytical
+# choice, not an oversight. See D-12/D-13.
+# ════════════════════════════════════════════════════════════
+
+id: maine_counties
+name: Maine counties, conformed
+description: >
+  Dissolve Maine's arc-derived county polygons into the sixteen counties, so
+  an ownership-concentration analysis has a denominator that counts the right
+  number of places and carries the FIPS code that joins it to the nation.
+
+curiosity:
+  ref: $curiosity-space/information/information_access
+method:
+  ref: $methods/information/ownership_concentration_analysis
+
+city: maine
+manifest: ../manifest.yml
+
+choices:
+  concentration_measure: hhi
+  aggregation_unit_level: county
+  outlet_weighting: count
+
+parameters:
+  target_crs: "EPSG:4326"
+
+steps:
+
+  - id: validate_counties
+    primitive: soil/validate_vector
+    version: "1.0.0"
+    description: "Diagnose the county source ~ CRS, validity, geometry types"
+    inputs:
+      features: $manifest.governance_unit_county
+    outputs:
+      checked: governance_unit
+    params: {}
+
+  - id: repair_counties
+    primitive: soil/repair_geometry
+    version: "1.0.0"
+    description: "st_make_valid before the union; s2 refuses invalid loops"
+    inputs:
+      features: $steps.validate_counties.checked
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: dissolve_counties
+    primitive: soil/dissolve_by_field
+    version: "1.0.0"
+    description: "7,196 arc polygons -> 16 counties, mainland land only"
+    inputs:
+      features: $steps.repair_counties.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: COUNTY
+      filters:
+        ISLAND: "n"
+        LAND: "y"
+      keep_fields:
+        - CNTYCODE
+      drop_blank: true

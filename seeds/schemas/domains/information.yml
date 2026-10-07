@@ -1,12 +1,18 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # seeds/schemas/domains/information.yml
-# Module vocabulary: information-ecosystem mapping (the Maine project).
-# Merged on top of the base file. Loader stamps module = "information".
+# Domain vocabulary: information-ecosystem mapping (the Maine project).
+# Merged on top of the base file. Loader stamps domain = "information".
 #
 # Every type here previously had an empty `format:` (which crashed the loader,
 # since format is required). Formats are assigned by category. The
 # resolution_tier values are advisory metadata until an exposure gate exists
 # to enforce them.
+#
+# Indicators are NOT types. A semantic type names a kind of artifact; what an
+# indicator measures, in what unit, which direction is better, and how it
+# composes across units are declared once per indicator in seeds/indicators/.
+# Two types carry every indicator: indicator_source (the raw published values
+# a derivation reads) and indicator_values (the derived measurements).
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -37,7 +43,36 @@ types:
   access_infrastructure:
     category: raster
     format: tiff
-    description: Broadband, cell, cable coverage.
+    description: >
+      Broadband, cell and cable AVAILABILITY as a coverage surface: whether
+      infrastructure reaches a place, not whether anyone there subscribes.
+      Household subscription (ACS B28002) is adoption, a different claim, and
+      lives in indicator_values via the indicator registry. Provider-reported
+      sources such as the FCC National Broadband Map overstate availability.
+    resolution_tier: public
+
+  # ----- tabular: indicators -----
+
+  indicator_source:
+    category: tabular
+    format: parquet
+    description: >
+      Raw published values that an indicator derivation reads, one row per
+      unit: ACS estimate and margin-of-error columns, or a published table
+      such as County Health Rankings. Input to a claim, not yet a claim.
+      (csv is also accepted at I/O, as acquisition caches are csv by
+      declaration; parquet is canonical.)
+    resolution_tier: public
+
+  indicator_values:
+    category: tabular
+    format: parquet
+    description: >
+      Derived indicator measurements, one row per unit and indicator: the
+      estimate, its margin of error where the source publishes one, and the
+      registry entry that produced it. Measurements from different
+      authorities about the same unit and indicator are held side by side,
+      never averaged.
     resolution_tier: public
 
   # ----- tabular -----
@@ -52,7 +87,7 @@ types:
     category: tabular
     format: parquet
     description: Demographics, rurality, language, civic participation.
-    resolution_tier: custom   # potentially public; unit-level public-source aggregate. Field-level sensitivity deferred to per-field tiers. FLAG for review.
+    resolution_tier: custom   # potentially public; unit-level public-source aggregate. Field-level sensitivity deferred to per-field tiers. FLAG for review. Overlaps indicator_values; candidate to retire the same way.
 
   information_sufficiency:
     category: tabular

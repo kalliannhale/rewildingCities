@@ -440,12 +440,23 @@ class ResolutionEngine:
                         blocked.append({**entry, "reason": resolution.status,
                                         "detail": resolution.message})
 
+        # The commit's result is reported, never discarded: a manifest that
+        # failed to record an acquisition would otherwise say `available:
+        # false` about data sitting on disk, and nobody would know why.
+        manifest_update = None
         if transaction and transaction.has_changes:
-            transaction.commit()
+            tx_result = transaction.commit()
+            manifest_update = {
+                "success": tx_result.success,
+                "changes_applied": tx_result.changes_applied,
+                "changes_failed": list(tx_result.changes_failed),
+                "error": tx_result.error,
+            }
 
         return {
             "plot": self.manifest.city_id,
             "dry": dry,
+            "manifest_update": manifest_update,
             "requested": list(semantic_types),
             "present": present,
             "acquired_unconformed": acquired_unconformed,
@@ -696,7 +707,8 @@ class ResolutionEngine:
                 # Queue manifest update
                 if transaction:
                     reason = f"Acquired via {result.message}"
-                    transaction.set_available(dataset_name, True, reason)
+                    transaction.set_available(dataset_name, True, reason,
+                                              provenance=result.provenance or None)
                     transaction.update_cache_timestamp(dataset_name)
 
                 # Update in-memory

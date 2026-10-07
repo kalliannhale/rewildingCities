@@ -36,6 +36,21 @@ field         <- require_param(args$params, "field")
 # SEMANTIC choices (exclude islands, exclude water) and each one is named
 # in the warnings with how many features it removed.
 filters       <- get_param(args$params, "filters", NULL)
+# attributes to carry through the dissolve. an attribute is only kept if it
+# is CONSTANT within every group ~ carrying a varying one would invent a
+# value for the group, which is the reduction lying about itself. anything
+# requested and varying is refused by name.
+keep_fields   <- as.character(unlist(get_param(args$params, "keep_fields", character(0))))
+# how to merge a group's parts.
+#   union   ~ topological union; dissolves SHARED BOUNDARIES between adjacent
+#             polygons of the same unit. correct, and expensive: with s2 on,
+#             a complex coastline costs real time.
+#   combine ~ merges parts into one multipart geometry WITHOUT resolving
+#             shared boundaries. much faster, and identical in result when a
+#             unit's parts are disjoint (islands share no edges).
+# default is union because it is the honest answer; combine is offered for
+# layers whose parts are known-disjoint, and the choice is recorded.
+merge_method  <- as.character(get_param(args$params, "merge", "union"))
 drop_blank    <- isTRUE(as.logical(get_param(args$params, "drop_blank", TRUE)))
 
 w <- warnings_collector("dissolve_by_field")
@@ -97,18 +112,58 @@ with_primitive_error_handling({
       warnings = w)
   }
 
+  # GROUP ONCE, here, before anything consumes it. the first version of this
+  # re-subset the entire table for every group, and again for every
+  # keep_field: 924 groups x 8,421 features x 6 passes is roughly 46,000
+  # full-table scans, which does not finish. split() builds the row index in
+  # a single pass and everything downstream indexes into it.
+  #
+  # it belongs at the top of the dissolve rather than inside whichever block
+  # was being edited ~ a grouping written into a later block ended up after
+  # its own consumer. L-61.
+  row_index <- split(seq_len(nrow(features)), values)
+  groups <- names(row_index)
+
   # --- the dissolve ---
   geom_col <- attr(features, "sf_column")
-  groups <- unique(trimws(as.character(features[[field]])))
-  geoms <- vector("list", length(groups))
+  all_geom <- sf::st_geometry(features)
+  merge_fn <- if (identical(merge_method, "combine")) sf::st_combine else sf::st_union
 
-  for (i in seq_along(groups)) {
-    part <- features[trimws(as.character(features[[field]])) == groups[i], ]
-    geoms[[i]] <- sf::st_union(sf::st_geometry(part))
+  w$add("info", "dissolve_by_field",
+    sprintf("Merging %d group(s) with st_%s().", length(groups), merge_method))
+
+  geoms <- lapply(row_index, function(rows) merge_fn(all_geom[rows]))
+
+  # which requested attributes are safe to carry: constant within EVERY group
+  carried <- list()
+  varying <- character(0)
+  missing_fields <- setdiff(keep_fields, names(features))
+  if (length(missing_fields) > 0) {
+    w$warn(sprintf("keep_fields not present in the layer and skipped: %s.",
+                   paste(missing_fields, collapse = ", ")))
+  }
+  for (kf in intersect(keep_fields, names(features))) {
+    column <- trimws(as.character(features[[kf]]))
+    values_by_group <- vapply(row_index, function(rows) {
+      vals <- unique(column[rows])
+      if (length(vals) == 1) vals[1] else NA_character_
+    }, character(1))
+    if (anyNA(values_by_group)) {
+      varying <- c(varying, kf)
+    } else {
+      carried[[kf]] <- unname(values_by_group)
+    }
+  }
+  if (length(varying) > 0) {
+    w$warn(sprintf(
+      paste("Requested keep_fields vary WITHIN a unit and were refused: %s.",
+            "Carrying one would invent a value for the group. Dissolve on a",
+            "finer field, or drop the request."),
+      paste(varying, collapse = ", ")))
   }
 
   dissolved <- sf::st_sf(
-    setNames(list(groups), field),
+    c(setNames(list(groups), field), carried),
     geometry = sf::st_sfc(do.call(c, lapply(geoms, function(g) g[[1]])),
                           crs = sf::st_crs(features))
   )
@@ -126,7 +181,7 @@ with_primitive_error_handling({
   # attributes that varied within a group are GONE, and saying so is the
   # point: a reader who expects them back is reading a reduction as a
   # rename.
-  dropped_fields <- setdiff(names(features), c(field, geom_col))
+  dropped_fields <- setdiff(names(features), c(field, names(carried), geom_col))
   if (length(dropped_fields) > 0) {
     w$warn(sprintf(
       paste("Dropped %d attribute(s) that could vary within a unit: %s.",
@@ -145,11 +200,14 @@ with_primitive_error_handling({
       id_field = field,
       spatial_unit = field,
       dissolved_by = field,
+      merge_method = merge_method,
       feature_count_before = n_start,
       feature_count_after = n_end,
       features_after_filters = nrow(features),
       blank_dropped = if (drop_blank) n_blank else 0L,
-      attributes_dropped = as.list(dropped_fields)
+      attributes_dropped = as.list(dropped_fields),
+      attributes_carried = as.list(names(carried)),
+      attributes_refused_varying = as.list(varying)
     )),
     warnings = w
   )
