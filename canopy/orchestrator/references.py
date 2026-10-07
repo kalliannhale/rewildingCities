@@ -13,6 +13,10 @@ class ReferenceResolver:
         $choices.{choice_name} -> value from experiment's choices block
         $parameters.{param_name} -> value from experiment's parameters block
         $steps.{step_id}.{output_name} -> output from a previous step
+        $indicators.{indicator_id} -> an indicator's declaration from the
+            registry (seeds/indicators/), params only. the primitive receives
+            the parsed derivation, so R never reads YAML and a variable code
+            is written in exactly one place. D-33.
     """
     
     # Valid reference patterns
@@ -20,20 +24,26 @@ class ReferenceResolver:
     CHOICES_PATTERN = re.compile(r'^\$choices\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     PARAMETERS_PATTERN = re.compile(r'^\$parameters\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     STEPS_PATTERN = re.compile(r'^\$steps\.([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    INDICATORS_PATTERN = re.compile(r'^\$indicators\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    WEIGHTS_PATTERN = re.compile(r'^\$weights\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     
     # Pattern to detect anything that looks like a reference attempt
     LOOKS_LIKE_REFERENCE = re.compile(r'^\$[a-zA-Z]')
     
     # Valid prefixes for error messages
-    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.")
+    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$indicators.", "$weights.")
     
     def __init__(
         self,
         manifest: Manifest,
-        experiment: Experiment
+        experiment: Experiment,
+        indicator_registry=None,
     ):
         self.manifest = manifest
         self.experiment = experiment
+        # loaded on first use, so an experiment that never names an indicator
+        # never needs the registry to exist. injectable for tests.
+        self._indicator_registry = indicator_registry
         
         # Step outputs populated as steps complete
         self.step_outputs: dict[str, dict[str, str]] = {}
@@ -71,7 +81,9 @@ class ReferenceResolver:
             self.MANIFEST_PATTERN.match(ref) or
             self.CHOICES_PATTERN.match(ref) or
             self.PARAMETERS_PATTERN.match(ref) or
-            self.STEPS_PATTERN.match(ref)
+            self.STEPS_PATTERN.match(ref) or
+            self.INDICATORS_PATTERN.match(ref) or
+            self.WEIGHTS_PATTERN.match(ref)
         )
         
         if not is_valid:
@@ -90,6 +102,9 @@ class ReferenceResolver:
             
             if ref.startswith("$step."):
                 suggestions.append("Did you mean '$steps.' (plural)?")
+
+            if ref.startswith("$indicator."):
+                suggestions.append("Did you mean '$indicators.' (plural)?")
             
             if ref.startswith("$manifest.") and "." in ref[10:]:
                 suggestions.append("$manifest references should be $manifest.{dataset_name} (one level deep)")
@@ -100,7 +115,8 @@ class ReferenceResolver:
                 f"Invalid reference '{ref}'{context_msg}. "
                 f"Starts with '$' but doesn't match valid patterns.{suggestion_text}\n"
                 f"Valid formats: $manifest.{{name}}, $choices.{{name}}, "
-                f"$parameters.{{name}}, $steps.{{step_id}}.{{output}}"
+                f"$parameters.{{name}}, $steps.{{step_id}}.{{output}}, "
+                f"$indicators.{{indicator_id}}, $weights.{{weighting_id}}"
             )
     
     def _check_for_embedded_references(self, value: str, context: str = "") -> None:
@@ -167,6 +183,14 @@ class ReferenceResolver:
                 f"Invalid input reference '{ref}'{context_msg}. "
                 f"$parameters is for params, not inputs. "
                 f"Inputs must reference data: $manifest.{{dataset}} or $steps.{{step}}.{{output}}."
+            )
+        
+        if self.INDICATORS_PATTERN.match(ref) or self.WEIGHTS_PATTERN.match(ref):
+            raise ValueError(
+                f"Invalid input reference '{ref}'{context_msg}. "
+                f"$indicators is for params, not inputs: it names a definition, "
+                f"not data. The data an indicator is derived from is a "
+                f"$manifest.{{dataset}} of type indicator_source."
             )
         
         raise ValueError(
@@ -340,6 +364,16 @@ class ReferenceResolver:
         if match:
             param_name = match.group(1)
             return self._resolve_parameter(param_name, context)
+
+        # Try $indicators.{id}
+        match = self.INDICATORS_PATTERN.match(value)
+        if match:
+            return self._resolve_indicator(match.group(1), context)
+
+        # Try $weights.{id}
+        match = self.WEIGHTS_PATTERN.match(value)
+        if match:
+            return self._resolve_weights(match.group(1), context)
         
         # Check for misuse of $manifest and $steps in params
         if self.MANIFEST_PATTERN.match(value):
@@ -382,6 +416,47 @@ class ReferenceResolver:
         
         return self.experiment.choices[choice_name]
     
+    def _resolve_indicator(self, indicator_id: str, context: str = "") -> dict:
+        """Resolve an indicator reference to its declaration, as plain JSON."""
+        context_msg = f" (in {context})" if context else ""
+        registry = self._indicator_registry
+        if registry is None:
+            from canopy.indicators import IndicatorRegistry
+            from canopy.paths import project_root
+            try:
+                registry = IndicatorRegistry.load(project_root() / "seeds" / "indicators")
+            except (FileNotFoundError, ValueError) as e:
+                raise ValueError(
+                    f"$indicators.{indicator_id}{context_msg} could not be "
+                    f"resolved because the indicator registry did not load: {e}")
+            self._indicator_registry = registry
+        if indicator_id not in registry.all():
+            close = self._find_close_matches(indicator_id, registry.all())
+            suggestion = f" Did you mean: {', '.join(close)}?" if close else ""
+            raise ValueError(
+                f"Unknown indicator '{indicator_id}'{context_msg}. "
+                f"Declared: {', '.join(registry.all())}.{suggestion}")
+        return registry.declaration(indicator_id)
+
+    def _resolve_weights(self, weighting_id: str, context: str = "") -> dict:
+        """Resolve a weighting reference to its declaration, as plain JSON."""
+        context_msg = f" (in {context})" if context else ""
+        from canopy.indicators.weights import WeightsRegistry
+        from canopy.paths import project_root
+        ids = None
+        try:
+            from canopy.indicators import IndicatorRegistry
+            ids = IndicatorRegistry.load(project_root() / "seeds" / "indicators").all()
+        except (FileNotFoundError, ValueError):
+            pass
+        try:
+            reg = WeightsRegistry.load(project_root() / "seeds" / "weights", ids)
+            return reg.declaration(weighting_id)
+        except KeyError as e:
+            raise ValueError(f"{e.args[0]}{context_msg}")
+        except (FileNotFoundError, ValueError) as e:
+            raise ValueError(f"$weights.{weighting_id}{context_msg} could not be resolved: {e}")
+
     def _resolve_parameter(self, param_name: str, context: str = "") -> Any:
         """Resolve a parameter reference."""
         context_msg = f" (in {context})" if context else ""

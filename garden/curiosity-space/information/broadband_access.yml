@@ -1,0 +1,72 @@
+# ============================================================================
+# garden/curiosity-space/information/broadband_access.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: broadband_access
+domain: information
+question: Can households here get online, and do they?
+description: >-
+  Two different claims share the word broadband. Availability is whether a connection
+  was built within reach, which the FCC reports from providers. Adoption is whether
+  a household subscribes, which the Census measures. CII uses adoption. A place
+  where broadband is built and not bought has a different problem from a place where
+  it was never built.
+significance: >-
+  Broadband is how most civic information now arrives. Investment in infrastructure
+  and investment in affordability or digital skills answer different gaps, and only
+  the comparison says which gap a county has.
+sub_questions:
+  subscription:
+    question: What share of households subscribe to broadband of any type?
+    indicated_by:
+    - cii_broadband
+    - cii_pub_broadband
+    interpretation: >-
+      Two authorities, one question: this system's derivation from the Census and
+      CII's published value agree in all sixteen Maine counties at CII's precision.
+  availability:
+    question: Where has fixed or mobile broadband been built?
+    description: >-
+      FCC fixed and mobile broadband by Maine county are in the Press Forward data
+      inventory, not yet planted. Provider-reported availability overstates coverage.
+    interpretation: An upper bound on access, never measured service.
+  built_not_bought:
+    question: Where is broadband available but not subscribed to?
+    depends_on:
+    - subscription
+    - availability
+    interpretation: >-
+      The gap between the two is a question neither source answers alone, and CII
+      cannot ask.
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Derives subscription from Census counts and sets CII's published value beside
+    it. Availability needs the FCC data, not yet planted.
+  sub_questions:
+  - subscription
+related_phenomena:
+- digital_divide
+- affordability
+- provider_reported_coverage
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Uses household broadband subscription of any type as its broadband access indicator
+    (p. 15).
+tags:
+- access
+- broadband
+- news_and_information
+- infrastructure
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

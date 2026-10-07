@@ -13,7 +13,7 @@
 #
 # An entry with a `replicates` block has been verified against CII's
 # published file: every Maine county agrees at the precision CII published,
-# checked with `python -m canopy.indicator_preview compare`. An entry without
+# checked with `python -m canopy.indicators.preview compare`. An entry without
 # one is CII's indicator as we believe it was built, not yet checked. The
 # column name is copied from the file's header, never typed from memory, and
 # a test asserts it is an exact header.
@@ -83,8 +83,9 @@ indicators:
       median also hides the tail. The share of renters paying 30 percent or
       more of income is a different claim, built from B25070, and would read
       a county where a few households are severely burdened very differently.
-      CII places rent burden in two pillars, Health & Opportunity and
-      Environmental Resilience, so it is counted twice in the composite.
+      CII places rent burden in one pillar, Health & Opportunity. An earlier
+      note that it also sat in Environmental Resilience was refuted by CII's
+      own file (CII-13).
       Verified against CII 2026 for all 16 Maine counties at ACS 2020-2024:
       difference 0.0 in every county, at the one decimal CII published.
       CII's column is named "Percent of income spent on rent", which reads as
@@ -116,7 +117,8 @@ indicators:
       vehicles available) was the first hypothesis and the check confirmed
       it: all 16 Maine counties agree at the 8 decimal places CII published
       (max abs difference 4.6e-9, correlation 1) at ACS 2020-2024. B25044
-      (tenure by vehicles available) was the second hypothesis, unneeded. Read with care in rural Maine: a household without a
-      car where nothing is reachable on foot is cut off, and a household
+      (tenure by vehicles available) was the second hypothesis, unneeded.
+      Read with care in rural Maine: a household without a car where nothing
+      is reachable on foot is cut off, and a household
       without a car in central Portland may be choosing well. The indicator
       cannot tell those apart.

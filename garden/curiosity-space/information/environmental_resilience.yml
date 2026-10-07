@@ -1,0 +1,72 @@
+# ============================================================================
+# garden/curiosity-space/information/environmental_resilience.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: environmental_resilience
+domain: information
+question: >-
+  Can people here withstand and recover from environmental hazards, and does information
+  reach them in time?
+description: >-
+  CII's newest pillar holds three indicators: household energy burden, inflation-adjusted
+  disaster damages, and heat wave days. The report is candid that heat wave days
+  are a risk proxy because county outcome data, such as heat-related emergency visits,
+  remain elusive (p. 14), and that walkability is missing. Maine's Department of
+  Public Health tracks fire hazard and preparedness.
+significance: >-
+  CII chose outcomes over risk because the two do not map onto the same places (p.
+  13). Preparedness is an information question: whether warnings and resources reach
+  people before and during a disaster.
+sub_questions:
+  energy_burden:
+    question: What share of income goes to energy?
+    indicated_by:
+    - cii_pub_energy_burden
+  disaster_damages:
+    question: How much damage have natural disasters done?
+    indicated_by:
+    - cii_pub_disaster_damages
+  heat:
+    question: How have temperatures and heat wave days changed?
+    indicated_by:
+    - cii_pub_heat_wave_days
+    interpretation: A risk measure standing in for an outcome, by CII's own account.
+  fire_hazard:
+    question: >-
+      Where is fire hazard high, and is preparedness information reaching those
+      places?
+  walkability:
+    question: Can people get around on foot or by bike?
+    description: Not currently measured by CII (p. 19).
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: Carries CII's three Environmental Resilience indicators.
+  sub_questions:
+  - energy_burden
+  - disaster_damages
+  - heat
+related_phenomena:
+- climate_resilience
+- energy_poverty
+- risk_versus_outcome
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Introduces the pillar's three indicators and names its risk proxy and missing
+    walkability measure (pp. 13-14, 19, 25).
+tags:
+- environment
+- resilience
+- preparedness
+- climate
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

@@ -1,0 +1,80 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/weights/cii_2026_equal_chips.yml
+# Equal chips across CII's five pillars. NOT CII's weights.
+#
+# CII weights each pillar by an Advisory Group "chip" allocation: members
+# spread 10 × (indicators in the pillar) chips within each pillar, and 50 chips
+# across the five. The allocation is not published, so CII's pillar and
+# overall indices cannot be reproduced exactly from public artifacts.
+#
+# This file follows CII's chip budget exactly and spends it evenly: 10 chips
+# per indicator, 10 per pillar. It is a declared, hashed artifact like any
+# other, so a Maine community's own allocation can sit beside it as a second
+# file, and every index records which allocation produced it.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: cii_2026_equal_chips
+name: Equal chips across CII's five pillars
+defined_by: rewildingcities
+budget: cii_advisory_rule
+is_publishers_weighting: false
+
+pillars:
+
+  news_information:
+    name: News and Information Index
+    chips: 10
+    components:
+      cii_pub_news_outlets: 10
+      cii_pub_journalist_equivalents: 10
+      cii_pub_broadband: 10
+      cii_pub_library_visits: 10
+      cii_pub_public_good_facebook_pages: 10
+      cii_pub_language_other_than_english: 10
+      cii_pub_literacy: 10
+
+  civic_participation:
+    name: Civic Participation Index
+    chips: 10
+    components:
+      cii_pub_voter_turnout: 10
+      cii_pub_active_voters: 10
+      cii_pub_social_associations: 10
+      cii_pub_volunteer_rate: 10
+      cii_pub_charitable_agi: 10
+      cii_pub_census_response: 10
+
+  equity_justice:
+    name: Equity & Justice Index
+    chips: 10
+    components:
+      cii_pub_life_expectancy: 10
+      cii_pub_medical_debt: 10
+      cii_pub_disconnected_youth: 10
+      cii_pub_high_poverty_neighborhoods: 10
+
+  health_opportunity:
+    name: Health & Opportunity Index
+    chips: 10
+    components:
+      cii_pub_unemployment: 10
+      cii_pub_mental_health_providers: 10
+      cii_pub_uninsured: 10
+      cii_pub_bachelors_or_higher: 10
+      cii_pub_rent_burden: 10
+      cii_pub_food_access: 10
+      cii_pub_no_vehicle: 10
+
+  # three indicators, not five. an earlier note held that unemployment and
+  # rent burden also sat here; CII's own file refutes it (CII-13). in all 13
+  # multi-gap counties missing rent burden, CII still publishes this index,
+  # which is impossible if rent burden were a member, and these three alone
+  # reproduce CII's ordering at Spearman 0.9993 on equal weights. with this,
+  # every one of the 27 indicators sits in exactly one pillar.
+  environmental_resilience:
+    name: Environmental Resilience Index
+    chips: 10
+    components:
+      cii_pub_energy_burden: 10
+      cii_pub_disaster_damages: 10
+      cii_pub_heat_wave_days: 10

@@ -1,0 +1,66 @@
+# ============================================================================
+# garden/curiosity-space/information/structural_barriers.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: structural_barriers
+domain: information
+question: What structural barriers stand between people here and civic life?
+description: >-
+  CII's Equity and Justice pillar: life expectancy, medical debt, disconnected youth,
+  and the share of people living in census tracts with poverty of 30 percent or
+  more. Medical debt is the report's clearest example of policy moving a measure,
+  falling almost everywhere and rising in Alaska (p. 28). CII names the cost of
+  voting and people working two or more jobs as missing.
+significance: >-
+  A barrier is a cause, not a deficit in the person facing it. Measuring barriers
+  points action at systems.
+sub_questions:
+  life_expectancy:
+    question: How long do people here live?
+    indicated_by:
+    - cii_pub_life_expectancy
+  medical_debt:
+    question: What share carry medical debt in collections?
+    indicated_by:
+    - cii_pub_medical_debt
+  concentrated_poverty:
+    question: What share live in high-poverty neighbourhoods?
+    indicated_by:
+    - cii_pub_high_poverty_neighborhoods
+    interpretation: >-
+      Defined at 30 percent tract poverty in the report (p. 17); the CII website's
+      source table says 20. Which one the data used is unresolved.
+  two_or_more_jobs:
+    question: How many people work two or more jobs?
+    description: Not currently measured by CII (p. 17).
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: Carries CII's Equity and Justice indicators.
+  sub_questions:
+  - life_expectancy
+  - medical_debt
+  - concentrated_poverty
+related_phenomena:
+- structural_determinants
+- medical_debt
+- concentrated_poverty
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Defines high-poverty neighbourhoods at a 30 percent tract poverty rate (p. 17)
+    and documents medical debt change (p. 28).
+tags:
+- equity
+- barriers
+- structural_determinants
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

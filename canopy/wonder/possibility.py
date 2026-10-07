@@ -52,6 +52,12 @@ def _root() -> Path:
     return project_root()
 
 
+# an index lists the documents in a folder; it is not one of them. both
+# loaders swept every *.yml, so curiosity-space/index.yml was loaded as a
+# curiosity named "index" (WON-5).
+_NOT_DOCUMENTS = {"index.yml"}
+
+
 def _load_dir(folder: Path) -> dict[str, dict]:
 
     out: dict[str, dict] = {}
@@ -60,6 +66,8 @@ def _load_dir(folder: Path) -> dict[str, dict]:
         return out
     
     for f in sorted(folder.rglob("*.yml")):
+        if f.name in _NOT_DOCUMENTS:
+            continue
         try:
             doc = yaml.safe_load(f.read_text()) or {}
         except Exception:
@@ -128,26 +136,43 @@ def present_holdings(loam, plot: str, holdings=None) -> dict[str, str]:
     return out
 
 
+def method_id_of(entry) -> str | None:
+    """the method id an entry in `compatible_methods` names, in either shape.
+
+    curiosity schema v1.1 writes `{ref: $methods/<domain>/<id>, fit, ...}`;
+    older curiosities write a bare string, `information/<id>`. str() of the
+    mapping, split on "/", used to yield a fragment of a dict's repr, so the
+    object form never matched anything (WON-2). ~
+    """
+    ref = entry.get("ref") if isinstance(entry, dict) else entry
+    if not isinstance(ref, str) or not ref.strip():
+        return None
+    return ref.strip().rstrip("/").split("/")[-1]
+
+
 def _candidate_methods(curiosity: dict, methods: dict[str, dict]) -> list[dict]:
     """
-    the methods that could answer this curiosity ~ 
-    the ones it names, or, failing an explicit list, 
-    the ones sharing its domain. ~
+    the methods that could answer this curiosity ~ the ones it names.
+
+    three different claims, never read as one (WON-1):
+      ~ `compatible_methods` names methods  -> those methods
+      ~ `compatible_methods: []`            -> none: no method answers this
+        yet, and wonder should say so rather than offer the whole domain
+      ~ the field is absent                 -> every method in the domain
+    a named method that is not in the index is dropped here, by id; the
+    curiosity loader is where an unknown ref should be refused (WON-3). ~
     """
 
+    if "compatible_methods" not in curiosity:
+        dom = curiosity.get("domain")
+        return [m for m in methods.values() if m.get("domain") == dom]
+
     named = []
-
-    for ref in curiosity.get("compatible_methods", []) or []:
-        mid = str(ref).split("/")[-1]
-        if mid in methods:
+    for entry in curiosity.get("compatible_methods") or []:
+        mid = method_id_of(entry)
+        if mid in methods and methods[mid] not in named:
             named.append(methods[mid])
-
-    if named:
-        return named
-    
-    dom = curiosity.get("domain")
-
-    return [m for m in methods.values() if m.get("domain") == dom]
+    return named
 
 
 @dataclass

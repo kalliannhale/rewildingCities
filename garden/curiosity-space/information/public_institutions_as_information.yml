@@ -1,0 +1,53 @@
+# ============================================================================
+# garden/curiosity-space/information/public_institutions_as_information.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: public_institutions_as_information
+domain: information
+question: Which public institutions carry civic information where news does not?
+description: >-
+  Libraries, town offices, schools and government sites carry information work that
+  no outlet census records. A county with no paper but a staffed library, a clerk
+  who posts minutes and good broadband is differently situated from one with none
+  of the four. Maine's Department of Public Health maps town offices and libraries.
+significance: >-
+  Without this, a news desert reads as an information vacuum when institutions may
+  be carrying the load, and investment flows past what already works.
+sub_questions:
+  library_use:
+    question: How much do people here use their libraries?
+    indicated_by:
+    - cii_pub_library_visits
+  institutional_reach:
+    question: >-
+      Where are libraries, town offices and schools, and who lives far from all
+      of them?
+  originate_or_host:
+    question: Which institutions publish local information, and which only host
+      it?
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: Carries CII's library visits as published.
+  sub_questions:
+  - library_use
+related_phenomena:
+- civic_infrastructure
+- information_hubs
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: Counts library utilisation within News and Information (p. 15).
+tags:
+- libraries
+- institutions
+- access
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

@@ -1,0 +1,73 @@
+# ============================================================================
+# garden/curiosity-space/information/voting_participation.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: voting_participation
+domain: information
+question: How do people here take part in elections, and who is counting?
+description: >-
+  Turnout and registration measure different things and, CII found, often do not
+  move together, especially in some key Black and Hispanic/Latino communities (p.
+  26). CII changed its turnout source to the Election Assistance Commission for
+  this edition, and asks of every county: what do you know about voting participation,
+  and who is counting? Maine's Secretary of State publishes registered and enrolled
+  voters, a second authority for the same counties.
+significance: >-
+  Where many are registered and few vote, the barrier is not registration. Where
+  turnout data from two authorities disagree, the disagreement is information about
+  the counting itself.
+sub_questions:
+  turnout:
+    question: What share of the citizen voting-age population voted?
+    indicated_by:
+    - cii_pub_voter_turnout
+  registration:
+    question: What share are registered?
+    indicated_by:
+    - cii_pub_active_voters
+  registered_not_voting:
+    question: Where are registered voters least likely to vote?
+    depends_on:
+    - turnout
+    - registration
+  two_authorities:
+    question: Do the EAC's figures and Maine's Secretary of State agree?
+    description: >-
+      The Maine Registered and Enrolled Voters 2026 file is in the inventory, not
+      yet planted.
+  cost_of_voting:
+    question: How hard is it to vote here?
+    description: Listed by CII as not currently measured (p. 17).
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Carries CII's turnout and registration figures, from the Election Assistance
+    Commission.
+  sub_questions:
+  - turnout
+  - registration
+  - registered_not_voting
+related_phenomena:
+- electoral_participation
+- voter_registration
+- measurement_authority
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Adds voter registration and observes it does not consistently track turnout
+    (pp. 14, 26).
+tags:
+- participation
+- elections
+- civic_participation
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

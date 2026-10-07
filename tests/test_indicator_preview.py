@@ -10,7 +10,7 @@ import textwrap
 
 import pytest
 
-from canopy import indicator_preview as ip
+from canopy.indicators import preview as ip
 from canopy.indicators import IndicatorRegistry
 
 
@@ -57,7 +57,7 @@ def manifest(sources: dict) -> str:
 def repo(tmp_path, monkeypatch):
     """a tiny repo: the real indicator seeds, one test plot, a CSV cache."""
     from pathlib import Path
-    real_seeds = Path(ip.__file__).resolve().parents[1] / "seeds" / "indicators"
+    real_seeds = Path(__file__).resolve().parents[1] / "seeds" / "indicators"
     monkeypatch.setattr(ip, "REPO", tmp_path)
     monkeypatch.setattr(ip, "INDICATORS_DIR", real_seeds)
     monkeypatch.setattr(ip, "PLOTS_DIR", tmp_path / "plots")
@@ -202,7 +202,10 @@ def test_two_sources_is_a_choice_not_a_lookup(repo):
 def test_plot_summary_names_what_is_and_is_not_here(repo):
     s = ip.plot_summary("test", ip.load_registry())
     assert s["derivable"] == ["cii_broadband", "cii_no_vehicle", "cii_rent_burden"]
-    assert s["in_registry_not_declared_here"] == ["limited_english_households"]
+    # what matters is that undeclared indicators are named, not how many the
+    # registry happens to hold today (it grew by 27 with cii_2026_published)
+    assert "limited_english_households" in s["in_registry_not_declared_here"]
+    assert not set(s["derivable"]) & set(s["in_registry_not_declared_here"])
     assert "_path" not in s["sources"][0]
 
 
@@ -324,3 +327,52 @@ def test_a_missing_published_file_is_refused_by_name(repo, tmp_path):
         ip.compare("test", "cii_broadband", missing, "FIPS")
     assert e.value.kind == "not_found"
     assert str(missing) in e.value.message
+
+
+def test_compare_percentile_reads_the_percentile_column(repo, tmp_path):
+    """23005 and 23029 both derive to 83.333...%, so they tie, share the
+    average rank, and both stand at 100 under CII's rule. 23999 has a zero
+    denominator, so it has no value and no standing."""
+    published = tmp_path / "cii.csv"
+    published.write_text(
+        "FIPS,Percent of households with broadband,Percent of households with broadband percentile\n"
+        "23005,83.3333333,100\n"
+        "23029,83.3333333,100\n"
+        "23999,,\n")
+    c = ip.compare("test", "cii_broadband", published, "FIPS", percentile=True)
+    assert c["published_column"] == "Percent of households with broadband percentile"
+    assert c["compared"] == "percentile"
+    assert c["reference_population"]["n"] == 2
+    assert c["summary"]["agree_at_published_precision"] == 2
+
+
+def test_a_fixed_width_column_is_judged_at_its_implied_digits(repo, tmp_path):
+    """PRV-4. CII writes percentiles ten characters wide: 92.3664122 at 7
+    decimals, 5.08905852 at 8. a short row dropped trailing zeros, so it is
+    held to the digits a full-width rendering would have had."""
+    ours = (1000 / 1200) * 100
+    published = tmp_path / "cii.csv"
+    published.write_text(
+        "FIPS,Percent of households with broadband\n"
+        f"23005,{ours:.7f}\n"
+        f"23029,{ours:.7f}\n"
+        "23031,12.3456789\n"
+        "23033,5.12345678\n")
+    c = ip.compare("test", "cii_broadband", published, "FIPS")
+    assert c["summary"]["precision_rule"] == "fixed_width"
+    assert c["summary"]["column_width"] == 10
+    assert c["summary"]["agree_at_published_precision"] == 2
+
+
+def test_a_real_difference_still_differs_under_fixed_width(repo, tmp_path):
+    ours = (1000 / 1200) * 100
+    published = tmp_path / "cii.csv"
+    published.write_text(
+        "FIPS,Percent of households with broadband\n"
+        f"23005,{ours + 1e-6:.7f}\n"
+        f"23029,{ours:.7f}\n"
+        "23031,12.3456789\n"
+        "23033,5.12345678\n")
+    rows = {r["geoid"]: r for r in ip.compare("test", "cii_broadband", published, "FIPS")["rows"]}
+    assert not rows["23005"]["agrees_at_published_precision"]
+    assert rows["23029"]["agrees_at_published_precision"]

@@ -1,0 +1,66 @@
+# ============================================================================
+# garden/curiosity-space/information/civic_education.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: civic_education
+domain: information
+question: What stands between people here and the civic knowledge they need?
+description: >-
+  Literacy, schooling and youth connection to school or work shape whether information
+  can be used once it arrives. School districts are the unit civic education happens
+  in, and the Census publishes poverty estimates by district (SAIPE), which are
+  in the inventory. CII names civic education and civic attitudes as not currently
+  measured.
+significance: >-
+  Information that cannot be read or acted on does not inform. Districts, not counties,
+  are where an intervention in civic education would land.
+sub_questions:
+  literacy:
+    question: What is the average adult literacy score?
+    indicated_by:
+    - cii_pub_literacy
+  attainment:
+    question: What share of adults hold a bachelor's degree or higher?
+    indicated_by:
+    - cii_pub_bachelors_or_higher
+  disconnected_youth:
+    question: What share of 16 to 19 year olds are neither working nor in school?
+    indicated_by:
+    - cii_pub_disconnected_youth
+  school_district_poverty:
+    question: How does child poverty vary across Maine's school districts?
+    description: >-
+      SAIPE 2024 school district estimates, in the inventory. A finer grain than
+      CII's county.
+  civic_education_and_attitudes:
+    question: Do schools here teach civics, and how do people regard civic life?
+    description: Not currently measured by CII (p. 16).
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: Carries CII's literacy, attainment and disconnected youth figures.
+  sub_questions:
+  - literacy
+  - attainment
+  - disconnected_youth
+related_phenomena:
+- civic_literacy
+- educational_opportunity
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Lists civic education and civic attitudes as not currently measured (p. 16).
+tags:
+- education
+- barriers
+- youth
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

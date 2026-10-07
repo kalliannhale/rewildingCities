@@ -1,0 +1,128 @@
+# ============================================================================
+# garden/methods/information/cii_indicator_values.yml
+# ============================================================================
+# a method is HOW you might answer a curiosity, with its choice points named
+# in the open and its data needs declared honestly ~ including what the
+# absence of each datum costs the answer. the teaching is the tool: the words
+# written here are what wonder says to a person. ~
+# ============================================================================
+
+id: cii_indicator_values
+domain: information
+name: "Civic Information Indicators from Published Sources"
+
+description: >
+  Derives civic information indicators from the raw counts their publishers
+  release, one declaration at a time. Each indicator is defined once in
+  seeds/indicators/: which numerator over which denominator, at what scale,
+  or which published value passes through untouched. This method applies
+  those definitions to an acquisition and records, on every value, which
+  definition produced it and from which release.
+
+  It then places each unit among a declared reference population: a
+  direction-adjusted z-score and CII's percentile, whose rule was recovered
+  from CII's own published file. A standing is relative. It says how a unit
+  compares, never whether its value is enough. This is the first stage of
+  the Civic Information Index, not the index: nothing here imputes, weights
+  or composes, because CII's weights are not published. Three of CII's
+  indicators derived this way agree with CII's published file in all sixteen
+  Maine counties at the precision CII published.
+
+requires_data:
+  - name: source
+    type: tabular
+    semantic_types: [indicator_source]
+    critical: true
+    role: >
+      Raw published estimates, one row per unit, carrying every variable the
+      chosen indicators need and their margins of error. The acquisition
+      names indicators, not variable codes, so it fetches what the registry
+      says each one needs.
+    uncertainty_without: >
+      Nothing to derive from. The method cannot run.
+
+choices:
+  sd_convention:
+    options: [sample, population]
+    default: sample
+    description: >
+      Whether the z-score's standard deviation divides by n - 1 or by n. CII
+      does not publish z-scores, so its convention cannot be recovered; the
+      percentile, which CII does publish, is unaffected by this choice. At
+      three thousand counties the two differ by under 0.02 percent.
+
+  reference_population:
+    options: [nation_50_states_dc, plot_only]
+    default: nation_50_states_dc
+    description: >
+      Who a unit is ranked against. CII ranks every county against the
+      nation's 3 144. Ranking Maine's sixteen against each other answers a
+      different question under the same name: a county can be last in Maine
+      and in the top quarter nationally.
+
+  aggregation_unit_level:
+    options: [county, tract]
+    default: county
+    description: >
+      The grain the source was acquired at, which is the grain every value
+      describes. A county figure averages over places a tract figure would
+      separate; tract estimates carry much wider margins of error. Neither
+      is more truthful in general; they answer different questions.
+
+requires_primitives:
+  - roots/derive_indicator
+  - roots/standardize_indicator
+
+produces:
+  semantic_type: indicator_standings
+  data_category: tabular
+  description: >
+    One row per unit and indicator: the value, its oriented z-score and CII
+    percentile against the declared population, or the reason it has none.
+    The intermediate indicator_values carry each value's margin of error,
+    empty reason, authority and vintage.
+
+interpretation: >
+  A value is a measurement of one thing, defined one way, at one vintage. A
+  ratio's margin of error is not yet derived and is marked so; read small
+  counties with that in mind. Broadband here is subscription, not
+  availability. Rent burden is a median for renters paying cash rent. A
+  household without a vehicle is cut off in one place and choosing well in
+  another, and the number cannot tell which. Ranking these values against
+  each other is a separate, later step, and a relative rank cannot say
+  whether any county's value is sufficient.
+
+# ── how this method runs ────────────────────────────────────────────────────
+# a recipe: the method's own steps. compose fills the compose-time references
+# ($requires, $curiosity, $source) from the question and the ground, and
+# writes them into the experiment as plain values. $choices and $steps are
+# left for the orchestrator. see canopy/wonder/recipe.py.
+recipe:
+  - id: derive
+    primitive: roots/derive_indicator
+    description: Indicator values from the source, one declaration at a time
+    inputs:
+      source: $requires.source
+    outputs:
+      values: indicator_values
+    params:
+      indicators: $curiosity.indicated_by
+      spatial_unit: $choices.aggregation_unit_level
+      time: $source.vintage
+      authority: $source.authority
+      unit_column: $source.unit_column
+      unit_pad: $source.unit_pad
+      name_column: $source.name_column
+      joins_to: governance_unit
+
+  - id: standardize
+    primitive: roots/standardize_indicator
+    description: Each unit placed among the source's reference population
+    inputs:
+      values: $steps.derive.values
+    outputs:
+      standings: indicator_standings
+    params:
+      indicators: $curiosity.indicated_by
+      sd: $choices.sd_convention
+      exclude_state_fips: ["72"]

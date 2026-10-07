@@ -1,0 +1,77 @@
+# ============================================================================
+# garden/curiosity-space/information/community_connection.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: community_connection
+domain: information
+question: Do people here come together, give, and volunteer?
+description: >-
+  Membership associations, volunteering and charitable giving are how a community
+  acts outside government. CII's volunteering figure is a state value, labelled
+  in the report as the percent of state residents and in the data as a county value:
+  34.9 in every Maine county. Belonging and power-building organisations, which
+  CII names as missing, may matter more.
+significance: >-
+  Ranking counties on a state value separates them on a difference that does not
+  exist. Knowing which participation measures are truly local decides which can
+  guide local action.
+sub_questions:
+  associations:
+    question: How many membership associations per 10 000 people?
+    indicated_by:
+    - cii_pub_social_associations
+  volunteering:
+    question: What share volunteer?
+    indicated_by:
+    - cii_pub_volunteer_rate
+    interpretation: >-
+      State-level. Every county in a state shares one value; a county comparison
+      within a state is meaningless.
+  giving:
+    question: What share of income goes to charitable giving?
+    indicated_by:
+    - cii_pub_charitable_agi
+  census_response:
+    question: What share responded to the 2020 Census themselves?
+    indicated_by:
+    - cii_pub_census_response
+  belonging:
+    question: Do people feel they belong here?
+    description: Not currently measured by CII (p. 16).
+  power_building:
+    question: Where are the organisations building community power?
+    description: Not currently measured by CII (p. 16).
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Carries CII's association, giving, volunteering and census response figures,
+    with volunteering marked state-level.
+  sub_questions:
+  - associations
+  - volunteering
+  - giving
+  - census_response
+related_phenomena:
+- social_capital
+- ecological_fallacy
+- mutual_aid
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Defines volunteering as the percent of state residents who formally volunteered
+    (p. 16).
+tags:
+- participation
+- connection
+- civic_participation
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

@@ -1,0 +1,518 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/cii_2026_published.yml
+# The Civic Information Index's 27 indicators as CII PUBLISHED them.
+#
+# Passthroughs, with CII itself as the authority: each value is the number in
+# CII's 2026 data file, unchanged. They exist so CII's full methodology
+# (imputation needs all 27; pillars average them) can run inside this system
+# today, while providers for the original sources are built one by one.
+#
+# Beside them sit this system's own derivations from the Census of three of
+# the same indicators (cii_broadband, cii_rent_burden, cii_no_vehicle), which
+# agree with these at CII's precision. `measures` is shared, so
+# registry.measuring() returns both: two authorities, side by side, never
+# averaged.
+#
+# Generated from the published file's header, so no column name was typed by
+# hand (L-69). Directions are the 12 reversals verified by CII-8. Aggregation
+# is `none` throughout: how CII built each rate is not documented, so nothing
+# here claims a rule for combining them across units.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+  cii_pub_news_outlets:
+    name: Total news outlets
+    defined_by: cii_2026
+    measures: news_outlets
+    unit: count
+    derivation:
+      kind: passthrough
+      column: Total news outlets
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Total news outlets
+  cii_pub_journalist_equivalents:
+    name: Local Journalist Equivalent per 100,000 people
+    defined_by: cii_2026
+    measures: journalist_equivalents
+    unit: per_100000_people
+    derivation:
+      kind: passthrough
+      column: Local Journalist Equivalent per 100,000 people
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Local Journalist Equivalent per 100,000 people
+    rationale: CII's published values are rounded to 8 decimals while its percentiles
+      were computed before rounding (CII-9). Ties in this column may not be ties.
+  cii_pub_broadband:
+    name: Percent of households with broadband
+    defined_by: cii_2026
+    measures: household_broadband_subscription
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent of households with broadband
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of households with broadband
+  cii_pub_library_visits:
+    name: Library visits per 10,000 population
+    defined_by: cii_2026
+    measures: library_visits
+    unit: per_10000_population
+    derivation:
+      kind: passthrough
+      column: Library visits per 10,000 population
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Library visits per 10,000 population
+  cii_pub_public_good_facebook_pages:
+    name: Public good Facebook pages per 10,000 users
+    defined_by: cii_2026
+    measures: public_good_facebook_pages
+    unit: per_10000_users
+    derivation:
+      kind: passthrough
+      column: Public good Facebook pages per 10,000 users
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Public good Facebook pages per 10,000 users
+  cii_pub_language_other_than_english:
+    name: Percent who speak a language other than English at home
+    defined_by: cii_2026
+    measures: language_other_than_english
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent who speak a language other than English at home
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent who speak a language other than English at home
+    rationale: CII reverses this, scoring multilingualism as worse civic health.
+      Carried as CII defines it so the index can be replicated; rewildingCities'
+      own departure is limited_english_households in rewilding.yml.
+  cii_pub_literacy:
+    name: Average literacy score
+    defined_by: cii_2026
+    measures: literacy
+    unit: score
+    derivation:
+      kind: passthrough
+      column: Average literacy score
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Average literacy score
+  cii_pub_voter_turnout:
+    name: Voter turnout (percent)
+    defined_by: cii_2026
+    measures: voter_turnout
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Voter turnout (percent)
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Voter turnout (percent)
+  cii_pub_active_voters:
+    name: Active voters (percent)
+    defined_by: cii_2026
+    measures: active_voters
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Active voters (percent)
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Active voters (percent)
+  cii_pub_social_associations:
+    name: Social associations per 10,000 population
+    defined_by: cii_2026
+    measures: social_associations
+    unit: per_10000_population
+    derivation:
+      kind: passthrough
+      column: Social associations per 10,000 population
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Social associations per 10,000 population
+  cii_pub_volunteer_rate:
+    name: Volunteer rate (percent)
+    defined_by: cii_2026
+    measures: volunteer_rate
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Volunteer rate (percent)
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Volunteer rate (percent)
+    rationale: 'Published at state level and broadcast to every county: 34.9 in
+      all sixteen Maine counties. Ranked as county data, it separates counties on
+      a difference that does not exist.'
+  cii_pub_charitable_agi:
+    name: Percent of AGI that is charitable contributions
+    defined_by: cii_2026
+    measures: charitable_agi
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent of AGI that is charitable contributions
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of AGI that is charitable contributions
+  cii_pub_census_response:
+    name: Census response rate (percent)
+    defined_by: cii_2026
+    measures: census_response
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Census response rate (percent)
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Census response rate (percent)
+  cii_pub_life_expectancy:
+    name: Life expectancy
+    defined_by: cii_2026
+    measures: life_expectancy
+    unit: years
+    derivation:
+      kind: passthrough
+      column: Life expectancy
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Life expectancy
+  cii_pub_medical_debt:
+    name: Percent with medical debt
+    defined_by: cii_2026
+    measures: medical_debt
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent with medical debt
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent with medical debt
+  cii_pub_disconnected_youth:
+    name: Percent of youth ages 16 to 19 who are not working or enrolled in school
+    defined_by: cii_2026
+    measures: disconnected_youth
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent of youth ages 16 to 19 who are not working or enrolled in
+        school
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of youth ages 16 to 19 who are not working or enrolled in
+        school
+  cii_pub_high_poverty_neighborhoods:
+    name: Percent in high poverty neighborhoods
+    defined_by: cii_2026
+    measures: high_poverty_neighborhoods
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent in high poverty neighborhoods
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent in high poverty neighborhoods
+  cii_pub_unemployment:
+    name: Unemployment rate (percent)
+    defined_by: cii_2026
+    measures: unemployment
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Unemployment rate (percent)
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Unemployment rate (percent)
+  cii_pub_uninsured:
+    name: Percent uninsured
+    defined_by: cii_2026
+    measures: uninsured
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent uninsured
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent uninsured
+  cii_pub_mental_health_providers:
+    name: Mental health providers per 10,000 population
+    defined_by: cii_2026
+    measures: mental_health_providers
+    unit: per_10000_population
+    derivation:
+      kind: passthrough
+      column: Mental health providers per 10,000 population
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Mental health providers per 10,000 population
+  cii_pub_bachelors_or_higher:
+    name: Percent with a Bachelor's degree or higher
+    defined_by: cii_2026
+    measures: bachelors_or_higher
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent with a Bachelor's degree or higher
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent with a Bachelor's degree or higher
+  cii_pub_rent_burden:
+    name: Percent of income spent on rent
+    defined_by: cii_2026
+    measures: median_rent_burden
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent of income spent on rent
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of income spent on rent
+  cii_pub_food_access:
+    name: Percent without adequate access to food
+    defined_by: cii_2026
+    measures: food_access
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent without adequate access to food
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent without adequate access to food
+  cii_pub_no_vehicle:
+    name: Percent with no vehicle available
+    defined_by: cii_2026
+    measures: households_without_vehicle
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Percent with no vehicle available
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent with no vehicle available
+  cii_pub_energy_burden:
+    name: Household energy burden (percent)
+    defined_by: cii_2026
+    measures: energy_burden
+    unit: percent
+    derivation:
+      kind: passthrough
+      column: Household energy burden (percent)
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Household energy burden (percent)
+  cii_pub_disaster_damages:
+    name: Damages from natural disasters per capita
+    defined_by: cii_2026
+    measures: disaster_damages
+    unit: dollars_per_capita
+    derivation:
+      kind: passthrough
+      column: Damages from natural disasters per capita
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Damages from natural disasters per capita
+  cii_pub_heat_wave_days:
+    name: Heat wave days
+    defined_by: cii_2026
+    measures: heat_wave_days
+    unit: days
+    derivation:
+      kind: passthrough
+      column: Heat wave days
+    direction: higher_is_worse
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: civic_information_index
+      dataset: cii_2026_published
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Heat wave days

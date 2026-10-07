@@ -1,0 +1,85 @@
+# ============================================================================
+# garden/curiosity-space/information/civic_health_overall.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: civic_health_overall
+domain: information
+question: >-
+  How healthy is my community's civic life, compared with others, and compared with
+  what it needs?
+description: >-
+  Civic health is the condition of the things a community needs in order to know
+  what is happening, take part, and look after itself: news and information, participation,
+  structural fairness, basic opportunity and resilience. CII measures all five as
+  a standing among the nation's counties. This curiosity holds that question and
+  the one a standing cannot answer: whether what a community has is enough.
+significance: >-
+  Funders, newsrooms and local governments already use CII's overall score to decide
+  where to invest. A score that is relative cannot tell a county it is doing well
+  enough, only that it is doing better than others, so the second question decides
+  whether a high standing is good news.
+sub_questions:
+  standing_among_nation:
+    question: >-
+      Where does each county stand among the nation's on CII's five pillars and
+      overall?
+    interpretation: >-
+      A percentile of 80 means the county does better than 80 percent of counties,
+      not that it does well. Read beside the absolute question below.
+    answers_for:
+    - Comparing Maine's counties with peers nationally
+    - Reproducing CII inside a system that records every step
+  standing_within_maine:
+    question: Where does each county stand among Maine's sixteen alone?
+    interpretation: >-
+      A different claim under the same name: a county can be last in Maine and in
+      the top quarter nationally. Both are true.
+  against_a_standard:
+    question: >-
+      Does each county have enough, judged against a standard rather than against
+      other places?
+    description: >-
+      UNESCO's right-to-information framework measures whether a right exists; the
+      adaptation here asks whether it can be exercised. No method answers this yet.
+    interpretation: >-
+      The question CII cannot ask by construction. Its absence from the ready list
+      is the point.
+  weakest_pillar:
+    question: Which pillar pulls each county's overall standing down most?
+    depends_on:
+    - standing_among_nation
+compatible_methods:
+- ref: $methods/information/cii_full_method
+  fit: direct
+  description: >-
+    CII's own method end to end: z-scores, two-stage imputation, pillar means and
+    a composite, each county placed among the nation's. Answers the relative question
+    and says it cannot answer the absolute one.
+  sub_questions:
+  - standing_among_nation
+  - weakest_pillar
+related_phenomena:
+- civic_infrastructure
+- information_ecosystem
+- relative_versus_absolute_measurement
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Defines the five pillars, 27 indicators, z-score standardisation, two-stage
+    nearest-neighbour imputation, chip weighting and percentile conversion (pp.
+    12-19, 39-40).
+tags:
+- civic_health
+- cii
+- composite_index
+- standards
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

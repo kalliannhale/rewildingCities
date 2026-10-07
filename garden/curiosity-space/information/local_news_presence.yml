@@ -1,0 +1,99 @@
+# ============================================================================
+# garden/curiosity-space/information/local_news_presence.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: local_news_presence
+domain: information
+question: >-
+  Who produces local news here, how many people do the reporting, and who owns it?
+description: >-
+  A newsroom existing and people doing the reporting are different facts, and CII
+  found they often disagree: some news deserts have journalists, some counties with
+  outlets have almost none (pp. 14, 26). Ownership is a third fact. Maine's own
+  outlet lists, from Cision, the Bangor Daily News, Local News Catalyst and the
+  Maine Media Ecosystem file, are a fourth: four authorities who may not agree on
+  what exists.
+significance: >-
+  Press Forward's Maine work starts here. A count of mastheads overstates independence
+  where one owner holds many, and a news desert label hides the institutions carrying
+  information where no paper does.
+sub_questions:
+  outlets:
+    question: How many local news outlets serve each county?
+    indicated_by:
+    - cii_pub_news_outlets
+    interpretation: >-
+      Caution: CII's published column holds only 0, 1 or 2 for every county in the
+      nation, an ordinal class rather than the per-capita rate the report describes
+      (p. 15). Androscoggin, home of the Sun Journal, is coded 0. Verify the coding
+      before reading it as a count.
+  journalists:
+    question: How many local journalists per 100 000 people?
+    indicated_by:
+    - cii_pub_journalist_equivalents
+  outlets_versus_journalists:
+    question: Where do outlet counts and journalist counts disagree?
+    depends_on:
+    - outlets
+    - journalists
+    interpretation: >-
+      CII mapped this disagreement and left it as a prompt (p. 26). Held side by
+      side, neither is privileged.
+  ownership:
+    question: How concentrated is ownership of the outlets that exist?
+  do_the_lists_agree:
+    question: Do Maine's outlet lists agree on which outlets exist?
+    description: >-
+      Four inventories, assembled by different people for different purposes. Their
+      overlap and disagreement is itself a finding about what is visible to whom.
+  historical_news_deserts:
+    question: Which places lost local news, and when?
+    description: Listed by CII as not currently measured (p. 17).
+  online_civic_space:
+    question: How active is local public-good conversation online?
+    indicated_by:
+    - cii_pub_public_good_facebook_pages
+    interpretation: >-
+      Facebook pages predicted to be public-good pages, per 10 000 users: a model's
+      estimate of one platform, which CII counts as news and information (p. 15).
+compatible_methods:
+- ref: $methods/information/ownership_concentration_analysis
+  fit: partial
+  description: >-
+    Attributes each outlet to its owner and measures how concentrated ownership
+    is per county.
+  sub_questions:
+  - ownership
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Carries CII's outlet and journalist figures, and its public-good pages, as published.
+  sub_questions:
+  - outlets
+  - journalists
+  - outlets_versus_journalists
+  - online_civic_space
+related_phenomena:
+- news_deserts
+- media_consolidation
+- ghost_newspapers
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Adds journalist equivalents because outlet counts and journalist presence often
+    do not correlate (pp. 14, 26).
+tags:
+- news
+- journalism
+- ownership
+- press_forward
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

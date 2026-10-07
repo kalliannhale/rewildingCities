@@ -49,6 +49,22 @@ methods:
         concentration_index, ownership, outlets, local_news, accountability
       ]
 
+    - id: cii_full_method
+      path: information/cii_full_method.yml
+      name: "The Civic Information Index Method, End to End"
+      answers: [
+        civic_information, civic_infrastructure, composite_index, imputation,
+        replication, pillar_index, weighting
+      ]
+
+    - id: cii_indicator_values
+      path: information/cii_indicator_values.yml
+      name: "Civic Information Indicators from Published Sources"
+      answers: [
+        civic_information, civic_infrastructure, information_access,
+        indicator_values, replication, broadband, rent_burden, vehicle_access
+      ]
+
   # Future domains slot in alongside `thermal:` — no structural change to
   # the orchestrator or the resolution engine when adding them.
   #

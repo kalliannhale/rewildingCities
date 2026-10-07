@@ -257,3 +257,100 @@ datasets:
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs
+  
+  # ── the reference population ──────────────────────────────────────────────
+  # a standing is relative to a population, and CII's population is the
+  # nation: every county is ranked against all of them. a percentile against
+  # Maine's sixteen would be a different claim with the same name. so the
+  # Maine plot holds a national acquisition, and Maine is a view onto it.
+  # this belongs in the grove once the grove exists; until then it lives here,
+  # declared, rather than nowhere.
+  #
+  # `state: "*"` returns Puerto Rico's 78 municipios as well. CII's 3 144 are
+  # the 50 states and DC, so standardize_indicator excludes state 72 by
+  # declaration, never by filtering the acquisition: the data stays whole and
+  # the population is a stated choice.
+
+  acs_us_county_2024:
+    available: true
+    description: >
+      ACS 2020-2024 five-year estimates for every county in the nation, the
+      reference population CII ranks against
+    semantic_type: indicator_source
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: county
+      within:
+        state: "*"
+      indicators: [cii_broadband, cii_rent_burden, cii_no_vehicle]
+    cache:
+      path: .data/acs_us_county_2024.parquet
+      refresh_policy: manual
+      fetched_at: '2026-10-07T05:49:38.182252+00:00'
+    provenance:
+      source: U.S. Census Bureau, American Community Survey
+      authority: us_census_acs
+  
+  # ── CII as an authority ───────────────────────────────────────────────────
+  # CII's published file, as a source in its own right. Its 27 raw columns
+  # are declared as passthrough indicators in seeds/indicators/
+  # cii_2026_published.yml, so CII's full method can run here before a
+  # provider exists for each original source. The FIPS column lost leading
+  # zeros (CII-6); derive_indicator pads it by declaration.
+
+  cii_2026_published:
+    available: true
+    description: >
+      The Civic Information Index 2026 data file, all 3 144 counties, as
+      downloaded from the CII site
+    semantic_type: indicator_source
+    format: csv
+    source:
+      type: manual
+      # the published file names units by a FIPS column that lost its
+      # leading zeros (CII-6). derive_indicator reads these through
+      # $source.unit_column and friends, so the repair is declared once, here.
+      unit_column: FIPS
+      unit_pad: 5
+      name_column: Name
+      notes: >
+        Downloaded by hand from the Civic Information Index site and copied
+        here unchanged. garden/reference/cii_2026.csv is the same file, kept
+        there as the reference this system is checked against.
+    temporal:
+      type: snapshot
+      label: CII 2026 edition
+    cache:
+      path: .data/cii_2026_published.csv
+      refresh_policy: manual
+    provenance:
+      source: Listening Post Collective and the Information Futures Lab, Civic Information Index 2026
+      authority: civic_information_index
+
+  # ── where each county is ──────────────────────────────────────────────────
+  # the geographic stage of CII's imputation needs a point per county. the
+  # Census Gazetteer gives each county's internal point. the 2024 file uses
+  # Connecticut's nine planning regions, as CII does.
+
+  county_locations_2024:
+    available: true
+    description: County internal points from the 2024 Census Gazetteer
+    semantic_type: unit_locations
+    format: parquet
+    source:
+      type: manual
+      notes: >
+        https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_counties_national.zip
+        Tab-delimited inside the zip; converted to parquet with GEOID as a
+        string, latitude and longitude (from INTPTLAT, INTPTLONG). Verify the URL on the Census Gazetteer page if
+        it has moved.
+    cache:
+      path: .data/county_locations_2024.parquet
+      refresh_policy: manual
+    provenance:
+      source: U.S. Census Bureau, Gazetteer Files 2024
+      authority: us_census_gazetteer

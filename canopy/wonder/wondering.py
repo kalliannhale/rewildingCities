@@ -59,6 +59,9 @@ def _load_by_id(folder: Path) -> dict[str, dict]:
     if not folder.is_dir():
         return out
     for f in sorted(folder.rglob("*.yml")):
+        # an index lists documents; it is not one (WON-5)
+        if f.name == "index.yml":
+            continue
         try:
             doc = yaml.safe_load(f.read_text()) or {}
         except Exception:
@@ -82,6 +85,17 @@ def _manifest_types(root: Path, plot: str) -> dict[str, str]:
         if st and st not in out:
             out[st] = name
     return out
+
+
+def _manifest_datasets(root: Path, plot: str) -> dict[str, dict]:
+    """every dataset the plot's manifest declares, by name, in full. the
+    recipe path binds from this rather than _manifest_types, which keeps the
+    first dataset of each type and would choose between two in silence. ~"""
+    mpath = root / "plots" / plot / "manifest.yml"
+    if not mpath.exists():
+        return {}
+    doc = yaml.safe_load(mpath.read_text()) or {}
+    return {n: (s or {}) for n, s in (doc.get("datasets") or {}).items()}
 
 
 @dataclass
@@ -159,6 +173,14 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
         dataset = manifest_types.get(st, st)
         category = req.get("type", "vector")
 
+        # a table is frameless by nature and relates through its join keys
+        # (the frame law), so it enters the analysis as declared, with no
+        # vector validation and no reprojection. composing both onto a
+        # parquet table drafted a chain that could only fail (WON-6).
+        if category == "tabular":
+            analysis_inputs[name] = f"$manifest.{dataset}"
+            continue
+
         validate = f"soil/validate_{'raster' if category == 'raster' else 'vector'}"
         last = f"conform_{name}"
         steps.append({
@@ -188,6 +210,11 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
             (pname, pspec), = first.items()
             prim_ref = f"{(pspec or {}).get('from', 'roots')}/{pname}"
             purpose = (pspec or {}).get("purpose", "")
+        elif isinstance(first, str) and "/" in first:
+            # the string form, `roots/derive_indicator`, is already a full
+            # reference. it used to fall through to the placeholder
+            # roots/analysis, which names no primitive (WON-6).
+            prim_ref = first.strip()
     # `produces` is declared two ways across the garden, and both are
     # legitimate. Four methods write a LIST of dicts, each naming an output;
     # one writes a bare MAPPING describing a single product. Iterating a
@@ -331,10 +358,35 @@ def compose(loam, plot: str, curiosity_id: str, method_id: str,
         "manifest": "../manifest.yml",
         "choices": resolved_choices,
         "parameters": {"target_crs": target_crs},
-        "steps": _compose_steps(method, manifest_types, target_crs),
+        "steps": None,
     }
 
+    # a method with a recipe says exactly how it runs; compose fills its
+    # compose-time references from this question and this ground (D-67).
+    # without one, the best-effort conform-then-analyze draft, as before.
+    recipe_notes: list[str] = []
+    if method.get("recipe"):
+        from .recipe import compose_recipe
+        from canopy.indicators import IndicatorRegistry
+        registry = IndicatorRegistry.load(base / "seeds" / "indicators")
+
+        def weights_loader(wid: str) -> dict:
+            from canopy.indicators.weights import WeightsRegistry
+            return WeightsRegistry.load(base / "seeds" / "weights", registry.all()).declaration(wid)
+
+        result = compose_recipe(method, curiosity, sub_question,
+                                _manifest_datasets(base, plot), registry,
+                                weights_loader, chosen.get("datasets"))
+        experiment["steps"] = result.steps
+        for req_name, ds in result.binding.items():
+            recipe_notes.append(f"{req_name}: bound to {ds}" if ds
+                                else f"{req_name}: nothing here declares it yet")
+        recipe_notes.extend(result.notes)
+    else:
+        experiment["steps"] = _compose_steps(method, manifest_types, target_crs)
+
     guidance = _guidance(curiosity, method, present, verdict, chosen)
+    guidance.decisions.extend(recipe_notes)
 
     path = None
     if write:

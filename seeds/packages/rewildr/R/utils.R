@@ -194,8 +194,13 @@ safe_read_table <- function(path, warnings = NULL) {
  }
 
  if (ext == "csv") {
+   # check.names = FALSE: R's default silently rewrites column names that are
+   # not syntactic, so "Percent of households with broadband" would arrive as
+   # "Percent.of.households.with.broadband" and no declaration naming the
+   # published column could find it. A reader that renames what it reads is
+   # making a silent choice (RWR-1).
    return(tryCatch(
-     utils::read.csv(path, stringsAsFactors = FALSE),
+     utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE),
      error = function(e) {
        primitive_failure(
          error = "Failed to read CSV",

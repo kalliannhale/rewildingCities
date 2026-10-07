@@ -238,3 +238,64 @@
     field: fetched_at
     value: '''2026-10-07T04:20:25.805843+00:00'''
     reason: Cache timestamp updated
+- timestamp: '2026-10-07T05:49:38.201200+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 2
+  changes_failed: 0
+  changes:
+  - dataset: acs_us_county_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 3222 county(s); vintage 2020-2024
+      (5-year estimates); 10 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county
+      within:
+        state: '*'
+      indicators:
+      - cii_broadband
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - B25071_001E
+      - B25071_001M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - B25071_001E
+      - B25071_001M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 3222
+      annotations_emptied: {}
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,B25071_001E,B25071_001M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: county:*
+          in: state:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-10-07T05:49:38.180175+00:00'
+  - dataset: acs_us_county_2024
+    field: fetched_at
+    value: '''2026-10-07T05:49:38.182252+00:00'''
+    reason: Cache timestamp updated

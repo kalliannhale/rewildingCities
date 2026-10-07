@@ -1,5 +1,5 @@
 """
-canopy/indicator_preview.py
+canopy/indicators/preview.py
 
 indicator values, previewed ~ the registry read over an acquisition, before
 any primitive has derived them
@@ -38,8 +38,8 @@ preview. it is a check, not a method: it lives here so the comparison uses the
 same derivation the API serves, and it says what it is in every result.
 
 run from the repo root:
-  python -m canopy.indicator_preview show maine cii_rent_burden
-  python -m canopy.indicator_preview compare maine cii_broadband --cii PATH --fips-column COL
+  python -m canopy.indicators.preview show maine cii_rent_burden
+  python -m canopy.indicators.preview compare maine cii_broadband --cii PATH --fips-column COL
 ♡
 """
 
@@ -53,7 +53,7 @@ from pathlib import Path
 
 import yaml
 
-from canopy.indicators import Indicator, IndicatorRegistry
+from .registry import Indicator, IndicatorRegistry
 from canopy.paths import project_root
 
 # one root for the whole garden: the API's read face resolves everything from
@@ -394,6 +394,95 @@ def preview(plot: str, indicator_id: str, dataset: str | None = None,
     }
 
 
+# ── standings: where a unit stands among others ───────────────────────────
+#
+# a standing is relative. it says how a unit compares with a reference
+# population, never whether its value is sufficient: if every county has poor
+# broadband, the top one still stands at 100. the reference population is
+# declared, never inferred from whichever rows happen to be present.
+#
+# the percentile is CII's, recovered from CII's own published file: average
+# rank, with higher-is-worse indicators negated, divided by the LARGEST rank,
+# times 100. dividing by the largest rank rather than by n only differs when
+# the top value is tied, and then it differs a lot: under rank / n, CII's news
+# outlet percentiles would be off by 22 points. this reproduces 26 of CII's 27
+# per-indicator percentile columns across all 3 144 counties to their
+# rounding (CII-8). the z-score cannot be checked against CII, which does not
+# publish one, so its SD convention is a required choice.
+
+SD_CONVENTIONS = ("sample", "population")
+
+
+def _average_ranks(values: list[float]) -> list[float]:
+    """1-based ranks, ties sharing their average, exact equality as R's rank()."""
+    order = sorted(range(len(values)), key=lambda i: values[i])
+    ranks = [0.0] * len(values)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        avg = (i + 1 + j + 1) / 2
+        for k in range(i, j + 1):
+            ranks[order[k]] = avg
+        i = j + 1
+    return ranks
+
+
+def standings(rows: list[dict], ind: Indicator, *, sd: str,
+              exclude_state_fips: tuple[str, ...] = (),
+              restrict_to: set[str] | None = None) -> tuple[list[dict], dict]:
+    """z-score and percentile for each row, against a declared population."""
+    if sd not in SD_CONVENTIONS:
+        raise PreviewError("malformed", f"sd must be one of {SD_CONVENTIONS}; there is no default")
+    sign = 1.0 if ind.direction == "higher_is_better" else -1.0
+    excluded = set(exclude_state_fips)
+
+    def why_out(r):
+        if r["value"] is None:
+            return "no value"
+        if r["unit"]["code"][:2] in excluded:
+            return f"outside the reference population (state {r['unit']['code'][:2]} excluded)"
+        if restrict_to is not None and r["unit"]["code"] not in restrict_to:
+            return "outside the reference population (not ranked by the publisher)"
+        return None
+
+    ref = [r for r in rows if why_out(r) is None]
+    n = len(ref)
+    if n < 2:
+        raise PreviewError("malformed", f"a reference population of {n} cannot be standardised")
+    oriented = [sign * r["value"] for r in ref]
+    ranks = _average_ranks(oriented)
+    top = max(ranks)
+    mean = math.fsum(oriented) / n
+    ss = math.fsum((v - mean) ** 2 for v in oriented)
+    sdv = math.sqrt(ss / (n - 1 if sd == "sample" else n))
+    position = {id(r): k for k, r in enumerate(ref)}
+
+    out = []
+    for r in rows:
+        k = position.get(id(r))
+        row = {"unit": r["unit"], "name": r["name"], "indicator": ind.id,
+               "value": r["value"], "direction": ind.direction,
+               "z": None, "percentile": None, "outside_reason": why_out(r)}
+        if k is not None:
+            row["z"] = (oriented[k] - mean) / sdv if sdv > 0 else None
+            row["percentile"] = ranks[k] / top * 100
+            if sdv == 0:
+                row["outside_reason"] = "no variation in the reference population"
+        out.append(row)
+    rule = "units with a value, outside excluded states"
+    if restrict_to is not None:
+        rule += ", and ranked by the publisher"
+    population = {"n": n, "excluded_state_fips": sorted(excluded), "sd": sd,
+                  "mean_oriented": mean, "sd_value": sdv, "rule": rule,
+                  "left_out_by_restriction": sorted(
+                      r["unit"]["code"] for r in rows
+                      if r["value"] is not None and r["unit"]["code"][:2] not in excluded
+                      and restrict_to is not None and r["unit"]["code"] not in restrict_to)}
+    return out, population
+
+
 # ── the hand check ────────────────────────────────────────────────────────
 def normalise_fips(x) -> str | None:
     """a county FIPS from whatever a published file did to it.
@@ -437,7 +526,9 @@ def read_published(path: Path, fips_column: str, value_column: str):
 
 
 def compare(plot: str, indicator_id: str, published: str | Path, fips_column: str,
-            column: str | None = None, dataset: str | None = None) -> dict:
+            column: str | None = None, dataset: str | None = None,
+            percentile: bool = False, exclude_state_fips: tuple[str, ...] = (),
+            match_published_population: bool = False) -> dict:
     registry = load_registry()
     ind = get_indicator(registry, indicator_id)
     if column is None:
@@ -448,13 +539,33 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
                 f"column to compare against. name it with --column, copied from the "
                 f"file's header.")
         column = ind.replicates["column"]
+    if percentile:
+        # CII names each percentile column after its raw column.
+        column = f"{column} percentile"
 
     ours = preview(plot, indicator_id, dataset, registry)
     theirs = read_published(Path(published), fips_column, column)
+    population = None
+    if percentile:
+        restrict = None
+        if match_published_population:
+            # rank against exactly the units the publisher ranked: those with a
+            # value in its file. a check of the RULE, so a difference in who was
+            # ranked is reported on its own rather than smeared across every row.
+            restrict = {normalise_fips(f) for f, v in zip(theirs[fips_column], theirs[column])
+                        if str(v).strip() != "" and normalise_fips(f)}
+        ranked, population = standings(ours["values"], ind, sd="sample",
+                                       exclude_state_fips=exclude_state_fips,
+                                       restrict_to=restrict)
+        for row, st in zip(ours["values"], ranked):
+            row["value"] = st["percentile"]
 
     state = (ours["source"]["within"] or {}).get("state")
+    if state == "*":
+        state = None
     published_rows: dict[str, float | None] = {}
     published_decimals: dict[str, int | None] = {}
+    published_raws: dict[str, str] = {}
     bad_fips = unparseable = 0
     for _, r in theirs.iterrows():
         code = normalise_fips(r[fips_column])
@@ -469,12 +580,32 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
             unparseable += 1
         published_rows[code] = v
         published_decimals[code] = _decimals(raw)
+        published_raws[code] = raw
 
-    # precision belongs to the column, not the row. a spreadsheet writes 30.0
-    # as 30, and judging that row at zero decimals would let 30.4 agree with
-    # it (PRV-3). the column was published at the most decimals any row shows.
+    # what precision did the publisher write each value at? two formats seen
+    # in CII's one file, and a rule for either breaks the other (PRV-4):
+    #   fixed width ~ every value squeezed into the same number of characters,
+    #     so a row's precision is the decimals a full-width rendering would
+    #     have. "92.3664122" and "5.08905852" are both ten characters, at 7
+    #     and 8 decimals. a short row has had trailing zeros dropped: "100" in
+    #     a width-ten column is 100.000000, and "30" in a width-four column is
+    #     30.0 (PRV-3).
+    #   fixed decimals ~ no dominant width: the column's most decimals.
     observed = sorted({d for d in published_decimals.values() if d is not None})
-    precision = max(observed) if observed else None
+    widths = [len(raw) for raw in published_raws.values() if raw]
+    precision_rule, precision, width = "fixed_decimals", (max(observed) if observed else None), None
+    if widths:
+        mode = max(set(widths), key=widths.count)
+        if widths.count(mode) / len(widths) >= 0.75:
+            precision_rule, width = "fixed_width", mode
+
+    def row_precision(code):
+        raw = published_raws.get(code) or ""
+        if precision_rule == "fixed_width" and raw:
+            intpart = raw.lstrip("-").split(".")[0]
+            implied = width - len(intpart) - 1 - (1 if raw.startswith("-") else 0)
+            return max(published_decimals.get(code) or 0, implied, 0)
+        return precision
 
     pairs, table = [], []
     our_codes = set()
@@ -485,7 +616,7 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
             continue
         a, b = row["value"], published_rows[code]
         diff = (a - b) if (a is not None and b is not None) else None
-        agrees = _agrees_at(a, b, precision)
+        agrees = _agrees_at(a, b, row_precision(code))
         table.append({"geoid": code, "name": row["name"], "ours": a,
                       "published": b, "difference": diff,
                       "written_decimals": published_decimals.get(code),
@@ -498,13 +629,18 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
         "n_published_in_scope": len(published_rows),
         "n_matched_units": len(table),
         "n_compared": len(pairs),
-        "only_ours": sorted(our_codes - set(published_rows)),
+        "only_ours": sorted(c for c in our_codes - set(published_rows)
+                            if c[:2] not in set(exclude_state_fips)),
+        "excluded_by_declaration": sorted(c for c in our_codes - set(published_rows)
+                                          if c[:2] in set(exclude_state_fips)),
         "only_published": sorted(set(published_rows) - our_codes),
         "published_fips_unreadable": bad_fips,
         "published_values_unparseable": unparseable,
         "max_abs_difference": max((abs(a - b) for a, b in pairs), default=None),
         "agree_at_published_precision": sum(1 for t in table
                                             if t["agrees_at_published_precision"]),
+        "precision_rule": precision_rule,
+        "column_width": width,
         "column_precision": precision,
         "written_decimals_observed": observed,
         "correlation": _pearson(pairs),
@@ -515,6 +651,8 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
         "indicator": indicator_id,
         "published_file": str(published),
         "published_column": column,
+        "compared": "percentile" if percentile else "value",
+        "reference_population": population,
         "vintage_window": ours["source"]["vintage_window"],
         "summary": summary,
         "rows": table,
@@ -580,26 +718,45 @@ def _print_compare(c: dict) -> None:
     print(f"{c['indicator']} vs '{c['published_column']}'")
     print(f"  {c['check']}")
     print(f"  vintage {c['vintage_window']}")
-    for r in c["rows"]:
+    pop = c.get("reference_population")
+    if pop:
+        print(f"  reference population: {pop['n']} units ({pop['rule']}; "
+              f"excluded {pop['excluded_state_fips'] or 'none'})")
+    rows = c["rows"]
+    if len(rows) > 40:
+        shown = [r for r in rows if not r["agrees_at_published_precision"]][:20]
+        print(f"  {len(rows)} units; showing those that differ ({len(shown)} shown)")
+        rows = shown
+    for r in rows:
         mark = "agrees" if r["agrees_at_published_precision"] else "DIFFERS"
         print(f"  {r['geoid']}  {r['name'][:34]:<34}  ours {_fmt(r['ours'])}  "
               f"published {_fmt(r['published'])}  diff {_fmt(r['difference'])}  {mark}")
     print(f"  compared {s['n_compared']} of {s['n_ours']} units")
+    if s["precision_rule"] == "fixed_width":
+        how = (f"each value judged at the digits a {s['column_width']}-character "
+               f"rendering holds")
+    else:
+        how = f"column published to {s['column_precision']} decimal places"
     print(f"  agree at published precision: {s['agree_at_published_precision']} of "
-          f"{s['n_compared']} (column published to {s['column_precision']} decimal "
-          f"places; rows written with {s['written_decimals_observed']})")
+          f"{s['n_compared']} ({how})")
+    if pop and pop.get("left_out_by_restriction"):
+        print(f"  ranked by us but not by the publisher, left out to compare like with "
+              f"like: {', '.join(pop['left_out_by_restriction'])}")
     print(f"  max abs difference {_fmt(s['max_abs_difference'])}")
     print(f"  correlation {_fmt(s['correlation'])}")
     for k in ("only_ours", "only_published"):
         if s[k]:
             print(f"  {k}: {', '.join(s[k])}")
+    if s.get("excluded_by_declaration"):
+        print(f"  {len(s['excluded_by_declaration'])} unit(s) outside the population by "
+              f"declaration, not compared")
     for k in ("published_fips_unreadable", "published_values_unparseable"):
         if s[k]:
             print(f"  {k}: {s[k]}")
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="python -m canopy.indicator_preview")
+    ap = argparse.ArgumentParser(prog="python -m canopy.indicators.preview")
     sub = ap.add_subparsers(dest="command", required=True)
 
     show = sub.add_parser("show", help="print a preview derivation")
@@ -614,14 +771,22 @@ def main(argv: list[str] | None = None) -> int:
     cmp_.add_argument("--fips-column", required=True)
     cmp_.add_argument("--column", help="published column, if the indicator declares no replicates")
     cmp_.add_argument("--dataset")
+    cmp_.add_argument("--percentile", action="store_true",
+                      help="compare CII's percentile column instead of the raw value")
+    cmp_.add_argument("--exclude-states", default="",
+                      help="state FIPS outside the reference population, comma-separated, e.g. 72")
+    cmp_.add_argument("--match-published-population", action="store_true",
+                      help="rank only the units the publisher ranked, to test the rule alone")
 
     a = ap.parse_args(argv)
     try:
         if a.command == "show":
             _print_preview(preview(a.plot, a.indicator, a.dataset))
         else:
+            excl = tuple(x.strip() for x in a.exclude_states.split(",") if x.strip())
             _print_compare(compare(a.plot, a.indicator, a.cii, a.fips_column,
-                                   a.column, a.dataset))
+                                   a.column, a.dataset, a.percentile, excl,
+                                   a.match_published_population))
     except PreviewError as e:
         print(f"refused ({e.kind}): {e.message}", file=sys.stderr)
         return 1

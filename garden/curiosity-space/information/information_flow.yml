@@ -1,0 +1,56 @@
+# ============================================================================
+# garden/curiosity-space/information/information_flow.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: information_flow
+domain: information
+question: How does information move through my community?
+description: >-
+  Not where outlets are, but how information travels: through newsrooms, libraries,
+  mutual aid networks, listservs, faith communities and neighbours. CII recommends
+  partnering with mutual aid groups to reach people disconnected from formal channels
+  (p. 37). The relational layers that would show this are declared aggregate-only
+  or excluded in this system's vocabulary, and enter only on terms a community sets.
+significance: >-
+  The flow is where an infodemic spreads and where trusted information can be routed.
+  It is also where the people are, which is why its consent boundary is part of
+  the answer, not an obstacle to it.
+sub_questions:
+  formal_channels:
+    question: Which formal channels reach which places?
+  relational_channels:
+    question: >-
+      Which relational networks carry information, in aggregate and with consent?
+    description: >-
+      relational_hub is aggregate-only and flow_edges excluded until an exposure
+      gate enforces it.
+  disconnected:
+    question: Who is disconnected from formal channels?
+    depends_on:
+    - formal_channels
+compatible_methods: []
+related_phenomena:
+- information_ecosystems
+- mutual_aid
+- care_principles
+- infodemic
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Recommends partnering with mutual aid groups to reach people disconnected from
+    formal information channels (p. 37).
+tags:
+- flow
+- relational
+- consent
+- infodemic
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

@@ -1,5 +1,5 @@
 """
-canopy/indicators.py
+canopy/indicators/registry.py
 
 indicators ~ what a number means, declared once
 
@@ -102,12 +102,44 @@ class Indicator:
         """what an acquisition must fetch for this indicator to be derived."""
         return self.estimate_variables() + self.moe_variables()
 
+    def as_declaration(self, declaration_sha256: str | None = None) -> dict:
+        """this indicator as a primitive receives it: plain JSON, nothing parsed later.
+
+        the orchestrator hands this to a primitive through `$indicators.<id>`,
+        so R never reads YAML and the registry stays the one place a variable
+        code is written. it is recorded in the step's provenance params, so an
+        envelope says exactly which definition produced its numbers, and the
+        hash says which version of the file that definition came from.
+        """
+        d = self.derivation
+        derivation = {"kind": d.kind}
+        if d.kind == "ratio":
+            derivation.update(numerator=list(d.numerator),
+                              denominator=d.denominator, scale=d.scale)
+        else:
+            derivation.update(column=d.column)
+        return {
+            "id": self.id,
+            "name": self.name,
+            "defined_by": self.defined_by,
+            "measures": self.measures,
+            "unit": self.unit,
+            "derivation": derivation,
+            "direction": self.direction,
+            "aggregation": self.aggregation,
+            "uncertainty": self.uncertainty,
+            "moe_variables": self.moe_variables(),
+            "declared_in": self.declared_in,
+            "declaration_sha256": declaration_sha256,
+        }
+
 
 class IndicatorRegistry:
     """every declared indicator, across seeds/indicators/*.yml."""
 
-    def __init__(self, indicators: dict[str, Indicator]):
+    def __init__(self, indicators: dict[str, Indicator], root: Path | None = None):
         self._indicators = indicators
+        self._root = root
 
     @classmethod
     def load(cls, indicators_dir: str | Path) -> "IndicatorRegistry":
@@ -131,7 +163,7 @@ class IndicatorRegistry:
                         f"'{indicators[ind_id].declared_in}' and '{label}'. ids are "
                         f"flat and global across files; rename one of them.")
                 indicators[ind_id] = cls._parse(ind_id, spec or {}, label)
-        return cls(indicators)
+        return cls(indicators, root)
 
     @staticmethod
     def _parse(ind_id: str, spec: dict, label: str) -> Indicator:
@@ -271,3 +303,14 @@ class IndicatorRegistry:
     def measuring(self, measures: str) -> list[str]:
         """every indicator that measures this thing, whoever defined it."""
         return sorted(i for i, ind in self._indicators.items() if ind.measures == measures)
+
+    def declaration(self, ind_id: str) -> dict:
+        """`as_declaration`, with the sha256 of the file the indicator lives in."""
+        import hashlib
+        ind = self.get(ind_id)
+        digest = None
+        if self._root is not None:
+            f = self._root / ind.declared_in.split("/", 1)[-1]
+            if f.is_file():
+                digest = hashlib.sha256(f.read_bytes()).hexdigest()
+        return ind.as_declaration(digest)

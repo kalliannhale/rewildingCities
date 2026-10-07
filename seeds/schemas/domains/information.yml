@@ -75,6 +75,39 @@ types:
       never averaged.
     resolution_tier: public
 
+  indicator_standings:
+    category: tabular
+    format: parquet
+    description: >
+      Where each unit stands among a declared reference population, one row
+      per unit and indicator: a direction-adjusted z-score and a percentile.
+      Relative by construction. A standing says how a unit compares and never
+      whether its value is sufficient: if every county had poor broadband,
+      the top one would still stand at 100. A standard is a different claim,
+      assessed against an absolute threshold, not against other places.
+    resolution_tier: public
+
+  indicator_index:
+    category: tabular
+    format: parquet
+    description: >
+      A weighted composite of declared components per unit: a pillar's mean
+      of indicator z-scores, or an overall mean of pillar percentiles, with
+      its percentile. Relative, like a standing, and it records which
+      weighting produced it and whether that weighting is the publisher's.
+    resolution_tier: public
+
+  unit_locations:
+    category: tabular
+    format: parquet
+    description: >
+      One point per unit, GEOID with latitude and longitude, for questions of
+      distance between units such as the geographic stage of imputation. A
+      representative point, not a boundary: it says where a unit is, never
+      what it contains. Parquet, so a GEOID stays a string: CSV read by R
+      turns 01001 into 1001.
+    resolution_tier: public
+
   # ----- tabular -----
 
   flow_edges:

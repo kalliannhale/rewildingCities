@@ -671,3 +671,132 @@ primitives:
       min_coverage: {type: number, default: 0.5}
     preconditions:
       provenance_contains: resolve_owner_entity
+
+  # --- indicators/ ---
+
+  derive_indicator:
+    path: indicators/derive_indicator.R
+    version: 0.1.0
+    description: >
+      Indicator values from raw published counts, by declaration. Each
+      indicator arrives as `$indicators.<id>`, resolved by the orchestrator
+      from seeds/indicators/, so the primitive does only the arithmetic it is
+      told: a ratio of summed numerators over a denominator at a declared
+      scale, or a published column passed through. Long-form output, one row
+      per unit and indicator, carrying (unit, indicator, value, authority,
+      method, time). Ratio rows carry no derived margin of error; a
+      passthrough carries its published one.
+    inputs:
+      - name: source
+        semantic_types: [indicator_source]
+        required: true
+        description: Raw published estimates with a GEOID column
+    outputs:
+      semantic_type: indicator_values
+      data_category: tabular
+    params:
+      indicators:
+        type: array
+        description: "Declarations, each written as $indicators.<id>"
+      spatial_unit:
+        type: string
+        description: "What each row is, e.g. county"
+      time:
+        type: string
+        default: null
+        description: "The source's vintage window"
+      authority:
+        type: string
+        default: null
+        description: "Who published the source"
+      joins_to:
+        type: string
+        default: null
+        description: "Semantic type of the units the table joins to, for mapping"
+    preconditions:
+      - no_unresolved_critical: true
+
+  standardize_indicator:
+    path: indicators/standardize_indicator.R
+    version: 0.1.0
+    description: >
+      Where each unit stands among a declared reference population: a
+      direction-adjusted z-score and CII's percentile (average rank over the
+      largest rank, times 100), recovered from CII's published file. The
+      population is units with a value outside any excluded states; a unit
+      outside it keeps its row with no standing and the reason. The SD
+      convention is a required choice because CII does not publish z-scores.
+    inputs:
+      - name: values
+        semantic_types: [indicator_values]
+        required: true
+        description: Long-form indicator values from derive_indicator
+    outputs:
+      semantic_type: indicator_standings
+      data_category: tabular
+    params:
+      indicators:
+        type: array
+        description: "Declarations, each written as $indicators.<id>, for direction"
+      sd:
+        type: string
+        options: [sample, population]
+        description: "SD convention for the z-score; no default"
+      exclude_state_fips:
+        type: array
+        default: []
+        description: "State FIPS outside the reference population, e.g. [\"72\"]"
+    preconditions:
+      - provenance_contains: derive_indicator
+      - no_unresolved_critical: true
+
+  impute_nearest_neighbor:
+    path: indicators/impute_nearest_neighbor.R
+    version: 0.1.0
+    description: >
+      CII's two-stage nearest-neighbour imputation, for a unit missing exactly
+      one indicator of a declared set: the ten complete units with the
+      smallest sum of absolute z differences across the other indicators,
+      then the geographically closest of those ten. The donor's z is copied,
+      and every imputed value is flagged with its donor, similarity, distance
+      and shortlist. Units missing two or more are not imputed.
+    inputs:
+      - name: standings
+        semantic_types: [indicator_standings]
+        required: true
+      - name: locations
+        semantic_types: [unit_locations]
+        required: true
+    outputs:
+      semantic_type: indicator_standings
+      data_category: tabular
+    params:
+      indicators: {type: array, description: "the set compared across, each $indicators.<id>"}
+      k: {type: integer, default: 10}
+      missing_exactly: {type: integer, default: 1}
+    preconditions:
+      - provenance_contains: standardize_indicator
+      - no_unresolved_critical: true
+
+  weighted_index:
+    path: indicators/weighted_index.R
+    version: 0.1.0
+    description: >
+      A weighted mean of declared components, then CII's percentile. Level
+      "pillars" averages each pillar's indicator z-scores; level "composite"
+      averages the pillar percentiles. A unit gets an index only when every
+      component is present; a gap is never averaged over. Weights arrive as
+      $weights.<id>, and every row says which weighting produced it.
+    inputs:
+      - name: components
+        semantic_types: [indicator_standings, indicator_index]
+        required: true
+    outputs:
+      semantic_type: indicator_index
+      data_category: tabular
+    params:
+      weights: {type: object, description: "$weights.<id>"}
+      level: {type: string, options: [pillars, composite]}
+    preconditions:
+      - provenance_contains: standardize_indicator
+      - no_unresolved_critical: true

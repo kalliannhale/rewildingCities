@@ -1,0 +1,53 @@
+# ============================================================================
+# garden/curiosity-space/information/health_information.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: health_information
+domain: information
+question: Where do people here get health information, and does it reach them?
+description: >-
+  The Information Futures Lab treats the information crisis as a public health threat,
+  and information decides where people find resources and how health outcomes unfold.
+  CDC PLACES maps health outcomes by place; the question here is the information
+  around them: where are the centres of health information, and who is outside their
+  reach?
+significance: >-
+  Health misinformation has a human, economic and social cost. A shared evidence
+  base for where trusted health information flows is what the infodemic response
+  needs.
+sub_questions:
+  health_information_centres:
+    question: >-
+      Where are the clinics, libraries and offices that carry health information?
+  outside_reach:
+    question: >-
+      Who lives far from all of them, or without the broadband to reach them online?
+    depends_on:
+    - health_information_centres
+  providers:
+    question: How many mental health providers serve each county?
+    indicated_by:
+    - cii_pub_mental_health_providers
+compatible_methods: []
+related_phenomena:
+- infodemic
+- health_misinformation
+- information_access
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Frames the information crisis as a civic and public health threat (p. 42).
+tags:
+- health
+- infodemic
+- information_futures_lab
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

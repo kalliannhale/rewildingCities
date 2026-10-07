@@ -1,0 +1,154 @@
+# ============================================================================
+# garden/methods/information/cii_full_method.yml
+# ============================================================================
+# a method is HOW you might answer a curiosity, with its choice points named
+# in the open and its data needs declared honestly ~ including what the
+# absence of each datum costs the answer. the teaching is the tool: the words
+# written here are what wonder says to a person. ~
+# ============================================================================
+
+id: cii_full_method
+domain: information
+name: "The Civic Information Index Method, End to End"
+
+description: >
+  CII's published method as a chain of recorded steps: each indicator
+  oriented so higher is better and standardised against the nation, counties
+  missing exactly one indicator imputed in two stages (the ten most similar
+  counties, then the nearest of those), a weighted mean per pillar, and a
+  weighted composite, with CII's percentile at each stage. Every imputed value
+  names its donor, and every index names the weighting that produced it.
+
+  The rules for who is imputed and who receives an index were recovered from
+  CII's own file and reproduce it exactly. The weights were not published, so
+  this method takes them as a declared choice and says whose they are.
+
+requires_data:
+  - name: source
+    type: tabular
+    semantic_types: [indicator_source]
+    critical: true
+    role: >
+      Every indicator the pillars average, one row per county. Imputation
+      measures similarity across all of them, so a partial set changes which
+      counties look alike.
+    uncertainty_without: >
+      Nothing to standardise. The method cannot run.
+
+  - name: locations
+    type: tabular
+    semantic_types: [unit_locations]
+    critical: true
+    role: >
+      A point per county, for the second stage of imputation: of the ten
+      counties most like this one, the closest.
+    uncertainty_without: >
+      The geographic stage cannot run, so no county is imputed, and the 461
+      counties missing one indicator lose their overall index. The method
+      will run and say so.
+
+choices:
+  sd_convention:
+    options: [sample, population]
+    default: sample
+    description: >
+      Whether the z-score's standard deviation divides by n - 1 or n. CII does
+      not publish z-scores, so its convention cannot be recovered.
+
+  reference_population:
+    options: [nation_50_states_dc]
+    default: nation_50_states_dc
+    description: >
+      CII standardises every county against the nation's.
+
+  aggregation_unit_level:
+    options: [county]
+    default: county
+    description: >
+      CII's unit. Its pillar memberships and imputation are defined for
+      counties.
+
+requires_primitives:
+  - roots/derive_indicator
+  - roots/standardize_indicator
+  - roots/impute_nearest_neighbor
+  - roots/weighted_index
+
+produces:
+  semantic_type: indicator_index
+  data_category: tabular
+  description: >
+    Five pillar indices and an overall index per county, each a percentile,
+    with the number of components that were imputed and the weighting used.
+
+interpretation: >
+  An index is relative. It says how a county compares with the nation's, and
+  cannot say whether any county's civic information is sufficient. On equal
+  chips, these indices order counties almost exactly as CII's do (Spearman
+  0.988 to 0.999 per pillar); what remains is CII's advisory-group weights,
+  which nobody outside the group can see. A county imputed from a neighbour is
+  partly that neighbour's, and its row says which.
+
+# ── how this method runs ────────────────────────────────────────────────────
+# CII's method as a recipe. every indicator in the weighting is derived,
+# standardised, imputed and composed; the weighting is named once here and
+# recorded, with its hash, in every index it produces.
+recipe:
+  - id: derive
+    primitive: roots/derive_indicator
+    inputs:
+      source: $requires.source
+    outputs:
+      values: indicator_values
+    params:
+      indicators: $weighting.cii_2026_equal_chips.components
+      spatial_unit: $choices.aggregation_unit_level
+      time: $source.vintage
+      authority: $source.authority
+      unit_column: $source.unit_column
+      unit_pad: $source.unit_pad
+      name_column: $source.name_column
+      joins_to: governance_unit
+
+  - id: standardize
+    primitive: roots/standardize_indicator
+    inputs:
+      values: $steps.derive.values
+    outputs:
+      standings: indicator_standings
+    params:
+      indicators: $weighting.cii_2026_equal_chips.components
+      sd: $choices.sd_convention
+      exclude_state_fips: ["72"]
+
+  - id: impute
+    primitive: roots/impute_nearest_neighbor
+    inputs:
+      standings: $steps.standardize.standings
+      locations: $requires.locations
+    outputs:
+      imputed: indicator_standings
+    params:
+      indicators: $weighting.cii_2026_equal_chips.components
+      k: 10
+      missing_exactly: 1
+
+  - id: pillars
+    primitive: roots/weighted_index
+    inputs:
+      components: $steps.impute.imputed
+    outputs:
+      pillars: indicator_index
+    params:
+      weights: $weights.cii_2026_equal_chips
+      level: pillars
+
+  - id: overall
+    primitive: roots/weighted_index
+    inputs:
+      components: $steps.pillars.pillars
+    outputs:
+      overall: indicator_index
+    params:
+      weights: $weights.cii_2026_equal_chips
+      level: composite

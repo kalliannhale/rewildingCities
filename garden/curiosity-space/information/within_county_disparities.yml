@@ -1,0 +1,52 @@
+# ============================================================================
+# garden/curiosity-space/information/within_county_disparities.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: within_county_disparities
+domain: information
+question: What does the county average hide?
+description: >-
+  CII warns that county averages can mask significant disparities and recommends
+  drilling deeper (p. 22): Cape Fear Collective found a 17-year life expectancy
+  gap between two neighbourhoods in one county. Maine has 924 civil divisions in
+  16 counties, and 461 of them have no local government at all, so the finer grain
+  is also a different kind of unit.
+significance: >-
+  The places a county average hides are often the ones that most need attention.
+  A finer grain changes who is visible.
+sub_questions:
+  town_grain:
+    question: >-
+      How do indicators vary across Maine's towns and townships within each county?
+  governed_or_not:
+    question: >-
+      Which divisions govern themselves, and which are under state jurisdiction?
+    description: Maine's LURC field splits its civil divisions roughly in half.
+  tract_grain:
+    question: >-
+      How do Census tract estimates vary within each county, and with what margins
+      of error?
+compatible_methods: []
+related_phenomena:
+- modifiable_areal_unit_problem
+- ecological_fallacy
+- spatial_heterogeneity
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Recommends drilling below the county, citing a 17-year life expectancy gap within
+    one county (p. 22).
+tags:
+- grain
+- equity
+- maine
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

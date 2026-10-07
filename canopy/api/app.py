@@ -10,7 +10,7 @@ of one PlotReading. that is the whole reason the read-model exists: the CLI
 and this speak about the same measurement, so they cannot tell different
 stories about the same ground. one declared exception: the indicator routes
 read the registry and manifest directly until derived indicators live in loam
-(D-29), and their CLI twin is `python -m canopy.indicator_preview`.
+(D-29), and their CLI twin is `python -m canopy.indicators.preview`.
 
 the ACT face can change things ~ found a plot, acquire data, compose an
 experiment, run one. these delegate to capabilities that already exist

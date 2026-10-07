@@ -1,0 +1,82 @@
+# ============================================================================
+# garden/curiosity-space/information/basic_needs_and_opportunity.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: basic_needs_and_opportunity
+domain: information
+question: Do people here have the basic foundations to take part in civic life?
+description: >-
+  CII's Health and Opportunity pillar: employment, insurance, mental health care,
+  education, housing cost, food and transport. A household without a car where nothing
+  is reachable on foot is cut off; one in central Portland may be choosing well,
+  and the number cannot tell which.
+significance: >-
+  Civic participation is sustained by people who have time, health and a way to
+  get there. These are the conditions, not the participation.
+sub_questions:
+  unemployment:
+    question: What share are unemployed?
+    indicated_by:
+    - cii_pub_unemployment
+  uninsured:
+    question: What share under 65 are uninsured?
+    indicated_by:
+    - cii_pub_uninsured
+  mental_health_care:
+    question: How many mental health providers per 10 000 people?
+    indicated_by:
+    - cii_pub_mental_health_providers
+    interpretation: Per 10 000, as the data and pp. 18 and 39 say; p. 14 says per
+      100 000.
+  rent_burden:
+    question: What share of income do renters spend on rent?
+    indicated_by:
+    - cii_rent_burden
+    - cii_pub_rent_burden
+    interpretation: >-
+      A median for renters paying cash rent. CII leaves 15 of the nation's smallest
+      counties blank that the Census publishes.
+  food_access:
+    question: What share lack adequate access to food?
+    indicated_by:
+    - cii_pub_food_access
+  vehicle_access:
+    question: What share of households have no vehicle?
+    indicated_by:
+    - cii_no_vehicle
+    - cii_pub_no_vehicle
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Derives rent burden and vehicle access from the Census beside CII's figures,
+    and carries the pillar's other indicators.
+  sub_questions:
+  - unemployment
+  - uninsured
+  - mental_health_care
+  - rent_burden
+  - food_access
+  - vehicle_access
+related_phenomena:
+- social_determinants
+- transport_access
+- housing_cost
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: Defines the Health and Opportunity pillar's seven indicators (p.
+    18).
+tags:
+- opportunity
+- health
+- social_determinants
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

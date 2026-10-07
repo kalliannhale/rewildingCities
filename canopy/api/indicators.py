@@ -15,7 +15,7 @@ exposure gate (P-22 comes before anything that can leave).
                                            per unit, every row labelled preview
 
 the router is thin on purpose. every decision lives in
-canopy/indicator_preview.py, where it can be tested without a server, and
+canopy/indicators/preview.py, where it can be tested without a server, and
 this file only translates a refusal into an HTTP status, with the reason as
 a plain-string detail like every other route on the read face:
 
@@ -31,7 +31,7 @@ NOT A PROJECTION OF PlotReading, and saying so. the rest of the read face
 projects one PlotReading so the CLI and the API cannot tell different stories.
 these routes read declarations (the registry, the manifest) and an acquired
 file directly, because the preview exists before the pipeline does. the CLI
-twin is `python -m canopy.indicator_preview`, so nothing here answers a
+twin is `python -m canopy.indicators.preview`, so nothing here answers a
 question the CLI cannot. once derive_indicator.R writes indicator_values into
 loam, the values route becomes a projection like the others (D-29).
 ♡
@@ -41,7 +41,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .. import indicator_preview as ip
+from ..indicators import preview as ip
 
 router = APIRouter(tags=["read"])
 

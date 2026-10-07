@@ -1,8 +1,15 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# CURIOSITY SCHEMA v1.0
+# CURIOSITY SCHEMA v1.1
 # A curiosity declares what we want to know — domain-specific but method-agnostic.
 # Pure inquiry, no implementation details.
 # seeds/schemas/curiosity.schema.yml
+#
+# v1.1 (2026-10-08): declares two fields already in use, so neither passes
+# silently: `compatible_methods`, which possibility.py reads to bind methods,
+# and `indicated_by` on sub-questions, which names the indicators that answer
+# them. The schema stays open (no additionalProperties: false), because
+# existing curiosities carry fields such as `references` that are not yet
+# declared; closing it is a separate decision.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
@@ -100,6 +107,62 @@ properties:
           items:
             type: string
           description: What use cases this sub-question serves
+        indicated_by:
+          type: array
+          items:
+            type: string
+            pattern: "^[a-z0-9_]+$"
+          description: >
+            Indicator ids from seeds/indicators/ that answer this sub-question.
+            Several ids for one sub-question are several authorities or
+            derivations of the same claim, held side by side and never
+            averaged. A curiosity stays method-agnostic: an indicator names
+            what is measured, not how an experiment computes it.
+          examples:
+            - ["cii_broadband", "cii_pub_broadband"]
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # METHODS THAT COULD ANSWER IT
+  # ───────────────────────────────────────────────────────────────────────────
+  compatible_methods:
+    type: array
+    description: >
+      The methods that could answer this curiosity, each with how well it fits.
+      An EMPTY list declares that no method answers this yet, and wonder says
+      so. OMITTING the field means the curiosity names no methods, and wonder
+      falls back to every method in its domain. The two are different claims
+      and are never read as the same one.
+    items:
+      type: object
+      required: [ref, fit]
+      properties:
+        ref:
+          type: string
+          pattern: "^\\$methods/[a-z_]+/[a-z0-9_]+$"
+          description: >
+            The method, as $methods/<domain>/<method_id>, where method_id is
+            the method's `id` as listed in garden/methods/index.yml, never its
+            file name. The two can differ: buffer_gradient_analysis lives in
+            thermal_gradient_analysis.yml, and possibility.py finds methods by id.
+          examples: ["$methods/thermal/hot_cold_spot_analysis", "$methods/thermal/buffer_gradient_analysis"]
+        fit:
+          type: string
+          enum: [direct, complementary, partial]
+          description: >
+            direct: answers the curiosity's central question. complementary:
+            follows up on or deepens a direct answer. partial: answers some
+            sub-questions and not others; name them in sub_questions.
+        description:
+          type: string
+          description: What this method contributes to this question, said to a person
+        sub_questions:
+          type: array
+          items:
+            type: string
+          description: >
+            Keys of the sub-questions this method addresses. Omitted means all
+            of them. Each must be a key of this curiosity's sub_questions,
+            which a JSON schema cannot check and the loader should.
 
   # ───────────────────────────────────────────────────────────────────────────
   # CONTEXT

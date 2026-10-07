@@ -1,0 +1,53 @@
+# ============================================================================
+# garden/curiosity-space/information/data_fragility.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: data_fragility
+domain: information
+question: >-
+  Which of my community's civic measures depend on data that might stop being collected?
+description: >-
+  Twenty-two of CII's 27 data sets come from federally supported collection, and
+  the report warns that defunding and the overhaul of the Census make their future
+  uncertain (p. 9). Every indicator in this system declares its source and authority,
+  so which measures rest on which institutions is a question the registry can already
+  answer.
+significance: >-
+  A community that knows which of its measures are fragile can arrange local collection
+  before a series ends, rather than after.
+sub_questions:
+  by_authority:
+    question: Which indicators come from which institution?
+  federal_dependence:
+    question: Which pillars rest mostly on federal collection?
+    depends_on:
+    - by_authority
+  local_alternatives:
+    question: Where does a state or local source already measure the same thing?
+    description: >-
+      Maine's Secretary of State for voting, the Center for Workforce Research and
+      Information for employment, and the state GIS office for boundaries.
+compatible_methods: []
+related_phenomena:
+- data_infrastructure
+- provenance
+- federal_statistical_system
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Notes 22 of 27 data sets are federally supported and their future is uncertain
+    (p. 9).
+tags:
+- provenance
+- data_infrastructure
+- resilience
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale

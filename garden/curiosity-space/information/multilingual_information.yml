@@ -1,0 +1,78 @@
+# ============================================================================
+# garden/curiosity-space/information/multilingual_information.yml
+# BRAINSTORM, v0.2.0. a curiosity is a question and declares no data; the
+# methods it names say what answering it would need. sub-questions name
+# their indicators in `indicated_by`. follows curiosity schema v1.1.
+# ============================================================================
+
+id: multilingual_information
+domain: information
+question: Is civic information available in the languages people here speak?
+description: >-
+  CII scores speaking a language other than English at home as worse civic health,
+  which makes multilingualism a deficit. Language isolation, households where no
+  one over 14 speaks English very well, measures a barrier instead. The stronger
+  question puts the obligation on institutions rather than residents: is the information
+  there, in the languages people use? CII lists multilingual media as not currently
+  measured (p. 15).
+significance: >-
+  In Aroostook, nearly every limited-English household speaks French, which the
+  standard Census table cannot name. Who is reached in their own language decides
+  who can act on civic information at all.
+sub_questions:
+  language_isolation:
+    question: >-
+      What share of households have no member over 14 who speaks English very well?
+    indicated_by:
+    - limited_english_households
+  languages_spoken:
+    question: Which languages do isolated households speak?
+    description: B16002 names French where C16002 folds it into Other Indo-European.
+  as_cii_frames_it:
+    question: What share speak a language other than English at home?
+    indicated_by:
+    - cii_pub_language_other_than_english
+    interpretation: >-
+      Carried as CII defines it so the index can be replicated, and labelled as
+      the framing this system departs from.
+  multilingual_media:
+    question: >-
+      Which outlets and institutions publish in languages other than English?
+    description: >-
+      Not currently measured by CII. Maine's outlet lists could carry a language
+      field.
+  information_in_peoples_languages:
+    question: Is civic information available in the languages people speak?
+    description: >-
+      UNESCO's right-to-information question, adapted. No method or indicator exists
+      yet.
+compatible_methods:
+- ref: $methods/information/cii_indicator_values
+  fit: partial
+  description: >-
+    Derives language isolation from the Census, and carries CII's framing beside
+    it, labelled as the one departed from.
+  sub_questions:
+  - language_isolation
+  - as_cii_frames_it
+related_phenomena:
+- language_access
+- linguistic_isolation
+- right_to_information
+foundational_research:
+- citation: >-
+    Listening Post Collective and Information Futures Lab (2026). The 2026 Civic
+    Information Index: Mapping drivers of engaged, informed, equitable, healthy
+    and resilient communities.
+  contribution: >-
+    Lists multilingual media as a category not currently measured (p. 15); the foreword
+    names multilingual access as fundamental (p. 3).
+tags:
+- language
+- access
+- unesco
+- equity
+version: 0.2.0
+created: '2026-10-08'
+contributors:
+- Kalli Hale
