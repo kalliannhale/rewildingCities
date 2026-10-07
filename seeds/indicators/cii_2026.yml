@@ -10,6 +10,13 @@
 #
 # Vintage is not declared here. One definition spans many releases; the year
 # belongs to the plot manifest's acquisition. CII 2026 used ACS 2020-2024.
+#
+# An entry with a `replicates` block has been verified against CII's
+# published file: every Maine county agrees at the precision CII published,
+# checked with `python -m canopy.indicator_preview compare`. An entry without
+# one is CII's indicator as we believe it was built, not yet checked. The
+# column name is copied from the file's header, never typed from memory, and
+# a test asserts it is an exact header.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 indicators:
@@ -34,10 +41,82 @@ indicators:
     replicates:
       publisher: civic_information_index
       edition: 2026
-      column: Percent of households with broadband of any type
+      # copied from the published file's header, 2026-10-07. the earlier value,
+      # "...of any type", came from the report's prose and matched no column.
+      column: Percent of households with broadband
     rationale: >
       Measures subscription, which is adoption, not availability: whether a
       household pays for a connection, not whether one was built within
       reach. Any standard about speed or coverage cannot be assessed against
-      this indicator. Verified exact against CII 2026 for all 16 Maine
-      counties (max abs difference 0, correlation 1) at ACS 2020-2024.
+      this indicator. Verified against CII 2026 for all 16 Maine counties at
+      ACS 2020-2024: every county agrees at the 7 decimal places CII
+      published (max abs difference 4.7e-8, correlation 1). Reproduced from
+      the repo on 2026-10-07.
+
+  cii_rent_burden:
+    name: Median gross rent as a percentage of household income
+    defined_by: cii_2026
+    measures: median_rent_burden
+    unit: percent_of_household_income
+    derivation:
+      kind: passthrough
+      column: B25071_001E
+    direction: higher_is_worse
+    # a median does not combine. two counties' medians say nothing about the
+    # median of the two together, and a weighted mean of medians is a number
+    # nobody measured. a larger unit needs the median recomputed from the
+    # binned distribution (B25070), which is a different acquisition.
+    aggregation: none
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent of income spent on rent
+    rationale: >
+      Published by the ACS as a single value, so no derivation stands between
+      the Census and this number and its margin of error is the published
+      one. The universe is renter-occupied units paying cash rent: it says
+      nothing about owners, and nothing about renters paying no cash rent. A
+      median also hides the tail. The share of renters paying 30 percent or
+      more of income is a different claim, built from B25070, and would read
+      a county where a few households are severely burdened very differently.
+      CII places rent burden in two pillars, Health & Opportunity and
+      Environmental Resilience, so it is counted twice in the composite.
+      Verified against CII 2026 for all 16 Maine counties at ACS 2020-2024:
+      difference 0.0 in every county, at the one decimal CII published.
+      CII's column is named "Percent of income spent on rent", which reads as
+      a share of all income; it is the median for renters paying cash rent.
+
+  cii_no_vehicle:
+    name: Households with no vehicle available
+    defined_by: cii_2026
+    measures: households_without_vehicle
+    unit: percent_of_households
+    derivation:
+      kind: ratio
+      numerator: [B08201_002E]
+      denominator: B08201_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: B08201_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    replicates:
+      publisher: civic_information_index
+      edition: 2026
+      column: Percent with no vehicle available
+    rationale: >
+      Which ACS table CII used is not documented. B08201 (household size by
+      vehicles available) was the first hypothesis and the check confirmed
+      it: all 16 Maine counties agree at the 8 decimal places CII published
+      (max abs difference 4.6e-9, correlation 1) at ACS 2020-2024. B25044
+      (tenure by vehicles available) was the second hypothesis, unneeded. Read with care in rural Maine: a household without a
+      car where nothing is reachable on foot is cut off, and a household
+      without a car in central Portland may be choosing well. The indicator
+      cannot tell those apart.

@@ -8,7 +8,9 @@ two faces, held apart on purpose.
 the READ face is cheap, side-effect-free, and every endpoint is a projection
 of one PlotReading. that is the whole reason the read-model exists: the CLI
 and this speak about the same measurement, so they cannot tell different
-stories about the same ground.
+stories about the same ground. one declared exception: the indicator routes
+read the registry and manifest directly until derived indicators live in loam
+(D-29), and their CLI twin is `python -m canopy.indicator_preview`.
 
 the ACT face can change things ~ found a plot, acquire data, compose an
 experiment, run one. these delegate to capabilities that already exist
@@ -412,3 +414,14 @@ def run_status(plot: str, run_id: str) -> dict:
     if record is None:
         raise HTTPException(status_code=404, detail=f"no run {run_id}")
     return record
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INDICATORS ~ read-only, and the one part of the read face that is not yet a
+# projection of PlotReading. the registry and manifest are read directly and
+# values are previews, labelled as such on every row. see
+# canopy/api/indicators.py for why, and for when that changes (D-29).
+# ─────────────────────────────────────────────────────────────────────────────
+
+from .indicators import router as indicators_router  # noqa: E402
+app.include_router(indicators_router)
