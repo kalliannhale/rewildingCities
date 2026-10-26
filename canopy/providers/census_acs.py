@@ -85,6 +85,28 @@ JAM_VALUES = {
     "-222222222": "estimate not available",
 }
 
+# ACS-6: the annotations arrive in more than one spelling. a count variable
+# returns "-666666666"; a median or a ratio returns "-666666666.0". matching
+# the text exactly caught the first and missed the second, so Maine towns
+# without renters carried a rent burden of minus 666 million and the town
+# map was colored by it. an annotation is a NUMBER with a meaning, so it is matched
+# as a number, whatever decimals it is written with.
+_JAM_BY_NUMBER = {int(k): k for k in JAM_VALUES}
+
+
+def jam_key(token: str) -> str | None:
+    """The canonical annotation a raw Census token stands for, or None when it
+    is an ordinary value (or not a number at all, which is counted elsewhere).
+    "-666666666", "-666666666.0" and "-666666666.00" are the same annotation."""
+    try:
+        value = float(token)
+    except (TypeError, ValueError):
+        return None
+    if value != value or not value.is_integer():
+        return None
+    return _JAM_BY_NUMBER.get(int(value))
+
+
 # How many digits each level of the hierarchy contributes to a GEOID, and
 # which parent levels it must be nested within. A GEOID is built by
 # concatenation, which is what makes it joinable to TIGER without a lookup.
@@ -378,8 +400,9 @@ class CensusACSProvider(Provider):
             for v in var_cols:
                 raw = row[index[v]]
                 token = str(raw).strip() if raw is not None else ""
-                if token in JAM_VALUES:
-                    jam_counts[token] = jam_counts.get(token, 0) + 1
+                annotation = jam_key(token)
+                if annotation is not None:
+                    jam_counts[annotation] = jam_counts.get(annotation, 0) + 1
                     out[v] = ""          # rests empty; never a very negative number
                 else:
                     out[v] = token
