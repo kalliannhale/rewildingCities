@@ -354,3 +354,76 @@ datasets:
     provenance:
       source: U.S. Census Bureau, Gazetteer Files 2024
       authority: us_census_gazetteer
+
+  # ── the town grain ────────────────────────────────────────────────────────
+  # ACS publishes towns as Census county subdivisions: 529 in Maine, not
+  # MEGIS's 924 civil divisions, because the Census groups unorganized
+  # townships into single unorganized-territory units. so the town grain for
+  # ACS indicators is the Census county subdivision, with boundaries from the
+  # same authority, keyed by the same 10-digit GEOID by construction. no
+  # crosswalk and no name match. MEGIS towns stay for the outlet work, where
+  # the 924 divisions and the LURC flag matter.
+
+  acs_cousub_2024:
+    available: false
+    description: >
+      ACS 2020-2024 five-year estimates for Maine's 529 county subdivisions,
+      carrying every variable the listed indicators need
+    semantic_type: indicator_source
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: county subdivision
+      within:
+        state: "23"
+        county: "*"
+      indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
+      notes: >
+        Requires CENSUS_API_KEY. Margins of error are wide at this grain and
+        ratio margins are not derived (D-18), so a small town's value is an
+        estimate with a wide band.
+    cache:
+      path: .data/acs_cousub_2024.parquet
+      refresh_policy: manual
+    provenance:
+      source: U.S. Census Bureau, American Community Survey
+      authority: us_census_acs
+
+  governance_unit_cousub:
+    available: true
+    description: >
+      Census county subdivisions for Maine ~ the grain ACS publishes towns at
+    semantic_type: governance_unit
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      # TIGERweb is a government MapServer with no ArcGIS Online item, so the
+      # endpoint is the identifier here. layer 1 and the 529 count come from
+      # seeds/sources/census_tigerweb.yml, which measured them.
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer
+      layer: 1
+      query_params:
+        where: "STATE='23'"
+        outFields: "*"
+        outSR: 4326
+        # small pages on purpose: the provider stops paging when a page comes
+        # back short, so a page size above the server's maxRecordCount would
+        # truncate silently. verify 529 features after acquisition.
+        limit: 200
+      notes: >
+        Carries GEOID, NAME, STATE, COUNTY, COUSUB and FUNCSTAT. FUNCSTAT says
+        whether a subdivision is a functioning government (A) or a statistical
+        or inactive unit; Maine measured A=459, S=42, F=27, N=1. TIGERweb is
+        the current vintage while ACS 2024 uses 2024 boundaries, so a
+        subdivision changed since then would show as unmatched on the map.
+    cache:
+      path: .data/maine_cousub.geojson
+      refresh_policy: manual
+      fetched_at: '2026-10-26T13:35:39.772061+00:00'
+    provenance:
+      source: U.S. Census Bureau, TIGERweb
+      authority: us_census_tiger

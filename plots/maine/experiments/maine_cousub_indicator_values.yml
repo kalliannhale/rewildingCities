@@ -1,0 +1,74 @@
+# ============================================================================
+# plots/maine/experiments/maine_cousub_indicator_values.yml
+# ============================================================================
+# four civic indicators at the town grain, where "town" is the Census county
+# subdivision: the unit ACS actually publishes. Maine has 529 of them, not
+# MEGIS's 924 civil divisions, because the Census groups unorganized
+# townships into single unorganized-territory units. boundaries and values
+# come from the same authority and share a 10-digit GEOID by construction,
+# so the join is derivable and needs no crosswalk.
+#
+# VALUES, NOT STANDINGS, on purpose. a percentile needs a declared reference
+# population at the same grain, and CII sets no town standard, so a town
+# percentile would be a new claim wearing CII's name. that choice is left
+# open rather than made here.
+#
+# margins of error are wide at this grain and ratio margins are not derived
+# (D-18). a small town's value should be read as an estimate with a wide
+# band, and the map says so.
+#
+# hand-written, not composed: it answers no single curiosity, since its four
+# indicators belong to different questions. curiosity is left empty rather
+# than borrowed from one of them.
+# ============================================================================
+
+id: maine_cousub_indicator_values
+name: "Four civic indicators for Maine's towns, by Census county subdivision"
+description: >
+  Repairs Census county subdivision boundaries for Maine and derives
+  broadband subscription, limited-English households, rent burden and
+  households without a vehicle for each subdivision from ACS 2020-2024.
+
+curiosity:
+  ref: ""
+
+method:
+  ref: $methods/information/cii_indicator_values
+
+city: maine
+manifest: ../manifest.yml
+
+choices:
+  aggregation_unit_level: county subdivision
+
+parameters: {}
+
+steps:
+  - id: cousub_repair
+    primitive: soil/repair_geometry
+    description: "st_make_valid on the TIGERweb county subdivisions"
+    inputs:
+      features: $manifest.governance_unit_cousub
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: cousub_derive
+    primitive: roots/derive_indicator
+    description: "Indicator values for each county subdivision, one declaration at a time"
+    inputs:
+      source: $manifest.acs_cousub_2024
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.cii_broadband
+        - $indicators.limited_english_households
+        - $indicators.cii_rent_burden
+        - $indicators.cii_no_vehicle
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      authority: us_census_acs
+      unit_column: GEOID
+      name_column: NAME
+      joins_to: governance_unit

@@ -737,7 +737,7 @@ class Orchestrator:
             completed_steps.append(step_id)
 
         final_envelopes = self._collect_final_envelopes(step_results)
-        self._enrich_with_lineage(final_envelopes)
+        validation_warnings.extend(self._enrich_with_lineage(final_envelopes))
 
         validation_warnings.extend(w.message for w in self._gap_scars(self._resolution_report))
 
@@ -845,6 +845,14 @@ class Orchestrator:
 
         envelope_path = self.envelope_dir / f"{step.id}_{output_name}.envelope.json"
 
+        # LIN-1: scientific lineage is attached BEFORE the receipt is written.
+        # It used to be added after the run, to the in-memory envelopes only,
+        # so every receipt on disk lacked it and every harvest read from disk
+        # recorded lineage: null. The experiment's lineage and the resolution
+        # report are both known before any step runs, so nothing is lost by
+        # attaching them here.
+        build_result.envelope.metadata["lineage"] = self._lineage_dict()
+
         # Sprint 8: wrap envelope-write so schema-validation failures fail
         # the step gracefully with a clear error rather than crashing the
         # orchestrator with a traceback. Import is lazy so this catch
@@ -892,8 +900,10 @@ class Orchestrator:
                 envelopes[step_id] = result.envelope
         return envelopes
 
-    def _enrich_with_lineage(self, envelopes: dict[str, Envelope]) -> None:
-        """Add scientific lineage and resolution context to final envelopes."""
+    def _lineage_dict(self) -> dict:
+        """The experiment's scientific lineage and resolution context, as it
+        is written into every receipt. One builder, so the copy on disk and the
+        copy in memory cannot drift."""
         lineage_dict = {
             "curiosity": self.experiment.lineage.curiosity_ref,
             "sub_question": self.experiment.lineage.sub_question,
@@ -901,14 +911,35 @@ class Orchestrator:
             "choices": self.experiment.lineage.choices,
             "parameters": self.experiment.parameters
         }
-
         if self._resolution_report:
             lineage_dict["data_resolution"] = self._resolution_report.to_envelope_context()
+        return lineage_dict
 
+    def _enrich_with_lineage(self, envelopes: dict[str, Envelope]) -> list[str]:
+        """Lineage is already on every receipt (LIN-1). What remains is the gap
+        scars, which can only be known once the run has finished. They used to
+        be added in memory and never written, so a caveat the run earned never
+        reached the receipt or the harvest. Each scarred envelope is now
+        rewritten in place. A rewrite that fails is reported, never swallowed.
+        Returns messages for the run's warnings."""
+        problems: list[str] = []
         scars = self._gap_scars(self._resolution_report)
-        for envelope in envelopes.values():
+        lineage_dict = self._lineage_dict()
+        for step_id, envelope in envelopes.items():
             envelope.metadata["lineage"] = lineage_dict
+            if not scars:
+                continue
             envelope.warnings.extend(scars)
+            try:
+                step = self._get_step(step_id)
+                output_name = list(step.outputs.keys())[0]
+                path = self.envelope_dir / f"{step_id}_{output_name}.envelope.json"
+                write_envelope(envelope, path)
+            except Exception as e:
+                problems.append(
+                    f"Gap warnings for step '{step_id}' could not be written to its "
+                    f"receipt ({type(e).__name__}: {e}). The receipt on disk lacks them.")
+        return problems
 
     @staticmethod
     def _gap_scars(report) -> list["Warning"]:

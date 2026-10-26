@@ -106,7 +106,8 @@ def long_form_view(df, indicator):
     return one, key, color_by
 
 
-def _join_and_color(df, features, meta, layer, plot, key=None, color_by=None) -> dict:
+def _join_and_color(df, features, meta, layer, plot, key=None, color_by=None,
+                    envelope=None, result_name=None) -> dict:
     """join a tabular result (DataFrame) onto vector geometry on a shared id
     column, color each joined feature by the dependent-ish numeric column, and
     return a self-describing choropleth FeatureCollection. a caller that knows
@@ -136,14 +137,37 @@ def _join_and_color(df, features, meta, layer, plot, key=None, color_by=None) ->
 
     lookup = {str(r[key]): r for _, r in df.iterrows()}
     joined = []
+    n_without_row = 0
     for f in features:
-        row = lookup.get(str(f.get("properties", {}).get(key)))
-        if row is None:
-            continue
         props = dict(f.get("properties", {}))
-        for c in df.columns:
-            props[c] = _plain(row[c])
+        row = lookup.get(str(props.get(key)))
+        if row is None:
+            # MAP-2: a unit of the layer with no row in the result used to be
+            # dropped, so a town the source never measured vanished from the
+            # map. it stays, drawn as empty, and is counted.
+            n_without_row += 1
+            if color_by:
+                props[color_by] = None
+            props["joined"] = False
+        else:
+            for c in df.columns:
+                props[c] = _plain(row[c])
+            props["joined"] = True
         joined.append({"type": "Feature", "properties": props, "geometry": f.get("geometry")})
+
+    # MAP-2: rows of the result that matched no feature were reported as one
+    # number, which mixed rows that belong to other places (expected, e.g. the
+    # rest of a national reference population) with rows of THIS place that
+    # failed to join (a defect). for a GEOID key the state prefix tells them
+    # apart: a row is in scope when its state is one the layer covers.
+    layer_keys = {str(f.get("properties", {}).get(key)) for f in features}
+    unmatched = [k for k in lookup if k not in layer_keys]
+    if key == "GEOID":
+        scope = {k[:2] for k in layer_keys if k and k != "None"}
+        in_scope_unmatched = [k for k in unmatched if k[:2] in scope]
+    else:
+        in_scope_unmatched = list(unmatched)
+    n_outside = len(unmatched) - len(in_scope_unmatched)
 
     n_empty = 0
     if color_by and joined:
@@ -169,12 +193,24 @@ def _join_and_color(df, features, meta, layer, plot, key=None, color_by=None) ->
             "layer": layer, "join_on": key, "color_by": color_by,
             "semantic_type": meta.get("semantic_type"),
             "caption": " ".join(meta.get("interpretation_notes") or []).strip(),
-            "unjoined_rows": len(df) - len(joined),
+            # kept with its original meaning for readers that use it: every
+            # result row that matched no feature, wherever it belongs.
+            "unjoined_rows": len(unmatched),
+            "rows_outside_scope": n_outside,
+            "rows_unmatched_in_scope": len(in_scope_unmatched),
+            "unmatched_in_scope_examples": sorted(in_scope_unmatched)[:10],
+            "features_without_row": n_without_row,
             "empty_values": n_empty,
         },
         "rewilding:provenance": {
             "result_semantic_type": meta.get("semantic_type"),
+            "result_envelope": result_name,
             "joined_to": layer, "lineage": meta.get("lineage"), "plot": plot,
+            # MAP-3: the processing chain and the caveats travel with the map.
+            # the harvest used to carry neither, so a published layer could not
+            # say what ran to produce it or what the run warned about.
+            "chain": (envelope or {}).get("provenance") or [],
+            "warnings": (envelope or {}).get("warnings") or [],
         },
     }
 
@@ -213,7 +249,8 @@ def resolve_layer(meta: dict, by_name: dict, layer_arg: str | None = None):
     return next(iter(candidates.items()))
 
 
-def _choropleth(result_env, by_name, out_dir, plot, indicator=None, layer_arg=None):
+def _choropleth(result_env, by_name, out_dir, plot, indicator=None, layer_arg=None,
+                result_name=None):
     """find the vector layer this tabular result draws on, read the result, join
     and color. returns a summary dict, or None when there is nothing to draw on. ~"""
     meta = result_env.get("metadata") or {}
@@ -241,20 +278,34 @@ def _choropleth(result_env, by_name, out_dir, plot, indicator=None, layer_arg=No
     elif indicator:
         raise MapRefusal("--indicator applies to long-form indicator tables only.")
 
-    fc = _join_and_color(df, features, meta, layer_name, plot, key=key, color_by=color_by)
+    fc = _join_and_color(df, features, meta, layer_name, plot, key=key, color_by=color_by,
+                         envelope=result_env, result_name=result_name)
     if not fc.get("features"):
         return None
+    if not any(f["properties"].get("joined") for f in fc["features"]):
+        m = fc["rewilding:map"]
+        raise MapRefusal(
+            f"no feature of {layer_name} matched any row of the result on {m['join_on']}. "
+            f"{m['rows_unmatched_in_scope']} row(s) in scope went unmatched, e.g. "
+            f"{', '.join(m['unmatched_in_scope_examples'][:3]) or '(none)'}. "
+            f"an all-empty map would read as a finding; check the layer's key.")
     if indicator:
         fc["rewilding:map"]["indicator"] = indicator
 
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    name = f"map_{indicator}.geojson" if indicator else "map.geojson"
+    # MAP-4: the layer is the grain, so it is in the name. the same indicator
+    # mapped by county and by town used to write one file, the second
+    # silently replacing the first.
+    stem = f"map_{indicator}" if indicator else "map"
+    name = f"{stem}__{layer_name}.geojson"
     path = Path(out_dir) / name
     path.write_text(json.dumps(fc, indent=2))
     m = fc["rewilding:map"]
     return {"path": str(path), "key": m["join_on"], "color_by": m["color_by"],
             "layer": layer_name, "n": len(fc["features"]),
-            "empty": m["empty_values"], "unjoined": m["unjoined_rows"]}
+            "empty": m["empty_values"], "unjoined": m["unjoined_rows"],
+            "outside": m["rows_outside_scope"], "unmatched": m["rows_unmatched_in_scope"],
+            "without_row": m["features_without_row"]}
 
 
 def _load_envelopes(envelopes_dir: Path) -> dict:
@@ -321,7 +372,8 @@ def run(args) -> int:
 
         if cat == "tabular":
             cho = _choropleth(env, by_name, out_dir, plot,
-                              indicator=indicator, layer_arg=getattr(args, "layer", None))
+                              indicator=indicator, layer_arg=getattr(args, "layer", None),
+                              result_name=result_name)
             if cho:
                 what = indicator or target
                 print(f"🗺  mapped {what} as a choropleth")
@@ -329,8 +381,12 @@ def run(args) -> int:
                       f"{cho['color_by']}, joined on {cho['key']}")
                 if cho["empty"]:
                     print(f"   {cho['empty']} drawn as empty: no value, not zero")
-                if cho["unjoined"]:
-                    print(f"   {cho['unjoined']} row(s) of the result matched no feature")
+                if cho["outside"]:
+                    print(f"   {cho['outside']} row(s) belong to places outside this layer (expected)")
+                if cho["unmatched"]:
+                    print(f"   {cho['unmatched']} row(s) of THIS place matched no feature: a join defect")
+                if cho["without_row"]:
+                    print(f"   {cho['without_row']} feature(s) have no row in the result, drawn as empty")
                 print(f"   {cho['path']}")
                 return 0
             print(f"   (no geometry to join {target} to ~ writing a descriptor instead)")

@@ -1,0 +1,73 @@
+# ============================================================================
+# plots/maine/experiments/maine_county_indicator_standings.yml
+# ============================================================================
+# the county standings for the three CII indicators the national acquisition
+# already holds, in one run, so the "Counties, Ranked" panels share one
+# receipt. the same declarations the broadband experiment used, widened from
+# one indicator to three; the demo's agreement matrix already checks all
+# three against CII 2026 for Maine's sixteen counties.
+#
+# the reference population is the nation's 3,144 counties (50 states and DC);
+# Puerto Rico's 78 municipios keep their rows with no standing, by
+# declaration. a Maine-only percentile would be a different claim with the
+# same name.
+# ============================================================================
+
+id: maine_county_indicator_standings
+name: "Maine's counties among the nation's, on three CII indicators"
+description: >
+  Derives broadband subscription, rent burden and households without a
+  vehicle for every U.S. county from ACS 2020-2024, then places each county
+  among the nation's 3,144 by CII's percentile rule.
+
+curiosity:
+  ref: ""
+
+method:
+  ref: $methods/information/cii_indicator_values
+
+city: maine
+manifest: ../manifest.yml
+
+choices:
+  sd_convention: sample
+  reference_population: nation_50_states_dc
+  aggregation_unit_level: county
+
+parameters: {}
+
+steps:
+  - id: county_derive
+    primitive: roots/derive_indicator
+    description: "Indicator values for every U.S. county"
+    inputs:
+      source: $manifest.acs_us_county_2024
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.cii_broadband
+        - $indicators.cii_rent_burden
+        - $indicators.cii_no_vehicle
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      authority: us_census_acs
+      unit_column: GEOID
+      name_column: NAME
+      joins_to: governance_unit
+
+  - id: county_standardize
+    primitive: roots/standardize_indicator
+    description: "Each county placed among the nation's"
+    inputs:
+      values: $steps.county_derive.values
+    outputs:
+      standings: indicator_standings
+    params:
+      indicators:
+        - $indicators.cii_broadband
+        - $indicators.cii_rent_burden
+        - $indicators.cii_no_vehicle
+      sd: $choices.sd_convention
+      exclude_state_fips:
+        - '72'
