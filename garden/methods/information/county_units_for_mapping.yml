@@ -1,0 +1,77 @@
+# ============================================================================
+# garden/methods/information/county_units_for_mapping.yml
+# ============================================================================
+# preparation, not a question: the county layer a Census-keyed result is
+# drawn on. it answers no curiosity on its own, so it has no curiosity; it
+# makes every county-grain answer mappable. ~
+# ============================================================================
+
+id: county_units_for_mapping
+domain: information
+name: "County Units, Keyed for Mapping"
+
+description: >
+  Maine's county boundaries arrive as 7 196 arc-derived polygons, 7 156 of
+  them islands. This repairs their geometry, keeps the mainland polygons,
+  dissolves them into one feature per county, and gives each county its Census
+  GEOID from its own county code, so a table keyed by GEOID joins to it by
+  derivation rather than by name.
+
+requires_data:
+  - name: units
+    type: vector
+    semantic_types: [governance_unit]
+    critical: true
+    role: >
+      The state's own county boundaries, carrying the county name and code
+      fields the dissolve and the GEOID are built from.
+    uncertainty_without: >
+      Nothing to draw on. A Census-keyed result can still be computed; it
+      cannot be mapped.
+
+choices: {}
+
+requires_primitives:
+  - soil/repair_geometry
+  - soil/dissolve_by_field
+  - soil/assign_geoid
+
+produces:
+  semantic_type: governance_unit
+  data_category: vector
+  description: One feature per county with COUNTY, CNTYCODE and GEOID
+
+recipe:
+  - id: units_repair
+    primitive: soil/repair_geometry
+    inputs:
+      features: $requires.units
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: units_dissolve
+    primitive: soil/dissolve_by_field
+    inputs:
+      features: $steps.units_repair.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: COUNTY
+      filters:
+        ISLAND: "n"
+        LAND: "y"
+      # carried through only because it is constant within every county;
+      # assign_geoid builds the GEOID from it. without this the dissolve
+      # keeps COUNTY alone, and the GEOID step refuses by name.
+      keep_fields: [CNTYCODE]
+
+  - id: units_geoid
+    primitive: soil/assign_geoid
+    inputs:
+      boundaries: $steps.units_dissolve.dissolved
+    outputs:
+      with_geoid: governance_unit
+    params:
+      state_fips: "23"
+      county_field: CNTYCODE

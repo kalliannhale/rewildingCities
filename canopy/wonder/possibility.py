@@ -219,11 +219,16 @@ class MethodPossibility:
             "ready": "🌱 you can explore this today",
             "partial": "🌤 you can start this, with one honest caveat",
             "not_yet": "🌰 not yet ~ but here is what it would take",
+            "unanswered": "🌾 a question still waiting for a way in",
         }[self.verdict]
         lines = [f"{head}", f'   your question: "{self.curiosity_question}"']
         if self.significance:
             lines.append(f"   why it matters: {self.significance.strip().splitlines()[0]}")
-        lines.append(f"   the way in: {self.method_name}")
+        if self.verdict == "unanswered":
+            lines.append("   the way in: no method answers this yet. it is part of the "
+                         "research agenda, named so it is not forgotten.")
+        else:
+            lines.append(f"   the way in: {self.method_name}")
         if self.sub_questions:
             lines.append("   things you could actually ask:")
             for _name, q in self.sub_questions[:4]:
@@ -245,7 +250,7 @@ class MethodPossibility:
         return "\n".join(lines)
 
 
-_VERDICT_ORDER = {"ready": 0, "partial": 1, "not_yet": 2}
+_VERDICT_ORDER = {"ready": 0, "partial": 1, "not_yet": 2, "unanswered": 3}
 
 
 def _weigh(method: dict, present: set[str],
@@ -330,6 +335,18 @@ def explore(loam, plot: str, question: str | None = None,
         text = " ".join([cur.question, cur.description, cur.significance,
                          " ".join(cur.tags)]).lower()
         relevance = len(q_words & set(text.split())) if q_words else 0
+
+        # a curiosity no method answers yet is still a question this place
+        # has. explore used to emit one possibility per method, so these
+        # vanished; now they are said, as the research agenda (WON-11).
+        if not cur.methods:
+            possibilities.append((relevance, MethodPossibility(
+                plot=plot, curiosity_id=cur.curiosity_id,
+                curiosity_question=cur.question, significance=cur.significance,
+                method_id="", method_name="", verdict="unanswered",
+                sub_questions=[(q, q) for q in cur.sub_questions],
+                present_detail=holdings)))
+            continue
 
         for m in cur.methods:
             gaps: list[Gap] = []

@@ -57,6 +57,11 @@ methods:
         replication, pillar_index, weighting
       ]
 
+    - id: county_units_for_mapping
+      path: information/county_units_for_mapping.yml
+      name: "County Units, Keyed for Mapping"
+      answers: [boundaries, mapping, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"

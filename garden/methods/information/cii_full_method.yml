@@ -28,6 +28,10 @@ requires_data:
     type: tabular
     semantic_types: [indicator_source]
     critical: true
+    # read as it arrived: a raw published table goes straight into the
+    # derivation, with nothing to conform. readiness counts the acquisition
+    # itself, and says so (WON-9).
+    as_acquired: true
     role: >
       Every indicator the pillars average, one row per county. Imputation
       measures similarity across all of them, so a partial set changes which
@@ -39,6 +43,7 @@ requires_data:
     type: tabular
     semantic_types: [unit_locations]
     critical: true
+    as_acquired: true
     role: >
       A point per county, for the second stage of imputation: of the ten
       counties most like this one, the closest.

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<!--
+  rewildingCities ~ demo/index.html
+  Status report and presenter's guide. Live panels read the read-only API on
+  localhost:8000; console panels are recorded transcripts of runs against the
+  Maine plot. Press P to show or hide the presenter notes.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rewildingCities ~ status report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,650;1,9..144,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FDF8EA; --card: #FFFDF6; --ink: #3F2E20; --ink-soft: #6A5440; --ink-faint: #A08A70; --rule: #EADCBC;
+    --sky: #BFD9EA; --sky-soft: #DDEBF3; --sky-deep: #4F86AA;
+    --meadow: #CFE3A6; --meadow-soft: #E8F1D2; --leaf: #6E9B4E; --tree: #3F6B30;
+    --honey: #E3A93B; --honey-soft: #F8E6B8; --honey-deep: #9A6A12;
+    --tigger: #E58A2E; --tigger-soft: #F9DDBE; --piglet: #F1B9C4; --piglet-soft: #FBE3E8; --piglet-deep: #A4505F;
+    --eeyore: #A9A7B8; --eeyore-soft: #ECEAF2; --eeyore-deep: #5E5A74; --bark: #7A5A3A;
+    --serif: "Fraunces", Georgia, serif; --sans: "Source Sans 3", -apple-system, "Segoe UI", Helvetica, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16.5px/1.64 var(--sans); }
+  a { color: var(--tree); } :focus-visible { outline: 3px solid var(--honey); outline-offset: 2px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* the sky over the wood: watercolour washes, then the hills */
+  .masthead { position: relative; overflow: hidden;
+    background:
+      radial-gradient(ellipse 38% 46% at 12% 22%, rgba(255,255,255,.55), transparent 70%),
+      radial-gradient(ellipse 30% 40% at 78% 16%, rgba(255,255,255,.5), transparent 70%),
+      radial-gradient(ellipse 50% 60% at 60% 70%, rgba(207,227,166,.45), transparent 75%),
+      linear-gradient(180deg, #A9CDE4 0%, var(--sky) 40%, #DCEBD6 78%, var(--meadow-soft) 100%); }
+  .masthead svg.hills { position: absolute; left: 0; bottom: -1px; width: 100%; height: 110px; display: block; }
+  header { position: relative; z-index: 1; padding: 58px 0 128px; }
+  .series { display: inline-block; font: 700 12.5px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--tree);
+    background: rgba(255,253,246,.75); border: 1px solid rgba(110,155,78,.35); padding: 4px 12px; border-radius: 999px; margin: 0 0 16px; }
+  h1 { font: 650 42px/1.13 var(--serif); margin: 0 0 18px; max-width: 26ch; letter-spacing: -0.3px; color: #2F2216; }
+  .summary { max-width: 74ch; font-size: 17px; color: #4E3D2C; margin: 0 0 14px; }
+  .flow { font: 13.2px/1.6 var(--mono); background: rgba(255,253,246,.88); border: 1.5px solid var(--honey); border-radius: 12px; padding: 14px 18px;
+    overflow-x: auto; white-space: pre; margin: 18px 0 0; color: var(--ink); box-shadow: 0 3px 0 rgba(227,169,59,.35); }
+  .byline { margin: 16px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: rgba(253,248,234,.96); border-bottom: 2px solid var(--meadow); }
+  nav.toc .row { display: flex; align-items: center; gap: 8px; max-width: 1080px; margin: 0 auto; padding: 8px 28px; }
+  nav.toc ol { display: flex; gap: 2px; margin: 0; padding: 0; list-style: none; overflow-x: auto; flex: 1; }
+  nav.toc a { display: block; white-space: nowrap; text-decoration: none; color: var(--ink-soft); font-size: 13.5px; padding: 6px 9px; border-radius: 999px; }
+  nav.toc a:hover { background: var(--honey-soft); color: var(--ink); }
+  nav.toc span { font: 700 12px var(--mono); color: var(--honey-deep); margin-right: 5px; }
+  .toggle { white-space: nowrap; border: 1.5px solid var(--rule); background: var(--card); border-radius: 999px; padding: 5px 12px; font: 600 13px var(--sans); color: var(--ink-soft); cursor: pointer; }
+  .toggle[aria-pressed="true"] { background: var(--honey-soft); border-color: var(--honey); color: var(--ink); }
+
+  /* each part wears its own colour */
+  .part { margin-top: 56px; padding: 26px 30px; border-radius: 18px; }
+  #built { background: linear-gradient(135deg, var(--meadow-soft), #F4F8E6); border: 1.5px solid var(--meadow); }
+  #collab { background: linear-gradient(135deg, var(--sky-soft), #EEF5F8); border: 1.5px solid var(--sky); }
+  #designed { background: linear-gradient(135deg, var(--eeyore-soft), #F5F3F8); border: 1.5px solid #D6D3E2; }
+  .part > .label { font: 700 12.5px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--tree); }
+  #collab > .label { color: var(--sky-deep); } #designed > .label { color: var(--eeyore-deep); }
+  .part > h2 { font: 650 34px/1.15 var(--serif); margin: 4px 0 8px; color: #2F2216; }
+  .part > p.intro { max-width: 74ch; color: var(--ink-soft); font-size: 17px; margin: 0; }
+
+  section.sec { padding: 40px 0 6px; }
+  .secno { display: inline-block; font: 700 12.5px var(--mono); color: var(--honey-deep); background: var(--honey-soft);
+    border: 1px solid rgba(227,169,59,.5); padding: 1px 10px; border-radius: 999px; }
+  h3 { font: italic 500 27px/1.2 var(--serif); margin: 8px 0 10px; color: var(--tree); }
+  h4 { font: 650 17px/1.3 var(--serif); margin: 0 0 6px; color: #2F2216; }
+  p.body { max-width: 74ch; margin: 0 0 12px; }
+
+  .grid { display: grid; gap: 16px; } .g2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+  [id] { scroll-margin-top: 72px; }
+  .card { background: var(--card); border: 1.5px solid var(--rule); border-radius: 14px; padding: 18px 20px; box-shadow: 0 3px 0 #EFE3C6; }
+  .card .sub { font-size: 13px; color: var(--ink-faint); margin-bottom: 10px; } .card p { margin: 8px 0 0; font-size: 15px; color: var(--ink-soft); }
+  .designed { background: var(--card); border-left: 5px solid var(--eeyore); }
+  .designed h4 { color: var(--eeyore-deep); }
+
+  table.t { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .t caption { text-align: left; font-size: 13px; color: var(--ink-faint); padding-bottom: 8px; }
+  .t th { text-align: left; font-weight: 700; font-size: 12.5px; color: var(--bark); padding: 0 12px 7px 0; border-bottom: 2px solid var(--honey-soft); vertical-align: bottom; }
+  .t td { padding: 7px 12px 7px 0; border-bottom: 1px solid #F2E8CF; vertical-align: top; font-variant-numeric: tabular-nums; }
+  .t td.fig { font: 650 16px var(--serif); white-space: nowrap; color: var(--tree); }
+  .tablewrap { overflow-x: auto; } .mono { font-family: var(--mono); font-size: 13px; }
+
+  .chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .c-ok { background: var(--meadow); color: var(--tree); } .c-maybe { background: var(--honey-soft); color: var(--honey-deep); }
+  .c-not { background: var(--tigger-soft); color: #94500F; } .c-wait { background: var(--eeyore-soft); color: var(--eeyore-deep); }
+  .c-info { background: var(--sky-soft); color: #2F6386; } .c-crit { background: var(--piglet); color: #6F2B33; }
+
+  .tiers { display: flex; gap: 10px; flex-wrap: wrap; }
+  .tier { flex: 1 1 110px; border-radius: 12px; padding: 12px 10px; text-align: center; }
+  .tier .n { display: block; font: 650 30px/1 var(--serif); color: #2F2216; } .tier .k { font-size: 12.5px; color: var(--ink-soft); }
+  .t-arrived { background: var(--honey-soft); border: 1.5px solid #F0D48E; }
+  .t-tended { background: var(--meadow); border: 1.5px solid #B6D485; }
+  .t-gathered { background: var(--sky); border: 1.5px solid #9EC4DD; }
+
+  /* the field notebook: consoles in the deep wood */
+  .console { margin: 0; background: #2A3F26; border-radius: 12px; overflow: hidden; box-shadow: 0 3px 0 #C7B48A; }
+  .console figcaption { background: #36512F; color: var(--honey-soft); font: 600 12.5px var(--sans); padding: 7px 14px; border-bottom: 2px solid var(--honey); }
+  .console pre, pre.code { margin: 0; padding: 13px 15px; color: #F3EBD4; font: 12.6px/1.55 var(--mono); white-space: pre-wrap; overflow-x: auto; }
+  pre.code { background: #2A3F26; border-radius: 12px; border-top: 3px solid var(--honey); box-shadow: 0 3px 0 #C7B48A; }
+
+  details.presenter { margin: 14px 0 4px; background: var(--piglet-soft); border: 1.5px dashed var(--piglet); border-radius: 12px; padding: 8px 14px; max-width: 900px; }
+  details.presenter summary { cursor: pointer; font: 700 12.5px var(--sans); color: var(--piglet-deep); letter-spacing: .06em; text-transform: uppercase; }
+  details.presenter ul { margin: 8px 0 4px; padding-left: 20px; font-size: 14.5px; } details.presenter li { margin: 0 0 7px; }
+  code.cmd { display: inline-block; background: #2A3F26; color: #F3EBD4; padding: 2px 8px; border-radius: 6px; font: 12.6px var(--mono); white-space: pre-wrap; }
+  body.clean details.presenter { display: none; }
+
+  .chain { list-style: none; margin: 0; padding: 0; }
+  .chain li { position: relative; padding: 0 0 13px 24px; border-left: 2px dashed var(--leaf); margin-left: 6px; }
+  .chain li:last-child { border-left-color: transparent; }
+  .chain li::before { content: ""; position: absolute; left: -8px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: var(--honey); border: 3px solid var(--card); box-shadow: 0 0 0 1.5px var(--honey); }
+  .chain li.absent::before { background: var(--eeyore-soft); box-shadow: 0 0 0 1.5px var(--eeyore); }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+  .pill { border: 1.5px solid var(--rule); background: var(--card); color: var(--ink-soft); border-radius: 999px; padding: 5px 13px; font: 600 13px var(--mono); cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+
+  .result { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .result .big { font: 650 54px/1 var(--serif); color: var(--tree); } .result .of { font-size: 16.5px; color: var(--ink-soft); max-width: 50ch; }
+  .result.pending .big { color: var(--ink-faint); } .result.mixed .big { color: var(--tigger); }
+  table.matrix { border-collapse: separate; border-spacing: 4px; min-width: 620px; width: 100%; }
+  .matrix th { font: 650 13.5px/1.25 var(--serif); text-align: left; padding: 0 8px 6px; vertical-align: bottom; color: #2F2216; }
+  .matrix th small { display: block; font: 12px var(--sans); color: var(--ink-faint); }
+  .matrix td.county { font-size: 13.5px; color: var(--ink-soft); padding-right: 8px; white-space: nowrap; }
+  .cell { border-radius: 8px; padding: 6px 9px; font-size: 13.5px; font-variant-numeric: tabular-nums; background: #F2E8CF; color: var(--ink-faint); }
+  .cell.agree { background: var(--meadow); color: var(--tree); } .cell.differ { background: var(--piglet); color: #6F2B33; font-weight: 700; }
+  .cell .pub { display: block; font-size: 11.5px; opacity: .8; }
+  .mapfig { margin: 0; background: var(--card); border: 1.5px solid var(--rule); border-radius: 14px; padding: 12px; box-shadow: 0 3px 0 #EFE3C6; }
+  .mapfig img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 8px; } .mapfig figcaption { font-size: 13px; color: var(--ink-faint); margin-top: 6px; }
+
+  ol.list, ul.list { padding-left: 22px; max-width: 80ch; margin: 6px 0 0; } .list li { margin: 0 0 9px; font-size: 15px; }
+  .list li::marker { color: var(--honey-deep); font-weight: 700; }
+  .formula { font: 600 17px/1.5 var(--serif); margin: 10px 0; color: var(--tree); background: var(--honey-soft); border-radius: 10px; padding: 8px 14px; }
+  .note { font-size: 13.5px; color: var(--ink-faint); max-width: 78ch; margin: 12px 0 0; }
+  .err { background: var(--tigger-soft); border: 1.5px solid #EDC08F; color: #6F3A0E; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .loading { color: var(--ink-faint); font-style: italic; }
+  code { font-family: var(--mono); font-size: 12.8px; background: var(--honey-soft); padding: 1px 5px; border-radius: 4px; }
+  footer { padding: 46px 0 80px; color: var(--ink-faint); font-size: 13.5px; max-width: 80ch; }
+  .groundline { margin-top: 60px; height: 70px; display: block; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="masthead"><div class="wrap"><header>
+  <p class="series">rewildingCities · status report</p>
+  <h1>A re-derivable geospatial analysis pipeline providing a shared, actionable evidence base for decision-making and civic engagement</h1>
+  <p class="summary">rewildingCities is a data acquisition and transformation pipeline for geospatial analysis with a provenance
+    contract at every boundary. Each community declares its holdings in a manifest; providers acquire them; small analytical
+    primitives in R and Python transform them; every artifact carries an envelope recording how it was made; and a per-plot
+    DuckDB catalog, the <em>loam</em>, indexes declared, conformed and derived data in separate tiers. Its computations are
+    deterministic and re-derivable: the catalog can be deleted and rebuilt from the provenance records alone, so every number
+    can be traced to its source and reproduced.</p>
+  <p class="summary">This report describes what is built and running against the Maine plot, how collaborators and other tools
+    connect to it, and what is designed and not yet built.</p>
+  <div class="flow">  manifest   →  providers  →  primitives   →  envelopes  →  loam         →  readiness    →  API
+  (declare)     (acquire)     (transform)     (record)      (catalogue)     (interpret)     (serve)</div>
+  <p class="byline">Kalli A. Hale · rewildingCities</p>
+</header></div><svg class="hills" viewBox="0 0 1440 110" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0,58 C160,22 300,74 470,50 C640,26 800,70 980,46 C1150,24 1300,60 1440,40 L1440,110 L0,110 Z" fill="#CFE3A6"/>
+  <path d="M0,80 C210,52 400,98 620,78 C840,58 1040,96 1240,76 C1330,68 1400,74 1440,70 L1440,110 L0,110 Z" fill="#B9D98A"/>
+  <g fill="#6E9B4E" opacity=".85"><circle cx="1180" cy="52" r="15"/><circle cx="1200" cy="46" r="18"/><circle cx="1220" cy="54" r="13"/><rect x="1197" y="58" width="5" height="14" fill="#7A5A3A"/>
+  <circle cx="210" cy="60" r="12"/><circle cx="226" cy="54" r="15"/><rect x="223" y="64" width="4" height="12" fill="#7A5A3A"/></g>
+  <path d="M0,98 C320,86 640,108 960,94 C1180,85 1320,100 1440,94 L1440,110 L0,110 Z" fill="#FDF8EA"/>
+</svg></div>
+
+<nav class="toc" aria-label="contents"><div class="row"><ol>
+  <li><a href="#built"><span>I</span>Built</a></li>
+  <li><a href="#s-manifest"><span>1.1</span>manifest</a></li>
+  <li><a href="#s-envelope"><span>1.4</span>envelopes</a></li>
+  <li><a href="#s-loam"><span>1.7</span>loam</a></li>
+  <li><a href="#s-compose"><span>1.9</span>experiments</a></li>
+  <li><a href="#s-validate"><span>1.11</span>validation</a></li>
+  <li><a href="#collab"><span>II</span>Collaborate</a></li>
+  <li><a href="#designed"><span>III</span>Designed</a></li>
+</ol><button class="toggle" id="toggle" aria-pressed="true" title="press P">presenter notes: on</button></div></nav>
+
+<main class="wrap">
+
+<div class="grid g2" style="margin-top:36px">
+  <div class="card"><h4>How this differs from a conversational tool</h4>
+    <p>A conversational interface is a way of asking: it helps a person retrieve, phrase and summarise. It keeps no record of how an answer was produced, and an answer that looks right is indistinguishable from one that is right. This pipeline determines what can responsibly be computed and published. Its New York park-cooling analysis once produced plausible temperatures, a textbook monotone gradient, complete provenance and nineteen of twenty-five features reporting success, and was void: a cropping step had masked 99.4% of the raster, the median park held fifty-four valid cells within three hundred metres, and the 0.35 °C gradient sat below the sensor's noise floor. The warnings travelled with the result, and the precondition gate now refuses to build on such inputs.</p>
+    <p>The two are complementary. A conversational layer is more useful on top of infrastructure that can tell it what the data does and does not support.</p></div>
+  <div class="card"><h4>Verified figures, Maine</h4>
+    <table class="t">
+      <tr><td class="fig">16</td><td>Maine counties conformed and cross-verified against Census TIGERweb</td></tr>
+      <tr><td class="fig">7 196 → 16</td><td>County source polygons reduced to administrative units</td></tr>
+      <tr><td class="fig">7 156</td><td>Island polygons excluded, explicitly, on a named attribute</td></tr>
+      <tr><td class="fig">463 / 461</td><td>Maine civil divisions self-governing vs under state jurisdiction</td></tr>
+      <tr><td class="fig">459 / 529</td><td>Maine county subdivisions that are active governments</td></tr>
+      <tr><td class="fig">0 / 586, 0 / 862</td><td>Active governments among county subdivisions, Georgia and Texas</td></tr>
+      <tr><td class="fig">48 / 48</td><td>Maine county values that agree with the Civic Information Index at its published precision</td></tr>
+      <tr><td class="fig" id="route-count">…</td><td>HTTP routes in the read and act faces, read live from the API</td></tr>
+    </table></div>
+</div>
+
+<div class="part" id="built"><div class="label">Part I</div><h2>What is built</h2>
+  <p class="intro">Each component below exists, runs, and is covered by tests. The table names the failure each one prevents.</p></div>
+
+<div class="card tablewrap" style="margin-top:18px"><table class="t">
+  <tr><th>component</th><th>what it prevents</th></tr>
+  <tr><td><b>Envelope contract</b></td><td>A result circulating without a verifiable record of how it was made</td></tr>
+  <tr><td><b>Precondition gates</b></td><td>Building a conclusion on inputs an earlier step flagged as unreliable, or that never passed through a required step</td></tr>
+  <tr><td><b>Semantic typing</b></td><td>Joining a per-park table to a per-ring table because both happen to carry an identifier column</td></tr>
+  <tr><td><b>Indicator and weighting registries</b></td><td>A variable code, a direction or a weight written in more than one place and drifting apart</td></tr>
+  <tr><td><b>Coverage floors</b></td><td>Reporting a confident figure from a raster that is almost entirely empty</td></tr>
+  <tr><td><b>Frame law</b></td><td>Cataloguing spatial data with no declared coordinate system</td></tr>
+  <tr><td><b>Loud vocabulary</b></td><td>A renamed folder silently reducing the type dictionary to half its definitions with no error</td></tr>
+  <tr><td><b>Consent tiers</b></td><td>Publishing mutual-aid networks or sovereign boundaries as named features</td></tr>
+  <tr><td><b>Reduction accounting</b></td><td>A geometric aggregation inventing an attribute value for a group, or giving distinct units one geometry</td></tr>
+  <tr><td><b>Re-derivability</b></td><td>The catalog drifting out of step with the data it describes</td></tr>
+</table></div>
+
+<section class="sec" id="s-manifest">
+  <div class="secno">1.1</div><h3>Community data is declared in a manifest</h3>
+  <p class="body">Every plot has a <code>manifest.yml</code>: a list of datasets stating what each one is, where it comes from, where
+    its copy lives, and whether it is currently accessible. Each dataset carries a semantic type, which opens valid analytical paths
+    between datasets. A dataset the community wants but has not acquired can still be declared and marked unavailable. A declaration
+    missing its semantic type, format or cache path is recorded as underspecified and refused, never defaulted.</p>
+  <div class="grid g2">
+    <pre class="code">governance_unit_county:
+  available: true
+  semantic_type: governance_unit
+  format: geojson
+  source:
+    type: api
+    provider: arcgis_rest
+    item_id: b47e1e44ce70411f91fe4c1c3f4c7cd6
+    layer: 1
+  cache:
+    path: .data/maine_counties.geojson</pre>
+    <div class="card tablewrap"><table class="t">
+      <caption>The Maine manifest</caption>
+      <tr><th>dataset</th><th>type</th><th>status</th></tr>
+      <tr><td class="mono">governance_unit_county</td><td class="mono">governance_unit</td><td><span class="chip c-ok">available</span></td></tr>
+      <tr><td class="mono">governance_unit_town</td><td class="mono">governance_unit</td><td><span class="chip c-ok">available</span></td></tr>
+      <tr><td class="mono">acs_county_2024</td><td class="mono">indicator_source</td><td><span class="chip c-ok">available</span></td></tr>
+      <tr><td class="mono">acs_us_county_2024</td><td class="mono">indicator_source</td><td><span class="chip c-ok">available</span></td></tr>
+      <tr><td class="mono">cii_2026_published</td><td class="mono">indicator_source</td><td><span class="chip c-ok">available</span></td></tr>
+      <tr><td class="mono">county_locations_2024</td><td class="mono">unit_locations</td><td><span class="chip c-maybe">manual</span></td></tr>
+      <tr><td class="mono">formal_outlet</td><td class="mono">formal_outlet</td><td><span class="chip c-not">sought</span></td></tr>
+      <tr><td class="mono">institutional_node</td><td class="mono">institutional_node</td><td><span class="chip c-not">sought</span></td></tr>
+      <tr><td class="mono">access_infrastructure</td><td class="mono">access_infrastructure</td><td><span class="chip c-not">sought</span></td></tr>
+    </table></div>
+  </div>
+  <p class="note">Coordinate policy: EPSG:4326 is the interchange frame in which vectors rest; EPSG:26983 (Maine East) is declared for metric work. Rasters are never reprojected for storage, because resampling a measurement alters it.</p>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Open the manifest: <code class="cmd">less plots/maine/manifest.yml</code>. Point at the header that declares what is deliberately absent, and at the county dataset's item id.</li>
+    <li>Say: a declared-but-absent dataset is a legitimate state, and its absence is reported in the method author's words.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-providers">
+  <div class="secno">1.2</div><h3>Acquisition through providers</h3>
+  <p class="body">A provider is a protocol for acquiring data from an external source. New protocols, such as a directory scraper,
+    are new <code>Provider</code> subclasses declaring <code>can_handle</code> and implementing <code>acquire</code>, without touching the
+    pipeline. Current providers cover ArcGIS REST, Socrata, STAC, direct URL, S3, Google Earth Engine, local files, manual placement,
+    and the Census ACS.</p>
+  <div class="grid g2">
+    <div class="card"><h4>Properties that matter</h4>
+      <ul class="list"><li><b>Sensing before fetching.</b> The system asks whether acquisition is feasible (network, credentials, disk) before committing, so the cost of a dataset is known in advance.</li>
+      <li><b>Durable identifiers.</b> ArcGIS sources are declared by item id, not URL, because a republished layer keeps its id and loses its URL. The provider resolves the address at fetch time and records which one it used.</li>
+      <li><b>Registry-driven variables.</b> The ACS provider fetches whatever variables the declared indicators require, margins of error included, and records the vintage window, not only the year.</li></ul></div>
+    <figure class="console"><figcaption>acquisition, and an ambiguity left to the person</figcaption><pre>$ python -m canopy.cli acquire maine --type indicator_source --fetch
+   acquired:
+     ~ indicator_source  (acs_us_county_2024)
+         Fetched from the Census ACS ~ 3222 county(s); vintage 2020-2024 (5-year estimates); 10 variable(s)
+   more than one holding offers this:
+     ~ indicator_source
+         2 datasets provide &#x27;indicator_source&#x27;; which one is a choice for you, not for the engine.</pre></figure>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Sense without fetching: <code class="cmd">python -m canopy.cli acquire maine --type indicator_source</code>. It reports what is held and acquirable, and names the two-source choice.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-primitives">
+  <div class="secno">1.3</div><h3>Analytical primitives</h3>
+  <p class="body">Each primitive does one thing (validate a vector layer, repair geometry, reproject, dissolve, derive an indicator,
+    standardise, impute, compose an index) and follows one contract: three JSON arguments in, one JSON object out. The orchestrator
+    dispatches on file extension, so an R primitive and a Python primitive are interchangeable. A primitive never writes its own
+    provenance; it reports what it did and what it noticed, and the system assembles the record around it. Each primitive's registry
+    entry declares its inputs by semantic type, its parameters, and its preconditions.</p>
+  <div class="card tablewrap"><table class="t">
+    <caption>Civic-information primitives, each held to an independent implementation</caption>
+    <tr><th>primitive</th><th>layer</th><th>does</th><th>verified against</th></tr>
+    <tr><td class="mono">derive_indicator</td><td>roots</td><td>Ratios of summed counts or published passthroughs, by declaration; long-form output</td><td>Python preview, exact</td></tr>
+    <tr><td class="mono">standardize_indicator</td><td>roots</td><td>Oriented z-score and percentile against a declared reference population</td><td>Python oracle; CII's percentiles</td></tr>
+    <tr><td class="mono">impute_nearest_neighbor</td><td>roots</td><td>Two stages: the ten most similar complete units, then the nearest; every value flagged with its donor</td><td>Python oracle, exact</td></tr>
+    <tr><td class="mono">weighted_index</td><td>roots</td><td>Weighted pillar means and composite, all-or-nothing on components</td><td>Python oracle, exact</td></tr>
+    <tr><td class="mono">assign_geoid</td><td>soil</td><td>A Census GEOID derived from a layer's own county code, refusing ambiguity</td><td>Maine's sixteen counties</td></tr>
+  </table></div>
+</section>
+
+<section class="sec" id="s-envelope">
+  <div class="secno">1.4</div><h3>The envelope system of provenance</h3>
+  <p class="body">Every artifact has an envelope beside it: a JSON record in four parts, validated against a schema on every write.
+    A primitive emitting malformed metadata fails immediately rather than producing a subtly wrong record.</p>
+  <div class="grid g2">
+    <div class="card tablewrap"><table class="t">
+      <tr><th>part</th><th>holds</th></tr>
+      <tr><td><b>data</b></td><td>Where the file is and its format</td></tr>
+      <tr><td><b>metadata</b></td><td>What the data is: semantic type, frame, feature count, coverage, join keys</td></tr>
+      <tr><td><b>provenance</b></td><td>An append-only chain: primitive, version, parameters, inputs, hashes</td></tr>
+      <tr><td><b>warnings</b></td><td>Everything noticed, at info, warning or critical</td></tr></table>
+      <p>Provenance accumulates, so a final artifact knows its whole history; warnings never disappear, so nothing downstream can quietly resolve one. Indicator definitions enter parameters by reference and are recorded with the sha256 of the file they were read from, so envelopes produced from different versions of one definition remain distinguishable.</p></div>
+    <div><div class="pills" id="clump-switch"></div><div id="trace"><div class="loading">reading lineage</div></div></div>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Show one envelope raw: <code class="cmd">python -m json.tool plots/maine/.envelopes/standardize_standings.envelope.json | less</code>. Point at the provenance params: the full cii_broadband declaration and its declaration_sha256.</li>
+    <li>Then click through the lineage panel on this page: standings, derived values, the acquired source.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-types">
+  <div class="secno">1.5</div><h3>Semantic typing and the indicator registry</h3>
+  <p class="body">A method declares "I need governance units and formal outlets", not "I need two vector files". Each type carries its
+    category (which decides the metadata it must have), its format, and its consent tier, and the vocabulary refuses to load if it contains
+    a contradiction: a name defined twice, an alias claimed by two types, an incomplete definition, or a missing domain folder. Above the types
+    sits the indicator registry: an indicator is a claim, not a type, declaring which numerator over which denominator, in what unit, which
+    direction is better, how it may be aggregated, and where its uncertainty comes from.</p>
+  <div class="card tablewrap"><table class="t">
+    <caption>The information domain</caption>
+    <tr><th>type</th><th>shape</th><th>holds</th><th>consent tier</th></tr>
+    <tr><td class="mono">formal_outlet</td><td>vector</td><td>Print, broadcast, digital and radio outlets</td><td>public</td></tr>
+    <tr><td class="mono">institutional_node</td><td>vector</td><td>Libraries, town halls, schools, government sites</td><td>public</td></tr>
+    <tr><td class="mono">access_infrastructure</td><td>raster</td><td>Broadband, cell and cable availability</td><td>public</td></tr>
+    <tr><td class="mono">indicator_source</td><td>tabular</td><td>Raw published values a derivation reads</td><td>public</td></tr>
+    <tr><td class="mono">indicator_values</td><td>tabular</td><td>Derived measurements, one row per unit and indicator</td><td>public</td></tr>
+    <tr><td class="mono">indicator_standings</td><td>tabular</td><td>Z-scores and percentiles against a declared population</td><td>public</td></tr>
+    <tr><td class="mono">indicator_index</td><td>tabular</td><td>Weighted pillar and composite indices, naming their weighting</td><td>public</td></tr>
+    <tr><td class="mono">unit_locations</td><td>tabular</td><td>One representative point per unit</td><td>public</td></tr>
+    <tr><td class="mono">ownership_concentration</td><td>tabular</td><td>Consolidation score per unit (derived)</td><td>public</td></tr>
+    <tr><td class="mono">community_context</td><td>tabular</td><td>Demographics, rurality, language, participation</td><td>custom</td></tr>
+    <tr><td class="mono">relational_hub</td><td>vector</td><td>Forums, groups, listservs, mutual-aid networks</td><td>aggregate-only</td></tr>
+    <tr><td class="mono">flow_edges</td><td>tabular</td><td>Pathways between node types (derived)</td><td>excluded</td></tr>
+  </table></div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Count the vocabulary before quoting a number: <code class="cmd">python -c "from canopy.vocabulary import Vocabulary; v=Vocabulary.load('seeds/schemas'); print(len(v.canonical))"</code></li>
+    <li>The registry: <code class="cmd">ls seeds/indicators/</code>, then open cii_2026.yml at cii_rent_burden, which declares aggregation: none and says why.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-consent">
+  <div class="secno">1.6</div><h3>Consent tiers</h3>
+  <p class="body">Every semantic type carries a <code>resolution_tier</code>. The system may compute with sensitive information internally;
+    the tier governs what may be published, and how. <b>public</b> may be published to the world. <b>aggregate-only</b> may be reported
+    as a count ("this county has twelve community information hubs"), never as named locations, to avoid enabling surveillance of community
+    activity. <b>custom</b> requires explicit, named consent: <code>sovereign_boundary</code> layers enter only on terms a nation sets, under CARE
+    and OCAP principles, because the barrier should be consent rather than difficulty; <code>community_context</code> is individually public but
+    combinable into re-identification risk at fine grain. <b>excluded</b> is not reported at all. The tiers are declared and travel with every
+    type; the exposure gate that enforces them at publication is described in Part III.</p>
+</section>
+
+<section class="sec" id="s-loam">
+  <div class="secno">1.7</div><h3>The loam catalog</h3>
+  <p class="body">A DuckDB catalog with one row per artifact in three tiers. Every column is a projection of a named field from an envelope
+    or a manifest; a field the metadata does not carry is stored as empty, never guessed. The catalog is deleted and rebuilt from the receipts
+    each time a plot is opened, so opening a plot is idempotent and the catalog cannot drift from the data. Rules apply on entry: spatial data
+    needs a declared frame, data that has been through a lossy reduction is refused, and coverage below half is flagged.</p>
+  <div class="grid g2">
+    <div class="card"><h4>Holdings by tier</h4><div class="sub">live</div><div id="tiers"><div class="loading">reading</div></div></div>
+    <div class="card tablewrap"><table class="t" id="holdings"><tr><td class="loading">reading</td></tr></table></div>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Open the plot and query the catalog directly: <code class="cmd">python -c "from canopy.wonder.session import open_plot; v,l,r=open_plot('maine'); print(r); print(l.find(plot='maine', tier='tended')[:3])"</code></li>
+    <li>Say: delete <code>plots/maine/.loam/loam.duckdb</code> and the next read rebuilds it identically from the manifest and the envelopes.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-readiness">
+  <div class="secno">1.8</div><h3>Readiness: what the ground can answer</h3>
+  <p class="body">A <b>curiosity</b> is a question and declares no data. A <b>method</b> declares what it requires, each requirement with its role
+    and the cost of its absence in the author's own words. The read model weighs every curiosity's methods against what the loam holds and
+    returns a verdict: runnable, runnable with uncertainty, or blocked, naming what is missing. A curiosity with no method is reported as
+    awaiting one rather than offered every method in its domain. Raw sources that a derivation reads as acquired satisfy a requirement only
+    when they are declared available and present on disk.</p>
+  <div class="grid g2">
+    <div class="card"><h4>Curiosities, information domain</h4><div class="sub">live verdicts</div><table class="t" id="curiosities"><tr><td class="loading">reading</td></tr></table></div>
+    <figure class="console"><figcaption>the read model, rendered: wonder</figcaption><pre>$ python -m canopy.cli wonder maine
+planted 9 declared holding(s) from the manifest
+tilled 10 envelope(s) from plots/maine/.envelopes
+
+🌱 you can explore this today
+   your question: &quot;Can households here get online, and do they?&quot;
+   the way in: Civic Information Indicators from Published Sources
+   what your community already has: indicator_source
+   choices that would be yours to make:
+     ~ reference_population: Who a unit is ranked against. CII ranks every
+       county against the nation&#x27;s 3 144.</pre></figure>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Run it live: <code class="cmd">python -m canopy.cli wonder maine</code>. Point at reference_population: the choice is named in the open, in the method author's words.</li>
+    <li>Ask in plain words: <code class="cmd">python -m canopy.cli wonder maine "broadband"</code></li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-compose">
+  <div class="secno">1.9</div><h3>Experiments: composition and orchestration</h3>
+  <p class="body">An experiment binds one curiosity to one method on one plot. A method may declare a <b>recipe</b>; <code>compose</code> fills its
+    compose-time references from the question and the manifest and writes a complete experiment, so the file is a full account of what will run.
+    The orchestrator then reads the experiment and manifest, orders the steps, resolves data (present, acquirable or blocked), checks each
+    step's preconditions, runs the primitive, builds the envelope, threads it forward, and writes a run log.</p>
+  <div class="card tablewrap" style="margin-bottom:16px"><table class="t">
+    <tr><th>reference</th><th>resolved</th><th>becomes</th></tr>
+    <tr><td class="mono">$requires.&lt;name&gt;</td><td>compose</td><td>The dataset bound to a requirement; several candidates are refused unless chosen</td></tr>
+    <tr><td class="mono">$curiosity.indicated_by</td><td>compose</td><td>The sub-question's indicators the bound source serves; others are named with the source that serves them</td></tr>
+    <tr><td class="mono">$weighting.&lt;id&gt;.components</td><td>compose</td><td>Every indicator a declared weighting names</td></tr>
+    <tr><td class="mono">$source.&lt;fact&gt;</td><td>compose</td><td>Authority, vintage window and unit key of the bound source</td></tr>
+    <tr><td class="mono">$indicators · $weights · $choices · $steps</td><td>run time</td><td>Hashed declarations, choices, upstream outputs</td></tr>
+  </table></div>
+  <div class="grid g2">
+    <figure class="console"><figcaption>compose: one sub-question, one authority</figcaption><pre>&gt;&gt;&gt; compose(loam, &quot;maine&quot;, &quot;broadband_access&quot;, &quot;cii_indicator_values&quot;,
+...         sub_question=&quot;subscription&quot;,
+...         chosen={&quot;datasets&quot;: {&quot;source&quot;: &quot;acs_us_county_2024&quot;}})
+  the choices, named in the open:
+    ~ reference_population: defaulted to &#x27;nation_50_states_dc&#x27; (yours to change)
+    ~ source: bound to acs_us_county_2024
+    ~ also answered by cii_pub_broadband (cii_2026): served by cii_2026_published</pre></figure>
+    <figure class="console"><figcaption>execution</figcaption><pre>$ python -m canopy.cli sows plots/maine/experiments/maine_broadband_access_subscription__cii_indicator_values_91b5c0.yml
+✓ Experiment complete: 2 steps executed
+  Steps: derive → standardize
+  Final envelopes:
+    derive: plots/maine/.data/derive_values.parquet
+    standardize: plots/maine/.data/standardize_standings.parquet</pre></figure>
+    <figure class="console"><figcaption>precondition gate: standardisation without derivation</figcaption><pre>$ python -m canopy.cli sows garden/experiments/demo_precondition_gate.yml
+✗ Experiment failed
+  Failed at step: standardize
+Precondition not satisfied
+  - provenance_contains: derive_indicator not satisfied (no input was produced by &#x27;derive_indicator&#x27;)</pre></figure>
+    <figure class="console"><figcaption>a primitive declining to infer a key</figcaption><pre>$ python -m canopy.cli sows plots/maine/experiments/maine_county_units.yml
+✗ Experiment failed
+  Failed at step: units_geoid
+County field not found
+No field &#x27;CNTYCODE&#x27;. Fields: COUNTY</pre></figure>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Open the composed file: <code class="cmd">less plots/maine/experiments/maine_broadband_access_subscription__cii_indicator_values_91b5c0.yml</code>. Point at curiosity.ref, the bound $manifest source, and the literal $indicators list.</li>
+    <li>Show the gate live: <code class="cmd">python -m canopy.cli sows garden/experiments/demo_precondition_gate.yml</code></li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-harvest">
+  <div class="secno">1.10</div><h3>Harvest: results onto geometry</h3>
+  <p class="body">A tabular result declares the vector layer it joins to. The harvest joins on a declared key, never on a column name that
+    happens to coincide: a long-form indicator table names its units by <code>(us_census_geoid, code)</code> and joins to a layer's GEOID,
+    which for Maine's counties is derived from the state's own county code (state FIPS 23 plus CNTYCODE, zero-padded). A layer without the key
+    is refused by name. Empty values are drawn as empty, never as the bottom of the colour ramp, and rows that match no feature are counted.</p>
+  <div class="grid g2">
+    <figure class="console"><figcaption>harvest: standings joined to derived county keys</figcaption><pre>$ python -m canopy.cli map maine indicator_standings --indicator cii_broadband --layer units_geoid_with_geoid
+🗺  mapped cii_broadband as a choropleth
+   16 features of units_geoid_with_geoid colored by percentile, joined on GEOID
+   3206 row(s) of the result matched no feature</pre></figure>
+    <figure class="mapfig"><img src="../plots/maine/harvest/map_cii_broadband.png" alt="Maine's sixteen counties shaded by national broadband percentile"
+      onerror="this.parentElement.innerHTML='<p class=note>map image not found; run demo/render_choropleth.py</p>'">
+      <figcaption>Households with broadband, national percentile, ACS 2020-2024; the other 3 206 rows of the national result lie outside the plot.</figcaption></figure>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Redraw if asked: <code class="cmd">python demo/render_choropleth.py plots/maine/harvest/map_cii_broadband.geojson</code></li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-validate">
+  <div class="secno">1.11</div><h3>Validation against the Civic Information Index</h3>
+  <p class="body">CII's method (reverse, standardise, impute counties missing exactly one indicator in two stages, weighted pillar means, a
+    weighted composite, percentiles at each stage) is implemented as primitives. Three indicators were derived from raw ACS counts and
+    compared with CII's published file within half a unit of CII's last published decimal, a precision inferred per column from the file's
+    own formatting.</p>
+  <div class="result pending" id="verdict" aria-live="polite"><span class="big" id="verdict-n">…</span><span class="of" id="verdict-of">reading the platform</span></div>
+  <div class="tablewrap"><table class="matrix" id="matrix"><tbody><tr><td class="loading">reading</td></tr></tbody></table></div>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card"><h4>Recovered rules</h4>
+      <p class="formula">percentile = average rank of the oriented value ÷ the largest rank × 100</p>
+      <p>Recovered from CII's file across 3 144 counties; reproduces 26 of 27 per-indicator percentile columns, the remaining one failing only because its published raw values were rounded after ranking. Under ÷ n, agreement fails wherever the top value is tied, by up to 22 points. The pipeline's national standardisation reproduces CII's broadband percentiles for all sixteen Maine counties.</p>
+      <p>Imputation applies to exactly the 461 counties missing one indicator; the 163 missing two or more receive no overall index and only the pillars without a gap. Environmental Resilience has three members. On equal weights the pipeline orders counties as CII does at Spearman 0.988 to 0.999 per pillar and 0.987 overall; the residual is CII's unpublished advisory-group weighting.</p>
+      <table class="t" id="rule" style="margin-top:10px"></table></div>
+    <div class="card"><h4>Findings in the published index</h4>
+      <ol class="list"><li>The ACS vintage is load-bearing and unrecorded: values differ by up to 4.2 points at 2019-2023 and agree exactly at 2020-2024.</li>
+      <li>Rent burden is blank for 15 of the nation's smallest counties for which the Census publishes a value; ranking them shifts every percentile by up to 0.25 points.</li>
+      <li>Volunteering is a state value, disclosed in the report and presented as county data in the file: 34.9 in every Maine county.</li>
+      <li>The news-outlet column takes only 0, 1 and 2 nationally, unlike the per-capita rate described; the coding requires confirmation.</li>
+      <li>Imputed values are unmarked. Here each names its donor, similarity and distance.</li></ol></div>
+  </div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Reproduce a column live: <code class="cmd">python -m canopy.indicators.preview compare maine cii_rent_burden --cii garden/reference/cii_2026.csv --fips-column FIPS --dataset acs_county_2024</code></li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-defects">
+  <div class="secno">1.12</div><h3>Defects identified and corrected</h3>
+  <div class="card"><ol class="list">
+    <li><b>Dissolve geometry assembly.</b> Each group was unioned correctly, then assembled with <code>c()</code> over bare geometries, which merges them; the single result was recycled across every row, giving each county the state's shape under its own name. It was detected when a choropleth rendered every county in one colour. The step now fails if geometry count differs from group count or any two units share a geometry, and a test exercises the real primitive on known shapes. County layers derived before the correction are being rebuilt.</li>
+    <li><b>Column-name rewriting.</b> The CSV reader's default renamed non-syntactic columns, so a declaration naming a published column could not find it.</li>
+    <li><b>Readiness for raw sources.</b> A source read as acquired could never satisfy a requirement; requirements may now declare <code>as_acquired</code>.</li>
+    <li><b>Registry drift.</b> A primitive accepted parameters its registry entry did not declare; both are now aligned, and a comparison test is proposed.</li>
+  </ol></div>
+</section>
+
+<div class="part" id="collab"><div class="label">Part II</div><h2>For collaborators</h2>
+  <p class="intro">The pipeline is a source of truth other tools can build on: dashboards, maps, a conversational layer, a statewide
+    rollup. Everything is reachable through a read-only API, and new data, questions and methods enter through declarative files that the
+    system validates before it uses them.</p></div>
+
+<section class="sec" id="s-api">
+  <div class="secno">2.1</div><h3>Connecting a tool: the API</h3>
+  <p class="body">The read face projects one read model, so the CLI, the API and any downstream tool report the same answer about the same
+    ground. Responses are JSON; interactive documentation is generated from the code at <a href="http://localhost:8000/docs">/docs</a>.
+    A conversational layer should call these routes rather than reason about the data itself: they say what the data does and does not support.</p>
+  <div class="card tablewrap"><table class="t" id="routes"><tr><td class="loading">reading the API's route list</td></tr></table></div>
+  <details class="presenter"><summary>presenter notes</summary><ul>
+    <li>Open <code>localhost:8000/docs</code> in a tab and try <code>/plots/maine/reading</code>: the same verdicts the CLI prints, as JSON.</li>
+  </ul></details>
+</section>
+
+<section class="sec" id="s-newdata">
+  <div class="secno">2.2</div><h3>Adding new data</h3>
+  <div class="grid g2">
+    <div class="card"><ol class="list">
+      <li><b>Declare it</b> in the plot's manifest with a semantic type, format, source and cache path. It may be declared before it exists; the read model reports it as sought, and what its absence costs.</li>
+      <li><b>If it can be fetched automatically</b>, use an existing provider, or add a <code>Provider</code> subclass declaring <code>can_handle</code> and implementing <code>acquire</code>. Acquisition is then <code>acquire &lt;plot&gt; --type &lt;type&gt; --fetch</code>, recorded in an append-only changelog.</li>
+      <li><b>If it is a new kind of thing</b>, declare a semantic type in the domain vocabulary with its category, format and consent tier. The vocabulary refuses a name defined twice.</li>
+      <li><b>If it measures something</b>, declare an indicator in <code>seeds/indicators/</code>: derivation, unit, direction, aggregation, uncertainty. A <code>replicates</code> block is added only after the indicator has been checked against its published source.</li>
+    </ol></div>
+    <pre class="code">formal_outlet:
+  available: false
+  description: Maine local news outlets with owning entity
+  semantic_type: formal_outlet
+  format: geojson
+  source:
+    type: manual
+    notes: >
+      Reconcile the Maine Press Association list,
+      FCC licences and publisher mastheads.
+  cache:
+    path: .data/maine_outlets.geojson
+  provenance:
+    source: Maine Press Association; FCC; mastheads</pre>
+  </div>
+</section>
+
+<section class="sec" id="s-tickets">
+  <div class="secno">2.3</div><h3>Proposing a question or a method</h3>
+  <p class="body">A question or an approach is proposed as a file. A <b>curiosity</b> ticket states a question without prescribing how to
+    answer it; a <b>method</b> ticket states how, what it needs, and what each absence costs. Both are validated against their schemas before
+    review, and the read model shows at once whether Maine's data can answer them.</p>
+  <div class="grid g2">
+    <pre class="code"># garden/curiosity-space/information/&lt;id&gt;.yml
+id: library_reach
+domain: information
+question: Who lives beyond the reach of a public library?
+significance: >
+  Where libraries carry civic information, distance
+  from one is distance from that information.
+sub_questions:
+  library_use:
+    question: How much do people use their libraries?
+    indicated_by: [cii_pub_library_visits]
+compatible_methods:
+  - ref: $methods/information/cii_indicator_values
+    fit: partial
+    sub_questions: [library_use]
+version: 0.1.0
+contributors: [your name]</pre>
+    <pre class="code"># garden/methods/information/&lt;id&gt;.yml
+id: library_distance
+domain: information
+name: Distance to the nearest public library
+requires_data:
+  - name: libraries
+    type: vector
+    semantic_types: [institutional_node]
+    critical: true
+    role: Every public library, with its location.
+    uncertainty_without: >
+      Nothing to measure distance to.
+  - name: units
+    type: vector
+    semantic_types: [governance_unit]
+    critical: true
+    role: The units distance is summarised per.
+    uncertainty_without: >
+      No denominator; distance cannot be reported per place.
+choices: {}
+produces:
+  semantic_type: information_sufficiency
+  data_category: tabular</pre>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h4>Validation before review</h4>
+      <p>Curiosities are checked against <code>seeds/schemas/curiosity.schema.yml</code> (v1.1), methods against the method schema.</p>
+      <pre class="code" style="margin-top:10px">python -c "import yaml,jsonschema; s=yaml.safe_load(open('seeds/schemas/curiosity.schema.yml')); print([e.message for e in jsonschema.Draft202012Validator(s).iter_errors(yaml.safe_load(open('PATH')))] or 'valid')"</pre></div>
+    <div class="card"><h4>Review checklist</h4><ul class="list">
+      <li>The question names no method and no dataset.</li>
+      <li>Every <code>indicated_by</code> id exists in the indicator registry.</li>
+      <li>Every <code>compatible_methods</code> ref names a method by its index id, with an honest <code>fit</code>; an empty list declares that none exists yet.</li>
+      <li>Every requirement states its <code>role</code> and its <code>uncertainty_without</code> in words a non-specialist can follow.</li>
+      <li>No requirement asks for a type above its consent tier.</li>
+      <li>A new primitive ships with an independent implementation it is held to, and its registry entry declares every parameter it reads.</li></ul></div>
+  </div>
+</section>
+
+<div class="part" id="designed"><div class="label">Part III</div><h2>Designed, not yet built</h2>
+  <p class="intro">Each item below is specified, and its absence is visible in the current system. None is presented as working.</p></div>
+
+<section class="sec">
+  <div class="grid g2">
+    <div class="card designed"><h4>The grove</h4>
+      <p>A cross-plot catalog federating each plot's loam: a state as a hierarchy of plots (the state, counties and regions, towns, sovereign nations, watersheds), answering statewide queries such as which towns fall below information sufficiency or which counties are single-owner news markets, without copying data between plots. Until it exists, the national reference population for county standings is held in the Maine plot as a declared acquisition, and Maine's sixteen counties are a view onto it. The open question is how to admit community-declared data with standing equal to institutional sources; the measurement model already holds multiple authorities' claims about one unit side by side, and the grove must preserve that.</p></div>
+    <div class="card designed"><h4>Granularity beyond the county</h4>
+      <p>Units are <code>(authority, code)</code> pairs, and aggregation is declared per indicator (<code>sum</code>, <code>population_weighted_mean</code>, <code>recompute</code>, or <code>none</code> for medians). The minor civil division grain (924 divisions, roughly half without local government) is declared; tracts are acquirable through the same provider, with wider margins of error; a declared view step that narrows national standings to a plot's units is specified.</p></div>
+    <div class="card designed"><h4>Exposure gate and publish latch</h4>
+      <p>The gate enforces consent tiers at publication, between a deliberate, recorded aggregation step and anything that leaves the system. A publish latch will require an explicit request before any harvest reaches ArcGIS Online; until then, publication is a manual act.</p></div>
+    <div class="card designed"><h4>Standards and coverage</h4>
+      <p>A percentile states how a county compares, not whether its value is sufficient. Assessment against an absolute standard, adapted from UNESCO's right-to-information framework, is the next claim. Providers for the remaining 24 CII sources, and the four civic questions awaiting a method, form the research agenda.</p></div>
+  </div>
+</section>
+
+</main>
+
+<svg class="groundline" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0,40 C240,18 480,52 720,34 C960,16 1200,48 1440,30 L1440,70 L0,70 Z" fill="#E8F1D2"/>
+  <path d="M0,54 C300,40 600,64 900,50 C1140,40 1300,58 1440,52 L1440,70 L0,70 Z" fill="#CFE3A6"/>
+</svg>
+<footer class="wrap">Live panels read the platform's read-only API: route list, holdings, tiers, lineage, curiosities and the agreement
+  matrix. Console panels are recorded transcripts of runs against the Maine plot. The percentile-rule table is computed from CII's 2026
+  published file. Press P to show or hide presenter notes.</footer>
+
+<script>
+const API = "http://localhost:8000", PLOT = "maine";
+const EMBED = {"published": {"cii_broadband": {"column": "Percent of households with broadband", "values": {"23001": "89.7514536", "23003": "84.2743552", "23005": "92.6956601", "23007": "85.0650888", "23009": "91.1739402", "23011": "91.0977316", "23013": "90.2726683", "23015": "89.0790743", "23017": "87.4855012", "23019": "88.8333512", "23021": "88.3482409", "23023": "93.9073331", "23025": "86.2510233", "23027": "89.4733829", "23029": "84.2743357", "23031": "92.6979751"}, "percentiles": {"23001": "71.4058524", "23003": "30.2480916", "23005": "89.6310433", "23007": "36.0050891", "23009": "81.2340967", "23011": "80.629771", "23013": "75.6361323", "23015": "66.3167939", "23017": "54.1984733", "23019": "64.2811705", "23021": "60.5597964", "23023": "94.783715", "23025": "44.1793893", "23027": "69.2430025", "23029": "30.216285", "23031": "89.6628499"}}, "cii_rent_burden": {"column": "Percent of income spent on rent", "values": {"23001": "30.7", "23003": "28.7", "23005": "30", "23007": "27.8", "23009": "30.4", "23011": "29.6", "23013": "30", "23015": "25.6", "23017": "31.5", "23019": "30.2", "23021": "26.1", "23023": "29.1", "23025": "27.6", "23027": "27.6", "23029": "30.8", "23031": "27.7"}, "percentiles": {"23001": "21.7321828", "23003": "39.7091723", "23005": "27.0853308", "23007": "48.4659636", "23009": "23.7775647", "23011": "30.5209332", "23013": "27.0853308", "23015": "69.6708213", "23017": "16.5548098", "23019": "25.4394375", "23021": "65.7238734", "23023": "35.282838", "23025": "50.6711409", "23027": "50.6711409", "23029": "21.0290828", "23031": "49.5365932"}}, "cii_no_vehicle": {"column": "Percent with no vehicle available", "values": {"23001": "9.42857751", "23003": "8.57276493", "23005": "6.93208644", "23007": "9.16765286", "23009": "6.19036446", "23011": "7.47164531", "23013": "5.42631465", "23015": "4.49011572", "23017": "6.94697597", "23019": "8.07561982", "23021": "4.90161002", "23023": "5.14410799", "23025": "5.79947434", "23027": "5.84430452", "23029": "6.06188764", "23031": "4.7268988"}, "percentiles": {"23001": "10.4475235", "23003": "14.2060838", "23005": "26.5965918", "23007": "11.4667941", "23009": "36.8848543", "23011": "21.4365345", "23013": "49.9761108", "23015": "66.6348145", "23017": "26.5010352", "23019": "16.9135213", "23021": "58.9265807", "23023": "54.9450549", "23025": "43.0960344", "23027": "42.3634337", "23029": "38.859691", "23031": "62.2392101"}}}, "names": {"23001": "Androscoggin County", "23003": "Aroostook County", "23005": "Cumberland County", "23007": "Franklin County", "23009": "Hancock County", "23011": "Kennebec County", "23013": "Knox County", "23015": "Lincoln County", "23017": "Oxford County", "23019": "Penobscot County", "23021": "Piscataquis County", "23023": "Sagadahoc County", "23025": "Somerset County", "23027": "Waldo County", "23029": "Washington County", "23031": "York County"}, "rule": [{"indicator": "Total news outlets", "n": 3144, "reversed": false, "max_rank": 3.519049585065659e-08, "over_n": 22.360050890585242}, {"indicator": "Local Journalist Equivalent per 100,000 people", "n": 3142, "reversed": false, "max_rank": 0.6842775032463404, "over_n": 0.6842775032463404}, {"indicator": "Percent of households with broadband", "n": 3144, "reversed": false, "max_rank": 4.9872781460180704e-08, "over_n": 4.9872781460180704e-08}, {"indicator": "Library visits per 10,000 population", "n": 2752, "reversed": false, "max_rank": 4.883721516080186e-08, "over_n": 4.883721516080186e-08}, {"indicator": "Public good Facebook pages per 10,000 users", "n": 3089, "reversed": false, "max_rank": 4.995143854102935e-08, "over_n": 4.995143854102935e-08}, {"indicator": "Percent who speak a language other than English at home", "n": 3144, "reversed": true, "max_rank": 4.99602279546707e-08, "over_n": 0.047709923664115195}, {"indicator": "Average literacy score", "n": 3142, "reversed": false, "max_rank": 4.990451429875975e-08, "over_n": 4.990451429875975e-08}, {"indicator": "Voter turnout (percent)", "n": 3109, "reversed": false, "max_rank": 4.999193947696767e-08, "over_n": 0.1125763911225448}, {"indicator": "Active voters (percent)", "n": 3058, "reversed": false, "max_rank": 4.998317848503575e-08, "over_n": 2.8449967298888197}, {"indicator": "Social associations per 10,000 population", "n": 3144, "reversed": false, "max_rank": 4.9872781460180704e-08, "over_n": 4.9872781460180704e-08}, {"indicator": "Volunteer rate (percent)", "n": 3144, "reversed": false, "max_rank": 4.85623026236226e-08, "over_n": 0.4452926208651462}, {"indicator": "Percent of AGI that is charitable contributions", "n": 3143, "reversed": false, "max_rank": 4.998409508516488e-08, "over_n": 4.998409508516488e-08}, {"indicator": "Census response rate (percent)", "n": 3139, "reversed": false, "max_rank": 4.99203594017672e-08, "over_n": 4.99203594017672e-08}, {"indicator": "Life expectancy", "n": 3067, "reversed": false, "max_rank": 4.9983697181232856e-08, "over_n": 4.9983697181232856e-08}, {"indicator": "Percent with medical debt", "n": 3072, "reversed": true, "max_rank": 4.972067202402286e-08, "over_n": 6.770833333333343}, {"indicator": "Percent of youth ages 16 to 19 who are not working or enrolled in school", "n": 3140, "reversed": true, "max_rank": 4.998367586495078e-08, "over_n": 2.4522292993630685}, {"indicator": "Percent in high poverty neighborhoods", "n": 3144, "reversed": true, "max_rank": 4.9990390493803716e-08, "over_n": 17.286895674300254}, {"indicator": "Unemployment rate (percent)", "n": 3143, "reversed": true, "max_rank": 4.998409508516488e-08, "over_n": 4.998409508516488e-08}, {"indicator": "Percent uninsured", "n": 3143, "reversed": true, "max_rank": 4.9252307121605554e-08, "over_n": 4.9252307121605554e-08}, {"indicator": "Mental health providers per 10,000 population", "n": 2987, "reversed": false, "max_rank": 4.99832708555914e-08, "over_n": 4.99832708555914e-08}, {"indicator": "Percent with a Bachelor's degree or higher", "n": 3144, "reversed": false, "max_rank": 4.9872781460180704e-08, "over_n": 4.9872781460180704e-08}, {"indicator": "Percent of income spent on rent", "n": 3129, "reversed": true, "max_rank": 4.976030254510988e-08, "over_n": 4.976030254510988e-08}, {"indicator": "Percent without adequate access to food", "n": 3144, "reversed": true, "max_rank": 4.987277080203967e-08, "over_n": 4.987277080203967e-08}, {"indicator": "Percent with no vehicle available", "n": 3144, "reversed": true, "max_rank": 4.999203895295068e-08, "over_n": 0.143129770992374}, {"indicator": "Household energy burden (percent)", "n": 3144, "reversed": true, "max_rank": 4.9872781460180704e-08, "over_n": 4.9872781460180704e-08}, {"indicator": "Damages from natural disasters per capita", "n": 3136, "reversed": true, "max_rank": 4.9976062399537113e-08, "over_n": 0.07971938775510523}, {"indicator": "Heat wave days", "n": 3108, "reversed": true, "max_rank": 4.4787640263166395e-08, "over_n": 4.4787640263166395e-08}], "volunteer_maine": ["34.9"]};
+const IDS = ["cii_broadband", "cii_rent_burden", "cii_no_vehicle"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function get(path) {
+  const r = await fetch(API + path); const body = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(body.detail || `${r.status} ${path}`); e.status = r.status; throw e; }
+  return body;
+}
+function down(el, e) { if (el) el.innerHTML = `<div class="err">The platform did not answer: ${esc(e.message)}. Start it with <code>uvicorn canopy.api:app --host 127.0.0.1 --port 8000</code>.</div>`; }
+const pct = v => v == null ? "unknown" : Math.round(v * 100) + "%";
+
+function setNotes(on) { document.body.classList.toggle("clean", !on); const b = $("toggle"); b.setAttribute("aria-pressed", on); b.textContent = `presenter notes: ${on ? "on" : "off"}`; }
+$("toggle").onclick = () => setNotes(document.body.classList.contains("clean"));
+document.addEventListener("keydown", e => { if ((e.key === "p" || e.key === "P") && !e.metaKey && !e.ctrlKey && e.target.tagName !== "INPUT") setNotes(document.body.classList.contains("clean")); });
+
+async function renderRoutes() {
+  const el = $("routes");
+  try {
+    const spec = await get("/openapi.json");
+    const rows = [];
+    for (const [path, ops] of Object.entries(spec.paths || {}))
+      for (const [verb, op] of Object.entries(ops))
+        rows.push({ path, verb: verb.toUpperCase(), tag: (op.tags && op.tags[0]) || (verb.toLowerCase() === "get" ? "read" : "act"), summary: op.summary || "" });
+    rows.sort((a, b) => a.tag.localeCompare(b.tag) || a.path.localeCompare(b.path));
+    $("route-count").textContent = rows.length;
+    el.innerHTML = `<caption>${rows.length} routes, read live from /openapi.json</caption><tr><th>face</th><th>method</th><th>route</th><th>summary</th></tr>` +
+      rows.map(r => `<tr><td><span class="chip ${r.verb === "GET" ? "c-info" : "c-maybe"}">${esc(r.tag)}</span></td><td class="mono">${r.verb}</td><td class="mono">${esc(r.path)}</td><td>${esc(r.summary)}</td></tr>`).join("");
+  } catch (e) { $("route-count").textContent = "n/a"; down(el.parentElement, e); }
+}
+
+async function renderTiersAndHoldings() {
+  try {
+    const h = await get(`/plots/${PLOT}/holdings`); const t = h.tiers || {};
+    $("tiers").innerHTML = `<div class="tiers"><div class="tier t-arrived"><span class="n">${t.arrived ?? 0}</span><span class="k">arrived</span></div>
+      <div class="tier t-tended"><span class="n">${t.tended ?? 0}</span><span class="k">tended</span></div>
+      <div class="tier t-gathered"><span class="n">${t.gathered ?? 0}</span><span class="k">gathered</span></div></div>
+      <p>Arrived: declared in the manifest. Tended: conformed through a primitive, with an envelope. Gathered: raised by an experiment.</p>`;
+    $("holdings").innerHTML = `<caption>Holdings by semantic type, live</caption><tr><th>semantic type</th><th>artifacts</th><th>coverage</th><th>tier</th></tr>` +
+      (h.holdings || []).map(x => { const cov = x.best_coverage == null ? "unknown" : (x.count > 1 && x.worst_coverage !== x.best_coverage ? `${pct(x.worst_coverage)} to ${pct(x.best_coverage)}` : pct(x.best_coverage));
+        return `<tr><td class="mono">${esc(x.semantic_type)}</td><td>${x.count}</td><td>${esc(cov)}</td><td>${x.conformed ? '<span class="chip c-ok">tended</span>' : '<span class="chip c-maybe">arrived</span>'}</td></tr>`; }).join("");
+  } catch (e) { down($("tiers"), e); down($("holdings").parentElement, e); }
+}
+
+async function renderCuriosities() {
+  const el = $("curiosities");
+  try {
+    const { reading } = await get(`/plots/${PLOT}/reading`);
+    const curs = (reading.curiosities || []).filter(c => c.domain === "information");
+    const chip = c => (!c.methods || !c.methods.length) ? '<span class="chip c-wait">no method yet</span>'
+      : c.best_verdict === "runnable" ? '<span class="chip c-ok">runnable</span>'
+      : c.best_verdict === "runnable_with_uncertainty" ? '<span class="chip c-maybe">with uncertainty</span>' : '<span class="chip c-not">blocked</span>';
+    el.innerHTML = `<tr><th>question</th><th>verdict</th></tr>` + curs.map(c => `<tr><td>${esc(c.question)}</td><td>${chip(c)}</td></tr>`).join("");
+  } catch (e) { down(el.parentElement, e); }
+}
+
+async function buildLineage() {
+  try {
+    const d = await get(`/plots/${PLOT}/trace`);
+    const all = (d.clumps || []).filter(c => c.has_parent);
+    const prefer = ["standardize", "derive", "units_geoid", "units_dissolve"];
+    const pick = prefer.map(p => all.find(c => (c.name || "").includes(p))).filter(Boolean);
+    const list = (pick.length ? pick : all).slice(0, 5); const sw = $("clump-switch");
+    sw.innerHTML = list.map((c, i) => `<button class="pill" data-c="${esc(c.name)}" aria-pressed="${i === 0}">${esc(c.declared || c.name)}</button>`).join("");
+    sw.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { sw.querySelectorAll("[data-c]").forEach(x => x.setAttribute("aria-pressed", x === b)); trace(b.dataset.c); });
+    if (list.length) trace(list[0].name); else $("trace").innerHTML = `<div class="loading">no lineage to trace</div>`;
+  } catch (e) { down($("trace"), e); }
+}
+async function trace(name) {
+  const el = $("trace");
+  try {
+    const d = await get(`/plots/${PLOT}/trace?clump=${encodeURIComponent(name)}`);
+    el.innerHTML = `<div class="card"><h4>Lineage: ${d.depth} step(s) to the source</h4><div class="sub mono">${esc(d.clump)}</div>
+      <ul class="chain">${(d.chain || []).map(c => `<li class="${c.present ? "" : "absent"}"><span class="mono">${esc(c.declared || c.name)}</span>
+        ${c.tier ? ` <span class="chip c-info">${esc(c.tier)}</span>` : ""}${c.has_critical ? ' <span class="chip c-crit">critical warning</span>' : ""}${c.crs ? ` <span class="chip c-ok mono">${esc(c.crs)}</span>` : ""}
+        ${c.note ? `<div class="note" style="margin:3px 0 0">${esc(c.note)}</div>` : ""}</li>`).join("")}</ul></div>`;
+  } catch (e) { down(el, e); }
+}
+
+const decimals = s => { s = String(s).trim(); return s === "" ? null : (s.includes(".") ? s.split(".")[1].length : 0); };
+async function renderMatrix() {
+  const table = $("matrix");
+  try {
+    const res = {}; for (const id of IDS) res[id] = await get(`/plots/${PLOT}/indicators/${id}?dataset=acs_county_2024`);
+    const codes = Object.keys(EMBED.names).sort(); let agree = 0, total = 0; const prec = {};
+    for (const id of IDS) prec[id] = Math.max(...Object.values(EMBED.published[id].values).map(decimals).filter(d => d !== null));
+    const head = `<tr><th></th>${IDS.map(id => `<th>${esc(res[id].indicator.name)}<small>CII: ${esc(EMBED.published[id].column)}</small></th>`).join("")}</tr>`;
+    const rows = codes.map(code => `<tr><td class="county">${esc(EMBED.names[code])}</td>${IDS.map(id => {
+      const ours = (res[id].values.find(v => v.unit.code === code) || {}).value; const raw = EMBED.published[id].values[code];
+      const pub = raw === "" || raw == null ? null : Number(raw); total += 1;
+      if (ours == null || pub == null) return `<td><div class="cell">no value</div></td>`;
+      const ok = Math.abs(ours - pub) <= 0.5 * Math.pow(10, -prec[id]) + 1e-12; if (ok) agree += 1;
+      return `<td><div class="cell ${ok ? "agree" : "differ"}" title="pipeline ${ours}&#10;CII ${esc(raw)}">${ours.toFixed(prec[id])}<span class="pub">CII ${esc(raw)}</span></div></td>`;
+    }).join("")}</tr>`).join("");
+    table.innerHTML = `<thead>${head}</thead><tbody>${rows}</tbody>`;
+    $("verdict").className = "result " + (agree === total ? "" : "mixed");
+    $("verdict-n").textContent = `${agree} / ${total}`;
+    $("verdict-of").textContent = agree === total ? "Maine county values agree with CII 2026 within half a unit of CII's last published decimal" : "county values agree; each differing cell is marked";
+  } catch (e) { $("verdict-n").textContent = "…"; $("verdict-of").textContent = "the platform did not answer"; down(table.parentElement, e); }
+}
+function renderRule() {
+  const fmt = x => x < 1e-6 ? "exact" : x.toFixed(2);
+  const top = EMBED.rule.slice().sort((a, b) => b.over_n - a.over_n).slice(0, 6);
+  $("rule").innerHTML = `<caption>Maximum absolute difference from CII's published percentile, by rule (largest six)</caption><tr><th>indicator</th><th>÷ largest rank</th><th>÷ n</th></tr>` +
+    top.map(r => `<tr><td>${esc(r.indicator)}</td><td>${fmt(r.max_rank)}</td><td>${fmt(r.over_n)}</td></tr>`).join("");
+}
+
+renderRoutes(); renderTiersAndHoldings(); renderCuriosities(); buildLineage(); renderMatrix(); renderRule();
+</script>
+</body>
+</html>

@@ -290,7 +290,7 @@ datasets:
     cache:
       path: .data/acs_us_county_2024.parquet
       refresh_policy: manual
-      fetched_at: '2026-10-07T05:49:38.182252+00:00'
+      fetched_at: '2026-10-26T14:12:45.381091+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs
@@ -365,7 +365,7 @@ datasets:
   # the 924 divisions and the LURC flag matter.
 
   acs_cousub_2024:
-    available: false
+    available: true
     description: >
       ACS 2020-2024 five-year estimates for Maine's 529 county subdivisions,
       carrying every variable the listed indicators need
@@ -388,6 +388,7 @@ datasets:
     cache:
       path: .data/acs_cousub_2024.parquet
       refresh_policy: manual
+      fetched_at: '2026-10-26T14:12:38.673560+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs

@@ -303,6 +303,23 @@ primitives:
           Drop features with no value in the dissolve field. They cannot
           belong to a unit and would otherwise collapse into one anonymous
           group.
+      keep_fields:
+        type: array
+        default: []
+        description: >
+          Attributes to carry through the dissolve. Each is kept only if it is
+          constant within every group; a requested field that varies within a
+          unit is refused by name, because carrying it would invent a value
+          for the group. Declared here after it was found in the primitive and
+          missing from the registry (REG-6).
+      merge:
+        type: string
+        default: union
+        options: [union, combine]
+        description: >
+          union dissolves shared boundaries between a unit's parts, correct
+          and slower; combine merges parts into one multipart geometry without
+          resolving shared edges, identical when parts are disjoint.
 
   reproject_vector:
     path: transform/reproject_vector.R
@@ -890,3 +907,42 @@ primitives:
       x_col: {type: string, default: "x"}
       y_col: {type: string, default: "y"}
       time_col: {type: string, default: null}
+
+  assign_geoid:
+    path: transform/assign_geoid.R
+    version: 0.1.0
+    passthrough: false
+    description: >
+      A Census GEOID on a boundary layer, derived from the layer's own county
+      code: the state FIPS followed by the county code zero-padded. Turns a
+      join to Census-keyed tables into a recorded derivation rather than a
+      match on county names. Refuses non-numeric codes, codes wider than
+      declared, duplicate GEOIDs (dissolve first), and an output field that
+      already exists.
+    inputs:
+      - name: boundaries
+        semantic_types:
+          - governance_unit
+        required: true
+        description: Vector features carrying a county code field, one per county
+    outputs:
+      semantic_type: null  # Preserves input semantic type
+      data_category: vector
+      description: The same features, with a GEOID field added and declared as id_field
+    params:
+      state_fips:
+        type: string
+        required: true
+        description: Two-digit state FIPS, e.g. "23" for Maine
+      county_field:
+        type: string
+        required: true
+        description: The field holding the county code, e.g. CNTYCODE
+      county_width:
+        type: integer
+        default: 3
+      output_field:
+        type: string
+        default: GEOID
+    preconditions:
+      - no_unresolved_critical: true

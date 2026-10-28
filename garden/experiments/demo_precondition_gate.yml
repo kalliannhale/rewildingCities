@@ -1,0 +1,55 @@
+# ============================================================================
+# garden/experiments/demo_precondition_gate.yml
+# ============================================================================
+# WRONG ON PURPOSE. a demonstration of the precondition gate.
+#
+# this hands raw ACS counts straight to standardize_indicator, skipping
+# derive_indicator. the primitive declares, in roots/_registry.yml:
+#
+#   preconditions:
+#     - provenance_contains: derive_indicator
+#
+# so the orchestrator reads the input's provenance, finds no derive_indicator
+# in it, and refuses before the primitive runs. without the gate, a z-score
+# would be computed over raw household counts: a plausible column of numbers
+# that measures county size, not civic information.
+#
+# expected: the run fails at step `standardize` with
+#   "Precondition not satisfied ... provenance_contains: derive_indicator
+#    not satisfied (no input was produced by 'derive_indicator')"
+# ============================================================================
+
+id: demo_precondition_gate
+name: "Demonstration: standardising values that were never derived"
+description: >
+  Deliberately miswired. Standardises raw ACS estimates as if they were
+  indicator values, to show the precondition gate refusing it.
+
+curiosity:
+  ref: ""
+
+method:
+  ref: cii_indicator_values
+
+city: maine
+manifest: plots/maine/manifest.yml
+
+choices:
+  sd_convention: sample
+  reference_population: nation_50_states_dc
+  aggregation_unit_level: county
+
+parameters: {}
+
+steps:
+  - id: standardize
+    primitive: roots/standardize_indicator
+    version: 0.1.0
+    description: Standardise raw counts directly, which the gate refuses
+    inputs:
+      values: $manifest.acs_county_2024
+    outputs:
+      standings: indicator_standings
+    params:
+      indicators: [$indicators.cii_broadband]
+      sd: $choices.sd_convention

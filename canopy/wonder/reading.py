@@ -64,6 +64,9 @@ class RequirementReading:
     role: str = ""
     uncertainty_without: str = ""
     thin: bool = False
+    # met by an acquired source the method reads as it arrived, with nothing
+    # to conform. said out loud so it is never mistaken for a conformed hit.
+    as_acquired: bool = False
 
 
 @dataclass
@@ -187,7 +190,29 @@ def _read_holdings(loam, plot: str, floor: float) -> list[HoldingReading]:
     return readings
 
 
-def _read_method(method: dict, conformed, floor: float) -> MethodReading:
+def _acquired_types(base: Path, plot: str) -> set[str]:
+    """
+    semantic types whose manifest dataset is declared available AND whose file
+    is on disk. planted holdings include declared-but-never-fetched sources, so
+    the arrived tier alone cannot say a source is really here (WON-9). ~
+    """
+    import yaml
+    mpath = base / "plots" / plot / "manifest.yml"
+    if not mpath.is_file():
+        return set()
+    doc = yaml.safe_load(mpath.read_text()) or {}
+    have: set[str] = set()
+    for spec in (doc.get("datasets") or {}).values():
+        spec = spec or {}
+        cache = (spec.get("cache") or {}).get("path")
+        if spec.get("available") and spec.get("semantic_type") and cache \
+                and (mpath.parent / cache).is_file():
+            have.add(spec["semantic_type"])
+    return have
+
+
+def _read_method(method: dict, conformed, floor: float,
+                 acquired: set[str] | None = None) -> MethodReading:
     requirements: list[RequirementReading] = []
     uncertainties: list[str] = []
 
@@ -196,15 +221,24 @@ def _read_method(method: dict, conformed, floor: float) -> MethodReading:
         if not accepts:
             continue
         hit = _met(accepts, conformed)
+        # a requirement that reads its source as acquired (a raw published
+        # table into a derivation) is met by the acquisition itself. without
+        # this, every indicator method reads as blocked forever, because a
+        # source it consumes is never conformed (WON-9).
+        used_as_acquired = False
+        if not hit and item.get("as_acquired") and acquired:
+            hit = next((t for t in accepts if t in acquired), None)
+            used_as_acquired = hit is not None
         critical = bool(item.get("critical", True))
         uncertainty = (item.get("uncertainty_without") or "").strip()
-        thin = bool(hit and conformed[hit].is_thin(floor))
+        thin = bool(hit and not used_as_acquired and conformed[hit].is_thin(floor))
 
         requirements.append(RequirementReading(
             name=item.get("name", accepts[0]), accepts=list(accepts),
             satisfied_by=hit, critical=critical,
             role=(item.get("role") or "").strip(),
-            uncertainty_without=uncertainty, thin=thin))
+            uncertainty_without=uncertainty, thin=thin,
+            as_acquired=used_as_acquired))
 
         if not hit and uncertainty:
             uncertainties.append(
@@ -247,6 +281,7 @@ def read_plot(loam, plot: str, *, plot_name: str = "",
     curiosities = _load_dir(base / "garden" / "curiosity-space")
     methods = _load_dir(base / "garden" / "methods")
     conformed = holdings_by_type(loam, plot)
+    acquired = _acquired_types(base, plot)
 
     holdings = _read_holdings(loam, plot, floor)
     declared_unconformed = [h.semantic_type for h in holdings if not h.conformed]
@@ -267,7 +302,7 @@ def read_plot(loam, plot: str, *, plot_name: str = "",
             description=cur.get("description", ""),
             tags=[str(x) for x in (cur.get("tags") or [])],
             sub_questions=subs,
-            methods=[_read_method(m, conformed, floor)
+            methods=[_read_method(m, conformed, floor, acquired)
                      for m in _candidate_methods(cur, methods)]))
 
     order = {"runnable": 0, "runnable_with_uncertainty": 1, "blocked": 2}

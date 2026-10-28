@@ -1,0 +1,56 @@
+# ════════════════════════════════════════════════════════════
+# Composed by wonder ~ maine_broadband_access_subscription__cii_indicator_values_91b5c0
+# The door does not lock: this experiment runs as composed so its
+# limits can be discovered through honest provenance, not refused.
+# Steps are a composed draft; the orchestrator validates them.
+# Readiness: ready
+# ════════════════════════════════════════════════════════════
+
+id: maine_broadband_access_subscription__cii_indicator_values_91b5c0
+name: Can households here get online, and do they?
+description: 'Composed by wonder from curiosity ''broadband_access'' and method ''cii_indicator_values''
+  for plot ''maine''. The door does not lock: this runs as composed so its limits
+  can be discovered honestly.'
+curiosity:
+  ref: $curiosity-space/information/broadband_access
+  sub_question: subscription
+method:
+  ref: $methods/information/cii_indicator_values
+city: maine
+manifest: ../manifest.yml
+choices:
+  sd_convention: sample
+  reference_population: nation_50_states_dc
+  aggregation_unit_level: county
+parameters:
+  target_crs: EPSG:4326
+steps:
+- id: derive
+  primitive: roots/derive_indicator
+  description: Indicator values from the source, one declaration at a time
+  inputs:
+    source: $manifest.acs_us_county_2024
+  outputs:
+    values: indicator_values
+  params:
+    indicators:
+    - $indicators.cii_broadband
+    spatial_unit: $choices.aggregation_unit_level
+    time: 2020-2024 (5-year estimates)
+    authority: us_census_acs
+    unit_column: GEOID
+    name_column: NAME
+    joins_to: governance_unit
+- id: standardize
+  primitive: roots/standardize_indicator
+  description: Each unit placed among the source's reference population
+  inputs:
+    values: $steps.derive.values
+  outputs:
+    standings: indicator_standings
+  params:
+    indicators:
+    - $indicators.cii_broadband
+    sd: $choices.sd_convention
+    exclude_state_fips:
+    - '72'

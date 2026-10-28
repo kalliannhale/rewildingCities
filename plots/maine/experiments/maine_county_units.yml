@@ -1,0 +1,62 @@
+# ============================================================================
+# plots/maine/experiments/maine_county_units.yml
+# ============================================================================
+# preparation: Maine's counties, repaired, dissolved and keyed by GEOID, so
+# county-grain results can be drawn. written by hand from the recipe in
+# garden/methods/information/county_units_for_mapping.yml, because it answers
+# no curiosity of its own. its step ids are units_*, so it writes new
+# artifacts and leaves the ownership experiment's county chain untouched.
+# ============================================================================
+
+id: maine_county_units
+name: "Maine's counties, keyed by GEOID for mapping"
+description: >
+  Repairs the state's county polygons, keeps the mainland, dissolves to one
+  feature per county, and derives each county's GEOID from its CNTYCODE.
+
+curiosity:
+  ref: ""
+
+method:
+  ref: $methods/information/county_units_for_mapping
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: units_repair
+    primitive: soil/repair_geometry
+    inputs:
+      features: $manifest.governance_unit_county
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: units_dissolve
+    primitive: soil/dissolve_by_field
+    inputs:
+      features: $steps.units_repair.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: COUNTY
+      filters:
+        ISLAND: "n"
+        LAND: "y"
+      # carried through only because it is constant within every county;
+      # assign_geoid builds the GEOID from it. without this the dissolve
+      # keeps COUNTY alone, and the GEOID step refuses by name.
+      keep_fields: [CNTYCODE]
+
+  - id: units_geoid
+    primitive: soil/assign_geoid
+    inputs:
+      boundaries: $steps.units_dissolve.dissolved
+    outputs:
+      with_geoid: governance_unit
+    params:
+      state_fips: "23"
+      county_field: CNTYCODE

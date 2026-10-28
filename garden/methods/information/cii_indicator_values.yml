@@ -33,6 +33,10 @@ requires_data:
     type: tabular
     semantic_types: [indicator_source]
     critical: true
+    # read as it arrived: a raw published table goes straight into the
+    # derivation, with nothing to conform. readiness counts the acquisition
+    # itself, and says so (WON-9).
+    as_acquired: true
     role: >
       Raw published estimates, one row per unit, carrying every variable the
       chosen indicators need and their margins of error. The acquisition

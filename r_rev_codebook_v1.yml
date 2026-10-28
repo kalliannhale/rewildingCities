@@ -1,0 +1,653 @@
+# r_rev_codebook_v1.yml
+# Role-Reversal Signature Codebook: a primer on discursive criminalization
+#
+# Status:   DRAFT for freeze. Items marked PROPOSED are Claude's suggestions and
+#           are not settled until Kalli rules on them.
+# Design:   two stages. Stage 1 asks four facet questions of every comment
+#           (cheap). Stage 2 classifies the specific items within each facet,
+#           for every comment with a facet "yes" plus a random slice of
+#           all-"no" comments, so the filter's miss rate can be measured.
+# Readers:  the LLM annotator (this whole file is its instructions); Kalli,
+#           coding the human reference set; the evaluation framework, which
+#           measures every facet and item separately (Bean et al. 2025, 5.1).
+# Generality: the primer, facets, and items marked scope=general are written
+#           for any case. Only the case record card and the identity module
+#           are case-specific; a new case swaps those two and keeps the rest.
+# Rule:     once frozen, edits go to decisions_log.md and land in v1.1.
+
+meta:
+  version: "1.0-draft"
+  frozen_on: null
+  case_id: megan_2022
+  identity_module: misogynoir
+  unit: comment
+  scoring: binary_per_item
+  default: 0
+
+# =========================================================================
+# PRIMER (read first; frames every judgment below)
+# =========================================================================
+primer: |
+  This codebook describes discursive criminalization: the way public
+  discourse inverts power, recasting a person who experienced an abuse of
+  power as the dangerous, powerful, or guilty party, and the person who
+  committed it as vulnerable and wronged.
+
+  Psychology names the pattern DARVO: Deny, Attack, and Reverse Victim and
+  Offender (Freyd 1997). Read through power, each move does the same work.
+  Denial erases the moment the accused exercised power over the victim.
+  Attack makes the victim the threat. Advocacy positions the accused as the
+  one who needs protection.
+
+  Power is not one ranking. It runs along several axes at once, and they can
+  point in different directions: who used force in the incident; how gender
+  and race position each person; who holds money, fame, or institutional
+  backing. The power map in the case record card sets out these axes for
+  this case. Role reversal is discourse that inverts the documented power
+  relation OF THE HARM, often by using another axis as material: for
+  example, invoking the victim's wealth or fame so that the accused's
+  violence disappears. Mentioning another axis is not inversion. Using it to
+  recast who harmed whom is.
+
+  Power inversion often coincides with identity-based oppression. These are
+  distinct phenomena that appear together: stereotypes about the victim's
+  identity are expressions of power structures that seek to subordinate
+  her, and they frequently travel with the inversion without being the same
+  thing. When the victim is a Black woman, those stereotypes are the
+  controlling images of misogynoir (Collins 2000; Bailey 2021), explained in
+  full in the controlling_images section below. Read that section before
+  coding the stereotype facet; the item names alone are not enough.
+
+  Your task is to recognise these moves in individual comments. You are not
+  judging whether a commenter is a good person, and you are not deciding what
+  happened in the case: the case record card states the documented facts and
+  the power map, and you judge comments against them. Code what a comment
+  DOES. A comment that quotes or describes one of these moves in order to
+  criticise it is doing the opposite, and is coded as counter-speech.
+
+# =========================================================================
+# CONTROLLING IMAGES (the identity module, explained to the annotator)
+# Each image is defined by its FUNCTION: what it makes thinkable. Surface
+# words are cues, never sufficient on their own.
+# =========================================================================
+controlling_images:
+
+  - id: jezebel
+    origin: >
+      Collins (2000) names the Jezebel as a controlling image of Black women
+      as sexually aggressive and insatiable. Historically it served to excuse
+      the sexual exploitation of enslaved Black women by casting them as
+      unable to be violated.
+    function: >
+      Makes harm to a Black woman seem impossible, deserved, or not worth
+      taking seriously because of her sexuality, and makes her account less
+      credible because of it. This includes any comment that implicates her
+      sexual history, number of partners, or presumed promiscuity as a
+      justification for, or explanation of, the violence against her.
+    cues: >
+      Sexual history or number of partners; slurs for sexually active women;
+      sex-work rumours; circulating or referencing sexual images of her,
+      including fabricated ones; "slept with" framings used against her.
+    not_this: >
+      Discussion of the sexual content of her own music or performance that
+      is not used against her account or her harm. Her sexual expression is
+      not, in itself, the stereotype; using it to discount her is.
+
+  - id: sapphire
+    origin: >
+      Collins (2000) and later work trace the Sapphire, the loud, angry,
+      emasculating Black woman, to minstrel and early broadcast caricature.
+    function: >
+      Recasts a Black woman's anger, assertiveness, or emotion as aggression,
+      making her the aggressor and the man the one needing protection, and
+      discrediting her testimony as rage rather than report.
+    cues: >
+      "Angry", "violent", "crazy", "unhinged", "she was attacking him", "she
+      started on him", emotion in testimony framed as hostility.
+    not_this: >
+      Describing her diss tracks or performances as aggressive as a matter of
+      artistry, without casting her as the aggressor in the case.
+
+  - id: imperviousness
+    origin: >
+      The strong-Black-woman or superwoman schema, and the long history of
+      false beliefs that Black people feel less pain, documented in medical
+      settings. It includes masculinising Black women's bodies as too large,
+      strong, or "manly" to be harmed.
+    function: >
+      Makes a Black woman's injury and pain seem minor, fake, or impossible,
+      because she is imagined as too strong, too big, or too tough to be hurt.
+    cues: >
+      Her size, height, or strength invoked against the harm; "she could take
+      him"; calling her a man; "barely a scratch"; "she was dancing a week
+      later".
+    not_this: >
+      Praise of her resilience that affirms the harm happened ("so strong for
+      getting through this"), which is counter-speech.
+
+# =========================================================================
+# CASE RECORD CARD (the documented record comments are judged against)
+# =========================================================================
+case_record:
+  status: >
+    Compiled by Claude from news reporting on Oct 27, 2026; reviewed and
+    accepted by Kalli before freeze. Facts only; no characterisation.
+  roles:
+    victim_token: "[VICTIM]"
+    accused_token: "[ACCUSED]"
+  documented_facts:
+    - >
+      Incident. On July 12, 2020, after leaving a gathering at a private home
+      in the Hollywood Hills, Los Angeles, [ACCUSED] fired a semiautomatic
+      handgun at [VICTIM] as she walked away from the SUV they had been
+      riding in. [VICTIM] testified that he shouted at her to dance before
+      firing.
+    - >
+      Injury. [VICTIM] was wounded in both feet; bullet fragments were
+      surgically removed.
+    - >
+      Initial account. [VICTIM] initially told police she had cut her foot on
+      glass, and later publicly identified [ACCUSED] as the shooter. A comment
+      that reports this sequence is not denial; a comment asserting the injury
+      really was glass is.
+    - >
+      Verdict. On December 23, 2022, a Los Angeles jury convicted [ACCUSED] of
+      three felonies: assault with a semiautomatic firearm; carrying a
+      loaded, unregistered firearm in a vehicle; and discharging a firearm
+      with gross negligence. [ACCUSED] did not testify.
+    - >
+      Sentence. In August 2023 [ACCUSED] was sentenced to 10 years in state
+      prison.
+    - >
+      Appeal. On November 12, 2025, California's Second District Court of
+      Appeal affirmed the conviction, finding the evidence more than
+      sufficient that [ACCUSED] personally inflicted great bodily injury. On
+      February 25, 2026, the California Supreme Court denied review.
+    - >
+      Related civil case. On December 1, 2025, a federal jury in Miami found a
+      blogger liable to [VICTIM] for defamation (including accusations that
+      she committed perjury at the trial), intentional infliction of emotional
+      distress, and promoting a sexually explicit deepfake video of her.
+  power_map:
+    incident_coercive: >
+      [ACCUSED]. He was armed and fired at her, as found by the jury and
+      affirmed on appeal.
+    structural_position: >
+      [VICTIM] is positioned by gendered and racialised hierarchies that
+      systematically discount Black women's testimony and pain (Collins 2000;
+      Fricker 2007).
+    social_capital: >
+      [VICTIM]. She was already a major star at the time of the shooting, and
+      her fame and wealth grew afterwards.
+    institutional: >
+      Courts found for [VICTIM]: the verdict, the appeal, the denial of
+      review, and the civil defamation verdict.
+    reading_rule: >
+      Inversion is measured against incident_coercive: who harmed whom.
+      Comments that use social_capital or institutional outcomes to recast
+      [ACCUSED] as the one harmed, or [VICTIM] as the one who exercised power
+      over him, are inversion. Comments that merely describe her success are
+      not.
+  not_established:
+    - >
+      That someone other than [ACCUSED] fired the gun. The defense argued that
+      [VICTIM]'s then-friend fired the shots; the friend denied it and had
+      earlier identified [ACCUSED]; the jury convicted [ACCUSED] and the
+      appeal was rejected. Trial evidence included gunshot residue on both
+      [ACCUSED] and the friend; residue alone does not establish who fired.
+    - >
+      That [VICTIM] lied or committed perjury. No court has found this; a jury
+      found accusations of perjury defamatory.
+    - >
+      That [ACCUSED] has been released, pardoned, or exonerated. A clemency
+      request to the governor was reported in December 2025; no grant is
+      established here. Reported parole eligibility is August 2029.
+  aftermath_reported:
+    - >
+      [ACCUSED] was stabbed by another inmate in 2025 and transferred to a
+      different facility. Comments referencing this are about the case.
+  sources:
+    - https://www.courttv.com/news/la-jury-convicts-tory-lanez-of-shooting-megan-thee-stallion/
+    - https://www.euronews.com/2022/12/24/tory-lanez-convicted-in-megan-thee-stallions-shooting
+    - https://www.brooklynvegan.com/tory-lanez-found-guilty-in-shooting-of-megan-thee-stallion/
+    - https://www.musicbusinessworldwide.com/megan-thee-stallion-wins-defamation-case-against-blogger/
+    - https://ny1.com/nyc/all-boroughs/ap-top-news/2025/11/12/court-denies-rapper-tory-lanezs-appeal-of-his-conviction-in-megan-thee-stallion-shooting/
+    - https://www.nbcsandiego.com/news/national-international/tory-lanez-appeals-court-conviction/3930735/?amp=1
+    - https://newsroom.courts.ca.gov/news/ca-supreme-court-wont-review-case-rapper-tory-lanez-0
+    - https://www.xxlmag.com/california-supreme-court-tory-lanez-shooting-conviction/
+    - https://chicagodefender.com/tory-lanez-found-guilty-in-the-shooting-of-meg-thee-stallion-faces-22-years-in-prison/?amp=1
+    - https://www.rollingstone.com/music/music-news/megan-thee-stallion-wins-defamation-trial-blogger-1235471592/
+    - https://thesource.com/?p=788239
+  note: >
+    Short and factual by design. It replaces the annotator's own beliefs
+    about the case with a declared, auditable record; the masking ablation
+    tests whether that works.
+
+# =========================================================================
+# GLOBAL RULES (apply to both stages)
+# =========================================================================
+global_rules:
+  - id: record_not_belief
+    rule: >
+      Judge comments against the case record card, not against your own
+      knowledge or beliefs about the case. Do not use the video, thread, or
+      anything outside the comment text and the record card.
+  - id: role_tokens
+    rule: >
+      Names are replaced: [VICTIM] is the person harmed; [ACCUSED] is the
+      person convicted of harming her. @handles are replaced with [USER].
+  - id: does_not_mentions
+    rule: >
+      Code what the comment DOES. Quoting, reporting, or mocking a framing in
+      order to criticise it is 0 for that facet and item, and 1 for
+      counter_speech.
+  - id: questions_by_presupposition
+    rule: >
+      A question is coded by what it presupposes, not by the asker's possible
+      intent.
+  - id: sarcasm_by_meaning
+    rule: >
+      Code sarcasm by its intended meaning. If the meaning cannot be decided,
+      code your best reading and set uncertain = 1.
+  - id: best_judgment
+    rule: >
+      Never default to 0 because a judgment is hard. Record your best
+      judgment and set uncertain = 1.
+  - id: non_english
+    rule: >
+      PROPOSED. Code non-English comments by meaning if you can read them
+      confidently; otherwise set not_codeable = 1. Record the language.
+  - id: compassion_is_not_reversal
+    rule: >
+      Sympathy for [ACCUSED]'s suffering, including in prison, is not role
+      reversal by itself. Refusing to celebrate violence against anyone,
+      including someone who did harm, is consistent with abolitionist ethics.
+      Code it as empathy_accused. It becomes himpathy only when, in the same
+      comment, it displaces or discounts [VICTIM]'s harm.
+  - id: not_discourse
+    rule: >
+      Pasted lyrics, spam, keyboard mash, and emoji-only comments are
+      not_discourse = 1, and every facet and item is 0.
+
+# =========================================================================
+# STAGE 1: GATES AND FACET FILTER (every comment)
+# =========================================================================
+stage1:
+
+  gates:
+    - id: case_reference
+      question: >
+        Does the comment refer to the incident, the injury, the trial, the
+        verdict, the sentence, [ACCUSED], or the conflict between [VICTIM]
+        and [ACCUSED]?
+      code_0_when:
+        - text: "Shots fired!"
+          why: Idiom for a diss, not the incident.
+    - id: counter_speech
+      question: >
+        Does the comment defend [VICTIM], affirm the documented record, or
+        name or criticise any of the four moves below?
+      code_0_when:
+        - text: "Love you queen!"
+          why: Support, but not about the case or any framing.
+
+  descriptive:
+    # Not role-reversal items and not in the measurement model. They feed
+    # the section-level empathy balance (see derived_metrics).
+    - id: empathy_accused
+      question: >
+        Does the comment express sympathy for [ACCUSED]'s suffering, losses,
+        or hardship (his freedom, career, family, health, or safety)?
+      code_0_when:
+        - text: "Free [ACCUSED]."
+          why: Advocacy without expressed sympathy; code accused_advocacy.
+    - id: empathy_victim
+      question: >
+        Does the comment express sympathy for [VICTIM]'s suffering, injury,
+        fear, or hardship?
+      code_0_when:
+        - text: "Love you queen!"
+          why: Support for her as an artist, not sympathy for her harm.
+
+  facets:
+    - id: advocate
+      darvo: Reverse
+      question: >
+        Does the comment advocate on behalf of [ACCUSED]: defend him, call
+        for his release, present him as sincere or wronged, or present him as
+        the injured party?
+    - id: attack
+      darvo: Attack
+      question: >
+        Does the comment negatively characterise [VICTIM] or place blame on
+        her for the harm or its aftermath?
+    - id: deny
+      darvo: Deny
+      question: >
+        Does the comment express doubt about, or contradict, the documented
+        events on the case record card?
+    - id: stereotype
+      darvo: identity layer
+      question: >
+        Does the comment use a stereotype tied to [VICTIM]'s identity as a
+        Black woman (see controlling_images) to discredit her, minimise her
+        harm, or cast her as the aggressor?
+
+  routing: >
+    A comment goes to stage 2 if any facet is 1. A fixed random share of
+    comments with all four facets 0 (and case_reference = 1) also goes to
+    stage 2, to estimate what the filter misses.
+
+# =========================================================================
+# STAGE 2: ITEMS WITHIN FACETS
+# Code every item independently; an item may fire under a facet that
+# stage 1 coded 0. Record it; do not force consistency.
+# =========================================================================
+stage2:
+
+  # ---------------- ADVOCATE (Reverse) ----------------
+  advocate:
+
+    - id: accused_advocacy
+      scope: general
+      source: Freyd 1997
+      definition: >
+        Explicit support for [ACCUSED]: calls for his release, declarations
+        of loyalty, or defence of his character in relation to the case.
+      code_1_when:
+        - "Calls to free him, or statements that he should not be imprisoned."
+        - "Loyalty or defence of him, in a comment about the case."
+      code_0_when:
+        - text: "His old albums were great."
+          why: About his work, not the case.
+      example_pos: "Free [ACCUSED], stand on it."
+
+    - id: himpathy
+      scope: general
+      source: Manne 2018 (Down Girl)
+      definition: >
+        Sympathy for [ACCUSED] that does reversal work in the same comment:
+        paired with discounting [VICTIM]'s harm, or framing his suffering as
+        unjust because of her.
+      code_1_when:
+        - "Sympathy for him alongside dismissal of her injury or account."
+        - "His suffering framed as unjust, caused by her or her supporters."
+      code_0_when:
+        - text: "Nobody deserves to be stabbed in prison, not even him."
+          why: Compassion that does not touch her harm; empathy_accused only.
+        - text: "I feel bad for his kids."
+          why: Sympathy without discounting her; empathy_accused only.
+      example_pos: "He is rotting in there over a scratch on her foot."
+
+    - id: reverse_victim
+      scope: general
+      source: Freyd 1997
+      definition: >
+        [ACCUSED] is framed as the real victim, harmed by [VICTIM], her
+        testimony, her supporters, or the outcome.
+      code_1_when:
+        - "Framings in which she ruined, imprisoned, or destroyed him."
+      code_0_when:
+        - text: "Prison is hard on anyone."
+          why: General claim, no reversal of roles.
+      example_pos: "She put an innocent man in prison and you all cheered."
+
+    - id: credibility_excess
+      scope: general
+      source: Fricker 2007; Nelson 2025
+      definition: >
+        [ACCUSED]'s account is narrated as sincere while [VICTIM]'s is
+        narrated as performance or calculation, within the same comment.
+      code_0_when:
+        - text: "His interview was convincing."
+          why: No contrasting read of her.
+      example_pos: "You can hear he means it. She is acting for the cameras."
+
+    - id: victim_power_claim
+      scope: general
+      source: Freyd 1997; Kalli A. Hale (ruling, Oct 27 2026)
+      definition: >
+        [VICTIM] is framed as holding power over [ACCUSED]: through money,
+        fame, the industry, the media, the courts, or the accusation itself
+        used as a weapon.
+      code_1_when:
+        - "Claims that the industry, her label, or powerful allies protected her or bought the outcome."
+        - "The accusation or testimony framed as a weapon she used to destroy him."
+        - "The media, the public, or the courts framed as on her side against him."
+      code_0_when:
+        - text: "She is way bigger than him now."
+          why: Describes her success without using it to recast who harmed whom.
+        - text: "The jury believed her."
+          why: Reports an institutional outcome without framing it as her power over him.
+      example_pos: "She bought the verdict, he never had a chance."
+      evaluation_note: >
+        Minimal pairs that DESCRIBE her success versus WEAPONISE it test
+        whether the annotator reads power across axes or simply ranks people.
+
+  # ---------------- ATTACK ----------------
+  attack:
+
+    - id: agency_inversion
+      scope: general
+      source: Freyd 1997; Foster 2025
+      definition: >
+        [VICTIM] is described as having started, escalated, or chosen the
+        violent encounter.
+      code_0_when:
+        - text: "They both had issues."
+          why: Symmetry without initiation.
+      example_pos: "She provoked him the whole night and then acted shocked."
+
+    - id: character_as_evidence
+      scope: general
+      source: Waterhouse-Watson 2013 via Foster 2025
+      definition: >
+        Her past conduct, relationships, appearance, or personality is offered
+        in place of evidence about the incident.
+      code_0_when:
+        - text: "She is lying."
+          why: Bare disbelief with no character premise; see deny_events.
+      example_pos: "Look at how she moves. That tells you everything."
+
+    - id: deservingness
+      scope: general
+      source: Freyd 1997; Foster 2025
+      definition: >
+        The harm or its aftermath is framed as the fair or predictable
+        consequence of her own choices.
+      code_0_when:
+        - text: "Be careful who you party with."
+          why: General advice, not about her.
+      example_pos: "You run with that crowd, you get what comes with it."
+
+    - id: snitch_framing
+      scope: general
+      source: PROPOSED by Claude; Kaba 2021
+      definition: >
+        Her testimony or cooperation with the legal system is framed as
+        betrayal of a code.
+      code_0_when:
+        - text: "She testified in December."
+          why: Factual, no betrayal framing.
+      example_pos: "Real ones do not snitch, she sent him away."
+      note: >
+        Pilot question: does this co-occur with the stereotype facet, or
+        operate as a general code applied to anyone who testifies?
+
+    - id: intoxication_framing
+      scope: general
+      source: Waterhouse-Watson 2013 via Foster 2025 (Party Girl); allegations in the 2025 federal defamation suit (see case_record)
+      definition: >
+        Drinking, drug use, partying, or presumed mental instability is
+        invoked to undercut her account or explain away the harm.
+      code_1_when:
+        - "She was drunk, high, or out of it, so her account cannot be trusted."
+        - "Partying or nightlife used to imply she brought it on herself or misremembers."
+      code_0_when:
+        - text: "They had just left a party."
+          why: States the setting without using it against her.
+      example_pos: "She was too drunk that night to know who did what."
+
+    - id: counter_victim_inversion
+      scope: general
+      source: Nelson 2025 (real-vs-fake-victim inversion)
+      definition: >
+        Believing or supporting [VICTIM] is framed as harming real or
+        deserving victims.
+      code_1_when:
+        - "She makes it harder for real victims to be believed."
+        - "She set survivors or a movement back."
+      code_0_when:
+        - text: "False accusations are a serious problem."
+          why: General claim, not tied to her.
+      example_pos: "People like her are why actual victims get ignored."
+
+  # ---------------- DENY ----------------
+  deny:
+
+    - id: deny_events
+      scope: general
+      source: Freyd 1997; Dotson 2011
+      definition: >
+        Contradicts or doubts the documented events: the injury, the
+        incident, or that the outcome was just; includes calling her a liar
+        about the incident.
+      code_0_when:
+        - text: "I do not know what happened that night."
+          why: Uncertainty is not denial.
+      example_pos: "She was never shot, it was glass."
+
+    - id: alternate_perpetrator
+      scope: general
+      source: PROPOSED by Claude, from pilot comments
+      definition: >
+        Someone other than [ACCUSED] is named or implied as responsible for
+        the harm.
+      code_0_when:
+        - text: "Other people were in the car that night."
+          why: States presence without assigning responsibility.
+      example_pos: "Her own friend did it and everybody knows."
+
+    - id: visible_injury_demand
+      scope: general
+      source: Nelson 2025
+      definition: >
+        Belief in the harm is conditioned on visible or physical proof.
+      code_0_when:
+        - text: "The medical evidence came out at trial."
+          why: Engages evidence without making belief conditional.
+      example_pos: "Show the bullet fragments or stop lying."
+
+  # ---------------- STEREOTYPE (identity module: misogynoir) ----------------
+  stereotype:
+
+    - id: jezebel
+      scope: identity_module
+      source: Collins 2000; Bailey 2021
+      definition: >
+        Her sexuality is invoked to imply she cannot be harmed, that the harm
+        does not count, or that she is not credible, including any comment
+        that implicates her sexual history or presumed promiscuity as a
+        justification for the violence.
+      code_1_when:
+        - "Sexual reference does work against her account or her harm."
+        - "Her sexual history or presumed promiscuity offered as a justification for, or explanation of, the violence."
+      code_0_when:
+        - text: "They were dating at the time."
+          why: Narrates the relationship without using it against her.
+      example_pos: "She has been with everybody, why would anyone believe her."
+
+    - id: sapphire
+      scope: identity_module
+      source: Collins 2000; Bailey 2021
+      definition: >
+        She is framed as inherently angry, loud, or aggressive, and therefore
+        the real aggressor or not credible.
+      code_0_when:
+        - text: "That diss was aggressive, she went off."
+          why: Describes a song, not her as aggressor in the case.
+      example_pos: "She is always angry and violent, he was defending himself."
+
+    - id: imperviousness
+      scope: identity_module
+      source: Collins 2000; strong-Black-woman schema literature
+      definition: >
+        She is framed as too strong or physically formidable to have been
+        hurt, or her pain is minimised as not real.
+      code_0_when:
+        - text: "She is so strong for getting through this."
+          why: Praise of resilience that affirms the harm; counter_speech.
+      example_pos: "Big as she is, a little foot wound did nothing."
+
+# =========================================================================
+# OUTPUT CONTRACTS
+# =========================================================================
+output_schema:
+  stage1:
+    format: json
+    fields:
+      comment_row: string
+      not_discourse: 0|1
+      not_codeable: 0|1
+      language: string
+      case_reference: 0|1
+      counter_speech: 0|1
+      empathy_accused: 0|1
+      empathy_victim: 0|1
+      advocate: 0|1
+      attack: 0|1
+      deny: 0|1
+      stereotype: 0|1
+      uncertain: 0|1
+  stage2:
+    format: json
+    fields:
+      comment_row: string
+      accused_advocacy: 0|1
+      himpathy: 0|1
+      reverse_victim: 0|1
+      credibility_excess: 0|1
+      victim_power_claim: 0|1
+      agency_inversion: 0|1
+      character_as_evidence: 0|1
+      deservingness: 0|1
+      snitch_framing: 0|1
+      intoxication_framing: 0|1
+      counter_victim_inversion: 0|1
+      deny_events: 0|1
+      alternate_perpetrator: 0|1
+      visible_injury_demand: 0|1
+      jezebel: 0|1
+      sapphire: 0|1
+      imperviousness: 0|1
+      uncertain: 0|1
+      rationale: string            # 25 words or fewer, for error analysis only
+  parsing: >
+    A response that is not valid JSON with every field present is a parse
+    failure: retried once, then recorded. Refusals are recorded as refusals.
+    Neither is ever coded 0.
+
+# =========================================================================
+# DERIVED SECTION-LEVEL METRICS (computed, never asked of the annotator)
+# All rates use sampling weights and the evaluation's per-item error rates.
+# =========================================================================
+derived_metrics:
+  - id: empathy_balance
+    definition: >
+      Among case-referencing comments expressing any empathy, the share
+      directed at [ACCUSED]: n_accused / (n_accused + n_victim). 0.5 is
+      balance; above 0.5 leans toward him.
+    estimation: >
+      Beta(1, 1) prior on the share, so a section with few empathetic
+      comments gets a wide interval instead of an extreme ratio, and a
+      section with none for her does not produce an infinite ratio.
+    report_with: >
+      Both underlying rates per case-referencing comment, because the share
+      alone hides volume: 2 empathetic comments and 500 can show the same
+      balance.
+    note: >
+      Descriptive. Compassion for him is not misogynoir; the balance shows
+      where a section's sympathy goes, and is read alongside the role-reversal
+      latent rather than folded into it.
+
+decisions_log: decisions_log.md
