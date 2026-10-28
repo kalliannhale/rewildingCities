@@ -76,13 +76,18 @@ INDICATORS_DIR = Path(__file__).resolve().parents[2] / "seeds" / "indicators"
 
 # The Census encodes non-values as large negative integers. Each has a distinct
 # meaning and all of them are "this is not a number you may average".
+
+# Meanings verified against the Census's "Notes on ACS Estimate and Annotation
+# Values" (census.gov/data/developers), 2026-10-28. -333333333 and -222222222
+# are margin-of-error codes, not estimate codes; the earlier labels said
+# "not applicable" and "estimate not available", which were wrong.
 JAM_VALUES = {
     "-999999999": "estimate not available",
     "-888888888": "not applicable",
     "-666666666": "estimate not computable (too few sample observations)",
     "-555555555": "estimate controlled; a margin of error is not appropriate",
-    "-333333333": "not applicable",
-    "-222222222": "estimate not available",
+    "-333333333": "margin not computable: the median falls in the lowest or highest interval of an open-ended distribution",
+    "-222222222": "margin of error not computable (too few sample observations)",
 }
 
 # ACS-6: the annotations arrive in more than one spelling. a count variable
@@ -390,6 +395,7 @@ class CensusACSProvider(Provider):
         # ── jam values ─────────────────────────────────────────────────────
 
         jam_counts: dict[str, int] = {}
+        annotated_vars: set[str] = set()
         cleaned: list[dict] = []
 
         for row in body:
@@ -404,6 +410,11 @@ class CensusACSProvider(Provider):
                 if annotation is not None:
                     jam_counts[annotation] = jam_counts.get(annotation, 0) + 1
                     out[v] = ""          # rests empty; never a very negative number
+                    # the value is emptied but the receipt is kept: which code
+                    # the Census sent, in a column beside it. -333333333 on a
+                    # median's margin means "open-ended", a claim, not an absence.
+                    out[f"{v}_annotation"] = annotation
+                    annotated_vars.add(v)
                 else:
                     out[v] = token
             cleaned.append(out)
@@ -418,7 +429,8 @@ class CensusACSProvider(Provider):
 
         # ── write ──────────────────────────────────────────────────────────
         id_cols = ["GEOID", "NAME"] + [p.replace(" ", "_") for p in parts if p in index]
-        fieldnames = id_cols + var_cols
+        ann_cols = [f"{v}_annotation" for v in var_cols if v in annotated_vars]
+        fieldnames = id_cols + var_cols + ann_cols
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         ext = cache_path.suffix.lower()
 
@@ -438,6 +450,8 @@ class CensusACSProvider(Provider):
 
             frame = pd.DataFrame(cleaned, columns=fieldnames)
             for c in id_cols:
+                frame[c] = frame[c].astype("string")
+            for c in ann_cols:
                 frame[c] = frame[c].astype("string")
             for v in var_cols:
                 frame[v] = pd.Series([number(t) for t in frame[v]], dtype="Float64")
@@ -480,6 +494,7 @@ class CensusACSProvider(Provider):
             "variables_not_returned": not_returned,
             "n_units": len(cleaned),
             "annotations_emptied": {t: c for t, c in sorted(jam_counts.items())},
+            "annotation_columns": ann_cols,
             "unparseable_emptied": unparseable,
             "request": self._public_request(url, params),
             "api_key_used": "key" in params,
