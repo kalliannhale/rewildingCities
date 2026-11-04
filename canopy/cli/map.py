@@ -38,7 +38,8 @@ class MapRefusal(Exception):
 
 def register(subparsers) -> None:
     p = subparsers.add_parser(
-        "map", help="render a result to a map (parks colored by the result; geojson + ArcGIS)")
+        "map", help="render a result to a map (parks colored by the result; geojson, "
+                    "plus ArcGIS only with --publish)")
     p.add_argument("plot", help="the plot name, e.g. nyc")
     p.add_argument("semantic_type", nargs="?", default="",
                    help="the result type to map, e.g. pci_results")
@@ -48,6 +49,9 @@ def register(subparsers) -> None:
                    help="the envelope to draw on, by name, when more than one could be")
     p.add_argument("--result", default=None,
                    help="the result envelope, by name, when more than one has this type")
+    p.add_argument("--publish", action="store_true",
+                   help="also publish the map to ArcGIS Online. off by default; "
+                        "needs the network and ArcGIS credentials (EXP-1)")
     p.set_defaults(func=run)
 
 
@@ -388,14 +392,25 @@ def run(args) -> int:
                 if cho["without_row"]:
                     print(f"   {cho['without_row']} feature(s) have no row in the result, drawn as empty")
                 print(f"   {cho['path']}")
+                if getattr(args, "publish", False):
+                    print("   (--publish applies to descriptor maps only; this choropleth "
+                          "was written locally and not published)", file=sys.stderr)
                 return 0
             print(f"   (no geometry to join {target} to ~ writing a descriptor instead)")
     except MapRefusal as e:
         print(f"refused: {e}", file=sys.stderr)
         return 1
 
-    from canopy.visuals import render
-    result = render(env, out_dir, plot=plot)
+    from canopy.visuals import PublishError, render
+    try:
+        result = render(env, out_dir, plot=plot,
+                        publish=getattr(args, "publish", False))
+    except PublishError as e:
+        print(f"not published: {e}", file=sys.stderr)
+        if e.geojson_path:
+            print(f"   the map was still written locally: {e.geojson_path}",
+                  file=sys.stderr)
+        return 1
     spec = result.spec
     try:
         n = len(json.loads(Path(result.geojson_path).read_text()).get("features", []))
