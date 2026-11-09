@@ -61,6 +61,12 @@ indicators:
     derivation:
       kind: passthrough
       column: B25071_001E
+      # the edges of B25071's two end categories, "less than 10.0 percent" and
+      # "50.0 percent or more". the Census reports a median in either one as
+      # 9 or 51 with -333333333 on its margin; derive_indicator writes it as a
+      # bound past these edges. ten counties at ACS 2020-2024, none in Maine;
+      # CII left all ten blank (ACS-7).
+      open_ended: {lower: 10, upper: 50}
     direction: higher_is_worse
     # a median does not combine. two counties' medians say nothing about the
     # median of the two together, and a weighted mean of medians is a number

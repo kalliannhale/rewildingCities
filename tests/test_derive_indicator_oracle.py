@@ -49,13 +49,16 @@ def fixture_source(tmp_path):
         "NAME": ["Cumberland County, Maine", "Washington County, Maine", "Nowhere County, Maine"],
         "B28002_004E": [1000.0, 500.0, 0.0], "B28002_001E": [1200.0, 600.0, 0.0],
         "B28002_004M": [50.0, 40.0, 0.0], "B28002_001M": [60.0, 30.0, 0.0],
-        "B25071_001E": [29.4, None, 31.0], "B25071_001M": [1.2, None, 2.0],
+        "B25071_001E": [29.4, None, 51.0], "B25071_001M": [1.2, None, None],
         "B08201_002E": [90.0, 30.0, 0.0], "B08201_001E": [1200.0, 600.0, 0.0],
         "B08201_002M": [15.0, 9.0, 0.0], "B08201_001M": [60.0, 30.0, 0.0],
     })
     for c in frame.columns[2:]:
         frame[c] = frame[c].astype("Float64")
     frame["GEOID"] = frame["GEOID"].astype("string")
+    # ACS-7: an open-ended median, shaped as the provider writes it. 51 with
+    # -333333333 on its margin is how the Census reports "50.0 or more".
+    frame["B25071_001M_annotation"] = pd.array([None, None, "-333333333"], dtype="string")
     path = tmp_path / "source.parquet"
     frame.to_parquet(path, index=False)
     return path, frame
@@ -101,10 +104,23 @@ def test_r_agrees_with_the_preview_exactly(tmp_path, fixture_source):
         for i, py in enumerate(py_rows):
             r = mine.iloc[i]
             assert r["unit_code"] == py["unit"]["code"]
-            for field in ("value", "moe", "moe_status", "empty_reason"):
+            for field in ("value", "moe", "moe_status", "bound", "empty_reason"):
                 rv = r[field]
                 rv = None if pd.isna(rv) else (rv.item() if hasattr(rv, "item") else rv)
                 assert _same(py[field], rv), (ind_id, py["unit"]["code"], field, py[field], rv)
+
+
+def test_an_open_ended_median_is_a_bound_in_both_languages(tmp_path, fixture_source):
+    import pandas as pd
+    source_path, frame = fixture_source
+    reg = IndicatorRegistry.load(SEEDS)
+    response, out, proc = _run_primitive(tmp_path, source_path, [reg.declaration("cii_rent_burden")])
+    assert response["status"] == "success", (response, proc.stderr)
+    r = pd.read_parquet(out).set_index("unit_code").loc["23999"]
+    assert r["moe_status"] == "open_ended"
+    assert r["bound"] == "50.0 or more"
+    assert r["value"] == 51.0
+    assert pd.isna(r["empty_reason"])
 
 
 def test_the_envelope_metadata_is_what_the_schema_expects(tmp_path, fixture_source):

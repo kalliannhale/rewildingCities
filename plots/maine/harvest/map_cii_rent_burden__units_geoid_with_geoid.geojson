@@ -1185242,10 +1185242,10 @@
       "parameters": {},
       "data_resolution": {
         "full_experiment_possible": true,
-        "datasets_available": [],
-        "datasets_acquired": [
+        "datasets_available": [
           "acs_us_county_2024"
         ],
+        "datasets_acquired": [],
         "datasets_missing": [],
         "runnable_steps": [
           "county_derive",
@@ -1185260,7 +1185260,7 @@
       {
         "primitive": "derive_indicator",
         "version": "1.0.0",
-        "timestamp": "2026-10-26T14:12:46.874698+00:00",
+        "timestamp": "2026-10-28T23:13:05.483069+00:00",
         "params": {
           "indicators": [
             {
@@ -1185285,7 +1185285,7 @@
                 "B28002_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             },
             {
               "id": "cii_rent_burden",
@@ -1185295,7 +1185295,11 @@
               "unit": "percent_of_household_income",
               "derivation": {
                 "kind": "passthrough",
-                "column": "B25071_001E"
+                "column": "B25071_001E",
+                "open_ended": {
+                  "lower": 10.0,
+                  "upper": 50.0
+                }
               },
               "direction": "higher_is_worse",
               "aggregation": "none",
@@ -1185304,7 +1185308,7 @@
                 "B25071_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             },
             {
               "id": "cii_no_vehicle",
@@ -1185328,7 +1185332,7 @@
                 "B08201_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             }
           ],
           "spatial_unit": "county",
@@ -1185344,19 +1185348,19 @@
             "semantic_type": "indicator_source",
             "path": "plots/maine/experiments/../.data/acs_us_county_2024.parquet",
             "hash": {
-              "value": "e2ccb6c6ed7808e17e1af005ce6cfba4",
+              "value": "fb346fc07fc05d524be7fa42882b9a3a",
               "method": "full_file",
               "algorithm": "md5"
             }
           }
         ],
-        "duration_seconds": 1.41,
+        "duration_seconds": 1.449,
         "lineage_branch": "values"
       },
       {
         "primitive": "standardize_indicator",
         "version": "1.0.0",
-        "timestamp": "2026-10-26T14:12:48.255600+00:00",
+        "timestamp": "2026-10-28T23:13:06.789892+00:00",
         "params": {
           "indicators": [
             {
@@ -1185381,7 +1185385,7 @@
                 "B28002_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             },
             {
               "id": "cii_rent_burden",
@@ -1185391,7 +1185395,11 @@
               "unit": "percent_of_household_income",
               "derivation": {
                 "kind": "passthrough",
-                "column": "B25071_001E"
+                "column": "B25071_001E",
+                "open_ended": {
+                  "lower": 10.0,
+                  "upper": 50.0
+                }
               },
               "direction": "higher_is_worse",
               "aggregation": "none",
@@ -1185400,7 +1185408,7 @@
                 "B25071_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             },
             {
               "id": "cii_no_vehicle",
@@ -1185424,7 +1185432,7 @@
                 "B08201_001M"
               ],
               "declared_in": "indicators/cii_2026.yml",
-              "declaration_sha256": "f8969c08c79af2fdf8cbf3fb7c99a119f0008cc3a02c6945be72ecf324981e32"
+              "declaration_sha256": "7119ef1564b01e2454b861b8c37f985589013cdc548d506805d5224494805972"
             }
           ],
           "sd": "sample",
@@ -1185438,21 +1185446,26 @@
             "semantic_type": "indicator_values",
             "path": "plots/maine/experiments/../.data/county_derive_values.parquet",
             "hash": {
-              "value": "d33ef1153fd17e45f0c91a47096b3b3d",
+              "value": "6f9704889e6bca71d0776140030edf94",
               "method": "full_file",
               "algorithm": "md5"
             }
           }
         ],
-        "duration_seconds": 1.376,
+        "duration_seconds": 1.302,
         "lineage_branch": null
       }
     ],
     "warnings": [
       {
+        "level": "info",
+        "primitive": "derive_indicator",
+        "message": "cii_rent_burden: 10 unit(s) have an open-ended median. The value is the Census's encoding of an end category and sorts correctly, but it is a bound, not a measurement; read `bound` for these."
+      },
+      {
         "level": "warning",
         "primitive": "derive_indicator",
-        "message": "cii_rent_burden: 5 of 3222 unit(s) have no value. Where the reason is an empty source value, the Census annotation behind it is not recoverable here (ACS-5)."
+        "message": "cii_rent_burden: 5 of 3222 unit(s) have no value. Where the reason is an empty source value, the Census code behind it is in the source's <variable>_annotation column when it was acquired after ACS-7."
       },
       {
         "level": "info",

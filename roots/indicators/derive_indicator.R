@@ -22,8 +22,12 @@
 #     Ratio rows say `not_derived`. A passthrough's margin is the
 #     published one. D-18, IND-3.
 #   ~ round. Replication is checked at full precision.
-#   ~ guess why a value is empty. The provider keeps only a count of
-#     the Census annotations it emptied (ACS-5).
+#   ~ guess why a value is empty. Since ACS-7 the provider keeps each
+#     Census code it emptied in a <variable>_annotation column. The one
+#     read here is -333333333 on a passthrough's margin: a median in an
+#     open-ended category, written as a `bound` ("50.0 or more"), not
+#     as a measurement. The value stays the Census's encoding (51, 9),
+#     which sorts correctly, so a rank over it is still right.
 #
 # canopy/indicator_preview.py does the same arithmetic in Python. The
 # two must agree exactly; tests/test_derive_indicator_oracle.py holds
@@ -96,6 +100,21 @@ UNIT_AUTHORITY <- "us_census_geoid"
       warnings = w)
   }
   v
+}
+
+# ACS-7. The Census code on a median's margin meaning the median falls
+# in the lowest or highest category. preview.py holds the same constant.
+OPEN_ENDED <- -333333333
+
+# What an open-ended median claims, in words. preview._bound_label writes
+# the same strings; the oracle test holds the two to each other.
+.bound_label <- function(v, edges) {
+  if (is.null(edges)) return(rep("open-ended interval (edges not declared)", length(v)))
+  lo <- as.numeric(edges$lower)
+  hi <- as.numeric(edges$upper)
+  ifelse(v >= hi, sprintf("%.1f or more", hi),
+         ifelse(v < lo, sprintf("less than %.1f", lo),
+                "open-ended interval (value inside the declared edges)"))
 }
 
 # Which of these variables is empty on each row, joined the way the preview
@@ -184,6 +203,7 @@ with_primitive_error_handling({
 
     reason <- .empty_reason(df, needed)
     moe <- rep(NA_real_, nrow(df))
+    bound <- rep(NA_character_, nrow(df))
 
     if (kind == "ratio") {
       n_ratio <- n_ratio + 1
@@ -200,13 +220,37 @@ with_primitive_error_handling({
       moe_col <- sub("E$", "M", column)
       if (moe_col %in% names(df)) moe <- as.numeric(df[[moe_col]])
       moe_status <- ifelse(is.na(moe), "absent", "published")
+
+      ann_col <- paste0(moe_col, "_annotation")
+      edges <- der$open_ended
+      if (ann_col %in% names(df)) {
+        code <- suppressWarnings(as.numeric(as.character(df[[ann_col]])))
+        open <- !is.na(value) & !is.na(code) & code == OPEN_ENDED
+        if (any(open)) {
+          moe_status[open] <- "open_ended"
+          bound[open] <- .bound_label(value[open], edges)
+          w$info(sprintf(
+            "%s: %d unit(s) have an open-ended median. The value is the Census's encoding of an end category and sorts correctly, but it is a bound, not a measurement; read `bound` for these.",
+            id, sum(open)))
+          odd <- open & startsWith(bound, "open-ended interval")
+          if (any(odd)) {
+            w$warn(sprintf(
+              "%s: %d open-ended median(s) could not be placed past a declared edge (%s). Declare or check `open_ended`.",
+              id, sum(odd), bound[odd][1]))
+          }
+        }
+      } else if (!is.null(edges)) {
+        w$warn(sprintf(
+          "%s declares open-ended edges but the source has no %s column, so no open-ended median can be recognised. It was probably acquired before ACS-7; re-acquire the source.",
+          id, ann_col))
+      }
     }
 
     n_empty <- sum(is.na(value))
     if (n_empty > 0) {
       w$warn(paste0(
         sprintf("%s: %d of %d unit(s) have no value. ", id, n_empty, nrow(df)),
-        "Where the reason is an empty source value, the Census annotation behind it is not recoverable here (ACS-5)."))
+        "Where the reason is an empty source value, the Census code behind it is in the source's <variable>_annotation column when it was acquired after ACS-7."))
     }
 
     pieces[[length(pieces) + 1]] <- data.frame(
@@ -218,6 +262,7 @@ with_primitive_error_handling({
       value          = value,
       moe            = moe,
       moe_status     = moe_status,
+      bound          = bound,
       empty_reason   = reason,
       authority      = authority,
       method         = paste0("derive_indicator:", kind),

@@ -4,11 +4,6 @@ canopy/indicators/preview.py
 indicator values, previewed ~ the registry read over an acquisition, before
 any primitive has derived them
 
-derive_indicator.R does not exist yet. until it does, the numbers this module
-produces are a PREVIEW: computed in Python, outside the pipeline, with no
-envelope. every response says so. they are not indicator_values, and nothing
-here writes one.
-
 why build it anyway
   ~ a derived number shown without saying how it was made is exactly what this
     platform refuses to do, so the demo needs one that says so out loud
@@ -23,8 +18,10 @@ what it deliberately does not do
     number, so a ratio row carries its component margins and no derived one. a
     passthrough's margin is the published one, and is served as is.
   ~ round. replication is checked at full precision.
-  ~ guess why a value is empty. the provider empties Census annotations and
-    keeps only their count, so the reason is not recoverable here (ACS-5).
+  ~ guess why a value is empty. the provider empties Census annotations; since
+    ACS-7 it keeps each code in a <variable>_annotation column, and the one
+    read here is -333333333 on a passthrough's margin: a median in an
+    open-ended category, reported as a bound rather than a number.
   ~ cache. the registry and manifest are read on every call, so a preview can
     never disagree with the files on disk.
 
@@ -296,6 +293,31 @@ def _number(x) -> float | None:
 
 
 # ── derivation ────────────────────────────────────────────────────────────
+# ACS-7: the Census code on a median's margin meaning "the median falls in the
+# lowest or highest category". the estimate beside it (9 or 51 for B25071) is
+# an encoding of the category, which sorts correctly but is not a measurement.
+OPEN_ENDED = -333333333
+
+
+def _annotation(x) -> int | None:
+    """an annotation cell as its integer code, whatever it was stored as."""
+    v = _number(x)
+    return int(v) if v is not None and float(v).is_integer() else None
+
+
+def _bound_label(value: float, edges: tuple[float, float] | None) -> str:
+    """what an open-ended median actually claims, in words. derive_indicator.R
+    writes the same strings; the oracle test holds them to it."""
+    if edges is None:
+        return "open-ended interval (edges not declared)"
+    lower, upper = edges
+    if value >= upper:
+        return f"{upper:.1f} or more"
+    if value < lower:
+        return f"less than {lower:.1f}"
+    return "open-ended interval (value inside the declared edges)"
+
+
 def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) -> tuple[list[dict], list[str]]:
     """long-form preview rows for one indicator over one acquisition."""
     estimates = ind.estimate_variables()
@@ -322,6 +344,16 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
             "whether this ratio is a proportion, and the Census formulas differ. "
             "component margins are served instead.")
 
+    # the margin's annotation column, named as derive_indicator.R names it
+    ann_col = (re.sub(r"E$", "M", d.column) + "_annotation"
+               if d.kind == "passthrough" else None)
+    has_ann = ann_col is not None and ann_col in frame.columns
+    if d.kind == "passthrough" and d.open_ended is not None and not has_ann:
+        notes.append(
+            f"{ind.id} declares open-ended edges but the acquisition has no "
+            f"{ann_col} column, so no open-ended median can be recognised. it was "
+            f"probably acquired before ACS-7; re-acquire the source.")
+
     rows: list[dict] = []
     for _, r in frame.iterrows():
         comp = {}
@@ -330,13 +362,16 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
             comp[v] = {"estimate": _number(r[v]),
                        "moe": _number(r[m]) if m and m in frame.columns else None}
 
-        value, moe, moe_status, reason = None, None, None, None
+        value, moe, moe_status, reason, bound = None, None, None, None, None
         if d.kind == "passthrough":
             value = comp[d.column]["estimate"]
             moe = comp[d.column]["moe"]
             moe_status = "published" if moe is not None else "absent"
             if value is None:
                 reason = f"source value empty: {d.column}"
+            elif has_ann and _annotation(r[ann_col]) == OPEN_ENDED:
+                moe_status = "open_ended"
+                bound = _bound_label(value, d.open_ended)
         else:
             moe_status = "not_derived"
             empty = [v for v in (*d.numerator, d.denominator) if comp[v]["estimate"] is None]
@@ -357,6 +392,7 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
             "value": value,
             "moe": moe,
             "moe_status": moe_status,
+            "bound": bound,
             "empty_reason": reason,
             "authority": authority,
             "method": method,
@@ -368,8 +404,19 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
     if n_empty:
         notes.append(
             f"{n_empty} unit(s) have no value. where the reason is an empty source "
-            f"value, the Census annotation that emptied it is not recoverable here: "
-            f"the provider keeps only a count (ACS-5).")
+            f"value, the Census code behind it is in the acquisition's "
+            f"<variable>_annotation column when it was acquired after ACS-7.")
+    open_rows = [row for row in rows if row["moe_status"] == "open_ended"]
+    if open_rows:
+        notes.append(
+            f"{len(open_rows)} unit(s) have an open-ended median: the value is the "
+            f"Census's encoding of an end category and sorts correctly, but it is "
+            f"a bound, not a measurement. read `bound`, not `value`, for these.")
+        odd = [row for row in open_rows if row["bound"].startswith("open-ended interval")]
+        if odd:
+            notes.append(
+                f"{len(odd)} open-ended median(s) could not be placed past a declared "
+                f"edge ({odd[0]['bound']}). declare or check `open_ended` for {ind.id}.")
     return rows, notes
 
 

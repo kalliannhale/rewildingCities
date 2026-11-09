@@ -65,13 +65,16 @@ choices:
       and in the top quarter nationally.
 
   aggregation_unit_level:
-    options: [county, tract]
+    options: [county, county subdivision, tract]
     default: county
     description: >
       The grain the source was acquired at, which is the grain every value
-      describes. A county figure averages over places a tract figure would
-      separate; tract estimates carry much wider margins of error. Neither
-      is more truthful in general; they answer different questions.
+      describes. A county figure averages over places a town or tract figure
+      would separate; finer grains carry much wider margins of error. Neither
+      is more truthful in general; they answer different questions. In Maine,
+      a county subdivision is a town as the Census publishes it: 529 units,
+      not the 924 civil divisions in Maine's own GIS, because the Census
+      groups unorganized townships into single units.
 
 requires_primitives:
   - roots/derive_indicator

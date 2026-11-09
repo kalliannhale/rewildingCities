@@ -57,6 +57,10 @@ class Derivation:
     denominator: str | None = None
     scale: float = 1.0
     column: str | None = None                   # passthrough only
+    # passthrough only: (lower, upper), the edges of a published distribution's
+    # two end categories. a median the Census marks open-ended (-333333333 on
+    # its margin) is reported as a bound past one of them, never as a number.
+    open_ended: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -118,6 +122,9 @@ class Indicator:
                               denominator=d.denominator, scale=d.scale)
         else:
             derivation.update(column=d.column)
+            if d.open_ended is not None:
+                derivation["open_ended"] = {"lower": d.open_ended[0],
+                                            "upper": d.open_ended[1]}
         return {
             "id": self.id,
             "name": self.name,
@@ -281,10 +288,27 @@ class IndicatorRegistry:
         column = d.get("column")
         if not column or not isinstance(column, str):
             raise ValueError(f"{where}: a passthrough needs a single column")
-        extra = [k for k in d if k not in ("kind", "column")]
+        extra = [k for k in d if k not in ("kind", "column", "open_ended")]
         if extra:
             raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
-        return Derivation(kind="passthrough", column=column)
+
+        open_ended = None
+        if "open_ended" in d:
+            oe = d["open_ended"]
+            if not isinstance(oe, dict) or set(oe) != {"lower", "upper"}:
+                raise ValueError(
+                    f"{where}: open_ended must be a mapping of exactly lower and "
+                    f"upper, the edges of the published distribution's two end "
+                    f"categories (e.g. 10 and 50 for B25071)")
+            lo, hi = oe["lower"], oe["upper"]
+            numeric = all(isinstance(x, (int, float)) and not isinstance(x, bool)
+                          for x in (lo, hi))
+            if not numeric or lo >= hi:
+                raise ValueError(
+                    f"{where}: open_ended lower and upper must be numbers with "
+                    f"lower below upper; got {lo!r} and {hi!r}")
+            open_ended = (float(lo), float(hi))
+        return Derivation(kind="passthrough", column=column, open_ended=open_ended)
 
     # ── read surface ───────────────────────────────────────────────────────
     def get(self, ind_id: str) -> Indicator:
