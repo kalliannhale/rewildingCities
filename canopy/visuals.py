@@ -11,9 +11,11 @@ map; it derives one ~ the same rule as loam and wonder: the metadata is the sour
 of truth.
 
 the door does not lock on seeing. a map.geojson is written every time (openable
-anywhere, offline), and additionally, when introspect says ArcGIS is reachable
-(online + credentialed), the same result is published to a hosted layer. never a
-locked door, always some way to view your result.
+anywhere, offline). publishing is a latch, not a default (EXP-1): the same result
+goes to a hosted ArcGIS layer only when the caller asks (publish=True), and only
+when introspect says ArcGIS is reachable (online + credentialed). a publish that
+was asked for and cannot happen says why, out loud; it never falls back in
+silence. always some way to view your result, never a publish nobody chose.
 
 a map is a claim, so the view records which result envelope produced it and the
 lineage that led there ~ its provenance travels with it. ~
@@ -81,10 +83,24 @@ class ViewResult:
     provenance: dict
 
 
-def _arcgis_reachable() -> bool:
-    """can we reach ArcGIS to publish, here and now? introspect's job. ~"""
+class PublishError(Exception):
+    """a publish was asked for and did not happen, with the reason. the local
+    map.geojson is already written when this is raised; geojson_path names it. ~"""
+
+    def __init__(self, message: str, geojson_path: str | None = None):
+        super().__init__(message)
+        self.geojson_path = geojson_path
+
+
+def _arcgis_unreachable() -> str | None:
+    """why ArcGIS cannot be reached here and now, or None when it can.
+    introspect's job; the reason is named so a refused publish can say it. ~"""
     from canopy.introspect import is_online, has_credentials
-    return is_online() and has_credentials("arcgis")
+    if not is_online():
+        return "this machine is offline"
+    if not has_credentials("arcgis"):
+        return "no ArcGIS credentials were found (ARCGIS_API_KEY or ARCGIS_USERNAME)"
+    return None
 
 
 def _read_features(envelope: dict) -> list:
@@ -128,24 +144,42 @@ def _write_map_geojson(spec: MapSpec, provenance: dict, out_dir,
 
 def _publish_arcgis(geojson_path: Path, spec: MapSpec, metadata: dict) -> str:
     """publish the map.geojson as a hosted feature layer. new code beside the
-    read-only provider; uses the arcgis python api. only called when introspect
-    says ArcGIS is reachable, and any failure falls back to the geojson already
-    written ~ the door stays open. ~"""
-    from arcgis.gis import GIS
-    gis = GIS("home")  # active profile / stored credentials
-    item = gis.content.add(
-        {"title": spec.title or metadata.get("semantic_type", "rewilding result"),
-         "type": "GeoJson", "tags": "rewildingCities"},
-        data=str(geojson_path),
-    )
-    published = item.publish()
+    read-only provider; uses the arcgis python api. only called when the caller
+    asked to publish and introspect says ArcGIS is reachable. every failure is
+    raised as a PublishError naming what happened, including an upload that went
+    up but did not publish, which would otherwise sit on ArcGIS unseen. ~"""
+    try:
+        from arcgis.gis import GIS
+    except ImportError as e:
+        raise PublishError(
+            "the arcgis package is not installed, so nothing was published") from e
+
+    try:
+        gis = GIS("home")  # active profile / stored credentials
+        item = gis.content.add(
+            {"title": spec.title or metadata.get("semantic_type", "rewilding result"),
+             "type": "GeoJson", "tags": "rewildingCities"},
+            data=str(geojson_path),
+        )
+    except Exception as e:
+        raise PublishError(f"could not upload to ArcGIS: {e}") from e
+
+    try:
+        published = item.publish()
+    except Exception as e:
+        raise PublishError(
+            f"uploaded item {getattr(item, 'id', '(unknown id)')} to ArcGIS, but "
+            f"publishing it failed: {e}. the uploaded item is still on ArcGIS; "
+            f"delete it there if it should not stay") from e
     return published.homepage
 
 
-def render(envelope: dict, out_dir, *, plot: str | None = None) -> ViewResult:
-    """derive the map from the result's metadata, always write map.geojson, and
-    additionally publish to ArcGIS when reachable. the view carries its own
-    provenance back to the result envelope and its lineage. ~"""
+def render(envelope: dict, out_dir, *, plot: str | None = None,
+           publish: bool = False) -> ViewResult:
+    """derive the map from the result's metadata and always write map.geojson.
+    publish to ArcGIS only when publish=True; if it was asked for and cannot
+    happen, raise PublishError after the geojson is written. the view carries
+    its own provenance back to the result envelope and its lineage. ~"""
     metadata = envelope.get("metadata") or {}
     spec = derive_map_spec(metadata)
     provenance = {
@@ -159,11 +193,16 @@ def render(envelope: dict, out_dir, *, plot: str | None = None) -> ViewResult:
     geojson_path = _write_map_geojson(spec, provenance, out_dir, features)
 
     arcgis_url = None
-    if _arcgis_reachable():
+    if publish:
+        reason = _arcgis_unreachable()
+        if reason:
+            raise PublishError(f"publish was asked for, but {reason}",
+                               str(geojson_path))
         try:
             arcgis_url = _publish_arcgis(geojson_path, spec, metadata)
-        except Exception:
-            arcgis_url = None  # fall back to the geojson already written
+        except PublishError as e:
+            e.geojson_path = str(geojson_path)
+            raise
 
     return ViewResult(
         mode="arcgis+geojson" if arcgis_url else "geojson",
