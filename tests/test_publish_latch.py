@@ -116,6 +116,13 @@ def test_without_publish_reachability_is_not_even_checked(tmp_path, monkeypatch,
     assert arcgis.uploads == []
 
 
+# F4, encoded on purpose and named so it is not mistaken for intent:
+# credentials() sets ARCGIS_API_KEY, which introspect.has_credentials("arcgis")
+# accepts, but the login below asserts GIS("home"), which ignores that variable
+# and signs in with the stored profile. on a real machine the check and the
+# login can disagree: the key passes the check and then is never used. this
+# test records today's behaviour; the publish door (per-target identity) is
+# where F4 gets resolved, and this assertion should change with it.
 def test_publish_online_with_credentials_uploads_once(tmp_path, monkeypatch, arcgis):
     online(monkeypatch, True)
     credentials(monkeypatch)
@@ -209,3 +216,59 @@ def test_rewilding_map_publish_without_credentials_exits_1_and_says_why(
     assert str(local_map) in err
     assert arcgis.uploads == []
     assert local_map.exists()
+
+
+# ── rewilding map: --publish on a choropleth ──────────────────────────────
+def plot_with_a_choropleth(tmp_path, monkeypatch):
+    """a tabular result that joins to a vector layer, so map draws a
+    choropleth instead of falling back to a descriptor. ~"""
+    pd = pytest.importorskip("pandas")
+    pytest.importorskip("pyarrow")
+    plot = tmp_path / "plots" / "demo"
+    envelopes = plot / ".envelopes"
+    envelopes.mkdir(parents=True)
+    data = plot / ".data"
+    data.mkdir()
+
+    parks = data / "parks.geojson"
+    parks.write_text(json.dumps({"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"park_id": "p1"},
+         "geometry": {"type": "Point", "coordinates": [0, 0]}},
+        {"type": "Feature", "properties": {"park_id": "p2"},
+         "geometry": {"type": "Point", "coordinates": [1, 1]}},
+    ]}))
+    (envelopes / "parks.envelope.json").write_text(json.dumps({
+        "metadata": {"semantic_type": "park_boundaries", "data_category": "vector"},
+        "data": {"path": str(parks), "format": "geojson"}}))
+
+    pci = data / "pci.parquet"
+    pd.DataFrame({"park_id": ["p1", "p2"], "pci": [1.5, 2.5]}).to_parquet(pci)
+    (envelopes / "pci.envelope.json").write_text(json.dumps({
+        "metadata": {"semantic_type": "pci_results", "data_category": "tabular",
+                     "joins_to": "park_boundaries"},
+        "data": {"path": str(pci), "format": "parquet"}}))
+
+    monkeypatch.setattr(m, "find_root", lambda: tmp_path)
+    return plot / "harvest" / "map__parks.geojson"
+
+
+def test_rewilding_map_choropleth_without_publish_exits_0(tmp_path, monkeypatch, arcgis):
+    local_map = plot_with_a_choropleth(tmp_path, monkeypatch)
+    assert m.run(parse(["map", "demo", "pci_results"])) == 0
+    assert local_map.exists()
+    assert arcgis.uploads == []
+
+
+def test_rewilding_map_choropleth_with_publish_exits_1_and_writes_locally(
+        tmp_path, monkeypatch, capsys, arcgis):
+    # online and credentialed, so the only reason nothing is published is the
+    # rule itself: map does not publish choropleths.
+    online(monkeypatch, True)
+    credentials(monkeypatch)
+    local_map = plot_with_a_choropleth(tmp_path, monkeypatch)
+    assert m.run(parse(["map", "demo", "pci_results", "--publish"])) == 1
+    err = capsys.readouterr().err
+    assert "not published" in err
+    assert str(local_map) in err
+    assert local_map.exists()
+    assert arcgis.signins == [] and arcgis.uploads == []

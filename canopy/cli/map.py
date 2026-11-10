@@ -12,7 +12,12 @@ result or the layer, map refuses and names them rather than taking the first by
 filename; --result and --layer choose (MAP-1). And a long-form indicator_values
 table holds many indicators in one `value` column, so --indicator picks one, and
 it joins on its declared key: `unit_code`, a Census GEOID, to the layer's GEOID.
-A layer without a GEOID is refused by name, never matched on a county name. ~
+A layer without a GEOID is refused by name, never matched on a county name.
+
+Publishing is asked for, never assumed (EXP-1): only --publish reaches ArcGIS,
+and only through the descriptor path. A choropleth given --publish is written
+locally, says it was not published, and exits 1, because a publish that was
+asked for and did not happen is a failure, never a quiet success. ~
 """
 
 from __future__ import annotations
@@ -393,8 +398,15 @@ def run(args) -> int:
                     print(f"   {cho['without_row']} feature(s) have no row in the result, drawn as empty")
                 print(f"   {cho['path']}")
                 if getattr(args, "publish", False):
-                    print("   (--publish applies to descriptor maps only; this choropleth "
-                          "was written locally and not published)", file=sys.stderr)
+                    # EXP-1 follow-up: this used to print a note and exit 0, so
+                    # a script asking for a publish could not tell that none
+                    # happened. same words and exit code as the descriptor path.
+                    print("not published: map does not publish choropleths; "
+                          "--publish reaches ArcGIS through descriptor maps only",
+                          file=sys.stderr)
+                    print(f"   the map was still written locally: {cho['path']}",
+                          file=sys.stderr)
+                    return 1
                 return 0
             print(f"   (no geometry to join {target} to ~ writing a descriptor instead)")
     except MapRefusal as e:

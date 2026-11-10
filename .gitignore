@@ -77,3 +77,10 @@ Thumbs.db
 *.DNG
 # re-derivable, never committed
 plots/*/.loam/
+
+# --- plot harvests (regenerable; canonical home is S3, Sprint 07) ---
+# contains a slash, so it is anchored at the root and matches every plot
+plots/*/harvest/
+
+# --- reference files (third-party publications; redistribution terms unsettled, D-31) ---
+garden/reference/
