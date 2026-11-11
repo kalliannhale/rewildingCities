@@ -25,8 +25,16 @@
 # The percentile is CII's: average rank over the largest rank,
 # times 100 (CII-8). Held to canopy/index_oracle.weighted_index().
 #
+# A unit is an (authority, code) pair (D-19, Contract 3 section 1), so
+# every row carries its unit_authority and its id is
+# index:unit_authority:code, as every value's is (D-132). An index ranks
+# units against each other, so all of them must be under one authority:
+# counties ranked beside districts were never measured beside each other,
+# and that is refused by name, not averaged (SEAM-1, D-190).
+#
 # Inputs:
-#   components: indicator_standings (pillars) or indicator_index (composite)
+#   components: indicator_standings (pillars) or indicator_index (composite),
+#               each row carrying its unit_authority
 # Params:
 #   weights: $weights.<id>
 #   level:   "pillars" or "composite"
@@ -61,6 +69,30 @@ with_primitive_error_handling({
   }
 
   df <- safe_read_table(input_path, w)
+
+  # whose codes these are, said once for every unit, or refused (D-190)
+  if (!"unit_authority" %in% names(df)) {
+    primitive_failure("No unit authority",
+      paste0("The input has no unit_authority column, so no index row could say whose ",
+             "code it carries. Rerun the standings from values that name their units (D-132, D-190)."),
+      warnings = w)
+  }
+  ua_all <- trimws(as.character(df$unit_authority))
+  if (any(is.na(ua_all) | !nzchar(ua_all))) {
+    primitive_failure("No unit authority",
+      sprintf("%d row(s) name no unit_authority (D-132, D-190).", sum(is.na(ua_all) | !nzchar(ua_all))),
+      warnings = w)
+  }
+  unit_authority <- sort(unique(ua_all), method = "radix")
+  if (length(unit_authority) > 1) {
+    primitive_failure("Units under more than one authority",
+      paste0("An index ranks units against each other, and these are under ",
+             paste(unit_authority, collapse = " and "),
+             ": units of different levels were never measured beside each other. ",
+             "Build one index per authority (SEAM-1, D-190)."),
+      warnings = w)
+  }
+
   if (level == "pillars") {
     need <- c("unit_code", "indicator", "z")
     comp_col <- "indicator"; score_col <- "z"
@@ -111,6 +143,7 @@ with_primitive_error_handling({
       vapply(units, function(u) sum(imputed$unit_code == u & imputed$indicator %in% names(comps)), integer(1))
     } else rep(0L, length(units))
     pieces[[length(pieces) + 1]] <- data.frame(
+      unit_authority = unit_authority,
       unit_code = units,
       name = if (!is.null(name_of)) as.character(name_of[units]) else "",
       index = g$id, index_name = g$name,
@@ -128,7 +161,9 @@ with_primitive_error_handling({
     }
   }
   out <- do.call(rbind, pieces)
-  out$measurement_id <- paste(out$index, out$unit_code, sep = ":")
+  # index:authority:code, so ids stay unique when tables from different
+  # levels are read together, as every value's are (D-132, D-190)
+  out$measurement_id <- paste(out$index, out$unit_authority, out$unit_code, sep = ":")
 
   if (!isTRUE(weights$is_publishers_weighting)) {
     w$warn(sprintf("Weighting '%s' is not the publisher's. CII's own allocation is unpublished, so these indices will not reproduce CII's exactly.",

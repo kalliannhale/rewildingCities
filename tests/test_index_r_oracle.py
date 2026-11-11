@@ -5,6 +5,10 @@ impute_nearest_neighbor.R and weighted_index.R against canopy/index_oracle,
 chained as the experiment chains them: impute, then pillars, then composite.
 values and percentiles must agree exactly; donors must be the same county.
 params pass as files, as the orchestrator passes them. skipped without R.
+
+every index row carries its unit_authority and an id of index:authority:code
+(D-132), and an index across units of more than one authority, or of none,
+is refused by name (SEAM-1, D-190).
 """
 
 import json
@@ -39,6 +43,9 @@ WEIGHTS = {"id": "test_weights", "is_publishers_weighting": False, "declared_in"
                        "p2": {"name": "Pillar two", "chips": 20, "components": {"ind_c": 20, "ind_d": 20}}}}
 
 
+GEOID = "us_census_geoid"
+
+
 def _fixture():
     rng = random.Random(7)
     units = [f"23{n:03d}" for n in range(1, 61, 2)] + [f"33{n:03d}" for n in range(1, 21, 2)]
@@ -48,19 +55,24 @@ def _fixture():
         gaps = {5: ["ind_c"], 11: ["ind_a"], 17: ["ind_b", "ind_d"], 23: ["ind_d"]}.get(k, [])
         for i in IDS:
             z = None if i in gaps else round(rng.gauss(0, 1), 6)
-            rows.append({"measurement_id": f"{i}:{u}", "unit_code": u, "name": u, "indicator": i,
+            rows.append({"measurement_id": f"{i}:{GEOID}:{u}", "unit_authority": GEOID,
+                         "unit_code": u, "name": u, "indicator": i,
                          "z": z, "outside_reason": None if z is not None else "no value"})
     return rows, locs
 
 
-def _run(script, inputs, params, out, tmp):
+def _respond(script, inputs, params, out, tmp):
     ij, pj = tmp / f"{out.stem}_in.json", tmp / f"{out.stem}_params.json"
     ij.write_text(json.dumps(inputs)); pj.write_text(json.dumps(params))
     proc = subprocess.run(["Rscript", str(script), str(ij), str(out), str(pj)],
                           capture_output=True, text=True, cwd=ROOT)
     lines = [l for l in proc.stdout.strip().splitlines() if l.startswith("{")]
     assert lines, f"no protocol response.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
-    resp = json.loads(lines[-1])
+    return json.loads(lines[-1]), proc
+
+
+def _run(script, inputs, params, out, tmp):
+    resp, proc = _respond(script, inputs, params, out, tmp)
     assert resp["status"] == "success", (resp, proc.stderr)
     return resp
 
@@ -98,6 +110,9 @@ def test_the_chain_agrees_with_the_oracle(tmp_path):
     _run(INDEX, {"components": str(ip_out)}, {"weights": WEIGHTS, "level": "pillars"}, pil_out, tmp_path)
     py_pil = ox.weighted_index(py_imp, WEIGHTS, "pillars")
     r_pil = pd.read_parquet(pil_out)
+    assert set(r_pil["unit_authority"]) == {GEOID}
+    assert list(r_pil["measurement_id"]) == [
+        f"{i}:{GEOID}:{u}" for i, u in zip(r_pil["index"], r_pil["unit_code"])]
     by = {(r["unit_code"], r["index"]): r for r in py_pil}
     for _, r in r_pil.iterrows():
         p = by[(r["unit_code"], r["index"])]
@@ -109,6 +124,8 @@ def test_the_chain_agrees_with_the_oracle(tmp_path):
     _run(INDEX, {"components": str(pil_out)}, {"weights": WEIGHTS, "level": "composite"}, comp_out, tmp_path)
     py_comp = {r["unit_code"]: r for r in ox.weighted_index(py_pil, WEIGHTS, "composite")}
     r_comp = pd.read_parquet(comp_out)
+    assert set(r_comp["unit_authority"]) == {GEOID}
+    assert set(r_comp["measurement_id"]) == {f"overall:{GEOID}:{u}" for u in r_comp["unit_code"]}
     for _, r in r_comp.iterrows():
         p = py_comp[r["unit_code"]]
         assert _f(r["percentile"]) == p["percentile"], r["unit_code"]
@@ -131,3 +148,32 @@ def test_a_numeric_geoid_is_refused(tmp_path):
     resp = json.loads([l for l in proc.stdout.splitlines() if l.startswith("{")][-1])
     assert resp["status"] == "failure"
     assert "GEOID arrived as a number" in resp["message"]
+
+
+def _standings(tmp_path, rows):
+    pd = pytest.importorskip("pandas")
+    sp = tmp_path / "standings.parquet"
+    df = pd.DataFrame(rows); df["z"] = df["z"].astype("Float64"); df.to_parquet(sp, index=False)
+    return sp
+
+
+def test_standings_without_a_unit_authority_are_refused(tmp_path):
+    rows, _ = _fixture()
+    sp = _standings(tmp_path, [{k: v for k, v in r.items() if k != "unit_authority"} for r in rows])
+    resp, _ = _respond(INDEX, {"components": str(sp)}, {"weights": WEIGHTS, "level": "pillars"},
+                       tmp_path / "pillars.parquet", tmp_path)
+    assert resp["status"] == "failure"
+    assert "unit_authority" in json.dumps(resp)
+
+
+def test_an_index_across_authorities_is_refused_by_name(tmp_path):
+    rows, _ = _fixture()
+    for r in rows:
+        if r["unit_code"].startswith("33"):
+            r["unit_authority"] = "us_census_sldl"
+    sp = _standings(tmp_path, rows)
+    resp, _ = _respond(INDEX, {"components": str(sp)}, {"weights": WEIGHTS, "level": "pillars"},
+                       tmp_path / "pillars.parquet", tmp_path)
+    said = json.dumps(resp)
+    assert resp["status"] == "failure"
+    assert "us_census_geoid" in said and "us_census_sldl" in said and "D-190" in said
