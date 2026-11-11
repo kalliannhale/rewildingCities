@@ -151,10 +151,19 @@ datasets:
       notes: >
         Assembled rather than fetched: there is no single authoritative
         register of local news outlets, which is part of why ownership
-        concentration is hard to see. Sources to reconcile: the Maine Press
-        Association membership list, FCC broadcast licences (public, by
-        state), the Maine Trust for Local News masthead list, and known
-        independents absent from all three.
+        concentration is hard to see. The listings that arrived are declared
+        below as outlet_listing datasets (Cision twice, Jo Easton, Local News
+        Catalyst, the Maine Media Ecosystem file), and the maine_outlets
+        preparation keeps their records side by side (D-201 to D-205). Not
+        yet consulted: the Maine Press Association membership list, FCC
+        broadcast licences, the Maine Trust for Local News mastheads.
+
+        No listing carries language of publication or paywall status (P-9);
+        both need our own observation of each outlet (OBS-1). Which place
+        meaning counts as where an outlet is, an office address, a named
+        town or the communities served, is undecided (WHERE-1). An outlet's
+        county comes from the geography graph through its town, never from a
+        listing (D-204).
 
         Each outlet needs a name, a location (an address is enough; the
         pipeline will geocode it), a medium, and an owning entity. If the
@@ -169,7 +178,7 @@ datasets:
       path: .data/maine_outlets.geojson
       refresh_policy: manual
     provenance:
-      source: Maine Press Association; FCC licence records; publisher mastheads
+      source: the outlet_listing datasets below, reconciled by maine_outlets; to add, the Maine Press Association, FCC licence records and publisher mastheads
       notes: >
         Assembled from public records. Each attribution should be traceable
         to a specific source, because the finding is a claim about ownership
@@ -696,3 +705,84 @@ datasets:
       known_issues:
         - The listing carries no email or phone; contact is the profile link.
         - The URL's host is the one verified 2026-11-11 (SEN-1).
+
+  # ── outlet listings (Sprint 06, D-205) ────────────────────────────────────
+  # each listing stays in garden/reference/, ignored by .gitignore line 86, so
+  # these paths reach outside the plot (D-205). they are read only as
+  # seeds/crosswalks/outlets/outlet_sources.yml declares (D-201); a column it
+  # does not name is never read. excluded tier: none of this leaves as it is.
+
+  outlets_cision:
+    available: true
+    description: Cision's Maine media outlets export, 353 rows, with a hand-added Still Operates? column (SRC-4)
+    semantic_type: outlet_listing
+    license: terms_unknown   # D-116
+    license_note: a commercial media database's export; its terms are not recorded (SRC-4)
+    format: csv
+    source: {type: manual, notes: "Exported from Cision and copied into garden/reference/ unchanged."}
+    cache: {path: "../../garden/reference/Maine Media Outlets_Cision(Sheet 1).csv", refresh_policy: manual}
+    provenance: {source: Cision, published_by: cision}
+    quality:
+      known_issues:
+        - Outlet County reads Cook (Illinois) on 235 of 353 rows, across every outlet type (D-204).
+        - The address is the publisher's office, not the outlet's town (D-203).
+        - Outlet Language reads English on every row and omits Amjambo Africa (P-9).
+
+  outlets_cision_raw:
+    available: true
+    description: Cision's Maine media outlets export, 412 rows, a separate pull from outlets_cision (297 names in both)
+    semantic_type: outlet_listing
+    license: terms_unknown   # D-116
+    license_note: as outlets_cision (SRC-4)
+    format: csv
+    source: {type: manual, notes: "Exported from Cision and copied into garden/reference/ unchanged. Its headers are on the second line."}
+    cache: {path: "../../garden/reference/Maine Media Outlets(Sheet 1) (1).csv", refresh_policy: manual}
+    provenance: {source: Cision, published_by: cision}
+    quality:
+      known_issues:
+        - As outlets_cision, without Still Operates?.
+
+  outlets_easton:
+    available: true
+    description: Jo Easton's Maine news outlets list, about 50 outlets, assembled for her own use
+    semantic_type: outlet_listing
+    license: terms_unknown   # D-116
+    license_note: her caveat welcomes corrections; terms of reuse not recorded (SRC-4)
+    format: csv
+    source: {type: manual, notes: "Shared by Jo Easton (Bangor Daily News). A caveat line sits above the headers."}
+    cache: {path: "../../garden/reference/Jo Easton Maine News Outlets(Sheet1).csv", refresh_policy: manual}
+    provenance: {source: Jo Easton, published_by: jo_easton}
+    quality:
+      known_issues:
+        - Contact names people and is never read (D-201).
+        - The SimilarWeb columns are a third party's estimates and are not read (D-201).
+        - Format mixes medium and cycle as free text.
+
+  outlets_lnc:
+    available: true
+    description: Local News Catalyst's Maine local news publications, 30 rows
+    semantic_type: outlet_listing
+    license: terms_unknown   # D-116
+    license_note: terms not recorded (SRC-4)
+    format: csv
+    source: {type: manual, notes: "Copied into garden/reference/ unchanged."}
+    cache: {path: "../../garden/reference/Local News Catalyst Local News Publications(Sheet 1).csv", refresh_policy: manual}
+    provenance: {source: Local News Catalyst, published_by: local_news_catalyst}
+    quality:
+      known_issues:
+        - A seventh column has no header (probably circulation) and is not read.
+
+  outlets_mme:
+    available: true
+    description: The Maine Media Ecosystem file, 81 outlets
+    semantic_type: outlet_listing
+    license: terms_unknown   # D-116
+    license_note: its publisher is not yet known (SRC-4)
+    format: csv
+    source: {type: manual, notes: "Copied into garden/reference/ unchanged."}
+    cache: {path: "../../garden/reference/Maine Media Ecosystem(Maine Media Ecosystem).csv", refresh_policy: manual}
+    provenance: {source: unknown; ask before release (SRC-4)}
+    quality:
+      known_issues:
+        - Print holds frequency for print media and a station's format for radio (D-201).
+        - County holds region and multi-county values for some rows (Maine, Waldo/Knox, Central Maine).

@@ -82,6 +82,11 @@ methods:
       name: "Legislative Seats, One Legislature at a Time"
       answers: [legislators, representation, districts, preparation]
 
+    - id: outlet_reconciliation
+      path: information/outlet_reconciliation.yml
+      name: "Outlet Records, Side by Side"
+      answers: [outlets, ownership, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"

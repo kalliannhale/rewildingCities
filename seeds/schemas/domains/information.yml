@@ -26,6 +26,46 @@ types:
     description: Print, broadcast, digital, radio outlets.
     resolution_tier: public
 
+  # ----- tabular: outlet records (Sprint 06, step 8) -----
+
+  outlet_listing:
+    category: tabular
+    format: csv
+    description: >
+      One source's list of outlets, exactly as published or exported: a
+      commercial database's export, a journalist's own list, a funder's
+      file. Read only as seeds/crosswalks/outlets/outlet_sources.yml
+      declares (D-201). Input to a claim about outlets, never the claim.
+    resolution_tier: excluded   # holds commercial and personal data under unrecorded terms (SRC-4); it never leaves as it is
+
+  outlet_stack:
+    category: tabular
+    format: csv
+    description: >
+      Every listing's outlet records stacked side by side, one row per
+      source record, keyed by (source, source_line), each field carrying
+      the meaning its source gives it (D-203). Nothing is merged.
+    # no resolution_tier yet: Person 3 declares it. until then it fails
+    # closed, which is right while it carries listings' fields.
+
+  outlet_groups:
+    category: tabular
+    format: csv
+    description: >
+      The outlet stack with each record's group: records sharing an exact
+      url or name key, never one source twice (D-202). A group is a set of
+      records that share a key, not a judgment that they are one outlet.
+    # no resolution_tier yet: Person 3 declares it, as outlet_stack.
+
+  outlet_disagreements:
+    category: tabular
+    format: csv
+    description: >
+      Where a group's sources hold different values for one field, one row
+      per group, field and source, like compared only with like (D-203).
+      What the profile's "where sources disagree" reads.
+    # no resolution_tier yet: Person 3 declares it, as outlet_stack.
+
   owner_crosswalk:
     category: tabular
     format: csv

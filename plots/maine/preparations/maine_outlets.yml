@@ -1,0 +1,59 @@
+# ============================================================================
+# plots/maine/preparations/maine_outlets.yml
+# ============================================================================
+# a preparation (D-98): Maine's local news outlets, every listing's record
+# kept side by side (Sprint 06, step 8).
+#   five listings -> one stack, a row per source record (D-201, D-203)
+#   the stack     -> groups by exact url or name key (D-202)
+#   the groups    -> where a group's sources disagree
+# the listings live in garden/reference/ (D-205); their declaration reaches
+# the run as a param, so its receipt records it (D-206). nothing here places
+# an outlet on the map: that waits on WHERE-1 and located_in.
+# ============================================================================
+
+id: maine_outlets
+name: "Maine's outlet records, side by side"
+kind: preparation
+description: >
+  Stacks the records of five outlet listings, groups records that share an
+  exact url or name, and lists every field on which a group's sources
+  disagree. Nothing is merged and nothing is resolved.
+
+method:
+  ref: $methods/information/outlet_reconciliation
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: outlets_stack
+    primitive: soil/stack_outlet_sources
+    inputs:
+      cision: $manifest.outlets_cision
+      cision_raw: $manifest.outlets_cision_raw
+      easton: $manifest.outlets_easton
+      local_news_catalyst: $manifest.outlets_lnc
+      maine_media_ecosystem: $manifest.outlets_mme
+    outputs:
+      stack: outlet_stack
+    params:
+      declaration: $crosswalks.outlet_sources
+
+  - id: outlets_groups
+    primitive: soil/group_outlet_records
+    inputs:
+      stack: $steps.outlets_stack.stack
+    outputs:
+      groups: outlet_groups
+    params: {}
+
+  - id: outlets_disagreements
+    primitive: soil/list_outlet_disagreements
+    inputs:
+      grouped: $steps.outlets_groups.groups
+    outputs:
+      disagreements: outlet_disagreements
+    params: {}

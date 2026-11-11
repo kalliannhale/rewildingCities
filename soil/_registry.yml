@@ -1170,3 +1170,52 @@ primitives:
       display_notes: {type: object, required: false, default: {}}
     preconditions:
       - no_unresolved_critical: true
+
+  # ── outlet records (Sprint 06, step 8) ────────────────────────────────────
+
+  stack_outlet_sources:
+    path: transform/stack_outlet_sources.py
+    version: 1.0.0
+    description: >
+      Every outlet listing's records, side by side, one row per source record
+      keyed by (source, source_line). Each listing is read only as its
+      declaration says: the header found by declared column names, an
+      undeclared column never read, a never_read column refused (D-201).
+      Place fields keep their meaning (D-203). Refuses a declared source with
+      no input or an input no source declares. Its inputs name Maine's five
+      listings; a plot with other listings needs its own entry (OUT-REG-1).
+    inputs:
+      - {name: cision, semantic_types: [outlet_listing], required: true}
+      - {name: cision_raw, semantic_types: [outlet_listing], required: true}
+      - {name: easton, semantic_types: [outlet_listing], required: true}
+      - {name: local_news_catalyst, semantic_types: [outlet_listing], required: true}
+      - {name: maine_media_ecosystem, semantic_types: [outlet_listing], required: true}
+    outputs: {semantic_type: outlet_stack, data_category: tabular}
+    params:
+      declaration: {type: object, required: true}
+
+  group_outlet_records:
+    path: transform/group_outlet_records.py
+    version: 1.0.0
+    description: >
+      Groups stacked outlet records by exact url (path kept) and name keys,
+      never fuzzy. A group never holds one source twice, and a key one source
+      holds twice joins nothing, so row order never chooses a match (D-202).
+      Merges nothing: every record keeps its row and gains a group.
+    inputs:
+      - {name: stack, semantic_types: [outlet_stack], required: true}
+    outputs: {semantic_type: outlet_groups, data_category: tabular}
+    params: {}
+
+  list_outlet_disagreements:
+    path: transform/list_outlet_disagreements.py
+    version: 1.0.0
+    description: >
+      Where a group's sources hold different values for a field: one row per
+      group, field and source. An empty value is not a disagreement, and an
+      office address is never compared with a named town (D-203).
+    inputs:
+      - {name: grouped, semantic_types: [outlet_groups], required: true}
+    outputs: {semantic_type: outlet_disagreements, data_category: tabular}
+    params:
+      fields: {type: array, required: false}

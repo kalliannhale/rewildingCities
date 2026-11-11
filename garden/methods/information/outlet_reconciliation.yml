@@ -1,0 +1,50 @@
+# ============================================================================
+# garden/methods/information/outlet_reconciliation.yml
+# ============================================================================
+# a preparation method (D-98): Maine's local news outlets, every source's
+# record kept side by side (Sprint 06, step 8). nothing is merged: a record
+# is grouped with others only by an exact key, and where a group's sources
+# say different things the difference is listed, never resolved (D-201 to
+# D-204). ~
+# ============================================================================
+
+id: outlet_reconciliation
+domain: information
+kind: preparation
+name: "Outlet Records, Side by Side"
+
+description: >
+  Reads each outlet listing the way its declaration says
+  (seeds/crosswalks/outlets/outlet_sources.yml), stacks every record with
+  its source and line, groups records that share an exact url or name, and
+  lists every field on which a group's sources disagree. Place fields keep
+  their meaning: an office address, a town a source names, and the
+  communities a source says an outlet serves are never compared with each
+  other. A county comes from the geography graph through a town, never from
+  a listing (D-204).
+
+requires_data:
+  - {name: listings, type: tabular, semantic_types: [outlet_listing], critical: true, as_acquired: true,
+     role: "Each source's outlet list, as published or exported, read only as declared.",
+     uncertainty_without: "No outlet can be placed or counted."}
+
+choices: {}
+
+requires_primitives:
+  - soil/stack_outlet_sources
+  - soil/group_outlet_records
+  - soil/list_outlet_disagreements
+
+produces:
+  semantic_type: outlet_groups
+  data_category: tabular
+  description: Every source's outlet records, each with a group and how it was matched.
+
+interpretation: >
+  A group is a set of records that share an exact key, never a judgment that
+  two outlets are one. A record alone in its group may still be an outlet
+  another source lists under another name. No listing carries an outlet's
+  language of publication or whether it is free to read (P-9), so neither
+  barrier can be read from here; frequency is a source's declared cycle, and
+  an outlet's last post, where someone observed it, is stronger evidence
+  that its information is current.
