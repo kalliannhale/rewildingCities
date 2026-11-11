@@ -5,15 +5,15 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-11, at the close of Sprint 04 step 7.
+**Updated:** 2026-11-11, at the close of Sprint 04.
 
 ## Where the build stands
 
-- Branch main. Steps 6 and 7, the Contract 3 note-line fix and this page are committed on top of 239cfd5, which is still origin/main: nothing since step 5b is pushed. Read `git log --oneline -5` for the hashes.
-- Tests: `python -m pytest -q`. 417 passed at the close of step 7.
+- Branch main. Steps 6 to 8 and the Contract 3 note-line fix are committed on top of 239cfd5. Check `git status -sb` for whether they are pushed; at the close they were not. Read `git log --oneline -6` for the hashes.
+- Tests: `python -m pytest -q`. 417 passed at the close of Sprint 04.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81; check its claims against the code.
 - Next decision ID: D-163. Before minting any other ID, grep the ledger for it.
-- Current: Sprint 04. Step 7 is done: Contract 3's invariants are each refused or tested (D-161, D-162). The next step is not yet named. Step 4 closes when loam reads places into build_seats (LOAM-1, Sprint 05). On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1.
+- Current: Sprint 04 is closed (step 8). Its report is field-guide/docs/progress/information/sprint-04.md. Next: Sprint 05, loam learns the graph; its first consumer is build_seats reading places (LOAM-1), which also closes Sprint 04's step 4. On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1.
 
 ## Contracts
 
@@ -51,6 +51,7 @@ The ledger has no entries for D-98 to D-124 (LEDGER-1). Where some live:
 
 | ID | One line | Defined |
 | --- | --- | --- |
+| NOTE-3 | the tribal representation note the plan's item 6 asks for (MP-77) is not written; it belongs on the seats type, worded by Kalli and Person 3 | ledger, Sprint 04 close |
 | LOAM-1 | also carries: places hold the 2020 tribal legal areas (D-123); if ACS 2024 tribal estimates are on 2024 boundaries, vintages cannot match for aiannh places once values join | ledger, step 7 |
 | NOTE-2 | descendants of places other than outlines write no row_context_notes, so they carry both tribal notes by lineage | ledger, step 5b and 6 |
 | Rule 10 | places and every outline are withheld at public under rule 10 only; the refusing dataset is not yet read (LIC-1?) | ledger, step 6 run |
@@ -62,7 +63,7 @@ The ledger has no entries for D-98 to D-124 (LEDGER-1). Where some live:
 | HASH-2 | a test-profile envelope cannot round-trip or validate | ledger, step 5a |
 | SEAM-2 | outlines and overlap weights disagree on split blocks, by design; do not fix | ledger |
 | HIST-1 | waiting on CII's reply to Kalli's Nov 10 email | ledger |
-| Person 3 | D-118's tiers, ROLE-1, and the two draft notes | ledger |
+| Person 3 | D-118's tiers, ROLE-1, the two draft notes, and NOTE-3 | ledger |
 
 Also carried, look up in the ledger before relying on them: S2-1, GATE-2, GATE-3, MAP-4, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, SEAM-1, AUTH-1, SRC-1, COMP-1, REG-1, NAME-2, LOOP-1, ACQ-6, SCH-5, TAG-1, DAS-1, ZERO-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1. CLI-1 to CLI-3 are not in the ledger under those strings; they may be about the two CLI doors (sows and experiment).
 
@@ -72,6 +73,8 @@ Untested refusals, left out of step 7 by its scope: a town in two counties, a co
 
 - /mnt/project in Claude's sandbox is a stale October snapshot. The repo is on Kalli's machine.
 - A step's `outputs:` in a preparation gives names, not file paths.
+- Progress reports live in field-guide/docs/progress/<domain>/sprint-NN.md, one per sprint, by domain.
+- The ledger holds the Sprint 04 step 4e block twice, word for word; the second copy is not a second decision.
 - The geography graph preparation declares `vintages` twice, once for graph_edges and once for graph_places. build_places refuses an edge family whose vintage differs from its own (D-162), so change both together.
 - Notes for merged places (counties, districts, the state) are decided in build_places, which has the spine, not in the outlines.
 - The gate runs only at exits (canopy/expose/check.py). Inside a run only the precondition gate applies.

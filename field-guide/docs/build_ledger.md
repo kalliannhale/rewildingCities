@@ -761,3 +761,16 @@ Contract 3's eight invariants, checked against build_place_edges and build_place
 - Carried to LOAM-1: places hold the 2020 tribal legal areas (D-123); if ACS 2024 tribal estimates are on 2024 boundaries, invariant 6 cannot hold for aiannh places once values join. Not decided here.
 - Found, not fixed: Contract 3's context_note field still says a note's text lives in seeds/schemas; since D-157 it lives in seeds/notes/notes.yml.
 - Contract 3 to 0.9. pytest: 417 passed.
+
+## Sprint 04 step 8: the sprint closes, 2026-11-11
+
+Report: field-guide/docs/progress/information/sprint-04.md. Progress reports live by domain, one per sprint. The done-when is met as a table query for all 151 House and 35 Senate districts; as a loam query it arrives in Sprint 05.
+
+Vintages used: blocks 2020 P.L. 94-171; towns, counties and the state 2024 (TIGER/Line faces and county subdivisions, D-126, D-127); House and Senate districts 2024 block equivalency files; Census tribal areas 2020 legal areas and block assignment (D-123); civil divisions MEGIS METWP24P; district and county names ACS 2024; legislators as test fixtures only, shapes fetched 2026-11-11 (D-139).
+
+| ID | item |
+| --- | --- |
+| **NOTE-3** | The plan's item 6 asks for a short, verified note on tribal representation (MP-77). It is not written: neither draft in seeds/notes/notes.yml is it. It belongs on the seats type, worded by Kalli and Person 3, before seats are published |
+| **LEDGER-2** | The step 4e block appears twice above, word for word. One decision, D-141, recorded twice; left in place, since the ledger is history |
+
+Carried: LOAM-1 (with the aiannh vintage question), SRC-1 and running build_seats to Sprint 05; located_in to Sprint 06; rule 10's license and GJSON-1 to Sprint 08; the rest as listed in the report.
