@@ -35,7 +35,8 @@ from pathlib import Path
 
 import pandas as pd
 
-COMPARED = ("frequency", "town", "county")
+# like is compared only with like: an office address never with a named town
+COMPARED = ("frequency", "office_town", "office_county", "named_town", "named_county")
 
 
 def _text(x) -> str | None:

@@ -111,3 +111,22 @@ def test_the_repo_seed_loads_and_names_no_aggregated_signals():
     declared = sos.load_seed(ROOT / sos.SEED)
     assert "aggregated_signals" not in declared["sources"]
     assert declared["sources"]["easton"]["never_read"]
+
+
+def test_a_county_outside_the_list_is_flagged_and_kept(tmp_path):
+    (tmp_path / "c.csv").write_text("Outlet Name,Outlet County\nBoothbay Register,Cook\n"
+                                    "Lincoln News,Penobscot County\n")
+    seed = tmp_path / "seed.yml"
+    seed.write_text(yaml.safe_dump({"counties": ["Penobscot"], "sources": {"cision": {
+        "file": "c.csv", "columns": {"name": "Outlet Name",
+                                     "office_county": "Outlet County"}}}}))
+    out = sos.stack_sources(seed, tmp_path).set_index("name")
+    assert out.loc["Boothbay Register", "office_county"] == "Cook"
+    assert "not a county" in out.loc["Boothbay Register", "location_note"]
+    assert pd.isna(out.loc["Lincoln News", "location_note"])
+
+
+def test_the_repo_seed_never_reads_coverage_as_a_town():
+    declared = sos.load_seed(ROOT / sos.SEED)
+    assert declared["sources"]["easton"]["columns"]["served_raw"] == "Communities served"
+    assert len(declared["counties"]) == 16

@@ -18,8 +18,26 @@
 #   ~ the aggregated-signals file is a survey about which data exists, not an
 #     outlet list, and carries respondent files; it is not read here.
 #
+#   ~ where an outlet is means three different things across the sources,
+#     so the stack keeps three kinds of place field and never compares one
+#     kind with another:
+#       office_*   a postal address (Cision). it is the publisher's office:
+#                  Cision puts the Advertiser Democrat, a Norway paper, in
+#                  South Portland
+#       named_*    the town a source names for the outlet, without saying
+#                  office or coverage (Local News Catalyst, the ecosystem file)
+#       served_raw the communities a source says the outlet serves, as free
+#                  text (Jo Easton)
+#   ~ Cision's Outlet County reads Cook, a county in Illinois, for outlets
+#     that are plainly in Maine. it is kept raw and flagged, never trusted.
+#
 # frequency maps a raw value to a cycle only by exact match after trimming.
-# a value in no list stays unmapped and says so. ~
+# a value in no list stays unmapped and says so. a county not in `counties`
+# is flagged in location_note, with or without a trailing " County". ~
+
+counties: [Androscoggin, Aroostook, Cumberland, Franklin, Hancock, Kennebec,
+           Knox, Lincoln, Oxford, Penobscot, Piscataquis, Sagadahoc, Somerset,
+           Waldo, Washington, York]
 
 frequency_vocabulary:
   daily: ["Daily", "Daily (Mon-Fri)", "5 Days", "6 Days"]
@@ -48,8 +66,8 @@ sources:
     columns:
       name: "Outlet Name"
       url: "Outlet Website"
-      town: "Outlet City"
-      county: "Outlet County"
+      office_town: "Outlet City"
+      office_county: "Outlet County"
       medium_raw: "Outlet Type"
       frequency_raw: "Outlet Frequency"
       operating_raw: "Still Operates?"
@@ -67,8 +85,8 @@ sources:
     columns:
       name: "Outlet Name"
       url: "Outlet Website"
-      town: "Outlet City"
-      county: "Outlet County"
+      office_town: "Outlet City"
+      office_county: "Outlet County"
       medium_raw: "Outlet Type"
       frequency_raw: "Outlet Frequency"
       language_raw: "Outlet Language"
@@ -88,7 +106,7 @@ sources:
     columns:
       name: "Name"
       url: "Link"
-      town: "Communities served"
+      served_raw: "Communities served"
       medium_raw: "Format"
       frequency_raw: "Format"
       business_model_raw: "Business model"
@@ -104,8 +122,8 @@ sources:
       circulation, and is not read until its meaning is known.
     columns:
       name: "Publication"
-      town: "City"
-      county: "County"
+      named_town: "City"
+      named_county: "County"
       medium_raw: "Type"
       ownership_raw: "Owner"
 
@@ -116,8 +134,8 @@ sources:
     columns:
       name: "Publication"
       url: "Digital"
-      town: "Town"
-      county: "County"
+      named_town: "Town"
+      named_county: "County"
       medium_raw: "Medium"
       frequency_raw: "Print"
       business_model_raw: "Biz Model"

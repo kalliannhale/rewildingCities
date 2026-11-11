@@ -18,6 +18,9 @@ later choice, and a stack that kept both is what lets that choice be seen.
   ~ a frequency_when gate reads frequency only for the media it names, and
     says what it left unread
   ~ nothing is defaulted: a source that declares no language has none
+  ~ place fields keep their meaning: office_* is a postal address, named_*
+    a town a source names, served_raw the coverage it describes. a county
+    outside the seed's `counties` is flagged in location_note, never fixed
 
 it reads only and writes only where it is told. ~
 """
@@ -31,10 +34,13 @@ import pandas as pd
 import yaml
 
 SEED = Path("seeds") / "crosswalks" / "outlets" / "outlet_sources.yml"
-FIELDS = ("name", "url", "town", "county", "medium_raw", "frequency_raw",
+FIELDS = ("name", "url", "office_town", "office_county", "named_town",
+          "named_county", "served_raw", "medium_raw", "frequency_raw",
           "ownership_raw", "business_model_raw", "affiliation_raw",
           "operating_raw", "language_raw", "address_raw", "zip_raw")
-COLUMNS = ("source", "source_line") + FIELDS + ("frequency", "frequency_note")
+COLUMNS = ("source", "source_line") + FIELDS + ("frequency", "frequency_note",
+                                                 "location_note")
+COUNTY_FIELDS = ("office_county", "named_county")
 
 
 class SourceRefused(ValueError):
@@ -79,7 +85,8 @@ def load_seed(path: str | Path) -> dict:
                     raise SourceRefused(
                         f"{path}: source {key} declares {field} from {column!r}, "
                         f"which its never_read list refuses ({prefix!r})")
-    return {"vocabulary": vocabulary, "sources": sources}
+    counties = {str(c).strip().lower() for c in doc.get("counties") or []}
+    return {"vocabulary": vocabulary, "sources": sources, "counties": counties}
 
 
 def _read_raw(path: Path) -> pd.DataFrame:
@@ -107,8 +114,23 @@ def _header_line(raw: pd.DataFrame, wanted: set[str], key: str) -> int:
                         f"the header is a choice, not a lookup")
 
 
+def _county_note(rec: dict, counties: set[str]) -> str | None:
+    if not counties:
+        return None
+    notes = []
+    for field in COUNTY_FIELDS:
+        v = rec.get(field)
+        if v is None:
+            continue
+        bare = v.lower().removesuffix(" county").strip()
+        if bare not in counties:
+            notes.append(f"{field} {v!r} is not a county in the seed's list")
+    return "; ".join(notes) or None
+
+
 def read_source(key: str, spec: dict, root: str | Path,
-                vocabulary: dict[str, str]) -> pd.DataFrame:
+                vocabulary: dict[str, str],
+                counties: set[str] | None = None) -> pd.DataFrame:
     """one source's records, as declared, in the stack's columns."""
     path = Path(root) / spec["file"]
     if not path.is_file():
@@ -134,6 +156,7 @@ def read_source(key: str, spec: dict, root: str | Path,
         rec = {f: rec.get(f) for f in FIELDS}
         rec["source"], rec["source_line"] = key, i + 1
         rec["frequency"], rec["frequency_note"] = _frequency(rec, spec, vocabulary)
+        rec["location_note"] = _county_note(rec, counties or set())
         rows.append(rec)
     return pd.DataFrame(rows, columns=list(COLUMNS))
 
@@ -158,7 +181,7 @@ def _frequency(rec: dict, spec: dict, vocabulary: dict[str, str]):
 def stack_sources(seed: str | Path = SEED, root: str | Path = ".") -> pd.DataFrame:
     """every declared source's records, stacked in declaration order."""
     declared = load_seed(Path(root) / seed if not Path(seed).is_absolute() else seed)
-    frames = [read_source(k, s, root, declared["vocabulary"])
+    frames = [read_source(k, s, root, declared["vocabulary"], declared["counties"])
               for k, s in declared["sources"].items()]
     return pd.concat(frames, ignore_index=True)
 
@@ -176,7 +199,9 @@ def main(argv=None) -> int:
     for key, g in stack.groupby("source", sort=False):
         mapped = g["frequency"].notna().sum()
         noted = g["frequency_note"].notna().sum()
-        print(f"{key}: {len(g)} rows, frequency mapped {mapped}, unmapped {noted}")
+        flagged = g["location_note"].notna().sum()
+        print(f"{key}: {len(g)} rows, frequency mapped {mapped}, unmapped {noted}, "
+              f"county flagged {flagged}")
     print(f"wrote {out}")
     return 0
 

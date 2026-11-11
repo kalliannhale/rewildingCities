@@ -13,7 +13,7 @@ _spec.loader.exec_module(gor)
 
 
 def _stack(rows):
-    cols = ["source", "source_line", "name", "url", "frequency", "town", "county"]
+    cols = ["source", "source_line", "name", "url", "frequency", "named_town", "office_town"]
     return pd.DataFrame([dict(zip(cols, r)) for r in rows], columns=cols)
 
 
@@ -80,3 +80,10 @@ def test_a_lone_record_is_its_own_group():
         ("lnc", 2, "Quoddy Tides", None, None, "Eastport", "Washington")]))
     assert g.loc[0, "group_id"] == "g0001"
     assert pd.isna(g.loc[0, "match_basis"]) or g.loc[0, "match_basis"] is None
+
+
+def test_an_office_address_is_never_compared_with_a_named_town():
+    g = gor.group_records(_stack([
+        ("cision", 3, "Advertiser Democrat", None, None, None, "South Portland"),
+        ("mme", 7, "Advertiser Democrat", None, None, "Norway", None)]))
+    assert gor.disagreements(g).empty
