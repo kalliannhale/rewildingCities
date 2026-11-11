@@ -978,3 +978,7 @@ A map layer is a source like any table, so D-189's rule answers MAP-4: the layer
 | --- | --- | --- |
 | **LAYER-1** | Build D-191: unit_authority and the key property on every layer source, in NAME-4's sweep with SRC-2; map.py's join by declared authority, with the publish door (Sprint 08). Verify the district layers' property names on real data first | build 6 |
 | **LEDGER-3** | MAP-4 names two entries: Sprint 02's county map check and Sprint 04's _UNIT_KEYS gap, which D-191 settles. An ID used twice is a ledger fault; a later reference to MAP-4 must say which one | build 6 |
+
+### Sprint 05 closed
+
+The done-when is met: wonder reads any Maine district through its edges (changes 10 to 12). Contract 3 is at 1.0, with CON3-1 applied and G-4 to G-11 recorded. Every grove key is decided (build 6, D-186 to D-191). The progress report is field-guide/docs/progress/information/sprint-05.md; state.md is rewritten for the hand-off (D-160), including the working agreement as it now stands. 531 tests pass. Next decision ID: D-192.
