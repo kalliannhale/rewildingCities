@@ -25,6 +25,19 @@ note, and `part_of` names the tribal area it belongs to, so Penobscot Indian
 Island's two Census subdivisions in two counties read as one place, the
 Penobscot Reservation, without inventing a code (PEN-1, D-129).
 
+A place that is not itself a tribal boundary but holds any 2020 block of a
+Census tribal area, reservation (R) or trust land (T), carries the tribal
+note's merged form, contains_census_tribal_area, at every level: the state, a
+county, a town partly in a reservation or holding trust land, a district, a
+civil division (D-158). Houlton, Littleton and Old Town are such towns. No
+share threshold: "all or part" is true of a sliver too, and a sliver that is
+only boundary noise is a finding about the edges, not a judgment to bury here.
+
+The table's own metadata lists its notes for the gate (Contract 1, rule 9,
+D-156): context_notes, every note it carries, its own type's note
+census_tribal_places included; row_context_notes, the notes its rows carry.
+Before step 6 it listed none, and the gate refused it (NOTE-1).
+
 LURC (D-130): a civil division is under LURC if any of its polygons says so;
 one whose polygons disagree is also flagged lurc_mixed. A town is flagged lurc
 if any of its blocks lies in a LURC division, and lurc_share_population says
@@ -50,7 +63,7 @@ Output: the places table, parquet or csv by the output's extension.
 Refuses: towns in the spine and the 2024 layer that differ; an LSAD with no
 kind; a reservation subdivision by LSAD that geometry does not confirm, or the
 reverse; a key used twice; an edge end with no place; a tribal place without
-its note.
+its note; the tribal note on a place that is not a tribal boundary.
 """
 
 from __future__ import annotations
@@ -75,7 +88,11 @@ from build_block_spine import read_dbf  # noqa: E402  (the reader the spine's te
 
 GEOID, SLDL, SLDU, AIANNH, MEGIS = ("us_census_geoid", "us_census_sldl", "us_census_sldu",
                                     "us_census_aiannh", "megis")
-TRIBAL_NOTE = "census_tribal_area"   # its text lives with the type, seeds/schemas
+# note texts live in seeds/notes/notes.yml (D-157). CONTAINS_NOTE is
+# TRIBAL_NOTE's when_merged there; tests/test_places.py holds the two equal
+TRIBAL_NOTE = "census_tribal_area"
+CONTAINS_NOTE = "contains_census_tribal_area"
+TABLE_NOTE = "census_tribal_places"
 COLUMNS = ["authority", "code", "level", "kind", "vintage", "name", "census_funcstat",
            "flags", "context_note", "part_of_authority", "part_of_code",
            "lurc_share_population"]
@@ -126,6 +143,13 @@ def row(authority, code, level, kind, vintage, name, funcstat=None, flags=(),
             "lurc_share_population": lurc_share}
 
 
+def context_metadata(places):
+    """what the gate reads instead of the rows (D-156): the notes the rows
+    carry, and every note the table carries, its own type's included."""
+    rows = sorted({n for n in places["context_note"] if isinstance(n, str) and n})
+    return {"context_notes": sorted(set(rows) | {TABLE_NOTE}), "row_context_notes": rows}
+
+
 def zero_flags(persons, households):
     out = []
     if persons == 0:
@@ -148,10 +172,21 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
                              + spine["aiannh_comptyp"].astype(str)).where(has_ai)
     rows = []
 
+    # which places hold any tribal block, R or T, at each level (D-158)
+    tribal_blocks = spine[has_ai]
+
+    def holding(col):
+        return set(tribal_blocks[col].dropna().astype(str))
+
+    def contains_note(code, held):
+        return CONTAINS_NOTE if str(code) in held else None
+
     # the state and its counties
     st = spine[["persons", "households"]].sum()
     rows.append(row(GEOID, state_fips, "state", "state", vintages["state"], state_name,
-                    flags=zero_flags(st["persons"], st["households"])))
+                    flags=zero_flags(st["persons"], st["households"]),
+                    note=CONTAINS_NOTE if has_ai.any() else None))
+    county_held = holding("county")
     names = counties.assign(GEOID=counties["GEOID"].astype(str)).set_index("GEOID")["NAME"]
     by_county = spine.groupby("county")[["persons", "households"]].sum()
     for code, n in by_county.iterrows():
@@ -159,7 +194,8 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
             primitive_failure("County without a name",
                               f"{code} is in the spine but not in the ACS county table")
         rows.append(row(GEOID, code, "county", "county", vintages["county"], names[code],
-                        flags=zero_flags(n["persons"], n["households"])))
+                        flags=zero_flags(n["persons"], n["households"]),
+                        note=contains_note(code, county_held)))
 
     # towns, from the 2024 layer (D-126, D-128)
     sub = subdivisions.assign(GEOID=subdivisions["GEOID"].astype(str))
@@ -194,6 +230,7 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     in_lurc["lurc_persons"] = in_lurc["persons"].where(in_lurc["lurc"], 0)
     lurc_town = in_lurc.groupby("cousub").agg(any_block=("lurc", "any"),
                                               persons=("lurc_persons", "sum"))
+    town_held = holding("cousub")
 
     for t in sub.sort_values("GEOID").itertuples(index=False):
         b = blocks.loc[t.GEOID]
@@ -211,7 +248,7 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
             flags.append("lurc")
             if b["persons"] > 0:
                 share = lurc_town.loc[t.GEOID, "persons"] / b["persons"]
-        note, part = None, (None, None)
+        note, part = contains_note(t.GEOID, town_held), (None, None)
         if kind == "reservation_subdivision":
             areas = r_area.get(t.GEOID, [])
             if len(areas) != 1:
@@ -226,13 +263,15 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     for level, auth, table, col in (("sldl", SLDL, house, "sldl"), ("sldu", SLDU, senate, "sldu")):
         dnames = table.assign(GEOID=table["GEOID"].astype(str)).set_index("GEOID")["NAME"]
         by = spine.groupby(col)[["persons", "households"]].sum()
+        held = holding(col)
         for code, n in by.iterrows():
             if code not in dnames.index:
                 primitive_failure("District without a name",
                                   f"{auth} {code} is in the spine but not in its ACS table")
             kind = "house_district" if level == "sldl" else "senate_district"
             rows.append(row(auth, code, level, kind, vintages[level], dnames[code],
-                            flags=zero_flags(n["persons"], n["households"])))
+                            flags=zero_flags(n["persons"], n["households"]),
+                            note=contains_note(code, held)))
 
     # Census tribal areas, the legal areas only (D-123, D-125)
     by_area = spine.dropna(subset=["aiannh_geoid"]).groupby("aiannh_geoid")[
@@ -247,6 +286,7 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
 
     # Maine's own civil divisions (MEGIS-2, D-130)
     edged = set(edges.loc[edges["from_authority"] == MEGIS, "from_code"].astype(str))
+    division_held = set(placed.merge(tribal_blocks[["GEOID"]], on="GEOID")["division"])
     for d in divisions.assign(GEOCODE=divisions["GEOCODE"].astype(str)).itertuples(index=False):
         flags = []
         if d.GEOCODE in lurc_division:
@@ -256,7 +296,8 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
         if d.GEOCODE not in edged:
             flags.append("no_block_points")
         rows.append(row(MEGIS, d.GEOCODE, "megis_division", "civil_division",
-                        vintages["division"], d.TOWN, flags=flags))
+                        vintages["division"], d.TOWN, flags=flags,
+                        note=contains_note(d.GEOCODE, division_held)))
 
     places = pd.DataFrame(rows)[COLUMNS]
 
@@ -280,12 +321,21 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     if len(unnoted):
         primitive_failure("Tribal place without its note",
                           f"{len(unnoted)} place(s), e.g. {unnoted.iloc[0]['code']}")
+    misnoted = places[(places["context_note"] == TRIBAL_NOTE) & ~places.index.isin(tribal.index)]
+    if len(misnoted):
+        primitive_failure("Tribal note on a place that is not a tribal boundary",
+                          f"{len(misnoted)} place(s), e.g. {misnoted.iloc[0]['code']}; such a "
+                          f"place carries {CONTAINS_NOTE} (D-158)")
 
     w.info("places: " + ", ".join(f"{k} {v}" for k, v in
                                   places["level"].value_counts().sort_index().items()))
     w.info("town kinds: " + ", ".join(f"{k} {v}" for k, v in
                                       places.loc[places["level"] == "cousub", "kind"]
                                       .value_counts().items()))
+    held = places[places["context_note"] == CONTAINS_NOTE]
+    w.info(f"{len(held)} place(s) hold a Census tribal area in whole or part and carry "
+           f"{CONTAINS_NOTE}: " + ", ".join(f"{k} {v}" for k, v in
+                                            held["level"].value_counts().sort_index().items()))
     w.info(f"{int(places['flags'].map(lambda f: 'lurc' in f).sum())} place(s) flagged lurc; "
            f"{len(lurc_mixed)} division(s) lurc_mixed")
     return places
@@ -308,7 +358,7 @@ def main():
             require_param(p, "vintages"), w)
         write_table(places, args["output"])
         primitive_success({"data_category": "tabular", "crs": None, "row_count": len(places),
-                           "variables": COLUMNS}, w)
+                           "variables": COLUMNS, **context_metadata(places)}, w)
 
 
 if __name__ == "__main__":

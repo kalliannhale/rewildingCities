@@ -153,6 +153,10 @@ steps:
       # WATER-1: the Aroostook County piece of Penobscot Indian Island
       # Reservation is one perennial water face; it is named, not drawn
       water_only: ["2300357936"]
+      # PENOB-1, D-159: the Main Stem's waters are left out for display; the
+      # note lands on the reservation subdivisions whose part_of_code is 2760R
+      display_notes:
+        penobscot_main_stem_waters: ["2760R"]
 
   - id: outline_house
     primitive: soil/build_place_outlines
@@ -176,8 +180,8 @@ steps:
       level: sldu
       state_fips: "23"
 
-  # tolerance 0 on the first run, on purpose: every difference beyond water
-  # is reported, and the tolerance is set from what Maine's data shows (TRIBE-5)
+  # tolerance 2000 m2, set from the first run's measurements at the break
+  # between noise (at most 1,395 m2) and the next value, 24,549 (D-155, TRIBE-5)
   - id: outline_tribal
     primitive: soil/build_tribal_outlines
     inputs:
@@ -192,3 +196,6 @@ steps:
       level: aiannh
       state_fips: "23"
       tribe_tolerance_m2: 2000
+      # PENOB-1, D-159: the same note on the Penobscot Reservation itself
+      display_notes:
+        penobscot_main_stem_waters: ["2760R"]

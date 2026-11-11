@@ -5,7 +5,8 @@ Sprint 04, step 2: the places table (Contract 3, D-128 to D-130). A tiny
 synthetic state: a town split by a district and partly in trust land, a city
 (FUNCSTAT F, as Maine's 23 are), and one reservation in two Census
 subdivisions in two counties, the shape of Penobscot Indian Island (PEN-1).
-Runs without pyarrow or shapely: everything is built in memory.
+Step 6 (D-156, D-158): which places carry which note, and what the table tells
+the gate. Runs without pyarrow or shapely: everything is built in memory.
 """
 
 import importlib.util
@@ -13,6 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import yaml
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -181,3 +183,49 @@ def test_an_edge_end_with_no_place_is_refused():
                          i["house"], i["senate"], i["reservations"], i["trust_lands"],
                          i["divisions"], i["division_polygons"], i["division_blocks"],
                          "23", "Maine", VINTAGES, W())
+
+
+# ── step 6: notes by row (D-156, D-158) ──────────────────────────────────
+CONTAINS = "contains_census_tribal_area"
+
+
+def test_a_place_holding_any_tribal_block_carries_the_contains_note():
+    # the town holds one trust-land block of three; its county, the state, the
+    # House district and Senate district it lies in, and its civil division
+    # all hold that block or the reservation's
+    p = build()
+    for authority, code in (("us_census_geoid", "23"), ("us_census_geoid", "23001"),
+                            ("us_census_geoid", "23015"), ("us_census_geoid", "23019"),
+                            ("us_census_geoid", "2300110000"), ("us_census_sldl", "23002"),
+                            ("us_census_sldu", "23001"), ("megis", "A")):
+        assert place(p, authority, code)["context_note"] == CONTAINS, (authority, code)
+
+
+def test_a_place_with_no_tribal_block_carries_no_note():
+    p = build()
+    for authority, code in (("us_census_geoid", "2300120000"), ("us_census_sldl", "23001"),
+                            ("megis", "B"), ("megis", "C")):
+        assert pd.isna(place(p, authority, code)["context_note"]), (authority, code)
+
+
+def test_the_tribal_note_stays_on_tribal_boundaries():
+    p = build()
+    tribal = (p["level"] == "aiannh") | (p["kind"] == "reservation_subdivision")
+    assert (p.loc[tribal, "context_note"] == "census_tribal_area").all()
+    assert not (p.loc[~tribal, "context_note"] == "census_tribal_area").any()
+
+
+def test_the_table_tells_the_gate_which_notes_its_rows_carry():
+    # NOTE-1: before step 6 the table listed none and rule 9 refused it
+    meta = places_mod.context_metadata(build())
+    assert meta["row_context_notes"] == ["census_tribal_area", CONTAINS]
+    assert meta["context_notes"] == ["census_tribal_area", "census_tribal_places", CONTAINS]
+
+
+def test_the_notes_the_primitive_names_are_the_notes_file_s():
+    # two homes for one mapping, held equal (D-157, D-158)
+    notes = yaml.safe_load((REPO / "seeds" / "notes" / "notes.yml").read_text())["notes"]
+    assert notes[places_mod.TRIBAL_NOTE]["when_merged"] == places_mod.CONTAINS_NOTE
+    assert places_mod.CONTAINS_NOTE in notes and places_mod.TABLE_NOTE in notes
+    types = yaml.safe_load((REPO / "seeds" / "schemas" / "semantic_types.yml").read_text())["types"]
+    assert [n["id"] for n in types["places"]["required_context"]] == [places_mod.TABLE_NOTE]

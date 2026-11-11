@@ -1,6 +1,6 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.4, 2026-11-11, for review (E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.5, 2026-11-11, for review (E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
 **Rests on:** MP-67 (publishing is opt-in), MP-72 (Wabanaki places as a
@@ -62,7 +62,7 @@ From the infrastructure plan's Part 3, with three additions from the fusion.
 | 6 | `custom` leaves only with a named consent record for this plot and this target, cited in provenance |
 | 7 | Refusals are content: every refusal names the type, the tier, the ancestor that set it, and what would let it through |
 | 8 | Presence before contents: the gate may say that a kind of data exists and is withheld, and why, without showing it |
-| 9 | Required context: a type may declare a note that must travel with it; publication without the note is refused |
+| 9 | Required context: a note must travel with what it describes. An artifact carries the notes its own type requires and the notes its rows carry; one that does not say what its rows carry is bound by every note in its lineage. Publication without a bound note, or with a note that has no text, is refused (D-156, D-157) |
 | 10 | License: redistribution must be permitted at the target's sharing level |
 | 11 | Every step that changes what leaves (a unit held out, a field dropped, a rename, rounding, a format change, simplification, clipping) is recorded in provenance, in the entry of the step that made it, and every descendant carries the record (D-143) |
 
@@ -86,6 +86,8 @@ why it was allowed.
 | `consent` | the consent record cited, if rule 6 applied |
 | `license` | the license term checked under rule 10 |
 | `context_notes` | the note ids carried under rule 9 |
+| `context_scope` | `rows` if the artifact said what its rows carry, `lineage` if it did not (D-156) |
+| `context_text` | each carried note's text, by id, so the text leaves with the artifact (D-157) |
 | `caveats` | what the artifact lacks but may leave without, in plain words; today, an experiment that names no curiosity (rule 4) |
 | `publication_steps` | every rule 11 record in the artifact's provenance chain, in chain order, each once, each with the `lineage_branch` it was found through (D-143) |
 | `gate_version`, `checked_at` | which gate decided, and when |
@@ -127,14 +129,38 @@ describes. A consent record is how those terms are kept; it is never inferred.
 
 ## 6. The context note
 
-A semantic type may declare `required_context`: one or more notes, each with an
-`id` and its text. An outgoing artifact of that type carries the note ids in
-`metadata.context_notes`, and the text travels with the artifact. Missing is a
-refusal under rule 9.
+**One home for every note's text (D-157).** Every note lives in
+`seeds/notes/notes.yml`, with an `id`, its `text`, and optionally
+`when_merged`, the note a place carries instead when it holds this note's
+place in whole or part. A semantic type requires a note by id alone, in its
+`required_context`. The notes file is loaded loudly: an id declared twice, a
+note without text, a `when_merged` naming no note, or a type requiring an id
+the file lacks, is an error when the gate's context is loaded, before any
+artifact is judged.
 
-The Census tribal-area type and reservation subdivisions declare one (Sprint
-04): the boundary is the Census Bureau's, small estimates are uncertain, and
-the nations' own data would describe these places on their own terms.
+**What binds an artifact (D-156).** Two sources, and the artifact says which:
+
+| The artifact's metadata | Notes it must carry |
+| --- | --- |
+| has `row_context_notes` (a list, empty included) | its own type's required notes, and every note in `row_context_notes` |
+| has no `row_context_notes` | its own type's required notes, and every note any type in its lineage requires |
+
+`row_context_notes` is written by the primitive that wrote the rows, which is
+the only step that knows what they hold; the gate never opens a data file. An
+empty list is a claim: no row here carries a note. A missing field is silence,
+and silence binds the whole lineage, so a primitive that has not learned to
+list its rows' notes over-notes and never fails open. `context_notes` and
+`row_context_notes` must each be a list of ids; a bare string is refused,
+because a string would seem to carry any note it contains (C-36).
+
+**The notes in use (Sprint 04).** `census_tribal_area` on every Census tribal
+area and reservation subdivision: the boundary is the Census Bureau's, small
+estimates are uncertain, and the nations' own data would describe these places
+on their own terms. `contains_census_tribal_area`, its merged form, on every
+other place that holds any tribal block, at every level (D-158).
+`census_tribal_places` on the places table itself (D-149). A display note,
+`penobscot_main_stem_waters`, on the Penobscot Reservation's outlines, because
+the display leaves out water the Census boundary includes (D-159, PENOB-1).
 
 ## 7. The license
 
@@ -178,6 +204,7 @@ written. `by: the gate` is for a change the exit itself makes, recorded there.
 | E-1 | Rule 3 is a conjunction, not a ranking: `aggregate-only` limits form and `custom` limits permission, so neither outranks the other and both bind (D-101) |
 | E-2 | An experiment with an empty curiosity passes rule 4: its method, choices and run make it traceable, and its missing question is carried as a caveat rather than blocking it (D-102) |
 | E-7 | Rule 11's records live in the provenance entry of the step that made them; the builder stamps `by` and `at`; the schema holds the closed set; the gate gathers them through the chain (D-143) |
+| E-8 | Rule 9 binds by row when the artifact lists `row_context_notes`, and by lineage when it does not; every note's text lives in `seeds/notes/notes.yml` and leaves in the allow record (D-156, D-157) |
 
 ## Open
 

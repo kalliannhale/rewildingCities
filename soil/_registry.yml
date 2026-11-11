@@ -1134,6 +1134,7 @@ primitives:
       level: {type: string, required: true}
       state_fips: {type: string, required: true}
       water_only: {type: array, required: false, default: []}
+      display_notes: {type: object, required: false, default: {}}
     preconditions:
       - no_unresolved_critical: true
 
@@ -1159,5 +1160,6 @@ primitives:
       level: {type: string, required: true}
       state_fips: {type: string, required: true}
       tribe_tolerance_m2: {type: number, required: true}
+      display_notes: {type: object, required: false, default: {}}
     preconditions:
       - no_unresolved_critical: true

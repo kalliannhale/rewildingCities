@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/notes/notes.yml
+# Context notes (Contract 1, rule 9): the one home of every note's text (D-157).
+#
+# A semantic type requires a note by id alone, in its `required_context`. A row
+# of a table carries a note by id in its `context_note` column. Either way the
+# text lives here and nowhere else, so one id always has one text (D-149).
+#
+#   text          what travels with the artifact, in plain words
+#   when_merged   optional: the note a place carries instead when it holds
+#                 this note's place, wholly or in part (D-158). A county holds
+#                 a reservation; the county is not the reservation's boundary,
+#                 so it carries the merged note, never this one
+#
+# canopy/expose/records.py loads this file loudly: an id declared twice, a note
+# without text, a when_merged naming no note, or a type requiring an id that is
+# not here, is an error at load, never at an exit.
+#
+# Every text here speaks about Wabanaki places. Wording is Kalli's and Person
+# 3's to settle; texts marked DRAFT have not been reviewed.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+notes:
+
+  census_tribal_area:
+    text: >
+      This boundary is the U.S. Census Bureau's, not the nation's own.
+      Estimates for small areas are uncertain. The nations' own data would
+      describe these places on their own terms, and this view does not.
+    when_merged: contains_census_tribal_area
+
+  census_tribal_places:
+    text: >
+      This table includes Census tribal areas and the town records that
+      coincide with reservations. Those boundaries are the U.S. Census
+      Bureau's, not the nations' own. Estimates for small areas are
+      uncertain. The nations' own data would describe these places on
+      their own terms, and this view does not.
+
+  # DRAFT (D-158), for Kalli and Person 3 to word
+  contains_census_tribal_area:
+    text: >
+      This place includes all or part of a Census tribal area. That boundary
+      is the U.S. Census Bureau's, not the nation's own, and the tribal area
+      is shown at its own level, where its context travels with it.
+      Estimates for small areas are uncertain.
+
+  # DRAFT (D-159, PENOB-1), for Kalli and Person 3 to word
+  penobscot_main_stem_waters:
+    text: >
+      This display leaves out the waters of the Penobscot River's Main Stem
+      around the reservation's islands. The Census Bureau's reservation
+      boundary includes them. In 2021 the First Circuit, sitting en banc,
+      held that the reservation does not include them, and in 2022 the
+      Supreme Court declined to review that ruling. The Penobscot Nation and
+      the United States, as its trustee, disputed that reading.

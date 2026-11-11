@@ -83,14 +83,10 @@ types:
       level, keyed by (authority, code), with its kind, the Census's own
       status, its flags and the context note that must travel with it.
     resolution_tier: public   # PROPOSED (Sprint 04): built from public Census and MEGIS data
+    # the note's text lives in seeds/notes/notes.yml (D-157); each row's own
+    # note is in its context_note column and travels by row (D-156, D-158)
     required_context:
       - id: census_tribal_places
-        text: >
-          This table includes Census tribal areas and the town records that
-          coincide with reservations. Those boundaries are the U.S. Census
-          Bureau's, not the nations' own. Estimates for small areas are
-          uncertain. The nations' own data would describe these places on
-          their own terms, and this view does not.
 
   census_faces:
     category: tabular
@@ -119,12 +115,9 @@ types:
       its statistical areas are not used. Not the nations' own description of
       their lands, which is `sovereign_boundary` and leaves only with consent.
     resolution_tier: public   # D-123: a qualified Census view (MP-72); the note below must travel with it
+    # the note's text lives in seeds/notes/notes.yml (D-157)
     required_context:
       - id: census_tribal_area
-        text: >
-          This boundary is the U.S. Census Bureau's, not the nation's own.
-          Estimates for small areas are uncertain. The nations' own data would
-          describe these places on their own terms, and this view does not.
 
   block_spine:
     category: tabular
@@ -332,7 +325,7 @@ types:
       land only (D-142, D-146). For maps and publication; never an input to
       analysis, and no primitive takes it. Each row carries the context note
       its place carries, so a reservation subdivision drawn among towns keeps
-      its note.
+      its note, and may carry a display note declared by the run (D-159).
     resolution_tier: public
 
   census_tribal_outline:
@@ -343,6 +336,6 @@ types:
       through 2020 blocks, so the outline of a 2020 place (D-142, D-146).
       The Census's view, never the nation's own (that is sovereign_boundary,
       which leaves only with consent). Never an input to analysis.
-    resolution_tier: public   # D-123, D-146: the note's text lives on census_tribal_area
+    resolution_tier: public   # D-123, D-146: the note's text lives in seeds/notes/notes.yml (D-157)
     required_context:
       - id: census_tribal_area

@@ -31,6 +31,19 @@
 # it in `water_only`, and is then named in a held_out publication record
 # instead of drawn. A declaration is refused if its key is not a place at
 # this level, if the place has land, or if it has no face at all (WATER-1).
+#
+# Notes (Contract 1, rule 9, D-156, D-159): each row keeps the context_note its
+# place carries in places, and the outline lists for the gate exactly the
+# notes its rows carry, in context_notes and row_context_notes, so a county
+# outline carries what its counties hold and nothing their ancestors held
+# (NOTE-2). A run may declare `display_notes`, a note id mapped to Census
+# tribal area keys, for a note about how the outline itself is drawn: at
+# aiannh it lands on the tribal areas named; at cousub, on the reservation
+# subdivisions whose part_of_code names them. A declaration is refused at any
+# other level, if a key is not a tribal area in places, if it lands on no
+# drawn outline, if it lands on an outline whose water was not removed, or if
+# two display notes land on one outline. The Penobscot Main Stem note is one
+# (PENOB-1).
 # ============================================================
 
 library(rewildr)
@@ -46,7 +59,7 @@ LEVEL_AUTHORITY <- c(state = "us_census_geoid", county = "us_census_geoid",
                      cousub = "us_census_geoid", sldl = "us_census_sldl",
                      sldu = "us_census_sldu", aiannh = "us_census_aiannh")
 TRIBAL_NOTE <- "census_tribal_area"      # a boundary's note, on every tribal row
-TABLE_NOTE <- "census_tribal_places"     # the places table's own note (D-149)
+DISPLAY_LEVELS <- c("cousub", "aiannh")  # where display notes may land (D-159)
 FACE_FIELDS <- c("STATEFP20", "COUNTYFP20", "TRACTCE20", "BLOCKCE20", "STATEFP",
                  "COUNTYFP", "COUSUBFP", "SLDLST", "SLDUST", "LWFLAG", "ATOTAL")
 
@@ -282,6 +295,75 @@ with_primitive_error_handling({
     }
   }
 
+  # --- display notes (D-159): a note about how these outlines are drawn ---
+  outlines$display_note <- NA_character_
+  display <- args$params$display_notes
+  if (length(display) > 0) {
+    if (!level %in% DISPLAY_LEVELS) {
+      primitive_failure("Display note at a level without tribal places",
+        sprintf(paste("display_notes is declared at level %s; display notes land only on",
+                      "tribal areas (aiannh) and the reservation subdivisions that are part",
+                      "of them (cousub) (D-159)"), level),
+        warnings = w)
+    }
+    if (is.null(names(display)) || any(names(display) == "")) {
+      primitive_failure("Display notes not understood",
+        "display_notes must map each note id to a list of Census tribal area keys (D-159)",
+        warnings = w)
+    }
+    tribal_codes <- places$code[places$level == "aiannh"]
+    if (level == "cousub") {
+      if (!"part_of_code" %in% names(places)) {
+        primitive_failure("Unexpected places layout",
+          "places lacks 'part_of_code', which display notes at level cousub follow (D-159)",
+          warnings = w)
+      }
+      part <- mine$part_of_code[match(outlines$code, mine$code)]
+    }
+    for (note in names(display)) {
+      keys <- unique(as.character(unlist(display[[note]])))
+      if (length(keys) == 0) {
+        primitive_failure("Display note with no keys",
+          sprintf("display note '%s' names no tribal area (D-159)", note), warnings = w)
+      }
+      unknown_keys <- setdiff(keys, tribal_codes)
+      if (length(unknown_keys) > 0) {
+        primitive_failure("Display note key not a tribal area",
+          sprintf("display note '%s' names %s, not a tribal area in places (D-159)",
+                  note, paste(unknown_keys, collapse = ", ")),
+          warnings = w)
+      }
+      hit <- if (level == "aiannh") outlines$code %in% keys else
+        !is.na(part) & part %in% keys
+      if (!any(hit)) {
+        primitive_failure("Display note lands on no outline",
+          sprintf(paste("display note '%s' (%s) lands on no outline drawn at level %s,",
+                        "so the declaration is stale (D-159)"),
+                  note, paste(keys, collapse = ", "), level),
+          warnings = w)
+      }
+      dry <- hit & !outlines$water_clipped
+      if (any(dry)) {
+        primitive_failure("Display note on an outline whose water was not removed",
+          sprintf(paste("display note '%s' would land on %s, whose water was not removed,",
+                        "so the note would be false there (D-159)"),
+                  note, paste(name_of(outlines$code[dry]), collapse = "; ")),
+          warnings = w)
+      }
+      twice <- hit & !is.na(outlines$display_note)
+      if (any(twice)) {
+        primitive_failure("Two display notes on one outline",
+          sprintf("%s would carry both '%s' and '%s' (D-159)",
+                  paste(name_of(outlines$code[twice]), collapse = "; "),
+                  outlines$display_note[twice][1], note),
+          warnings = w)
+      }
+      outlines$display_note[hit] <- note
+      w$info(sprintf("display note '%s' on %d outline(s): %s", note, sum(hit),
+                     paste(name_of(outlines$code[hit]), collapse = "; ")))
+    }
+  }
+
   # --- TRIBE-5: do the block-built outlines nest in the Census's 2020 areas? ---
   if (level == "aiannh") {
     tol <- as.numeric(require_param(args$params, "tribe_tolerance_m2"))
@@ -347,11 +429,13 @@ with_primitive_error_handling({
   meta$authority <- authority
   meta$size_bytes <- size_bytes
   meta$vertex_count <- vertex_count
-  # every outline descends from places, so rule 9 binds both notes to every
-  # outline: places' own (census_tribal_places) and its tribal inputs'
-  # (census_tribal_area) (D-146, D-149, NOTE-2). as.list keeps an array under
-  # auto_unbox (C-36)
-  meta$context_notes <- as.list(c(TRIBAL_NOTE, TABLE_NOTE))
+  # the notes the rows carry, and only those: the gate binds by row when the
+  # artifact says what its rows hold (D-156, D-159). as.list keeps an array
+  # under auto_unbox, an empty one included (C-36)
+  row_notes <- c(outlines$context_note, outlines$display_note)
+  row_notes <- sort(unique(row_notes[!is.na(row_notes) & row_notes != ""]))
+  meta$context_notes <- as.list(row_notes)
+  meta$row_context_notes <- as.list(row_notes)
   if (clipped > 0) {
     meta$publication <- list(list(
       step = "clipped",

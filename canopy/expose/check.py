@@ -3,7 +3,7 @@ canopy/expose/check.py
 
 the gate, given a plot. loads what decide() needs from the garden (the
 vocabulary, the plot's manifest datasets, its consent records, the license
-list) so every exit asks the same question the same way:
+list, the context notes) so every exit asks the same question the same way:
 
   check_envelope(envelope, plot=..., target=..., sharing_level=...)
   read_exposure(plot)   every receipt in the plot, judged at `public`
@@ -21,7 +21,7 @@ from pathlib import Path
 import yaml
 
 from .gate import decide
-from .records import load_consents, load_licenses
+from .records import check_required_notes, load_consents, load_licenses, load_notes
 
 
 def _root() -> Path:
@@ -30,25 +30,28 @@ def _root() -> Path:
 
 
 def _context(plot_dir: Path, seeds_root: Path):
-    """the vocabulary and license list come from the garden's seeds; the
-    datasets and consent records from the plot. a plot without a manifest
-    names no datasets, so rule 10 can only pass at private."""
+    """the vocabulary, license list and notes come from the garden's seeds;
+    the datasets and consent records from the plot. a plot without a manifest
+    names no datasets, so rule 10 can only pass at private. a type requiring
+    a note with no text stops here, before any receipt is judged (D-157)."""
     from canopy.vocabulary import Vocabulary
     vocab = Vocabulary.load(seeds_root / "seeds" / "schemas")
+    notes = load_notes(seeds_root / "seeds" / "notes")
+    check_required_notes(vocab, notes)
     manifest_path = plot_dir / "manifest.yml"
     manifest = (yaml.safe_load(manifest_path.read_text()) or {}) if manifest_path.is_file() else {}
     return (vocab, manifest.get("datasets") or {}, load_consents(plot_dir),
-            load_licenses(seeds_root / "seeds" / "licenses"))
+            load_licenses(seeds_root / "seeds" / "licenses"), notes)
 
 
 def check_envelope(envelope: dict, *, plot: str, target: str, sharing_level: str,
                    plot_dir: str | Path | None = None) -> dict:
     seeds = _root()
     pdir = Path(plot_dir) if plot_dir else seeds / "plots" / plot
-    vocab, datasets, consents, licenses = _context(pdir, seeds)
+    vocab, datasets, consents, licenses, notes = _context(pdir, seeds)
     return decide(envelope, target=target, sharing_level=sharing_level,
                   vocabulary=vocab, plot=plot, manifest_datasets=datasets,
-                  licenses=licenses, consents=consents)
+                  licenses=licenses, notes=notes, consents=consents)
 
 
 def read_exposure(plot: str, *, root: str | Path | None = None,
@@ -58,7 +61,7 @@ def read_exposure(plot: str, *, root: str | Path | None = None,
     envelopes = base / "plots" / plot / ".envelopes"
     if not envelopes.is_dir():
         return []
-    vocab, datasets, consents, licenses = _context(base / "plots" / plot, base)
+    vocab, datasets, consents, licenses, notes = _context(base / "plots" / plot, base)
     out = []
     for p in sorted(envelopes.glob("*.envelope.json")):
         try:
@@ -72,7 +75,7 @@ def read_exposure(plot: str, *, root: str | Path | None = None,
         try:
             res = decide(env, target=target, sharing_level=sharing_level, vocabulary=vocab,
                          plot=plot, manifest_datasets=datasets, licenses=licenses,
-                         consents=consents)
+                         notes=notes, consents=consents)
         except ValueError as e:          # rule 1: a declaration error, said plainly
             res = {"decision": "refuse", "refusals": [
                 {"rule": 1, "reason": str(e), "would_admit": "correct the declaration"}]}
