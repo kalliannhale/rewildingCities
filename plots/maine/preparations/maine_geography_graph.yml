@@ -5,6 +5,7 @@
 #   blocks  -> the spine (counts, town, 2024 districts, tribal area)
 #   MEGIS   -> repaired, dissolved to 924 divisions, blocks placed by point
 #   spine + divisions -> the edges, with both weights (D-121, D-122)
+#   everything above -> the places table, every level (D-128 to D-130)
 # vintages are declared on every edge: towns 2024 (TIGER faces, D-126; ACS
 # 2024 is tabulated on them), tribal areas 2020 (the block assignment file),
 # districts 2024 (the equivalency files that ACS
@@ -81,6 +82,34 @@ steps:
     params:
       state_fips: "23"
       vintages:
+        town: "2024"
+        sldl: "2024"
+        sldu: "2024"
+        aiannh: "2020"
+        division: "MEGIS METWP24P"
+
+  - id: graph_places
+    primitive: soil/build_places
+    inputs:
+      spine: $steps.graph_spine.spine
+      edges: $steps.graph_edges.edges
+      subdivisions: $manifest.cousub_2024_me
+      counties: $manifest.acs_county_2024
+      house: $manifest.acs_sldl_2024
+      senate: $manifest.acs_sldu_2024
+      reservations: $manifest.tribal_reservations_2020
+      trust_lands: $manifest.tribal_trust_lands_2020
+      divisions: $steps.graph_dissolve_towns.dissolved
+      division_polygons: $steps.graph_repair_towns.repaired
+      division_blocks: $steps.graph_divisions.assignment
+    outputs:
+      places: places
+    params:
+      state_fips: "23"
+      state_name: Maine
+      vintages:
+        state: "2024"
+        county: "2024"
         town: "2024"
         sldl: "2024"
         sldu: "2024"

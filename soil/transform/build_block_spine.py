@@ -120,6 +120,11 @@ def read_bef_state(path, state_fips, w, label):
     return first
 
 
+# the Census's own land convention (TIGER/Line user note 7, faces ALAND): G glacier,
+# I intermittent water, L land and S marsh count as land area; P perennial water
+# does not. the 2024 faces carry L, P and I (LWFLAG-1)
+LAND_FLAGS = ("G", "I", "L", "S")
+
 FACE_FIELDS = ["STATEFP20", "COUNTYFP20", "TRACTCE20", "BLOCKCE20",
                "STATEFP", "COUNTYFP", "COUSUBFP", "SLDLST", "SLDUST", "LWFLAG", "ATOTAL"]
 
@@ -181,7 +186,7 @@ def faces_by_block(faces, state_fips, w):
     f["GEOID"] = f["STATEFP20"] + f["COUNTYFP20"] + f["TRACTCE20"] + f["BLOCKCE20"]
     f["town"] = f["STATEFP"] + f["COUNTYFP"] + f["COUSUBFP"]
     f["area"] = pd.to_numeric(f["ATOTAL"], errors="coerce").fillna(0.0)
-    f["land"] = f["area"].where(f["LWFLAG"] == "L", 0.0)
+    f["land"] = f["area"].where(f["LWFLAG"].isin(LAND_FLAGS), 0.0)
     pieces = f.groupby(["GEOID", "town"], as_index=False)[["land", "area"]].sum()
     pieces = pieces.sort_values(["GEOID", "land", "area", "town"],
                                 ascending=[True, False, False, True])
@@ -261,6 +266,16 @@ def build(counts, baf, bef_sldl, bef_sldu, state_fips, w, faces=None):
                               f"faces, e.g. {sorted(absent)[0]}")
         spine = spine.merge(current, on="GEOID", how="left")
         spine["cousub"] = spine["cousub_2024"]
+        # a block's county follows its 2024 town (D-127): the 2020 county stays as
+        # a check. a boundary change since 2020 can move a block across a county line
+        spine["county_2020"] = spine["county"]
+        spine["county"] = spine["cousub"].str[:5]
+        crossed = spine[spine["county"] != spine["county_2020"]]
+        if len(crossed):
+            w.info(f"{len(crossed)} block(s), {int(crossed['persons'].sum())} persons, are in a "
+                   f"different county in 2024 than in 2020 (D-127): "
+                   + ", ".join(f"{g} {a} -> {b}" for g, a, b in
+                               crossed[["GEOID", "county_2020", "county"]].itertuples(index=False)))
         moved = spine[spine["cousub"] != spine["cousub_2020"]]
         if len(moved):
             pairs = (moved.groupby(["cousub_2020", "cousub"])
@@ -281,8 +296,11 @@ def build(counts, baf, bef_sldl, bef_sldu, state_fips, w, faces=None):
             w.info(f"{chamber}: the 2024 faces and the 2024 equivalency file disagree on "
                    f"{int(off.sum())} of {int(check.sum())} block(s)")
 
-    spine = spine[["GEOID", "county", "cousub", "cousub_2020", "cousub_split", "sldl", "sldu",
-                   "aiannh", "aiannh_comptyp", "persons", "housing_units", "households"]]
+    if "county_2020" not in spine.columns:
+        spine = spine.assign(county_2020=spine["county"])
+    spine = spine[["GEOID", "county", "county_2020", "cousub", "cousub_2020", "cousub_split",
+                   "sldl", "sldu", "aiannh", "aiannh_comptyp", "persons", "housing_units",
+                   "households"]]
 
     over = spine["households"] > spine["housing_units"]
     if over.any():

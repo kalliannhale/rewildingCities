@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.6, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1). **Owner:**
+**Status:** draft 0.7, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -32,14 +32,28 @@ names exactly one place.
 | `code` | text | the code as that authority writes it, leading zeros kept: `23005`, `2300560825` |
 | `level` | text | `state`, `county`, `cousub`, `sldl` (Maine House), `sldu` (Maine Senate), `aiannh` (Census tribal area), `megis_division` |
 | `vintage` | text | the boundary year; it must match the ACS vintage it is joined to |
+| `kind` | text | what the place is, in words a reader can use (D-128): `state`, `county`, `house_district`, `senate_district`, `tribal_reservation`, `tribal_trust_land`, `civil_division`, and for towns, from the 2024 LSAD: `town` (43), `plantation` (39), `city` (25), `unorganized_territory` (46), `reservation_subdivision` (86), `gore` (31). An LSAD with no kind is refused |
 | `name` | text | as the authority publishes it |
+| `census_funcstat` | text or null | the Census's functional status for a town, verbatim (A, S, F, N, E). Kept, never shown as a bare word: Maine's 23 cities and its 4 reservation subdivisions are F (FUNC-2) |
 | `flags` | list of text | from the list below; empty, never null |
-| `context_note` | text or null | the note Contract 1, rule 9, requires, where one applies |
+| `context_note` | text or null | the id of the note Contract 1, rule 9, requires (`census_tribal_area`); its text lives with its type in `seeds/schemas` |
+| `part_of_authority`, `part_of_code` | text or null | for a reservation subdivision, the Census tribal area it belongs to (D-129). Penobscot Indian Island is two Census subdivisions in two counties, both part of `2760R` |
+| `lurc_share_population` | number or null | for a town flagged `lurc`, the share of its people in blocks inside a LURC division; null when it has nobody |
 
-**Flags:** Census functional status (`active`, `statistical`, `fictitious`,
-`nonfunctioning`), `plantation`, `unorganized_territory`, `zero_households`,
-`census_construct`, `baxter_state_park`. A flag says what a place is, so a
-reader never mistakes a township with no government for a town with no news.
+**Flags:** `zero_population`, `zero_households`, `lurc`, `lurc_mixed`,
+`no_block_points`, `funcstat_unknown`. A flag says something a reader must
+know before reading a value. What a place is lives in `kind`, so a reader never
+mistakes a township with no government for a town with no news, nor a city for
+a fiction. `lurc` (D-130): a division any of whose polygons MEGIS marks LURC; a
+town any of whose blocks lies in one. `lurc_mixed`: a division whose polygons
+disagree. `no_block_points`: a division no 2020 block's internal point falls in
+(Cove Point Twp, Kineo Twp); it has no edges and is still a place. Baxter State
+Park is not a Census subdivision and is in neither file, so it carries no flag
+until a source for it is chosen (BAXTER-1).
+
+**Reservation subdivisions are found by geometry, never by name** (D-129): a
+town whose every 2020 block lies in a Census reservation. A town coded LSAD 86
+that the blocks do not confirm, or the reverse, is refused.
 
 **Counts for Maine** (Sprint 04 builds and tests them): 1 state, 16 counties,
 529 county subdivisions, 151 House districts, 35 Senate districts, the Census
@@ -103,7 +117,8 @@ These are tested where the tables are built (Sprint 04):
   `located_in` edge, exist in `places`; the `from` end of every `located_in`
   edge exists in its declared layer.
 - Boundary and estimate vintages match, place by place.
-- Every reservation subdivision and tribal area carries its context note.
+- Every reservation subdivision and tribal area carries its context note, and every reservation subdivision names its tribal area (D-129).
+- The towns in the places table and the 2024 county subdivision layer are the same set (D-126).
 
 ## 4. The three rules
 

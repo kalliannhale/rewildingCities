@@ -427,3 +427,19 @@ number.
 | **BOUND-1** | Waldo and Knox redrew their line in Penobscot Bay under P.L. 2023, c. 1 (LD 119), after the Census flagged a discrepancy in 2020. Three 2020 blocks in Knox are in Waldo's town 2302735240 in 2024: 230139711003030 (0 persons), 230139711003032 (9 persons, 2 households), 230139711003033 (0). The archipelago is the likely match; confirm on a map |
 | **LWFLAG-1** | The 2024 faces carry L (89,101), P (18,376) and I (15). The Census counts G, I, L and S as land and P as perennial water (TIGER/Line user note 7). The first version counted only L and undercounted intermittent water |
 | **FACE-1** | The Census's technical documentation says 2020 blocks never cross a boundary of an entity it tabulates. That holds for 2020 geography. After a 2024 boundary change, the faces show a block's land in another county. Contract 3 never stated the rule; contract 0.6 now carries the change instead |
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-128** | A place's `kind` comes from its 2024 LSAD (town, plantation, city, UT, reservation subdivision, gore); FUNCSTAT is kept verbatim in `census_funcstat` and never shown as a word | Portland reads as a city, not "fictitious". An unknown LSAD is refused | The Census changes its LSAD codes |
+| **D-129** | A reservation subdivision is found by geometry (every block in a Census reservation) and names its tribal area in `part_of`. Penobscot Indian Island's two subdivisions are both part of 2760R | One place without inventing a code; a mismatch between LSAD and geometry is refused | Consultation asks otherwise |
+| **D-130** | A MEGIS division is LURC if any polygon says so, and `lurc_mixed` if its polygons disagree; a town is LURC if any of its blocks is in a LURC division, with its population share | The rule is visible on every row it touches | MEGIS corrects the 13 mixed divisions |
+
+| ID | item |
+| --- | --- |
+| **PLACES-1** | The places table built green: 1,663 places (1 state, 16 counties, 529 towns, 151 House, 35 Senate, 8 tribal areas, 923 divisions). Town kinds: 430 towns, 42 UTs, 29 plantations, 23 cities, 4 reservation subdivisions, 1 gore. 12 places carry the census_tribal_area note |
+| **FUNC-2** | Maine's 23 cities are FUNCSTAT F (LSAD 25). The seed's F gloss missed them; corrected |
+| **RES-1** | Geometry finds exactly the four LSAD 86 subdivisions. Houlton, Littleton and Old Town are partly in R areas: overlap edges, no flag |
+| **LURC-1** | MEGIS: 451 divisions all y, 460 all n, 13 mixed (listed in the places probe), mostly islands with one n polygon |
+| **NAME-1** | Matching names for "UT" found 55 places, including Yarmouth town; LSAD says 42. Codes, never names |
+| **BAXTER-1** | Baxter State Park is not a Census subdivision and is in neither file; no flag until a source is chosen |
+| **REVERT-1** | The commit after D-127 held the D-126 spine. The run that closed TOWN-1 used the D-127 code, so its findings stand; the D-127 spine was restored and committed here. Cause unconfirmed: likely the earlier full-file paste of the D-126 spine. Lesson: zips only, and `git diff --stat HEAD` before every commit |

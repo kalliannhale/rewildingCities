@@ -91,9 +91,14 @@ governance_field:
       subdivisions coextensive with reservations (Passamaquoddy Indian
       Township and Pleasant Point; Penobscot Indian Island, in two counties),
       which are real places with governments of their own, not placeholders.
-      It also covers some water. Never read F as "not a real place" (Sprint
-      04; the earlier gloss here, "a placeholder, often water or a boundary
-      artifact", misdescribed the reservations)
+      In Maine it also covers all 23 cities (Portland, Bangor, Old Town and
+      the rest; the 2024 layer, LSAD 25): a city is outside any town, so its
+      county subdivision record is F while the city itself governs (FUNC-2,
+      Sprint 04). It also covers some water. Never read F as "not a real
+      place"; the places table shows a town's kind from its LSAD and keeps
+      FUNCSTAT verbatim (D-128). The earlier gloss here, "a placeholder, often
+      water or a boundary artifact", misdescribed the reservations and missed
+      the cities
     N: nonfunctioning or not applicable ~ a legal entity without its own government
     E: >
       a legal or administrative entity that is not a general-purpose

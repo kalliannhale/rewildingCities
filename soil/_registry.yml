@@ -1109,3 +1109,35 @@ primitives:
     preconditions:
       - no_unresolved_critical: true
 
+  build_places:
+    path: transform/build_places.py
+    version: 1.0.0
+    description: >
+      The places table (Contract 3): one row per place at every level, keyed by
+      (authority, code). Each town's kind comes from its 2024 LSAD and its
+      Census functional status is kept verbatim, never shown as a word (D-128).
+      Reservation subdivisions are found by geometry and name the tribal area
+      they belong to (D-129). LURC from MEGIS (D-130). Refuses towns that
+      differ from the 2024 layer, an LSAD with no kind, a reservation the
+      geometry does not confirm, a key used twice, an edge end with no place,
+      and a tribal place without its context note.
+    inputs:
+      - {name: spine, semantic_types: [block_spine], required: true}
+      - {name: edges, semantic_types: [place_edges], required: true}
+      - {name: subdivisions, semantic_types: [census_subdivisions], required: true}
+      - {name: counties, semantic_types: [indicator_source], required: true}
+      - {name: house, semantic_types: [indicator_source], required: true}
+      - {name: senate, semantic_types: [indicator_source], required: true}
+      - {name: reservations, semantic_types: [census_tribal_area], required: true}
+      - {name: trust_lands, semantic_types: [census_tribal_area], required: true}
+      - {name: divisions, semantic_types: [governance_unit], required: true}
+      - {name: division_polygons, semantic_types: [governance_unit], required: true}
+      - {name: division_blocks, semantic_types: [block_division_assignment], required: true}
+    outputs: {semantic_type: places, data_category: tabular}
+    params:
+      state_fips: {type: string, required: true}
+      state_name: {type: string, required: true}
+      vintages: {type: object, required: true}
+    preconditions:
+      - no_unresolved_critical: true
+

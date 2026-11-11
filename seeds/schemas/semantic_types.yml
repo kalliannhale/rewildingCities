@@ -65,6 +65,33 @@ types:
       the point is in the attributes.
     resolution_tier: public   # PROPOSED (Sprint 04): Census geography. For Person 3 to confirm
 
+  census_subdivisions:
+    category: tabular
+    format: zip
+    description: >
+      A state's TIGER/Line county subdivisions for one vintage, as the Census
+      publishes them (tl_<year>_<state>_cousub.zip). Read for its attributes
+      only: GEOID, NAMELSAD, LSAD and FUNCSTAT, which say what each town is
+      and the Census's status for it (D-128).
+    resolution_tier: public   # PROPOSED (Sprint 04): Census files. For Person 3 to confirm
+
+  places:
+    category: tabular
+    format: parquet
+    description: >
+      The geography graph's places (Contract 3): one row per place at every
+      level, keyed by (authority, code), with its kind, the Census's own
+      status, its flags and the context note that must travel with it.
+    resolution_tier: public   # PROPOSED (Sprint 04): built from public Census and MEGIS data
+    required_context:
+      - id: census_tribal_area
+        text: >
+          This table includes Census tribal areas and the town records that
+          coincide with reservations. Those boundaries are the U.S. Census
+          Bureau's, not the nations' own. Estimates for small areas are
+          uncertain. The nations' own data would describe these places on
+          their own terms, and this view does not.
+
   census_faces:
     category: tabular
     format: zip
