@@ -1,0 +1,127 @@
+# seeds/crosswalks/outlets/outlet_sources.yml
+#
+# how each outlet source is read, declared rather than guessed (P-9).
+# every field a source carries is named here with the column it comes from;
+# a column not named is never read. a source's header row is found by its
+# declared column names, so a caveat line above the headers cannot shift it.
+#
+# what P-9 found, so nobody has to rediscover it:
+#   ~ language of publication: no source carries it usably. Cision's
+#     Outlet Language reads English on every row and omits Amjambo Africa,
+#     which publishes in seven languages. it is kept raw, never defaulted
+#     for any other source.
+#   ~ publishing frequency: three sources, three shapes. Cision declares it;
+#     the Maine Media Ecosystem file holds it in Print for print media only
+#     (Print holds a station's format for radio); Jo Easton's Format is free
+#     text mixing medium and cycle, kept raw and never parsed.
+#   ~ paywall status: no source carries it.
+#   ~ the aggregated-signals file is a survey about which data exists, not an
+#     outlet list, and carries respondent files; it is not read here.
+#
+# frequency maps a raw value to a cycle only by exact match after trimming.
+# a value in no list stays unmapped and says so. ~
+
+frequency_vocabulary:
+  daily: ["Daily", "Daily (Mon-Fri)", "5 Days", "6 Days"]
+  several_weekly: ["Multiple times/week", "2x/week"]
+  weekly: ["Weekly", "Sunday", "Saturday", "Weekend"]
+  twice_monthly: ["2x/month", "2X per month"]
+  monthly: ["Monthly"]
+  every_other_month: ["Every other month"]
+  quarterly: ["Quarterly"]
+  twice_yearly: ["2x/year"]
+  annually: ["Annually"]
+  irregular: ["Irregular/Other"]
+  not_applicable: ["Not applicable"]
+  # left out on purpose: "2 Monthly" (twice a month or every two months?),
+  # "No" (no print edition), "0". each stays unmapped, with its value said.
+
+sources:
+  cision:
+    file: "garden/reference/Maine Media Outlets_Cision(Sheet 1).csv"
+    published_by: Cision
+    license: terms_unknown
+    notes: >
+      353 rows with a hand-added Still Operates? column, which is not a
+      Cision field: someone judged closures and last posts. who and when is
+      not yet recorded.
+    columns:
+      name: "Outlet Name"
+      url: "Outlet Website"
+      town: "Outlet City"
+      county: "Outlet County"
+      medium_raw: "Outlet Type"
+      frequency_raw: "Outlet Frequency"
+      operating_raw: "Still Operates?"
+      language_raw: "Outlet Language"
+      address_raw: "Outlet Address Line 1"
+      zip_raw: "Outlet Zip Code"
+
+  cision_raw:
+    file: "garden/reference/Maine Media Outlets(Sheet 1) (1).csv"
+    published_by: Cision
+    license: terms_unknown
+    notes: >
+      412 rows, a separate pull from the 353-row file: 297 names in both,
+      115 only here, 56 only there.
+    columns:
+      name: "Outlet Name"
+      url: "Outlet Website"
+      town: "Outlet City"
+      county: "Outlet County"
+      medium_raw: "Outlet Type"
+      frequency_raw: "Outlet Frequency"
+      language_raw: "Outlet Language"
+      address_raw: "Outlet Address Line 1"
+      zip_raw: "Outlet Zip Code"
+
+  easton:
+    file: "garden/reference/Jo Easton Maine News Outlets(Sheet1).csv"
+    published_by: Jo Easton
+    license: terms_unknown
+    notes: >
+      assembled for her own use, by her caveat. Contact names people and is
+      never read. the SimilarWeb columns are a third party's estimates under
+      their own terms and are not read here.
+    # each entry is a prefix: a declared column starting with one is refused
+    never_read: ["Contact", "Unique Users (From SimilarWeb", "Visits (From SimilarWeb", "PVs"]
+    columns:
+      name: "Name"
+      url: "Link"
+      town: "Communities served"
+      medium_raw: "Format"
+      frequency_raw: "Format"
+      business_model_raw: "Business model"
+      ownership_raw: "Ownership"
+      affiliation_raw: "Affiliation"
+
+  local_news_catalyst:
+    file: "garden/reference/Local News Catalyst Local News Publications(Sheet 1).csv"
+    published_by: Local News Catalyst
+    license: terms_unknown
+    notes: >
+      its seventh column has no header; it holds numbers, probably
+      circulation, and is not read until its meaning is known.
+    columns:
+      name: "Publication"
+      town: "City"
+      county: "County"
+      medium_raw: "Type"
+      ownership_raw: "Owner"
+
+  maine_media_ecosystem:
+    file: "garden/reference/Maine Media Ecosystem(Maine Media Ecosystem).csv"
+    published_by: null      # not yet known; ask before release
+    license: terms_unknown
+    columns:
+      name: "Publication"
+      url: "Digital"
+      town: "Town"
+      county: "County"
+      medium_raw: "Medium"
+      frequency_raw: "Print"
+      business_model_raw: "Biz Model"
+      ownership_raw: "Ownership"
+    # Print is a frequency only for print media; for radio it is a format
+    frequency_when:
+      medium_raw: ["Newspaper", "newspaper", "College Newspaper", "Magzine"]
