@@ -1,0 +1,47 @@
+# ============================================================================
+# garden/methods/information/legislative_seats.yml
+# ============================================================================
+# a preparation method (D-98): every seat of one Legislature, and who the
+# record says holds it (Contract 3, section 6). its places are read through
+# loam from the geography graph, never copied (D-141, D-163). ~
+# ============================================================================
+
+id: legislative_seats
+domain: information
+kind: preparation
+name: "Legislative Seats, One Legislature at a Time"
+
+description: >
+  Builds the seats table for one Legislature. Every House and Senate district
+  in the places table is a seat, held or not, so a vacancy is a seat the
+  record names no holder for. Tribal seats are House seats declared per
+  Legislature by the names 3 MRSA §601(1)(A) gives the Wabanaki Nations, and
+  point at no place: a Census boundary is never read as a nation's
+  constituency (D-136). Holders come from the Maine Legislature's own record
+  (D-134); a roster fetched before the swearing-in is refused (D-135, D-140).
+
+requires_data:
+  - {name: places, type: tabular, semantic_types: [places], critical: true,
+     role: "The district places every seat is generated from, read through loam from the geography graph.",
+     uncertainty_without: "No district seat can exist without its district place."}
+  - {name: rosters, type: tabular, semantic_types: [legislature_roster], critical: true, as_acquired: true,
+     role: "Who the House and the Senate record as holding each district's seat.",
+     uncertainty_without: "Every seat would read as vacant, which the record does not say."}
+
+choices: {}
+
+requires_primitives:
+  - soil/build_seats
+
+produces:
+  semantic_type: seats
+  data_category: tabular
+  description: One row per seat per Legislature, with its holder from the record or marked vacant.
+
+interpretation: >
+  A seat is an office, not a place. A vacant seat is one the record names no
+  holder for, never one LegiScan is silent about (LEG-1). No phone number is
+  carried, because some are members' own (D-138); a reader reaches a member
+  by email or through the member's own page. Tribal representatives speak
+  for their nations' members wherever they live, so tribal seats have no
+  district and no place.

@@ -1,0 +1,52 @@
+# ============================================================================
+# plots/maine/preparations/maine_seats.yml
+# ============================================================================
+# a preparation (D-98): the 133rd Legislature's seats (Contract 3, section 6).
+#   places  -> read through loam from maine_geography_graph, judged fresh or
+#              stale before the step runs (LOAM-1, D-163 to D-166)
+#   rosters -> the Legislature's own record (D-134), unavailable until the
+#              133rd is sworn in on 2026-12-02 (D-135); until then this run
+#              refuses at data resolution, naming them
+# its own run, not a step of the geography graph, so unavailable rosters never
+# block the graph (D-141). the tribal seats are the four nations TRIBE-3 names
+# for the 133rd, keyed by 3 MRSA §601(1)(A), with §1's wording where it
+# differs (D-136, NAME-3), as tests/test_seats.py declares them. their note
+# (NOTE-3) is not yet written and is needed before anything is published.
+# ============================================================================
+
+id: maine_seats
+name: "The 133rd Legislature's seats"
+kind: preparation
+description: >
+  Every House and Senate seat of the 133rd Maine Legislature, held or vacant,
+  from the district places of the geography graph and the Legislature's own
+  rosters, with the four tribal seats declared by statute.
+
+method:
+  ref: $methods/information/legislative_seats
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: seats
+    primitive: soil/build_seats
+    inputs:
+      places: $loam.places
+      house: $manifest.legislature_133_house
+      senate: $manifest.legislature_133_senate
+    outputs:
+      seats: seats
+    params:
+      legislature: "133"
+      sworn_in: "2026-12-02"
+      state_fips: "23"
+      tribal_seats:
+        - name: Passamaquoddy Tribe
+        - name: Penobscot Nation
+          statute_wording: Penobscot Indian Nation
+        - name: Houlton Band of Maliseet Indians
+        - name: Mi'kmaq Nation

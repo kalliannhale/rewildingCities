@@ -77,6 +77,11 @@ methods:
       name: "The Geography Graph"
       answers: [geography, districts, preparation]
 
+    - id: legislative_seats
+      path: information/legislative_seats.yml
+      name: "Legislative Seats, One Legislature at a Time"
+      answers: [legislators, representation, districts, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"
