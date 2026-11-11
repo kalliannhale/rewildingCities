@@ -306,3 +306,19 @@ types:
     description: >
       A ground-level RGB photograph of a space, optionally with a calibration
       board flat on the ground for pose recovery.
+  legislature_roster:
+    category: tabular
+    format: csv
+    description: >
+      One row per member a legislative chamber's own record names: chamber,
+      district as published, name, party, position, seat number, email,
+      profile link, residence, source, as_of (the fetch time). No phone
+      numbers (D-138). From the maine_legislature provider.
+
+  seats:
+    category: tabular
+    format: parquet
+    description: >
+      One row per seat per Legislature, keyed (legislature, chamber,
+      seat_kind, seat_ref); Contract 3, section 6. A vacant seat is one the
+      record names no holder for.

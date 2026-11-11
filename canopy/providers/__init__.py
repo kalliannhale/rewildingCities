@@ -20,6 +20,7 @@ from .stac import STACProvider
 from .s3 import S3Provider
 from .earthengine import EarthEngineProvider
 from .census_acs import CensusACSProvider
+from .maine_legislature import MaineLegislatureProvider
 
 
 def create_default_registry() -> ProviderRegistry:
@@ -34,6 +35,7 @@ def create_default_registry() -> ProviderRegistry:
     registry.register(S3Provider())
     registry.register(EarthEngineProvider())
     registry.register(CensusACSProvider())
+    registry.register(MaineLegislatureProvider())
     return registry
 
 
@@ -51,5 +53,6 @@ __all__ = [
     "S3Provider",
     "EarthEngineProvider",
     "CensusACSProvider",
+    "MaineLegislatureProvider",
     "create_default_registry",
 ]

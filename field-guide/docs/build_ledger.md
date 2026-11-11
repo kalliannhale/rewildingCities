@@ -527,3 +527,19 @@ Sources read: 3 MRSA §1 and §601 (Revisor's text, extracted 2026-10-05); the L
 | ID | item |
 | --- | --- |
 | **LEG-7** | The Senate's district listing is one line per district, `District N (Map) - Senator Name (P-County)`, all 35; no email or phone on the page. Corrects LEG-6's "fragile": one pattern parses every line |
+
+## SPRINT 04, STEP 4d ~ seats, built (preparation pending), 2026-11-11
+
+Built: canopy/providers/maine_legislature.py (House CSV, Senate listing, phones never read), soil/transform/build_seats.py, tests/test_seats.py (14 tests; shim-run in the sandbox, 14 passed, each refusal checked for its own reason), registry entry, semantic types legislature_roster and seats, manifest datasets legislature_133_house and legislature_133_senate (available: false).
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-139** | Seats tests use synthetic fixtures in the exact shapes fetched 2026-11-11, not the real export. Refines D-135 | No member's phone enters the public repo through a fixture (D-138) | A phone-free copy of a real export is wanted as a regression fixture |
+| **D-140** | build_seats takes `sworn_in` and refuses a roster fetched before it | D-135 is a refusal, not a habit: the previous Legislature cannot be built by accident | A product needs the outgoing Legislature and says so |
+
+| ID | item |
+| --- | --- |
+| **TRIBE-4** | The House export names no nation, so a tribal representative cannot be matched to a seat from it. build_seats refuses a House row with no district until the 133rd's export shows how tribal representatives appear; tribal seats are vacant by the record until then |
+| **SEN-1** | The Senate listing was verified at autodiscover.legislature.maine.gov; whether legislature.maine.gov serves the same page is unchecked |
+| **PREP-1** | How one preparation reads another's output (places into build_seats) is not known in this chat; the seats preparation waits on it |
+| **LEGI-1** | LegiScan columns exist in `seats` and stay empty until a key is held and the provider is built |

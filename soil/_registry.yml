@@ -1088,3 +1088,26 @@ primitives:
     preconditions:
       - no_unresolved_critical: true
 
+  build_seats:
+    path: transform/build_seats.py
+    version: 1.0.0
+    description: >
+      The seats table (Contract 3, section 6): one row per seat per
+      Legislature. District seats from the places table, tribal seats from a
+      declared list keyed by the 3 MRSA §601 names (D-136), holders from the
+      Legislature's rosters (D-134). Refuses an empty roster, a roster fetched
+      before the swearing-in (D-135), a holder with no district or no place,
+      two holders for one seat, and a seat key used twice.
+    inputs:
+      - {name: places, semantic_types: [places], required: true}
+      - {name: house, semantic_types: [legislature_roster], required: true}
+      - {name: senate, semantic_types: [legislature_roster], required: true}
+    outputs: {semantic_type: seats, data_category: tabular}
+    params:
+      legislature: {type: string, required: true}
+      sworn_in: {type: string, required: true}
+      tribal_seats: {type: array, required: true}
+      state_fips: {type: string, required: true}
+    preconditions:
+      - no_unresolved_critical: true
+

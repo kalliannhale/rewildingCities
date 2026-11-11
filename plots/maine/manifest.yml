@@ -647,3 +647,45 @@ datasets:
     source: {type: url, url: "https://www2.census.gov/geo/tiger/TIGER2024/COUSUB/tl_2024_23_cousub.zip"}
     cache: {path: .data/tl_2024_23_cousub.zip, refresh_policy: manual}
     provenance: {source: U.S. Census Bureau, TIGER/Line 2024, authority: us_census_tiger}
+
+  legislature_133_house:
+    available: false
+    description: Maine House members, 133rd Legislature, from the House's real-time export (D-134); acquire on or after the swearing-in, 2026-12-02 (D-135)
+    semantic_type: legislature_roster
+    format: csv
+    source:
+      type: api
+      provider: maine_legislature
+      chamber: house
+      url: https://legislature.maine.gov/house/Home/ExportActiveMembers?format=csv
+    cache:
+      path: .data/legislature_133_house.csv
+      refresh_policy: manual
+    provenance:
+      source: Maine House of Representatives, Office of the Clerk
+      license: none stated (LIC-1)
+    quality:
+      known_issues:
+        - The export names no Legislature and no date; as_of is the fetch time.
+        - Phone, City, Zip, County and Committees are never read (D-138).
+
+  legislature_133_senate:
+    available: false
+    description: Maine Senate members, 133rd Legislature, from the Senate's district listing (D-134); acquire on or after the swearing-in, 2026-12-02 (D-135)
+    semantic_type: legislature_roster
+    format: csv
+    source:
+      type: api
+      provider: maine_legislature
+      chamber: senate
+      url: https://autodiscover.legislature.maine.gov/senate/district-listing/9526
+    cache:
+      path: .data/legislature_133_senate.csv
+      refresh_policy: manual
+    provenance:
+      source: Maine Senate, district listing
+      license: none stated (LIC-1)
+    quality:
+      known_issues:
+        - The listing carries no email or phone; contact is the profile link.
+        - The URL's host is the one verified 2026-11-11 (SEN-1).
