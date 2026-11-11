@@ -443,3 +443,28 @@ number.
 | **NAME-1** | Matching names for "UT" found 55 places, including Yarmouth town; LSAD says 42. Codes, never names |
 | **BAXTER-1** | Baxter State Park is not a Census subdivision and is in neither file; no flag until a source is chosen |
 | **REVERT-1** | The commit after D-127 held the D-126 spine. The run that closed TOWN-1 used the D-127 code, so its findings stand; the D-127 spine was restored and committed here. Cause unconfirmed: likely the earlier full-file paste of the D-126 spine. Lesson: zips only, and `git diff --stat HEAD` before every commit |
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-131** | A value names whose codes key its units. `derive_indicator.R` requires `unit_authority`, one of Contract 3's five (section 1), with no default, and refuses a missing or unknown one by name. Every caller declares it: three methods, the cousub preparation and two experiments | A House district's 23001 can no longer key as Androscoggin County. The orchestrator does not enforce registry options, so the primitive does | The five move to one seed file both languages read (AUTH-1) |
+| **D-132** | `measurement_id` is `indicator:unit_authority:code` | Ids stay unique when the grove reads tables from different levels together. Nothing joins on it; joins stay on (`unit_authority`, `unit_code`), as D-19 says | Never |
+| **D-133** | The preview requires `unit_authority` everywhere, with no default: `derive()`, `preview()`, `compare()`, the CLI's `--unit-authority` and the API's `unit_authority` query parameter | A preview of `acs_sldl_2024` cannot label districts as counties. An API call without it is a 422 before anything is read. Kalli confirmed nothing else calls the endpoint | A manifest source declares its own (SRC-1) |
+
+| ID | item |
+| --- | --- |
+| **TWIN-1** | The hand-off named `canopy/indicators/oracle.py` as derive_indicator's Python twin. It is `preview.py`: the agreement test calls `ip.derive`. `oracle.py` holds impute and weighted_index, never keys a unit, and is unchanged |
+| **TWIN-2** | `preview.derive` read `r["GEOID"]` and `r["NAME"]` directly while the R honors `unit_column`, `unit_pad` and `name_column`. The twins agreed only because every source names its column GEOID. The preview now takes all three and refuses repeated codes as the R does. `read_table` still requires GEOID for a manifest source (SRC-1) |
+| **SEAM-1** | `roots/indicators/weighted_index.R` builds `measurement_id` as `index:code`, without the authority. Safe while composites are county-only; it needs D-132 before any non-county composite |
+| **AUTH-1** | The five unit authorities are written in four places: Contract 3 section 1, `build_places.py`, `derive_indicator.R`, `preview.py`. Their eventual home is one seed file. Contract 3 names `us_census_geoid` for state, county and town; tracts use it too (11 digits, no collision), and the contract should say so |
+| **SRC-1** | Should a manifest source declare its own `unit_authority` and unit column? An SLDL acquisition is SLDL codes by nature. Proposed for Sprint 05 |
+| **MAP-4** | `map.py`'s `_UNIT_KEYS` knows only `us_census_geoid`. District keys wait until a district value table is first mapped and the district layers' property names are verified. Until then map refuses the authority by name (line 106) |
+| **COMP-1** | No CLI writes a composed experiment; `wonder` only explores. The `_91b5c0` experiment was edited by hand with the line its method now writes, a literal, so composition would write the same. Its suffix is a hash, so a recomposition may write a new file name |
+| **REG-6** | Two soil registry entries pointed at no file: `validate_boundaries` at an .R never written (removed; `registry.py`'s docstring examples now name `repair_geometry`), and `fetch_dataset` at .R when the file is .py (fixed). The orchestrator checks a path only when a step uses it. `tests/test_registry_paths.py` now checks every entry in soil and roots |
+| **REG-1** | Ten soil files are not registered: `filter/mask_raster_by_class.R`, `scope/clip_to_boundary.R`, `register/verify_manifest.py`, `validate/calibrate_from_stills.py`, `validate/normalize_yt_comments.py`, `validate/stratify_comments.py`, `validate/window_comments.py`, and `classify/rgb_landcover_features.py`, `classify/deep_backbone.py`, `register/manifest_utils.py`, which look like helpers. Which are primitives is open |
+| **NAME-2** | Kalli would rather not use "authority" (`named_by` and `published_by` were considered). The word lives in Contract 3's four key fields, D-19, the places and edges tables, derive, preview, map and standardize. Deferred to a refactor of its own |
+
+**LESSON** ~ zsh expands an unquoted `--include=*.py` as a glob and the grep never runs. Quote every glob.
+
+**LESSON** ~ `grep -r` over `plots` crawls the binaries in `.data` and looks stalled. Scope it with `--include="*.yml"`.
+
+**LESSON** ~ The ledger had no trailing newline, so a block appended with `cat >>` would join its last row. A ledger block starts with a newline.

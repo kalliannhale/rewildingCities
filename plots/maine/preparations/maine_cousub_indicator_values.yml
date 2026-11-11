@@ -68,6 +68,8 @@ steps:
       spatial_unit: $choices.aggregation_unit_level
       time: 2020-2024 (5-year estimates)
       authority: us_census_acs
+      # whose codes name the units (D-131): a town's 10-digit GEOID
+      unit_authority: us_census_geoid
       unit_column: GEOID
       name_column: NAME
       joins_to: governance_unit

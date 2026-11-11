@@ -15,6 +15,12 @@
 # so a second authority's claim about the same county can sit beside
 # this one later without a schema change. D-19.
 #
+# A unit is an (authority, code) pair, and a Census GEOID is unique only
+# within its level: 23001 is Androscoggin County, House District 1 and
+# Senate District 1 (GRAPH-1). So the caller declares whose codes these
+# are, from Contract 3, section 1, with no default, and the declaration is
+# written on every row and into every measurement_id (D-131, D-132).
+#
 # What it deliberately does not do:
 #   ~ derive a margin of error for a ratio. The registry cannot yet
 #     say whether a ratio is a proportion, and the Census formulas
@@ -29,13 +35,18 @@
 #     as a measurement. The value stays the Census's encoding (51, 9),
 #     which sorts correctly, so a rank over it is still right.
 #
-# canopy/indicator_preview.py does the same arithmetic in Python. The
+# canopy/indicators/preview.py does the same arithmetic in Python. The
 # two must agree exactly; tests/test_derive_indicator_oracle.py holds
 # them to it. D-16.
 #
 # Inputs:
-#   source: an indicator_source table (parquet or CSV) with GEOID
+#   source: an indicator_source table (parquet or CSV), one row per unit
 # Params:
+#   unit_authority: required, whose codes name the units, one of
+#                 Contract 3's five (D-131): us_census_geoid (state,
+#                 county, town, tract), us_census_sldl (Maine House),
+#                 us_census_sldu (Maine Senate), us_census_aiannh (Census
+#                 tribal area), megis (Maine civil division)
 #   indicators:   list of declarations, each from $indicators.<id>
 #   spatial_unit: what each row is, e.g. "county"
 #   time:         the vintage window of the source, e.g. "2020-2024"
@@ -65,6 +76,7 @@ spatial_unit <- require_param(args$params, "spatial_unit")
 time_label   <- get_param(args$params, "time", NA_character_)
 authority    <- get_param(args$params, "authority", NA_character_)
 joins_to     <- get_param(args$params, "joins_to", NULL)
+unit_authority <- get_param(args$params, "unit_authority", NULL)
 unit_column  <- as.character(get_param(args$params, "unit_column", "GEOID"))
 unit_pad     <- get_param(args$params, "unit_pad", NULL)
 name_column  <- as.character(get_param(args$params, "name_column", "NAME"))
@@ -72,7 +84,34 @@ reliability  <- get_param(args$params, "reliability", NULL)
 
 w <- warnings_collector("derive_indicator")
 
-UNIT_AUTHORITY <- "us_census_geoid"
+# Contract 3, section 1. Also written in build_places.py and
+# canopy/indicators/preview.py until one seed file holds them (AUTH-1).
+KNOWN_UNIT_AUTHORITIES <- c("us_census_geoid", "us_census_sldl", "us_census_sldu",
+                            "us_census_aiannh", "megis")
+
+# Refused by name, never defaulted: a silent default is how a House
+# district came to key as a county (GRAPH-1, D-131).
+.unit_authority <- function(x) {
+  x <- if (is.null(x)) character(0) else trimws(as.character(unlist(x)))
+  if (length(x) != 1 || is.na(x) || !nzchar(x)) {
+    primitive_failure(
+      "No unit authority",
+      paste0("`unit_authority` is required: whose codes name these units, one of ",
+             paste(KNOWN_UNIT_AUTHORITIES, collapse = ", "),
+             " (Contract 3, section 1). A Census GEOID is unique only within its ",
+             "level, so 23001 is a county, a House district and a Senate district ",
+             "(GRAPH-1, D-131)."),
+      warnings = w)
+  }
+  if (!x %in% KNOWN_UNIT_AUTHORITIES) {
+    primitive_failure(
+      "Unknown unit authority",
+      sprintf("`unit_authority` '%s' is not one of %s (Contract 3, section 1; D-131).",
+              x, paste(KNOWN_UNIT_AUTHORITIES, collapse = ", ")),
+      warnings = w)
+  }
+  x
+}
 
 # Params from the orchestrator arrive through a file and read_json, which
 # keeps a list of declarations as a list of lists. Inline JSON simplifies
@@ -186,6 +225,7 @@ OPEN_ENDED <- -333333333
 
 with_primitive_error_handling({
 
+  unit_authority <- .unit_authority(unit_authority)
   declarations <- .declarations_as_list(declarations)
   df <- safe_read_table(source_path, w)
 
@@ -327,8 +367,10 @@ with_primitive_error_handling({
     }
 
     pieces[[length(pieces) + 1]] <- data.frame(
-      measurement_id = paste(id, geoid, sep = ":"),
-      unit_authority = UNIT_AUTHORITY,
+      # indicator:authority:code, so ids stay unique when tables from
+      # different levels are read together (D-132)
+      measurement_id = paste(id, unit_authority, geoid, sep = ":"),
+      unit_authority = unit_authority,
       unit_code      = geoid,
       name           = unit_name,
       indicator      = id,

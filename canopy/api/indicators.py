@@ -12,7 +12,10 @@ exposure gate (P-22 comes before anything that can leave).
   GET /plots/{plot}/indicators             which sources a plot holds, and what
                                            it could hold but does not
   GET /plots/{plot}/indicators/{id}        preview values, long-form, one row
-                                           per unit, every row labelled preview
+                                           per unit, every row labelled preview.
+                                           requires ?unit_authority=, whose codes
+                                           name the units (D-133); without it,
+                                           422 before anything is read
 
 the router is thin on purpose. every decision lives in
 canopy/indicators/preview.py, where it can be tested without a server, and
@@ -93,8 +96,9 @@ def plot_indicators(plot: str):
 
 @router.get("/plots/{plot}/indicators/{indicator_id}")
 def plot_indicator_values(plot: str, indicator_id: str,
+                          unit_authority: str = Query(...),
                           dataset: str | None = Query(None)):
     try:
-        return ip.preview(plot, indicator_id, dataset)
+        return ip.preview(plot, indicator_id, dataset, unit_authority=unit_authority)
     except ip.PreviewError as e:
         _refuse(e)

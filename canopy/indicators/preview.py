@@ -61,7 +61,12 @@ PLOTS_DIR = REPO / "plots"
 
 SOURCE_TYPE = "indicator_source"
 STATUS = "preview"
-UNIT_AUTHORITY = "us_census_geoid"
+# whose codes name a unit, from Contract 3, section 1. a Census GEOID is
+# unique only within its level (GRAPH-1), so every caller declares one and
+# none is assumed (D-131, D-133). the same five are written in
+# derive_indicator.R and build_places.py until one seed holds them (AUTH-1).
+KNOWN_UNIT_AUTHORITIES = ("us_census_geoid", "us_census_sldl", "us_census_sldu",
+                          "us_census_aiannh", "megis")
 
 # a plot name becomes a path, so it is held to a shape that cannot climb out
 # of plots/. refusing '../' here is cheaper than auditing every join later.
@@ -357,9 +362,65 @@ def _reliability_note(value, households, counts, cv, rule) -> str | None:
     return "read with care: " + "; and ".join(said) + "."
 
 
-def derive(frame, ind: Indicator, *, authority: str | None, time: str | None,
-           reliability: dict | None = None) -> tuple[list[dict], list[str]]:
-    """long-form preview rows for one indicator over one acquisition."""
+def _unit_authority(unit_authority) -> str:
+    """the declared authority, or a refusal by name, as derive_indicator.R
+    refuses. never a default (D-131). ~"""
+    ua = unit_authority.strip() if isinstance(unit_authority, str) else ""
+    if not ua:
+        raise PreviewError(
+            "malformed",
+            f"`unit_authority` is required: whose codes name these units, one of "
+            f"{', '.join(KNOWN_UNIT_AUTHORITIES)} (Contract 3, section 1). a Census "
+            f"GEOID is unique only within its level, so 23001 is a county, a House "
+            f"district and a Senate district (GRAPH-1, D-131).")
+    if ua not in KNOWN_UNIT_AUTHORITIES:
+        raise PreviewError(
+            "malformed",
+            f"`unit_authority` '{ua}' is not one of "
+            f"{', '.join(KNOWN_UNIT_AUTHORITIES)} (Contract 3, section 1; D-131).")
+    return ua
+
+
+def _unit_codes(frame, unit_column: str, unit_pad) -> list[str]:
+    """each row's unit code, read as derive_indicator.R reads it: trimmed,
+    padded only when asked and only where padding cannot invent a different
+    unit, and unique. ~"""
+    if unit_column not in frame.columns:
+        raise PreviewError(
+            "malformed",
+            f"the source has no '{unit_column}' column, so no row can be named as a unit.")
+    codes = [str(v).strip() for v in frame[unit_column]]
+    if unit_pad is not None:
+        width = int(unit_pad)
+        bad = [c for c in codes if not re.fullmatch(r"[0-9]+", c) or len(c) > width]
+        if bad:
+            raise PreviewError(
+                "malformed",
+                f"{len(bad)} code(s) in '{unit_column}' are not digits or are wider "
+                f"than {width}, e.g. {bad[0]}. padding would invent a different unit.")
+        codes = [c.zfill(width) for c in codes]
+    seen, dup = set(), []
+    for c in codes:
+        if c in seen:
+            dup.append(c)
+        seen.add(c)
+    if dup:
+        raise PreviewError(
+            "malformed",
+            f"{len(dup)} unit code(s) appear more than once, e.g. {dup[0]}.")
+    return codes
+
+
+def derive(frame, ind: Indicator, *, unit_authority: str, authority: str | None,
+           time: str | None, reliability: dict | None = None,
+           unit_column: str = "GEOID", unit_pad: int | None = None,
+           name_column: str = "NAME") -> tuple[list[dict], list[str]]:
+    """long-form preview rows for one indicator over one acquisition. the
+    unit column, padding and name column are read as derive_indicator.R
+    reads them, so the twins agree by construction, not by every source
+    happening to say GEOID (TWIN-2). ~"""
+    unit_authority = _unit_authority(unit_authority)
+    codes = _unit_codes(frame, unit_column, unit_pad)
     estimates = ind.estimate_variables()
     absent = [v for v in estimates if v not in frame.columns]
     if absent:
@@ -395,7 +456,7 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None,
             f"probably acquired before ACS-7; re-acquire the source.")
 
     rows: list[dict] = []
-    for _, r in frame.iterrows():
+    for code, (_, r) in zip(codes, frame.iterrows()):
         comp = {}
         for v in estimates:
             m = moes.get(v)
@@ -438,8 +499,8 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None,
         note = _reliability_note(value, households, ind.rests_on.counts, cv, reliability)
 
         rows.append({
-            "unit": {"authority": UNIT_AUTHORITY, "code": str(r["GEOID"])},
-            "name": str(r["NAME"]) if "NAME" in frame.columns else "",
+            "unit": {"authority": unit_authority, "code": code},
+            "name": str(r[name_column]) if name_column in frame.columns else "",
             "indicator": ind.id,
             "value": value,
             "moe": moe,
@@ -478,12 +539,13 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None,
 
 
 def preview(plot: str, indicator_id: str, dataset: str | None = None,
-            registry: IndicatorRegistry | None = None) -> dict:
+            registry: IndicatorRegistry | None = None, *, unit_authority: str) -> dict:
     registry = registry or load_registry()
     ind = get_indicator(registry, indicator_id)
     src = choose_source(plot, indicator_id, dataset)
     frame = read_table(src["_path"])
-    rows, notes = derive(frame, ind, authority=src["authority"], time=src["vintage_window"])
+    rows, notes = derive(frame, ind, unit_authority=unit_authority,
+                         authority=src["authority"], time=src["vintage_window"])
     return {
         "plot": plot,
         "status": STATUS,
@@ -640,7 +702,7 @@ def read_published(path: Path, fips_column: str, value_column: str):
 def compare(plot: str, indicator_id: str, published: str | Path, fips_column: str,
             column: str | None = None, dataset: str | None = None,
             percentile: bool = False, exclude_state_fips: tuple[str, ...] = (),
-            match_published_population: bool = False) -> dict:
+            match_published_population: bool = False, *, unit_authority: str) -> dict:
     registry = load_registry()
     ind = get_indicator(registry, indicator_id)
     if column is None:
@@ -655,7 +717,7 @@ def compare(plot: str, indicator_id: str, published: str | Path, fips_column: st
         # CII names each percentile column after its raw column.
         column = f"{column} percentile"
 
-    ours = preview(plot, indicator_id, dataset, registry)
+    ours = preview(plot, indicator_id, dataset, registry, unit_authority=unit_authority)
     theirs = read_published(Path(published), fips_column, column)
     population = None
     if percentile:
@@ -875,6 +937,9 @@ def main(argv: list[str] | None = None) -> int:
     show.add_argument("plot")
     show.add_argument("indicator")
     show.add_argument("--dataset")
+    show.add_argument("--unit-authority", required=True,
+                      choices=KNOWN_UNIT_AUTHORITIES,
+                      help="whose codes name the units, e.g. us_census_geoid (D-133)")
 
     cmp_ = sub.add_parser("compare", help="hand check against a published file")
     cmp_.add_argument("plot")
@@ -883,6 +948,9 @@ def main(argv: list[str] | None = None) -> int:
     cmp_.add_argument("--fips-column", required=True)
     cmp_.add_argument("--column", help="published column, if the indicator declares no replicates")
     cmp_.add_argument("--dataset")
+    cmp_.add_argument("--unit-authority", required=True,
+                      choices=KNOWN_UNIT_AUTHORITIES,
+                      help="whose codes name the units, e.g. us_census_geoid (D-133)")
     cmp_.add_argument("--percentile", action="store_true",
                       help="compare CII's percentile column instead of the raw value")
     cmp_.add_argument("--exclude-states", default="",
@@ -893,12 +961,14 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     try:
         if a.command == "show":
-            _print_preview(preview(a.plot, a.indicator, a.dataset))
+            _print_preview(preview(a.plot, a.indicator, a.dataset,
+                                   unit_authority=a.unit_authority))
         else:
             excl = tuple(x.strip() for x in a.exclude_states.split(",") if x.strip())
             _print_compare(compare(a.plot, a.indicator, a.cii, a.fips_column,
                                    a.column, a.dataset, a.percentile, excl,
-                                   a.match_published_population))
+                                   a.match_published_population,
+                                   unit_authority=a.unit_authority))
     except PreviewError as e:
         print(f"refused ({e.kind}): {e.message}", file=sys.stderr)
         return 1

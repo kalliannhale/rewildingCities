@@ -79,6 +79,9 @@ recipe:
       spatial_unit: $choices.aggregation_unit_level
       time: $source.vintage
       authority: $source.authority
+      # whose codes name the units (D-131), named by the preparation as it
+      # names its indicators; there is no default
+      unit_authority: $parameters.unit_authority
       unit_column: $source.unit_column
       unit_pad: $source.unit_pad
       name_column: $source.name_column

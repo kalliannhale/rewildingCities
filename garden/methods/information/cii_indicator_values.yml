@@ -117,6 +117,9 @@ recipe:
       spatial_unit: $choices.aggregation_unit_level
       time: $source.vintage
       authority: $source.authority
+      # whose codes name the units (D-131). every grain this method offers is
+      # a Census GEOID level; a district option would need this line to change
+      unit_authority: us_census_geoid
       unit_column: $source.unit_column
       unit_pad: $source.unit_pad
       name_column: $source.name_column

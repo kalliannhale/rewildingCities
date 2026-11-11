@@ -20,6 +20,8 @@ from pathlib import Path
 import pytest
 
 from canopy.indicators import preview as ip
+
+GEOID = "us_census_geoid"
 from canopy.indicators import IndicatorRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,16 +72,20 @@ def fixture_source(tmp_path):
     return path, frame
 
 
-def _run_primitive(tmp_path, source_path, declarations, reliability=None):
-    inputs = tmp_path / "inputs.json"
-    params = tmp_path / "params.json"
-    out = tmp_path / "derive_values.parquet"
+def _run_primitive(tmp_path, source_path, declarations, reliability=None,
+                   unit_authority=GEOID, extra=None, name="derive_values"):
+    """unit_authority=None leaves the param out, to test its refusal (D-131)."""
+    inputs = tmp_path / f"{name}_inputs.json"
+    params = tmp_path / f"{name}_params.json"
+    out = tmp_path / f"{name}.parquet"
     inputs.write_text(json.dumps({"source": str(source_path)}))
     params.write_text(json.dumps({
         "indicators": declarations, "spatial_unit": "county",
         "time": "2020-2024 (5-year estimates)", "authority": "us_census_acs",
         "joins_to": "governance_unit",
-        **({"reliability": reliability} if reliability else {})}))
+        **({"unit_authority": unit_authority} if unit_authority is not None else {}),
+        **({"reliability": reliability} if reliability else {}),
+        **(extra or {})}))
     proc = subprocess.run(
         ["Rscript", str(PRIMITIVE), str(inputs), str(out), str(params)],
         capture_output=True, text=True, cwd=ROOT)
@@ -105,13 +111,16 @@ def test_r_agrees_with_the_preview_exactly(tmp_path, fixture_source):
     r_rows = pd.read_parquet(out)
 
     for ind_id in IDS:
-        py_rows, _ = ip.derive(frame, reg.get(ind_id), authority=None, time=None,
+        py_rows, _ = ip.derive(frame, reg.get(ind_id), unit_authority=GEOID, authority=None, time=None,
                                reliability=RULE)
         mine = r_rows[r_rows["indicator"] == ind_id].reset_index(drop=True)
         assert len(mine) == len(py_rows), ind_id
         for i, py in enumerate(py_rows):
             r = mine.iloc[i]
             assert r["unit_code"] == py["unit"]["code"]
+            assert r["unit_authority"] == py["unit"]["authority"] == GEOID
+            # D-132: the id carries the authority between indicator and code
+            assert r["measurement_id"] == f"{ind_id}:{GEOID}:{py['unit']['code']}"
             for field in ("value", "moe", "moe_status", "bound", "empty_reason",
                           "households", "households_counts", "households_reason",
                           "cv", "reliability_note"):
@@ -169,3 +178,63 @@ def test_a_source_missing_a_variable_is_refused_by_name(tmp_path, fixture_source
     response, _, _ = _run_primitive(tmp_path, source_path, [reg.declaration("cii_rent_burden")])
     assert response["status"] == "failure"
     assert "B25071_001E" in response["message"]
+
+
+# ── D-131, D-132: whose codes these are ────────────────────────────────────
+def test_a_missing_unit_authority_is_refused_by_name(tmp_path, fixture_source):
+    source_path, _ = fixture_source
+    reg = IndicatorRegistry.load(SEEDS)
+    response, out, _ = _run_primitive(tmp_path, source_path, [reg.declaration("cii_broadband")],
+                                      unit_authority=None)
+    assert response["status"] == "failure"
+    assert "unit_authority" in response["message"]
+    assert not out.exists()
+
+
+def test_an_unknown_unit_authority_is_refused_by_name(tmp_path, fixture_source):
+    source_path, _ = fixture_source
+    reg = IndicatorRegistry.load(SEEDS)
+    response, out, _ = _run_primitive(tmp_path, source_path, [reg.declaration("cii_broadband")],
+                                      unit_authority="us_census_sdll")
+    assert response["status"] == "failure"
+    assert "us_census_sdll" in response["message"]
+    assert not out.exists()
+
+
+def test_one_code_under_two_authorities_is_two_measurements(tmp_path, fixture_source):
+    import pandas as pd
+    source_path, _ = fixture_source
+    reg = IndicatorRegistry.load(SEEDS)
+    decl = [reg.declaration("cii_broadband")]
+    _, county_out, _ = _run_primitive(tmp_path, source_path, decl, name="as_county")
+    _, house_out, _ = _run_primitive(tmp_path, source_path, decl,
+                                     unit_authority="us_census_sldl", name="as_house")
+    county = pd.read_parquet(county_out).set_index("unit_code").loc["23005"]
+    house = pd.read_parquet(house_out).set_index("unit_code").loc["23005"]
+    assert county["value"] == house["value"]
+    assert county["unit_authority"] == GEOID and house["unit_authority"] == "us_census_sldl"
+    assert county["measurement_id"] == "cii_broadband:us_census_geoid:23005"
+    assert house["measurement_id"] == "cii_broadband:us_census_sldl:23005"
+
+
+def test_a_unit_column_not_named_geoid_reads_the_same_in_both(tmp_path, fixture_source):
+    """TWIN-2: the preview read r["GEOID"] directly, so the twins agreed only
+    while every source named its column GEOID."""
+    import pandas as pd
+    source_path, frame = fixture_source
+    renamed = frame.rename(columns={"GEOID": "DISTRICT", "NAME": "LABEL"})
+    renamed.to_parquet(source_path, index=False)
+    reg = IndicatorRegistry.load(SEEDS)
+    response, out, proc = _run_primitive(
+        tmp_path, source_path, [reg.declaration("cii_broadband")],
+        unit_authority="us_census_sldl",
+        extra={"unit_column": "DISTRICT", "name_column": "LABEL"})
+    assert response["status"] == "success", (response, proc.stderr)
+    r_rows = pd.read_parquet(out)
+    py_rows, _ = ip.derive(renamed, reg.get("cii_broadband"), unit_authority="us_census_sldl",
+                           authority=None, time=None, unit_column="DISTRICT",
+                           name_column="LABEL")
+    assert list(r_rows["unit_code"]) == [p["unit"]["code"] for p in py_rows]
+    assert list(r_rows["name"]) == [p["name"] for p in py_rows]
+    for rv, p in zip(r_rows["value"], py_rows):
+        assert _same(p["value"], None if pd.isna(rv) else float(rv))

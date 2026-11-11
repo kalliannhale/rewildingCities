@@ -20,6 +20,8 @@ import pytest
 from canopy.indicators import IndicatorRegistry
 from canopy.indicators import preview as ip
 
+GEOID = "us_census_geoid"
+
 SEEDS = Path(__file__).resolve().parents[1] / "seeds" / "indicators"
 RULE = {"min_households": 50, "max_cv": 0.40}
 
@@ -123,7 +125,7 @@ def broadband_frame():
 
 def test_every_value_carries_its_household_count_or_why_not():
     ind = registry().get("cii_broadband")
-    rows, _ = ip.derive(broadband_frame(), ind, authority=None, time=None)
+    rows, _ = ip.derive(broadband_frame(), ind, unit_authority=GEOID, authority=None, time=None)
     by = {r["unit"]["code"]: r for r in rows}
     assert by["2300100001"]["households"] == 1000.0
     assert by["2300100001"]["households_counts"] == "households"
@@ -140,13 +142,13 @@ def test_rent_burden_count_is_its_universe_less_not_computed():
         "B25070_001E": [30000.0], "B25070_011E": [1500.0],
         "B25071_001M_annotation": [None],
     })
-    rows, _ = ip.derive(frame, ind, authority=None, time=None)
+    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, authority=None, time=None)
     assert rows[0]["households"] == 28500.0
 
 
 def test_the_count_rule_fires_below_its_floor_and_says_so():
     ind = registry().get("cii_broadband")
-    rows, _ = ip.derive(broadband_frame(), ind, authority=None, time=None, reliability=RULE)
+    rows, _ = ip.derive(broadband_frame(), ind, unit_authority=GEOID, authority=None, time=None, reliability=RULE)
     by = {r["unit"]["code"]: r for r in rows}
     assert by["2300100001"]["reliability_note"] is None
     note = by["2300100002"]["reliability_note"]
@@ -163,7 +165,7 @@ def test_the_cv_rule_fires_where_a_margin_is_published():
         "B25070_001E": [5000.0, 5000.0], "B25070_011E": [0.0, 0.0],
         "B25071_001M_annotation": [None, None],
     })
-    rows, _ = ip.derive(frame, ind, authority=None, time=None, reliability=RULE)
+    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, authority=None, time=None, reliability=RULE)
     by = {r["unit"]["code"]: r for r in rows}
     assert by["23001"]["reliability_note"] is None
     assert by["23002"]["cv"] == pytest.approx((25.0 / 1.645) / 30.0)
@@ -172,7 +174,7 @@ def test_the_cv_rule_fires_where_a_margin_is_published():
 
 def test_no_rule_declared_means_no_note():
     ind = registry().get("cii_broadband")
-    rows, _ = ip.derive(broadband_frame(), ind, authority=None, time=None)
+    rows, _ = ip.derive(broadband_frame(), ind, unit_authority=GEOID, authority=None, time=None)
     assert all(r["reliability_note"] is None for r in rows)
 
 
@@ -184,7 +186,7 @@ def test_an_open_ended_median_stands_outside_the_ranking():
         "B25070_001E": [100.0, 30000.0, 9000.0], "B25070_011E": [0.0, 0.0, 0.0],
         "B25071_001M_annotation": ["-333333333", None, None],
     })
-    rows, _ = ip.derive(frame, ind, authority=None, time=None)
+    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, authority=None, time=None)
     out, population = ip.standings(rows, ind, sd="sample")
     by = {r["unit"]["code"]: r for r in out}
     assert by["13141"]["percentile"] is None and by["13141"]["outside_reason"]
@@ -200,7 +202,7 @@ def test_a_standing_keeps_what_its_value_rests_on():
         "B25070_001E": [5000.0, 4000.0, 30.0], "B25070_011E": [0.0, 0.0, 0.0],
         "B25071_001M_annotation": [None, None, None],
     })
-    rows, _ = ip.derive(frame, ind, authority=None, time=None, reliability=RULE)
+    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, authority=None, time=None, reliability=RULE)
     out, _ = ip.standings(rows, ind, sd="sample")
     by = {r["unit"]["code"]: r for r in out}
     assert by["23003"]["households"] == 30.0 and by["23003"]["percentile"] is not None

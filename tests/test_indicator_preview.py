@@ -13,6 +13,8 @@ import pytest
 from canopy.indicators import preview as ip
 from canopy.indicators import IndicatorRegistry
 
+GEOID = "us_census_geoid"
+
 
 # ── fixtures ──────────────────────────────────────────────────────────────
 HEADER = ("GEOID,NAME,state,county,"
@@ -104,7 +106,7 @@ def test_replicates_marks_exactly_the_verified_entries():
 
 # ── derivation ────────────────────────────────────────────────────────────
 def test_ratio_is_exact_at_full_precision(repo):
-    p = ip.preview("test", "cii_broadband")
+    p = ip.preview("test", "cii_broadband", unit_authority=GEOID)
     row = by_code(p)["23005"]
     assert row["value"] == (1000 / 1200) * 100
     assert row["method"] == "preview:ratio"
@@ -114,34 +116,34 @@ def test_ratio_is_exact_at_full_precision(repo):
 
 
 def test_every_response_says_it_is_a_preview(repo):
-    p = ip.preview("test", "cii_broadband")
+    p = ip.preview("test", "cii_broadband", unit_authority=GEOID)
     assert p["status"] == "preview"
     assert p["envelope"] is None
     assert all(r["method"].startswith("preview:") for r in p["values"])
 
 
 def test_ratio_margin_is_not_derived(repo):
-    row = by_code(ip.preview("test", "cii_broadband"))["23005"]
+    row = by_code(ip.preview("test", "cii_broadband", unit_authority=GEOID))["23005"]
     assert row["moe"] is None
     assert row["moe_status"] == "not_derived"
     assert row["components"]["B28002_004E"] == {"estimate": 1000.0, "moe": 50.0}
 
 
 def test_zero_denominator_rests_empty_with_its_reason(repo):
-    row = by_code(ip.preview("test", "cii_broadband"))["23999"]
+    row = by_code(ip.preview("test", "cii_broadband", unit_authority=GEOID))["23999"]
     assert row["value"] is None
     assert row["empty_reason"] == "zero denominator"
 
 
 def test_passthrough_serves_the_published_margin(repo):
-    row = by_code(ip.preview("test", "cii_rent_burden"))["23005"]
+    row = by_code(ip.preview("test", "cii_rent_burden", unit_authority=GEOID))["23005"]
     assert row["value"] == 29.4
     assert row["moe"] == 1.2
     assert row["moe_status"] == "published"
 
 
 def test_empty_source_value_is_named_never_zero(repo):
-    p = ip.preview("test", "cii_rent_burden")
+    p = ip.preview("test", "cii_rent_burden", unit_authority=GEOID)
     row = by_code(p)["23029"]
     assert row["value"] is None
     assert row["empty_reason"] == "source value empty: B25071_001E"
@@ -150,7 +152,7 @@ def test_empty_source_value_is_named_never_zero(repo):
 
 
 def test_geoid_stays_a_string(repo):
-    codes = [r["unit"]["code"] for r in ip.preview("test", "cii_broadband")["values"]]
+    codes = [r["unit"]["code"] for r in ip.preview("test", "cii_broadband", unit_authority=GEOID)["values"]]
     assert codes == ["23005", "23029", "23999"]
 
 
@@ -159,7 +161,7 @@ def test_an_acquisition_missing_a_column_is_refused(repo):
     (repo / ".data" / "acs.csv").write_text(
         "GEOID,NAME,B28002_004E\n23005,Cumberland,1000\n")
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview("test", "cii_broadband")
+        ip.preview("test", "cii_broadband", unit_authority=GEOID)
     assert e.value.kind == "malformed"
     assert "B28002_001E" in e.value.message
 
@@ -167,26 +169,26 @@ def test_an_acquisition_missing_a_column_is_refused(repo):
 @pytest.mark.parametrize("bad", ["../etc", "Maine", "", "a/b", ".hidden"])
 def test_a_plot_name_is_never_a_path(repo, bad):
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview(bad, "cii_broadband")
+        ip.preview(bad, "cii_broadband", unit_authority=GEOID)
     assert e.value.kind == "malformed"
 
 
 def test_unknown_indicator(repo):
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview("test", "no_such_thing")
+        ip.preview("test", "no_such_thing", unit_authority=GEOID)
     assert e.value.kind == "not_found"
 
 
 def test_indicator_no_source_lists(repo):
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview("test", "limited_english_households")
+        ip.preview("test", "limited_english_households", unit_authority=GEOID)
     assert e.value.kind == "not_found"
 
 
 def test_declared_but_not_acquired(repo):
     (repo / ".data" / "acs.csv").unlink()
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview("test", "cii_broadband")
+        ip.preview("test", "cii_broadband", unit_authority=GEOID)
     assert e.value.kind == "unavailable"
     assert "acquire test --type indicator_source --fetch" in e.value.message
 
@@ -197,9 +199,9 @@ def test_two_sources_is_a_choice_not_a_lookup(repo):
         "acs_county_2024": (".data/acs.csv", ["cii_broadband"]),
     }))
     with pytest.raises(ip.PreviewError) as e:
-        ip.preview("test", "cii_broadband")
+        ip.preview("test", "cii_broadband", unit_authority=GEOID)
     assert e.value.kind == "ambiguous"
-    p = ip.preview("test", "cii_broadband", dataset="acs_county_2024")
+    p = ip.preview("test", "cii_broadband", dataset="acs_county_2024", unit_authority=GEOID)
     assert p["source"]["dataset"] == "acs_county_2024"
 
 
@@ -231,7 +233,7 @@ def test_compare_reports_exact_agreement(repo, tmp_path):
         f"23029,{(500 / 600) * 100!r}\n"
         "23999,\n"
         "1001,77.0\n")
-    c = ip.compare("test", "cii_broadband", published, "FIPS")
+    c = ip.compare("test", "cii_broadband", published, "FIPS", unit_authority=GEOID)
     s = c["summary"]
     assert s["max_abs_difference"] == 0
     assert s["n_compared"] == 2
@@ -244,14 +246,14 @@ def test_compare_needs_a_column_when_nothing_is_replicated(repo, tmp_path):
     published = tmp_path / "cii.csv"
     published.write_text("FIPS,Rent\n23005,29.4\n")
     with pytest.raises(ip.PreviewError) as e:
-        ip.compare("test", "limited_english_households", published, "FIPS")
+        ip.compare("test", "limited_english_households", published, "FIPS", unit_authority=GEOID)
     assert e.value.kind == "malformed" and "--column" in e.value.message
 
 
 def test_an_explicit_column_overrides_replicates(repo, tmp_path):
     published = tmp_path / "cii.csv"
     published.write_text("FIPS,Rent\n23005,29.4\n")
-    c = ip.compare("test", "cii_rent_burden", published, "FIPS", column="Rent")
+    c = ip.compare("test", "cii_rent_burden", published, "FIPS", column="Rent", unit_authority=GEOID)
     assert c["published_column"] == "Rent"
     assert c["summary"]["max_abs_difference"] == 0
 
@@ -264,7 +266,7 @@ def test_precision_belongs_to_the_column_not_the_row(repo, tmp_path):
         "FIPS,Percent of income spent on rent\n"
         "23005,29\n"
         "23999,31.0\n")
-    c = ip.compare("test", "cii_rent_burden", published, "FIPS")
+    c = ip.compare("test", "cii_rent_burden", published, "FIPS", unit_authority=GEOID)
     rows = {r["geoid"]: r for r in c["rows"]}
     assert c["summary"]["column_precision"] == 1
     assert c["summary"]["written_decimals_observed"] == [0, 1]
@@ -285,7 +287,7 @@ def test_agreement_is_judged_at_the_publisher_precision(repo, tmp_path):
         "23005,83.3333333\n"
         "23029,83.3333\n"
         "23999,\n")
-    c = ip.compare("test", "cii_broadband", published, "FIPS")
+    c = ip.compare("test", "cii_broadband", published, "FIPS", unit_authority=GEOID)
     rows = {r["geoid"]: r for r in c["rows"]}
     assert rows["23005"]["agrees_at_published_precision"]
     assert rows["23005"]["written_decimals"] == 7
@@ -303,7 +305,7 @@ def test_a_real_difference_is_not_rounding(repo, tmp_path):
     published.write_text(
         "FIPS,Percent of households with broadband\n"
         "23005,83.3334\n")
-    row = ip.compare("test", "cii_broadband", published, "FIPS")["rows"][0]
+    row = ip.compare("test", "cii_broadband", published, "FIPS", unit_authority=GEOID)["rows"][0]
     assert not row["agrees_at_published_precision"]
 
 
@@ -329,7 +331,7 @@ def test_the_registry_column_exists_in_the_published_header():
 def test_a_missing_published_file_is_refused_by_name(repo, tmp_path):
     missing = tmp_path / "nowhere" / "cii.csv"
     with pytest.raises(ip.PreviewError) as e:
-        ip.compare("test", "cii_broadband", missing, "FIPS")
+        ip.compare("test", "cii_broadband", missing, "FIPS", unit_authority=GEOID)
     assert e.value.kind == "not_found"
     assert str(missing) in e.value.message
 
@@ -344,7 +346,7 @@ def test_compare_percentile_reads_the_percentile_column(repo, tmp_path):
         "23005,83.3333333,100\n"
         "23029,83.3333333,100\n"
         "23999,,\n")
-    c = ip.compare("test", "cii_broadband", published, "FIPS", percentile=True)
+    c = ip.compare("test", "cii_broadband", published, "FIPS", percentile=True, unit_authority=GEOID)
     assert c["published_column"] == "Percent of households with broadband percentile"
     assert c["compared"] == "percentile"
     assert c["reference_population"]["n"] == 2
@@ -363,7 +365,7 @@ def test_a_fixed_width_column_is_judged_at_its_implied_digits(repo, tmp_path):
         f"23029,{ours:.7f}\n"
         "23031,12.3456789\n"
         "23033,5.12345678\n")
-    c = ip.compare("test", "cii_broadband", published, "FIPS")
+    c = ip.compare("test", "cii_broadband", published, "FIPS", unit_authority=GEOID)
     assert c["summary"]["precision_rule"] == "fixed_width"
     assert c["summary"]["column_width"] == 10
     assert c["summary"]["agree_at_published_precision"] == 2
@@ -378,6 +380,6 @@ def test_a_real_difference_still_differs_under_fixed_width(repo, tmp_path):
         f"23029,{ours:.7f}\n"
         "23031,12.3456789\n"
         "23033,5.12345678\n")
-    rows = {r["geoid"]: r for r in ip.compare("test", "cii_broadband", published, "FIPS")["rows"]}
+    rows = {r["geoid"]: r for r in ip.compare("test", "cii_broadband", published, "FIPS", unit_authority=GEOID)["rows"]}
     assert not rows["23005"]["agrees_at_published_precision"]
     assert rows["23029"]["agrees_at_published_precision"]

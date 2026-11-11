@@ -121,8 +121,8 @@ class RegistryManager:
     """
     Manages primitive registries across layers.
     
-    Resolves primitive references like "soil/validate_boundaries" 
-    to full paths like "soil/validate/validate_boundaries.R"
+    Resolves primitive references like "soil/repair_geometry"
+    to full paths like "soil/repair/repair_geometry.R"
     """
     
     def __init__(self, project_root: Path | None = None):
@@ -149,12 +149,14 @@ class RegistryManager:
         Resolve a primitive reference to its full path and spec.
         
         Args:
-            primitive_ref: Reference like "soil/validate_boundaries" or "roots/generate_buffers"
-            validate_exists: If True, verify the .R file exists on disk
+            primitive_ref: Reference like "soil/repair_geometry" or "roots/generate_buffers"
+            validate_exists: If True, verify the primitive's file (.R or .py) exists on disk.
+                This runs only when a step references the primitive, so a broken
+                registry path stays silent until something uses it (REG-6).
         
         Returns:
             Tuple of (full_path, PrimitiveSpec)
-            e.g., ("soil/validate/validate_boundaries.R", PrimitiveSpec(...))
+            e.g., ("soil/repair/repair_geometry.R", PrimitiveSpec(...))
         
         Raises:
             ValueError: If layer or primitive not found

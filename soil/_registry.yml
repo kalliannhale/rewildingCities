@@ -3,82 +3,6 @@
 
 primitives:
 
-  validate_boundaries:
-    path: validate/validate_boundaries.R
-    version: 1.0.0
-    description: >
-      Validate vector geometries for analytical readiness. Checks for 
-      valid geometry, CRS presence, minimum area thresholds, and empty 
-      features. Optionally repairs invalid geometries and reprojects 
-      to target CRS.
-    
-    # === Standard fields (shared with roots/) ===
-    
-    inputs:
-      - name: boundaries
-        semantic_types: 
-          - park_boundaries
-          - water_boundaries
-          - forest_boundaries
-          - study_area
-        required: true
-        description: Vector features to validate
-    
-    outputs:
-      semantic_type: null  # Preserves input semantic type
-      data_category: vector
-      description: >
-        Same features, validated and optionally repaired. 
-        Excluded features documented in warnings.
-    
-    params:
-      target_crs:
-        type: string
-        default: null
-        description: If provided, reproject to this CRS
-      min_area_ha:
-        type: number
-        default: null
-        description: Exclude features below this area threshold
-      repair_invalid:
-        type: boolean
-        default: false
-        description: Attempt to repair invalid geometries via st_make_valid
-      drop_empty:
-        type: boolean
-        default: true
-        description: Remove empty or null geometries
-    
-    # === Soil-specific fields ===
-    
-    validates:
-      - id: valid_geometry
-        description: Geometry passes st_is_valid()
-        severity_if_failed: warning
-      - id: crs_present
-        description: CRS is defined, not NA
-        severity_if_failed: critical
-      - id: min_area
-        description: Feature area meets threshold
-        severity_if_failed: info
-        conditional: when min_area_ha is set
-      - id: no_empty_geometries
-        description: Geometry is not empty or null
-        severity_if_failed: warning
-    
-    repairs:
-      - id: invalid_geometry
-        method: st_make_valid
-        when: repair_invalid is true
-        description: Attempts topological repair of invalid geometries
-      - id: crs_transform
-        method: st_transform
-        when: target_crs differs from input CRS
-        description: Reprojects features to target coordinate system
-    
-    may_exclude_features: true
-    exclusion_documented_in: warnings
-    
   validate_vector:
     path: validate/validate_vector.R
     version: 1.0.0
@@ -385,7 +309,7 @@ primitives:
         # no default — identity is never guessed
 
   fetch_dataset:
-    path: register/fetch_dataset.R
+    path: register/fetch_dataset.py
     version: 1.0.0
     description: >
       Fetch data from remote sources (APIs, URLs) and cache locally. 
@@ -952,7 +876,7 @@ primitives:
     # its name is unchanged, so provenance_contains: derive_indicator
     # (standardize_indicator's precondition) still matches.
     path: transform/derive_indicator.R
-    version: 0.1.0
+    version: 0.2.0
     description: >
       Indicator values from raw published counts, by declaration. Each
       indicator arrives as `$indicators.<id>`, resolved by the orchestrator
@@ -960,13 +884,16 @@ primitives:
       told: a ratio of summed numerators over a denominator at a declared
       scale, or a published column passed through. Long-form output, one row
       per unit and indicator, carrying (unit, indicator, value, authority,
-      method, time). Ratio rows carry no derived margin of error; a
-      passthrough carries its published one.
+      method, time). A unit is an (authority, code) pair: the caller declares
+      whose codes name the units, and the declaration is on every row and in
+      every measurement_id, indicator:authority:code (D-131, D-132). Ratio
+      rows carry no derived margin of error; a passthrough carries its
+      published one.
     inputs:
       - name: source
         semantic_types: [indicator_source]
         required: true
-        description: Raw published estimates with a GEOID column
+        description: Raw published estimates, one row per unit, named by unit_column
     outputs:
       semantic_type: indicator_values
       data_category: tabular
@@ -985,6 +912,26 @@ primitives:
         type: string
         default: null
         description: "Who published the source"
+      unit_authority:
+        type: string
+        # no default: a Census GEOID is unique only within its level
+        # (GRAPH-1), so it is declared, never assumed (D-131). the
+        # orchestrator does not enforce this list; the primitive refuses
+        # anything else by name
+        options: [us_census_geoid, us_census_sldl, us_census_sldu, us_census_aiannh, megis]
+        description: "Whose codes name the units, from Contract 3, section 1"
+      unit_column:
+        type: string
+        default: GEOID
+        description: "The source column naming each unit"
+      unit_pad:
+        type: integer
+        default: null
+        description: "Zero-pad unit codes to this width, for a file that lost leading zeros (CII-6)"
+      name_column:
+        type: string
+        default: NAME
+        description: "The source column with a readable name"
       reliability:
         type: object
         default: null
