@@ -72,6 +72,11 @@ methods:
       name: "Governance Units, Conformed"
       answers: [boundaries, denominators, preparation]
 
+    - id: geography_graph
+      path: information/geography_graph.yml
+      name: "The Geography Graph"
+      answers: [geography, districts, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"

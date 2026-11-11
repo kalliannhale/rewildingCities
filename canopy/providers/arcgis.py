@@ -151,6 +151,12 @@ class ArcGISProvider(Provider):
                     "resultRecordCount": page_size,
                     "resultOffset": offset,
                 }
+                # Sprint 04: any other declared query parameter passes through
+                # unchanged, so a source can ask for attributes without
+                # geometry (returnGeometry: false) or select by a bounding box
+                # (geometry, geometryType, inSR, spatialRel) rather than by name.
+                params.update({k: v for k, v in qp.items()
+                               if k not in ("where", "outFields", "outSR", "limit")})
                 logger.info(f"  ArcGIS REST: {query_url[:70]}... offset={offset}")
                 resp = requests.get(query_url, params=params, timeout=180)
                 resp.raise_for_status()

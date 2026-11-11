@@ -85,7 +85,15 @@ governance_field:
   values:
     A: active government ~ has officials, records, and someone to hold to account
     S: statistical entity ~ Census-drawn for tabulation; nobody governs it
-    F: fictitious entity ~ a placeholder, often water or a boundary artifact
+    F: >
+      fictitious entity ~ an entity the Census creates to complete its
+      hierarchy where no legal unit exists. In Maine this includes the county
+      subdivisions coextensive with reservations (Passamaquoddy Indian
+      Township and Pleasant Point; Penobscot Indian Island, in two counties),
+      which are real places with governments of their own, not placeholders.
+      It also covers some water. Never read F as "not a real place" (Sprint
+      04; the earlier gloss here, "a placeholder, often water or a boundary
+      artifact", misdescribed the reservations)
     N: nonfunctioning or not applicable ~ a legal entity without its own government
     E: >
       a legal or administrative entity that is not a general-purpose
@@ -229,6 +237,14 @@ levels:
       Redistricted after each census. Joining current outlet data to a
       superseded district layer produces a clean, plausible, wrong map ~ the
       same district count, different boundaries. Declare the vintage.
+    acs_vintage: >
+      ACS estimates use the districts of the legislative session year their
+      estimate year names: ACS 2020-2024 uses the 2024 districts (Census,
+      "Geography Boundaries by Year"). The `vintage` above is what TIGERweb
+      serves as current, not what ACS 2024 was tabulated on, so a district
+      layer joined to ACS 2024 values is declared at 2024 (layers 5 and 6),
+      never at the current default. Maine's 2024 districts are its 2021 plan;
+      it was not among the states that redistricted for 2024 (Sprint 04).
 
   state_legislative_lower:
     service: Legislative

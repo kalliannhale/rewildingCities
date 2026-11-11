@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.2, 2026-11-10 (G-3 decided, D-103). **Owner:**
+**Status:** draft 0.4, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -21,9 +21,14 @@ One row per place, at every level. The key is `(authority, code)`, as D-19
 already keys indicator rows, so a value and its place join by derivation,
 never by name.
 
+**A Census GEOID is unique only within its level (GRAPH-1).** `23001` is
+Androscoggin County, House District 1 and Senate District 1. So the authority
+names the level wherever codes could collide, and `(authority, code)` always
+names exactly one place.
+
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `authority` | text | who assigns the code: `us_census_geoid`, `megis` |
+| `authority` | text | who assigns the code, and at which level: `us_census_geoid` (state, county, town), `us_census_sldl` (House), `us_census_sldu` (Senate), `us_census_aiannh` (Census tribal area), `megis` (Maine civil division) |
 | `code` | text | the code as that authority writes it, leading zeros kept: `23005`, `2300560825` |
 | `level` | text | `state`, `county`, `cousub`, `sldl` (Maine House), `sldu` (Maine Senate), `aiannh` (Census tribal area), `megis_division` |
 | `vintage` | text | the boundary year; it must match the ACS vintage it is joined to |
@@ -51,15 +56,28 @@ columns.
 | `from_authority`, `from_code` | text | the containing or overlapping place; for `located_in`, the point's layer (its dataset id) and its feature id |
 | `to_authority`, `to_code` | text | the other place |
 | `kind` | text | `contains`, `overlaps` or `located_in` |
-| `weight` | number | see below |
+| `weight_population` | number or null | the share of the `from` town's population inside the `to` place; see below |
+| `weight_households` | number or null | the share of the `from` town's households (occupied housing units) inside the `to` place |
+| `weight_reason` | text or null | why a weight is null, e.g. `zero_households` |
 | `source` | text | the file or method the edge came from |
 | `vintage` | text | the vintage of that source |
 
-| Kind | Means | Weight |
+| Kind | Means | Weights |
 | --- | --- | --- |
-| `contains` | clean nesting: state to county, county to town | 1 |
-| `overlaps` | partial: town to district, town to tribal area | the share of the town's population inside the other place, from Census block assignments (Open, G-1) |
-| `located_in` | a point (a library, an outlet) to every area it falls in | 1 |
+| `contains` | clean nesting: state to county, county to town | 1 and 1 |
+| `overlaps` | partial: town to district, town to tribal area | the town's population share and household share inside the other place, from 2020 Census block assignments and block counts (P.L. 94-171: P1 population, H1 occupied housing units) |
+| `located_in` | a point (a library, an outlet) to every area it falls in | 1 and 1 |
+
+**Two weights, chosen by the value (D-121).** Population shares answer
+representation ("how much of this town does this district's legislator
+represent"); household shares answer values counted in households. A reader
+never picks one: a value uses the weight named by its indicator's
+`rests_on.counts` (households -> `weight_households`, persons ->
+`weight_population`), and representation uses `weight_population`. A town
+with no households has a null household share with `weight_reason:
+zero_households`, never 0. Housing units are not used: Maine's seasonal homes
+are counted as vacant housing and would give summer camps the weight of
+year-round towns.
 
 A point inside two districts has a `located_in` edge to each, so it counts in
 both (Sprint 06 test).
@@ -76,7 +94,9 @@ one; the `from` end of a `located_in` edge is a feature in a declared layer.
 These are tested where the tables are built (Sprint 04):
 
 - Every town has exactly one `contains` edge from its county.
-- A town's `overlaps` weights across one chamber's districts sum to 1.
+- A town's `overlaps` weights across one chamber's districts sum to 1, for each
+  basis separately; a null household share is excluded from the sum and the
+  town carries the `zero_households` flag.
 - Every district touches at least one town.
 - Both ends of every `contains` and `overlaps` edge, and the `to` end of every
   `located_in` edge, exist in `places`; the `from` end of every `located_in`
@@ -110,14 +130,14 @@ catalog is their union across plots.
 
 | ID | Question | Decided in |
 | --- | --- | --- |
-| G-1 | The weight basis for `overlaps`: population, households, or housing units | Sprint 04 |
-| G-2 | How MEGIS civil divisions join Census subdivisions where the two disagree | Sprint 04 |
 
 ## Decided in review
 
 | ID | Decision |
 | --- | --- |
 | G-3 | Points stay out of `places`; they are named by layer and feature id inside their `located_in` edges (D-103) |
+| G-1 | Both population and household weights on every `overlaps` edge; the value's `rests_on.counts` chooses (D-121) |
+| G-2 | MEGIS civil divisions join Census towns through blocks: each 2020 block goes to the division containing its internal point (D-122) |
 
 ## Review
 

@@ -958,3 +958,316 @@
     field: fetched_at
     value: '''2026-11-11T01:30:09.629630+00:00'''
     reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:11:30.856367+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: acs_sldl_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 151 state legislative district
+      (lower chamber)(s); vintage 2020-2024 (5-year estimates); 24 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state legislative district (lower chamber)
+      within:
+        state: '23'
+      indicators:
+      - cii_broadband
+      - limited_english_households
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 151
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,C16002_004E,C16002_007E,C16002_010E,C16002_013E,C16002_001E,C16002_004M,C16002_007M,C16002_010M,C16002_013M,C16002_001M,B25071_001E,B25070_001E,B25070_011E,B25071_001M,B25070_001M,B25070_011M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: state legislative district (lower chamber):*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T02:11:30.012176+00:00'
+  - dataset: acs_sldl_2024
+    field: fetched_at
+    value: '''2026-11-11T02:11:30.013713+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_sldu_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 35 state legislative district
+      (upper chamber)(s); vintage 2020-2024 (5-year estimates); 24 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state legislative district (upper chamber)
+      within:
+        state: '23'
+      indicators:
+      - cii_broadband
+      - limited_english_households
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 35
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,C16002_004E,C16002_007E,C16002_010E,C16002_013E,C16002_001E,C16002_004M,C16002_007M,C16002_010M,C16002_013M,C16002_001M,B25071_001E,B25070_001E,B25070_011E,B25071_001M,B25070_001M,B25070_011M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: state legislative district (upper chamber):*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T02:11:30.781155+00:00'
+  - dataset: acs_sldu_2024
+    field: fetched_at
+    value: '''2026-11-11T02:11:30.782707+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:11:40.193679+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: governance_unit_sldl_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 9.8 MB from ArcGIS REST ~ using layer 6; 151 features
+      in 1 page(s)
+  - dataset: governance_unit_sldl_2024
+    field: fetched_at
+    value: '''2026-11-11T02:11:37.140094+00:00'''
+    reason: Cache timestamp updated
+  - dataset: governance_unit_sldu_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 5.8 MB from ArcGIS REST ~ using layer 5; 35 features
+      in 1 page(s)
+  - dataset: governance_unit_sldu_2024
+    field: fetched_at
+    value: '''2026-11-11T02:11:40.121658+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:22:04.397816+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 2
+  changes_failed: 0
+  changes:
+  - dataset: blocks_2020_counts
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 47138 block(s); vintage 2020
+      Census (decennial count); 3 variable(s); fetched 16 county(ies) one at a time
+    provenance:
+      provider: census_acs
+      dataset: dec/pl
+      year: 2020
+      vintage_window: 2020 Census (decennial count)
+      geography: block
+      within:
+        state: '23'
+        county: '*'
+        tract: '*'
+      indicators: []
+      variables_requested:
+      - P1_001N
+      - H1_001N
+      - H1_002N
+      variables_returned:
+      - P1_001N
+      - H1_001N
+      - H1_002N
+      variables_not_returned: []
+      n_units: 47138
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2020/dec/pl
+        params:
+          get: NAME,P1_001N,H1_001N,H1_002N
+          for: block:*
+          in: state:23 county:* tract:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T02:22:04.337066+00:00'
+  - dataset: blocks_2020_counts
+    field: fetched_at
+    value: '''2026-11-11T02:22:04.346306+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:22:15.875537+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 2
+  changes_failed: 0
+  changes:
+  - dataset: blocks_2020_points
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 8.1 MB from ArcGIS REST ~ using layer 12; 47138 features
+      in 24 page(s)
+  - dataset: blocks_2020_points
+    field: fetched_at
+    value: '''2026-11-11T02:22:15.825764+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:22:19.836911+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 6
+  changes_failed: 0
+  changes:
+  - dataset: baf_2020_me
+    field: available
+    value: 'true'
+    reason: Acquired via Downloaded 1.1 MB
+  - dataset: baf_2020_me
+    field: fetched_at
+    value: '''2026-11-11T02:22:17.619946+00:00'''
+    reason: Cache timestamp updated
+  - dataset: bef_2024_sldl
+    field: available
+    value: 'true'
+    reason: Acquired via Downloaded 24.8 MB
+  - dataset: bef_2024_sldl
+    field: fetched_at
+    value: '''2026-11-11T02:22:18.646098+00:00'''
+    reason: Cache timestamp updated
+  - dataset: bef_2024_sldu
+    field: available
+    value: 'true'
+    reason: Acquired via Downloaded 23.5 MB
+  - dataset: bef_2024_sldu
+    field: fetched_at
+    value: '''2026-11-11T02:22:19.684640+00:00'''
+    reason: Cache timestamp updated
+- timestamp: '2026-11-11T02:22:22.259264+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 4
+  changes_failed: 0
+  changes:
+  - dataset: tribal_reservations_2020
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 0.4 MB from ArcGIS REST ~ using layer 38; 4 features
+      in 1 page(s)
+  - dataset: tribal_reservations_2020
+    field: fetched_at
+    value: '''2026-11-11T02:22:21.639966+00:00'''
+    reason: Cache timestamp updated
+  - dataset: tribal_trust_lands_2020
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched 0.4 MB from ArcGIS REST ~ using layer 39; 4 features
+      in 1 page(s)
+  - dataset: tribal_trust_lands_2020
+    field: fetched_at
+    value: '''2026-11-11T02:22:22.160597+00:00'''
+    reason: Cache timestamp updated

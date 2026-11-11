@@ -46,6 +46,75 @@ types:
     resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Features clipped to a study boundary.
 
+  census_block_counts:
+    category: tabular
+    format: parquet
+    description: >
+      2020 Census tabulation blocks with their redistricting counts (P.L.
+      94-171): P1_001N persons, H1_001N housing units, H1_002N occupied units,
+      which are households. The weights of every overlaps edge (D-121).
+    resolution_tier: public   # PROPOSED (Sprint 04): Census counts, U.S. government work. For Person 3 to confirm
+
+  census_block_points:
+    category: vector
+    format: geojson
+    description: >
+      2020 Census tabulation blocks as their internal points (INTPTLAT,
+      INTPTLON), from the Census 2020 block layer, never the current one: the
+      block equivalency files use original 2020 blocks. Geometry may be null;
+      the point is in the attributes.
+    resolution_tier: public   # PROPOSED (Sprint 04): Census geography. For Person 3 to confirm
+
+  block_assignment:
+    category: tabular
+    format: csv
+    description: >
+      A Census file assigning each 2020 block to a unit: a county subdivision,
+      a tribal area, a legislative district. Read from the zip it arrives in.
+    resolution_tier: public   # PROPOSED (Sprint 04): Census files. For Person 3 to confirm
+
+  census_tribal_area:
+    category: vector
+    format: geojson
+    description: >
+      A federal American Indian reservation or off-reservation trust land, as
+      the Census Bureau records it (D-123). The Census's legal areas only;
+      its statistical areas are not used. Not the nations' own description of
+      their lands, which is `sovereign_boundary` and leaves only with consent.
+    resolution_tier: public   # D-123: a qualified Census view (MP-72); the note below must travel with it
+    required_context:
+      - id: census_tribal_area
+        text: >
+          This boundary is the U.S. Census Bureau's, not the nation's own.
+          Estimates for small areas are uncertain. The nations' own data would
+          describe these places on their own terms, and this view does not.
+
+  block_spine:
+    category: tabular
+    format: parquet
+    description: >
+      One row per 2020 Census block: its persons, housing units and
+      households, and the county, town, House and Senate district (2024) and
+      Census tribal area it belongs to. Every overlaps edge is a sum over it.
+    resolution_tier: public   # PROPOSED (Sprint 04): Census counts and assignments. For Person 3 to confirm
+
+  block_division_assignment:
+    category: tabular
+    format: parquet
+    description: >
+      Each 2020 block's civil division, by the division containing its
+      internal point (D-122). How MEGIS divisions join the graph.
+    resolution_tier: public   # PROPOSED (Sprint 04). Inherits its polygons' license at the gate (rule 10)
+
+  place_edges:
+    category: tabular
+    format: parquet
+    description: >
+      The geography graph's edges (Contract 3): contains, overlaps and
+      located_in, each overlap with weight_population and weight_households
+      (D-121), its source and vintage.
+    resolution_tier: public   # PROPOSED (Sprint 04). For Person 3 to confirm
+
   governance_unit:
     category: vector
     format: geojson

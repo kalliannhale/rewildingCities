@@ -1055,3 +1055,55 @@ primitives:
       fuzzy: {type: boolean, default: true}
       fuzzy_cutoff: {type: number, default: 0.8}
 
+  # ── the geography graph (Sprint 04, Contract 3) ───────────────────────────
+  build_block_spine:
+    path: transform/build_block_spine.py
+    version: 1.0.0
+    description: >
+      One row per 2020 block with its counts (P.L. 94-171) and its town and
+      tribal area (2020 block assignment file) and House and Senate district
+      (2024 block equivalency files; the 2020 file's districts predate 2021
+      and are never read). Refuses a block with no assignment or two.
+    inputs:
+      - {name: counts, semantic_types: [census_block_counts], required: true}
+      - {name: baf, semantic_types: [block_assignment], required: true}
+      - {name: bef_sldl, semantic_types: [block_assignment], required: true}
+      - {name: bef_sldu, semantic_types: [block_assignment], required: true}
+    outputs: {semantic_type: block_spine, data_category: tabular}
+    params:
+      state_fips: {type: string, required: true}
+
+  assign_blocks_to_polygons:
+    path: transform/assign_blocks_to_polygons.py
+    version: 1.0.0
+    description: >
+      Each block to the polygon containing its internal point (D-122). A
+      point in no polygon is counted and left unassigned; one in two is
+      refused by name.
+    inputs:
+      - {name: points, semantic_types: [census_block_points], required: true}
+      - {name: polygons, semantic_types: [governance_unit], required: true}
+    outputs: {semantic_type: block_division_assignment, data_category: tabular}
+    params:
+      key_field: {type: string, required: true}
+      output_name: {type: string, default: division}
+
+  build_place_edges:
+    path: transform/build_place_edges.py
+    version: 1.0.0
+    description: >
+      The graph's edges from the block spine: contains from GEOID nesting;
+      overlaps from block sums with both weights (D-121), each chamber and
+      tribal areas under their own authority (GRAPH-1). Refuses a town in two
+      counties, or shares that do not sum to 1 per chamber and basis.
+    inputs:
+      - {name: spine, semantic_types: [block_spine], required: true}
+      - {name: divisions, semantic_types: [block_division_assignment], required: false}
+    outputs: {semantic_type: place_edges, data_category: tabular}
+    params:
+      state_fips: {type: string, required: true}
+      vintages: {type: object, required: true}
+      division_authority: {type: string, default: megis}
+    preconditions:
+      - no_unresolved_critical: true
+

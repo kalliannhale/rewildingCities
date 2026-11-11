@@ -1,0 +1,54 @@
+# ============================================================================
+# garden/methods/information/geography_graph.yml
+# ============================================================================
+# a preparation method (D-98): Maine's places and the relationships between
+# them, built from 2020 Census blocks so every share is a count of people and
+# households, never of area (Contract 3, D-121, D-122). ~
+# ============================================================================
+
+id: geography_graph
+domain: information
+kind: preparation
+name: "The Geography Graph"
+
+description: >
+  Builds the edges of the geography graph from whole 2020 Census blocks. A
+  town contains in its county; it overlaps each House and Senate district and
+  Census tribal area it touches, with the share of its people and of its
+  households inside each; and each of Maine's own civil divisions overlaps the
+  Census towns its blocks fall in. Districts come from the 2024 block
+  equivalency files, which match the ACS 2020-2024 values; the 2020 block
+  assignment file's districts predate the 2021 redistricting and are not read.
+
+requires_data:
+  - {name: counts, type: tabular, semantic_types: [census_block_counts], critical: true, as_acquired: true,
+     role: "Persons and households per block, the weights of every overlap.",
+     uncertainty_without: "No shares can be computed."}
+  - {name: assignments, type: tabular, semantic_types: [block_assignment], critical: true, as_acquired: true,
+     role: "Which town, district and tribal area each block belongs to.",
+     uncertainty_without: "No edges can be built."}
+  - {name: points, type: vector, semantic_types: [census_block_points], critical: false, as_acquired: true,
+     role: "Block internal points, to place blocks in Maine's own civil divisions (D-122).",
+     uncertainty_without: "Maine's civil divisions stay outside the graph; Census towns are unaffected."}
+  - {name: divisions, type: vector, semantic_types: [governance_unit], critical: false,
+     role: "Maine's civil divisions (MEGIS), dissolved to one feature each.",
+     uncertainty_without: "As above."}
+
+choices: {}
+
+requires_primitives:
+  - soil/build_block_spine
+  - soil/assign_blocks_to_polygons
+  - soil/build_place_edges
+
+produces:
+  semantic_type: place_edges
+  data_category: tabular
+  description: The graph's edges, with both weights, sources and vintages.
+
+interpretation: >
+  A share is of a place's people or households, never of its land. A
+  district's value comes from the ACS's own district estimate; these shares
+  say which towns a district touches and how much of each, so a district is
+  always shown with its towns' range (Contract 3). A null share with a reason
+  means the place has no people or no households, not a share of zero.

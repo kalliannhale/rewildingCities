@@ -445,3 +445,181 @@ datasets:
     provenance:
       source: U.S. Census Bureau, TIGERweb
       authority: us_census_tiger
+
+  # ── the legislative districts (Sprint 04) ─────────────────────────────────
+  # ACS 2020-2024 is tabulated on the 2024 districts, so the boundaries are
+  # declared at 2024 too (layers 5 and 6), never at TIGERweb's current default.
+
+  acs_sldl_2024:
+    available: true
+    fetched_at: '2026-11-11T02:11:30.013713+00:00'
+    description: ACS 2020-2024 estimates for Maine's 151 House districts
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state legislative district (lower chamber)
+      within: {state: '23'}
+      indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
+    cache: {path: .data/acs_sldl_2024.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, authority: us_census_acs}
+
+  acs_sldu_2024:
+    available: true
+    fetched_at: '2026-11-11T02:11:30.782707+00:00'
+    description: ACS 2020-2024 estimates for Maine's 35 Senate districts
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state legislative district (upper chamber)
+      within: {state: '23'}
+      indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
+    cache: {path: .data/acs_sldu_2024.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, authority: us_census_acs}
+
+  governance_unit_sldl_2024:
+    available: true
+    fetched_at: '2026-11-11T02:11:37.140094+00:00'
+    description: Maine House district boundaries, 2024 legislative session year
+    semantic_type: governance_unit
+    license: us_government_work   # D-116
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer
+      layer: 6
+      query_params: {where: "STATE='23'", outFields: '*', outSR: 4326, limit: 200}
+    cache: {path: .data/maine_sldl_2024.geojson, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+
+  governance_unit_sldu_2024:
+    available: true
+    fetched_at: '2026-11-11T02:11:40.121658+00:00'
+    description: Maine Senate district boundaries, 2024 legislative session year
+    semantic_type: governance_unit
+    license: us_government_work   # D-116
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Legislative/MapServer
+      layer: 5
+      query_params: {where: "STATE='23'", outFields: '*', outSR: 4326, limit: 200}
+    cache: {path: .data/maine_sldu_2024.geojson, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+
+  # ── the block spine (Sprint 04, Part 1b) ──────────────────────────────────
+  # every overlaps edge is built from 2020 blocks: their counts (weights,
+  # D-121), their internal points (MEGIS, D-122), and the Census files that
+  # assign each block to a district, a town and a tribal area. districts come
+  # from the 2024 block equivalency files, never the 2020 assignment files,
+  # which predate Maine's 2021 redistricting.
+
+  blocks_2020_counts:
+    available: true
+    fetched_at: '2026-11-11T02:22:04.346306+00:00'
+    description: 2020 Census blocks in Maine with persons, housing units and households (P.L. 94-171)
+    semantic_type: census_block_counts
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: dec/pl
+      year: 2020
+      geography: block
+      within: {state: '23', county: '*', tract: '*'}
+      variables: [P1_001N, H1_001N, H1_002N]
+    cache: {path: .data/blocks_2020_counts.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, 2020 Census Redistricting Data, authority: us_census_decennial}
+
+  blocks_2020_points:
+    available: true
+    fetched_at: '2026-11-11T02:22:15.825764+00:00'
+    description: 2020 Census blocks in Maine as internal points, from the Census 2020 block layer
+    semantic_type: census_block_points
+    license: us_government_work   # D-116
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer
+      layer: 12
+      query_params: {where: "STATE='23'", outFields: "GEOID,INTPTLAT,INTPTLON,POP100,HU100,LWBLKTYP", outSR: 4326, limit: 2000, returnGeometry: "false"}
+    cache: {path: .data/blocks_2020_points.geojson, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+
+  baf_2020_me:
+    available: true
+    fetched_at: '2026-11-11T02:22:17.619946+00:00'
+    description: 2020 Census block assignment files for Maine (towns and tribal areas are read; its districts predate 2021 and are not)
+    semantic_type: block_assignment
+    license: us_government_work   # D-116
+    format: zip
+    source: {type: url, url: "https://www2.census.gov/geo/docs/maps-data/data/baf2020/BlockAssign_ST23_ME.zip"}
+    cache: {path: .data/baf_2020_me.zip, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, Block Assignment Files, authority: us_census_decennial}
+
+  bef_2024_sldl:
+    available: true
+    fetched_at: '2026-11-11T02:22:18.646098+00:00'
+    description: 2024 House district block equivalency file (national; Maine's rows are read)
+    semantic_type: block_assignment
+    license: us_government_work   # D-116
+    format: zip
+    source: {type: url, url: "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/2024-state-legislative-bef/sldl24.zip"}
+    cache: {path: .data/bef_2024_sldl.zip, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, Redistricting Data Office, authority: us_census_decennial}
+
+  bef_2024_sldu:
+    available: true
+    fetched_at: '2026-11-11T02:22:19.684640+00:00'
+    description: 2024 Senate district block equivalency file (national; Maine's rows are read)
+    semantic_type: block_assignment
+    license: us_government_work   # D-116
+    format: zip
+    source: {type: url, url: "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/2024-state-legislative-bef/sldu24.zip"}
+    cache: {path: .data/bef_2024_sldu.zip, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, Redistricting Data Office, authority: us_census_decennial}
+
+  tribal_reservations_2020:
+    available: true
+    fetched_at: '2026-11-11T02:22:21.639966+00:00'
+    description: Federal American Indian reservations, Census 2020 vintage, within Maine's bounding box (D-123)
+    semantic_type: census_tribal_area
+    license: us_government_work   # D-116
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/AIANNHA/MapServer
+      layer: 38
+      query_params: {where: "1=1", outFields: "*", outSR: 4326, limit: 200, geometry: "-71.1,42.9,-66.9,47.5", geometryType: esriGeometryEnvelope, inSR: 4326, spatialRel: esriSpatialRelIntersects}
+    cache: {path: .data/tribal_reservations_2020.geojson, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+
+  tribal_trust_lands_2020:
+    available: true
+    fetched_at: '2026-11-11T02:22:22.160597+00:00'
+    description: Off-reservation trust lands, Census 2020 vintage, within Maine's bounding box (D-123)
+    semantic_type: census_tribal_area
+    license: us_government_work   # D-116
+    format: geojson
+    source:
+      type: api
+      provider: arcgis_rest
+      endpoint: https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/AIANNHA/MapServer
+      layer: 39
+      query_params: {where: "1=1", outFields: "*", outSR: 4326, limit: 200, geometry: "-71.1,42.9,-66.9,47.5", geometryType: esriGeometryEnvelope, inSR: 4326, spatialRel: esriSpatialRelIntersects}
+    cache: {path: .data/tribal_trust_lands_2020.geojson, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}

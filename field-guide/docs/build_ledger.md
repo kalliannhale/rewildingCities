@@ -531,3 +531,24 @@ their implication and reverse-if cells on GitHub.)
 | **E-6f** | E-6 closed: an experiment that names no curiosity writes that warning into its receipts, once per envelope |
 | **GATE-2** | A choropleth takes its geometry from its layer, but the gate judges the result's lineage, which does not name the layer's datasets. The county map's geometry is from MEGIS (`terms_unknown`). Harmless today, since choropleths do not publish (D-96); the publish door must judge result and layer both |
 | **TST-5** | `tests/test_publish_latch.py` needs pytest fixtures the sandbox shim lacks; its gate paths were hand-run with the same fakes: refused (exit 1, no sign-in), allowed (one upload, allow record written), allowed but uncredentialed (exit 1) |
+
+## SPRINT 04, PARTS 1 AND 2a ~ the geography graph, 2026-11-10
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-121** | Every `overlaps` edge carries `weight_population` and `weight_households`; a value's `rests_on.counts` chooses which applies, and representation uses population. Housing units are not used: Maine's seasonal homes count as vacant housing | The weight always matches what the number counts. A town with no households has a null household share with a reason, never 0 | Never |
+| **D-122** | MEGIS civil divisions join Census towns through blocks: each 2020 block goes to the division containing its internal point (Census 2020 block layer, never the current one) | One mechanism for every overlap; a boundary disagreement shows as a share below 1 | Never |
+| **D-123** | Tribal areas appear as a qualified Census view (MP-72): `census_tribal_area`, public with a required context note, holds only the Census's legal areas (federal reservations, off-reservation trust lands; Census 2020 layers 38 and 39, selected by bounding box, never by name). The nations' own descriptions stay `sovereign_boundary`, custom | Reservation subdivisions in the town data will carry the note at the row level (still to build) | Consultation asks otherwise |
+| **D-124** | Each legislative chamber and tribal areas have their own authority (`us_census_sldl`, `us_census_sldu`, `us_census_aiannh`); counties and towns stay `us_census_geoid` | `(authority, code)` always names one place (GRAPH-1) | Never |
+
+| ID | item |
+| --- | --- |
+| **GRAPH-1** | A Census GEOID is unique only within its level: `23001` is Androscoggin County, House District 1 and Senate District 1. Caught by the share check on its first run |
+| **BAF-1** | The 2020 block assignment files' districts predate Maine's 2021 redistricting. Districts come from the 2024 block equivalency files (sldl24.zip, sldu24.zip), which match ACS 2020-2024's 2024 session-year districts. Maine split no blocks |
+| **VIN-1** | `census_tigerweb.yml` defaulted district layers to vintage 2026; ACS 2024 uses 2024 (layers 5 and 6). The seed now says so |
+| **MEGIS-1** | MEGIS `GEOCODE` is Maine's own numbering, not the Census code (0 of 924 match a GEOID). The manifest's "authoritative MCD code" holds only in Maine's scheme. Three GEOCODEs are a single character |
+| **FUNC-1** | The seed glossed FUNCSTAT F as "a placeholder, often water"; in Maine, F includes the four reservation subdivisions. Corrected |
+| **PEN-1** | Penobscot Indian Island Reservation is two Census subdivisions, 2301957936 and 2300357936, in two counties: one place in `places`, still to build |
+| **BLK-1** | 47 138 blocks in the 2020 redistricting counts and 47 138 in the Census 2020 block layer: the two sources agree |
+| **ACQ-6** | `acquire` calls `as_acquired` sources "never conformed ~ needs an experiment"; raw sources are read as acquired by design (WON-9f) |
+| **CLI-3** | The decennial fetch reports "Fetched from the Census ACS" |

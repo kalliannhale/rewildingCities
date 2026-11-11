@@ -1,0 +1,86 @@
+# ============================================================================
+# plots/maine/preparations/maine_geography_graph.yml
+# ============================================================================
+# a preparation (D-98): Maine's geography graph, from 2020 Census blocks.
+#   blocks  -> the spine (counts, town, 2024 districts, tribal area)
+#   MEGIS   -> repaired, dissolved to 924 divisions, blocks placed by point
+#   spine + divisions -> the edges, with both weights (D-121, D-122)
+# vintages are declared on every edge: towns and tribal areas 2020 (the
+# block assignment file), districts 2024 (the equivalency files that ACS
+# 2020-2024 was tabulated on), divisions MEGIS's METWP24P.
+# ============================================================================
+
+id: maine_geography_graph
+name: "Maine's geography graph, from 2020 Census blocks"
+kind: preparation
+description: >
+  Builds the block spine and the graph's edges: every Census town in its
+  county, its shares in each House and Senate district and Census tribal
+  area, and each of Maine's civil divisions in the Census towns it covers.
+
+method:
+  ref: $methods/information/geography_graph
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: graph_spine
+    primitive: soil/build_block_spine
+    inputs:
+      counts: $manifest.blocks_2020_counts
+      baf: $manifest.baf_2020_me
+      bef_sldl: $manifest.bef_2024_sldl
+      bef_sldu: $manifest.bef_2024_sldu
+    outputs:
+      spine: block_spine
+    params:
+      state_fips: "23"
+
+  - id: graph_repair_towns
+    primitive: soil/repair_geometry
+    inputs:
+      features: $manifest.governance_unit_town
+    outputs:
+      repaired: governance_unit
+    params: {}
+
+  - id: graph_dissolve_towns
+    primitive: soil/dissolve_by_field
+    inputs:
+      features: $steps.graph_repair_towns.repaired
+    outputs:
+      dissolved: governance_unit
+    params:
+      field: GEOCODE
+      keep_fields: [TOWN, COUNTY, CNTYCODE, LURC]
+      drop_blank: true
+
+  - id: graph_divisions
+    primitive: soil/assign_blocks_to_polygons
+    inputs:
+      points: $manifest.blocks_2020_points
+      polygons: $steps.graph_dissolve_towns.dissolved
+    outputs:
+      assignment: block_division_assignment
+    params:
+      key_field: GEOCODE
+
+  - id: graph_edges
+    primitive: soil/build_place_edges
+    inputs:
+      spine: $steps.graph_spine.spine
+      divisions: $steps.graph_divisions.assignment
+    outputs:
+      edges: place_edges
+    params:
+      state_fips: "23"
+      vintages:
+        town: "2020"
+        sldl: "2024"
+        sldu: "2024"
+        aiannh: "2020"
+        division: "MEGIS METWP24P"

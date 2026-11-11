@@ -125,7 +125,26 @@ GEOGRAPHY = {
                                                                       "tract": 6}},
     "block group":       {"parents": ["state", "county", "tract"],
                           "width": {"state": 2, "county": 3, "tract": 6, "block group": 1}},
+    # Sprint 04: the two legislative chambers. The ACS publishes them within
+    # a state, for the legislative session year its estimate year names
+    # (2024 for ACS 2020-2024). A district code is three characters, so the
+    # GEOID is state + district, e.g. 23012 for Maine House District 12,
+    # the same key TIGER's SLDL and SLDU boundaries carry.
+    "state legislative district (upper chamber)": {
+        "parents": ["state"],
+        "width": {"state": 2, "state legislative district (upper chamber)": 3}},
+    "state legislative district (lower chamber)": {
+        "parents": ["state"],
+        "width": {"state": 2, "state legislative district (lower chamber)": 3}},
+    # Sprint 04: 2020 Census tabulation blocks, from the redistricting data
+    # (dec/pl). The API serves blocks one county at a time, so `county: '*'`
+    # is fetched county by county and the rows joined (BLOCKS_BY_COUNTY).
+    "block": {"parents": ["state", "county", "tract"],
+              "width": {"state": 2, "county": 3, "tract": 6, "block": 4}},
 }
+
+# geographies the Census API serves only within one county per request
+BLOCKS_BY_COUNTY = {"block"}
 
 
 class CensusACSProvider(Provider):
@@ -157,6 +176,8 @@ class CensusACSProvider(Provider):
             return f"{year - 2}-{year} (3-year estimates)"
         if dataset.endswith("acs1"):
             return f"{year} (1-year estimates)"
+        if dataset.startswith("dec/"):
+            return f"{year} Census (decennial count)"
         return str(year)
 
     # ── request ────────────────────────────────────────────────────────────
@@ -297,57 +318,82 @@ class CensusACSProvider(Provider):
             notes.append("no API key (set CENSUS_API_KEY); the Census rate-limits "
                          "anonymous requests and may refuse a large one")
 
-        try:
-            logger.info(f"  Census ACS: {url} [{geography}]")
-            resp = requests.get(url, params=params, timeout=180)
-        except Exception as e:
-            return AcquisitionResult(
-                dataset_name=dataset_name, success=False,
-                message=f"Census ACS request failed: {e}")
+        def _request(req_params):
+            try:
+                logger.info(f"  Census ACS: {url} [{geography}]")
+                resp = requests.get(url, params=req_params, timeout=180)
+            except Exception as e:
+                return AcquisitionResult(
+                    dataset_name=dataset_name, success=False,
+                    message=f"Census ACS request failed: {e}")
 
-        # The Census answers a keyless request with HTTP 200 and an HTML page,
-        # so a naive json() call fails with a parse error that says nothing
-        # about the actual problem. Detect it and name the remedy, because a
-        # credential the operator can obtain in two minutes is a different
-        # situation from one somebody has to grant them.
-        if "missing_key" in resp.url or "Missing Key" in resp.text[:400]:
-            return AcquisitionResult(
-                dataset_name=dataset_name, success=False,
-                requires_auth=True,
-                auth_instructions=(
-                    "The Census Bureau requires an API key for this endpoint. Keys are "
-                    "free, issued immediately, and self-service:\n"
-                    "  https://api.census.gov/data/key_signup.html\n"
-                    "Then either export CENSUS_API_KEY in the environment, or declare "
-                    "`api_key` on the source."),
-                message="The Census API requires a key, which has not been supplied.")
+            # The Census answers a keyless request with HTTP 200 and an HTML page,
+            # so a naive json() call fails with a parse error that says nothing
+            # about the actual problem. Detect it and name the remedy, because a
+            # credential the operator can obtain in two minutes is a different
+            # situation from one somebody has to grant them.
+            if "missing_key" in resp.url or "Missing Key" in resp.text[:400]:
+                return AcquisitionResult(
+                    dataset_name=dataset_name, success=False,
+                    requires_auth=True,
+                    auth_instructions=(
+                        "The Census Bureau requires an API key for this endpoint. Keys are "
+                        "free, issued immediately, and self-service:\n"
+                        "  https://api.census.gov/data/key_signup.html\n"
+                        "Then either export CENSUS_API_KEY in the environment, or declare "
+                        "`api_key` on the source."),
+                    message="The Census API requires a key, which has not been supplied.")
 
-        if resp.status_code == 404:
-            return AcquisitionResult(
-                dataset_name=dataset_name, success=False,
-                message=(f"The Census returned 404 for {dataset} {year}. Either the "
-                         f"release is not published yet, or a variable code does not "
-                         f"exist in this vintage. Variable codes change between "
-                         f"releases; check {API_ROOT}/{year}/{dataset}/variables.html"))
+            if resp.status_code == 404:
+                return AcquisitionResult(
+                    dataset_name=dataset_name, success=False,
+                    message=(f"The Census returned 404 for {dataset} {year}. Either the "
+                             f"release is not published yet, or a variable code does not "
+                             f"exist in this vintage. Variable codes change between "
+                             f"releases; check {API_ROOT}/{year}/{dataset}/variables.html"))
 
-        try:
-            resp.raise_for_status()
-        except Exception as e:
-            return AcquisitionResult(
-                dataset_name=dataset_name, success=False,
-                message=f"Census ACS returned {resp.status_code}: {resp.text[:300]}")
+            try:
+                resp.raise_for_status()
+            except Exception as e:
+                return AcquisitionResult(
+                    dataset_name=dataset_name, success=False,
+                    message=f"Census ACS returned {resp.status_code}: {resp.text[:300]}")
 
-        # A non-JSON body here means the request was malformed in a way the
-        # Census answers in prose. Report the prose rather than a parse error.
-        try:
-            rows = resp.json()
-        except ValueError:
-            return AcquisitionResult(
-                dataset_name=dataset_name, success=False,
-                message=(f"The Census returned a non-JSON response "
-                         f"(content-type {resp.headers.get('content-type')}). This is "
-                         f"usually an unknown variable code or a malformed geography.\n"
-                         f"  body begins: {resp.text[:300]}"))
+            # A non-JSON body here means the request was malformed in a way the
+            # Census answers in prose. Report the prose rather than a parse error.
+            try:
+                rows = resp.json()
+            except ValueError:
+                return AcquisitionResult(
+                    dataset_name=dataset_name, success=False,
+                    message=(f"The Census returned a non-JSON response "
+                             f"(content-type {resp.headers.get('content-type')}). This is "
+                             f"usually an unknown variable code or a malformed geography.\n"
+                             f"  body begins: {resp.text[:300]}"))
+            return rows
+
+        within = dict(source_config.get("within") or {})
+        if geography in BLOCKS_BY_COUNTY and within.get("county") == "*":
+            # one county at a time, as the API requires for blocks. the county
+            # list comes from the same release, so no county is assumed.
+            counties = _request({"get": "NAME", "for": "county:*",
+                                 "in": f"state:{within['state']}",
+                                 **({"key": params["key"]} if "key" in params else {})})
+            if isinstance(counties, AcquisitionResult):
+                return counties
+            ci = counties[0].index("county")
+            rows = None
+            for c in sorted(r[ci] for r in counties[1:]):
+                part = _request({**params, "in": " ".join(
+                    f"{k}:{c if k == 'county' else v}" for k, v in within.items())})
+                if isinstance(part, AcquisitionResult):
+                    return part
+                rows = part if rows is None else rows + part[1:]
+            notes.append(f"fetched {len(counties) - 1} county(ies) one at a time")
+        else:
+            rows = _request(params)
+            if isinstance(rows, AcquisitionResult):
+                return rows
 
         if not rows or len(rows) < 2:
             return AcquisitionResult(
