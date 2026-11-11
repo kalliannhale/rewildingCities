@@ -1032,3 +1032,7 @@ Findings and wrong hypotheses:
 - The DOJ safe harbor (2002) is per language group and counts persons: min(5%, 1,000) of those eligible to be served, with a 50-person carve-out. It is guidance for federal funding recipients, not a right, and the seed must say so.
 - The PIAAC Skills Map gives county-level hierarchical Bayes estimates of adult literacy and numeracy (ages 16 to 74) for every county, from pooled 2012/14/17 data; a copy is preserved on DataLumos (2026-04-19). County is its finest grain, so a town profile shows it as its county's.
 - Contract 4 at 0.2 predated Sprint 05: it named the publisher authority, knew no whole, split or firm ranges, and called the profile a PlotReading. 0.3 fixes all three.
+
+## garden/experiments/in-the-cloud removed, 2026-11-11
+
+Kalli removed garden/experiments/in-the-cloud/ from the repo: a vendored pyyaml (twice, with compiled cpython-313-darwin .so files), validator.zip, a Lambda validator, deploy scripts and an early Terraform pipeline. Not needed, and not fit for a public repo. The infrastructure work lives in terraform/ and canopy/terraform/ (Sprints 07 and 10). The files remain in git history; nothing in them was found to be a secret.

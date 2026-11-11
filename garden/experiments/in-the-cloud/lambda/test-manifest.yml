@@ -1,5 +1,0 @@
-city:
-  name: "Atlanta"
-  id: "atl"
-crs:
-  working: "EPSG:4326"
