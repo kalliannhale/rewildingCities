@@ -38,7 +38,10 @@ def test_a_list_of_indicators_resolves_element_by_element():
     out = resolver().resolve_param_value(
         ["$indicators.cii_broadband", "$indicators.cii_rent_burden"])
     assert [d["id"] for d in out] == ["cii_broadband", "cii_rent_burden"]
-    assert out[1]["derivation"] == {"kind": "passthrough", "column": "B25071_001E"}
+    # rent burden declares where its open-ended categories begin (ACS-7), and
+    # the declaration resolves whole, edges included (REF-1)
+    assert out[1]["derivation"] == {"kind": "passthrough", "column": "B25071_001E",
+                                    "open_ended": {"lower": 10.0, "upper": 50.0}}
 
 
 def test_the_hash_changes_when_the_declaring_file_changes(tmp_path):

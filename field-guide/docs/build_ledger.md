@@ -468,3 +468,7 @@ number.
 **LESSON** ~ `grep -r` over `plots` crawls the binaries in `.data` and looks stalled. Scope it with `--include="*.yml"`.
 
 **LESSON** ~ The ledger had no trailing newline, so a block appended with `cat >>` would join its last row. A ledger block starts with a newline.
+
+| ID | item |
+| --- | --- |
+| **REF-1** | `test_indicator_references.py` expected rent burden's derivation without `open_ended`, which ACS-7 added to its declaration. It failed at 37e89ad, before step 3, so step 2's "green" carried one known red. Fixed by expecting the declaration as it stands. A red test left standing hides the next one behind it |
