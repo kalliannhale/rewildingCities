@@ -965,3 +965,16 @@ roots/indicators/weighted_index.R: every pillar and composite row carries unit_a
 | **D-190** | SEAM-1: an index carries its units' unit_authority, ids it index:authority:code, and refuses to rank units of more than one authority, or of none. Option A of fork 6d, widened from the id alone when the code showed the rows carried no authority at all; Claude's proposal, accepted by Kalli | A row without its authority cannot be joined to a place, so fixing the id alone would put an authority in the id that the row does not hold; and ranking counties beside districts compares units never measured beside each other. With no index receipts in Maine, it costs no rerun now | A composite across levels is wanted on purpose; then it is a new method, not this one |
 
 Change 15, completed: d355aba committed the ledger entry for change 15 without its code, as fdc8c20 did for change 12. A long paste broke partway, and zsh discards a whole pasted buffer when it is cancelled, so neither file block ran. Found by the commit's own summary, 1 file changed. This commit carries weighted_index.R and tests/test_index_r_oracle.py as the entry describes; 531 tests pass. From here, every commit block is guarded, committing only if the code files it names have changed, and every file is pasted on its own.
+
+### Build 6, MAP-4 decided, and build 6 closed (D-191)
+
+A map layer is a source like any table, so D-189's rule answers MAP-4: the layer declares whose codes it holds and where. With this, every key the grove will federate is decided: NAME-2 (D-186, D-187), AUTH-1 (D-188), SRC-1 (D-189), SEAM-1 (D-190) and MAP-4 (D-191).
+
+| ID | Decision | Why | Revisit when |
+| --- | --- | --- | --- |
+| **D-191** | MAP-4: a map layer source declares its unit_authority and the property holding its codes, as D-189 has indicator sources declare theirs; map.py joins a table's (unit_authority, unit_code) to the layer that declares that authority, and _UNIT_KEYS goes away. Option B of fork 6e, Claude's lean, chosen by Kalli | One rule for every source, table or layer; map.py would otherwise hold a seventh copy of authority knowledge outside D-188's test. District maps were waiting on the publish door anyway | A layer holds codes under more than one authority; then it is two layers |
+
+| ID | Open item | Defined |
+| --- | --- | --- |
+| **LAYER-1** | Build D-191: unit_authority and the key property on every layer source, in NAME-4's sweep with SRC-2; map.py's join by declared authority, with the publish door (Sprint 08). Verify the district layers' property names on real data first | build 6 |
+| **LEDGER-3** | MAP-4 names two entries: Sprint 02's county map check and Sprint 04's _UNIT_KEYS gap, which D-191 settles. An ID used twice is a ledger fault; a later reference to MAP-4 must say which one | build 6 |
