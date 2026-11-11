@@ -81,7 +81,7 @@ def _run_primitive(tmp_path, source_path, declarations, reliability=None,
     inputs.write_text(json.dumps({"source": str(source_path)}))
     params.write_text(json.dumps({
         "indicators": declarations, "spatial_unit": "county",
-        "time": "2020-2024 (5-year estimates)", "authority": "us_census_acs",
+        "time": "2020-2024 (5-year estimates)", "published_by": "us_census_acs",
         "joins_to": "governance_unit",
         **({"unit_authority": unit_authority} if unit_authority is not None else {}),
         **({"reliability": reliability} if reliability else {}),
@@ -111,7 +111,7 @@ def test_r_agrees_with_the_preview_exactly(tmp_path, fixture_source):
     r_rows = pd.read_parquet(out)
 
     for ind_id in IDS:
-        py_rows, _ = ip.derive(frame, reg.get(ind_id), unit_authority=GEOID, authority=None, time=None,
+        py_rows, _ = ip.derive(frame, reg.get(ind_id), unit_authority=GEOID, published_by=None, time=None,
                                reliability=RULE)
         mine = r_rows[r_rows["indicator"] == ind_id].reset_index(drop=True)
         assert len(mine) == len(py_rows), ind_id
@@ -232,7 +232,7 @@ def test_a_unit_column_not_named_geoid_reads_the_same_in_both(tmp_path, fixture_
     assert response["status"] == "success", (response, proc.stderr)
     r_rows = pd.read_parquet(out)
     py_rows, _ = ip.derive(renamed, reg.get("cii_broadband"), unit_authority="us_census_sldl",
-                           authority=None, time=None, unit_column="DISTRICT",
+                           published_by=None, time=None, unit_column="DISTRICT",
                            name_column="LABEL")
     assert list(r_rows["unit_code"]) == [p["unit"]["code"] for p in py_rows]
     assert list(r_rows["name"]) == [p["name"] for p in py_rows]

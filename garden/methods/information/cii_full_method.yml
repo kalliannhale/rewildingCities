@@ -109,7 +109,7 @@ recipe:
       indicators: $weighting.cii_2026_equal_chips.components
       spatial_unit: $choices.aggregation_unit_level
       time: $source.vintage
-      authority: $source.authority
+      published_by: $source.authority
       # whose codes name the units (D-131). every grain this method offers is
       # a Census GEOID level; a district option would need this line to change
       unit_authority: us_census_geoid

@@ -81,7 +81,7 @@ PLACES = pd.DataFrame([
 def value(authority, code, v, indicator="cii_broadband"):
     return {"measurement_id": f"{indicator}:{authority}:{code}", "unit_authority": authority,
             "unit_code": code, "indicator": indicator, "value": v,
-            "authority": "us_census_acs", "time": ACS_2024}
+            "published_by": "us_census_acs", "time": ACS_2024}
 
 
 def a_plot(tmp_path):

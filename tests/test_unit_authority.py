@@ -41,32 +41,32 @@ def frame(**rename):
 @pytest.mark.parametrize("ua", ["us_census_geoid", "us_census_sldl", "us_census_sldu",
                                 "us_census_aiannh", "megis"])
 def test_each_of_contract_3s_authorities_is_written_on_every_row(ua):
-    rows, _ = ip.derive(frame(), broadband(), unit_authority=ua, authority=None, time=None)
+    rows, _ = ip.derive(frame(), broadband(), unit_authority=ua, published_by=None, time=None)
     assert {r["unit"]["authority"] for r in rows} == {ua}
 
 
 @pytest.mark.parametrize("ua", [None, "", "   "])
 def test_an_empty_unit_authority_is_refused_by_name(ua):
     with pytest.raises(ip.PreviewError, match="unit_authority"):
-        ip.derive(frame(), broadband(), unit_authority=ua, authority=None, time=None)
+        ip.derive(frame(), broadband(), unit_authority=ua, published_by=None, time=None)
 
 
 def test_an_unknown_unit_authority_is_refused_by_name():
     with pytest.raises(ip.PreviewError, match="us_census_sdll"):
         ip.derive(frame(), broadband(), unit_authority="us_census_sdll",
-                  authority=None, time=None)
+                  published_by=None, time=None)
 
 
 def test_derive_and_preview_have_no_default():
     with pytest.raises(TypeError, match="unit_authority"):
-        ip.derive(frame(), broadband(), authority=None, time=None)
+        ip.derive(frame(), broadband(), published_by=None, time=None)
     with pytest.raises(TypeError, match="unit_authority"):
         ip.preview("test", "cii_broadband")
 
 
 def test_the_unit_and_name_columns_are_read_as_declared():
     rows, _ = ip.derive(frame(GEOID="DISTRICT", NAME="LABEL"), broadband(),
-                        unit_authority="us_census_sldl", authority=None, time=None,
+                        unit_authority="us_census_sldl", published_by=None, time=None,
                         unit_column="DISTRICT", name_column="LABEL")
     assert [r["unit"]["code"] for r in rows] == ["23001", "23003"]
     assert [r["name"] for r in rows] == ["one", "three"]
@@ -75,26 +75,26 @@ def test_the_unit_and_name_columns_are_read_as_declared():
 def test_a_missing_unit_column_is_refused_by_name():
     with pytest.raises(ip.PreviewError, match="DISTRICT"):
         ip.derive(frame(), broadband(), unit_authority="us_census_sldl",
-                  authority=None, time=None, unit_column="DISTRICT")
+                  published_by=None, time=None, unit_column="DISTRICT")
 
 
 def test_padding_restores_lost_zeros_and_refuses_what_it_would_invent():
     f = frame()
     f["GEOID"] = ["3001", "3003"]
     rows, _ = ip.derive(f, broadband(), unit_authority="us_census_geoid",
-                        authority=None, time=None, unit_pad=5)
+                        published_by=None, time=None, unit_pad=5)
     assert [r["unit"]["code"] for r in rows] == ["03001", "03003"]
     f["GEOID"] = ["3001", "230031"]
     with pytest.raises(ip.PreviewError, match="wider than 5"):
         ip.derive(f, broadband(), unit_authority="us_census_geoid",
-                  authority=None, time=None, unit_pad=5)
+                  published_by=None, time=None, unit_pad=5)
 
 
 def test_a_repeated_unit_code_is_refused_as_the_r_refuses_it():
     f = frame()
     f["GEOID"] = ["23001", "23001"]
     with pytest.raises(ip.PreviewError, match="more than once"):
-        ip.derive(f, broadband(), unit_authority="us_census_geoid", authority=None, time=None)
+        ip.derive(f, broadband(), unit_authority="us_census_geoid", published_by=None, time=None)
 
 
 def test_the_cli_requires_the_flag(capsys):

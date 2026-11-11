@@ -111,7 +111,7 @@ def test_ratio_is_exact_at_full_precision(repo):
     assert row["value"] == (1000 / 1200) * 100
     assert row["method"] == "preview:ratio"
     assert row["time"] == "2020-2024 (5-year estimates)"
-    assert row["authority"] == "us_census_acs"
+    assert row["published_by"] == "us_census_acs"
     assert row["unit"] == {"authority": "us_census_geoid", "code": "23005"}
 
 

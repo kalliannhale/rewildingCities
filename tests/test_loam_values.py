@@ -39,7 +39,7 @@ PLACES = pd.DataFrame([
 def value(authority, code, indicator="cii_broadband", time=ACS_2024, publisher="us_census_acs",
           v=90.0):
     return {"measurement_id": f"{indicator}:{authority}:{code}", "unit_authority": authority,
-            "unit_code": code, "indicator": indicator, "value": v, "authority": publisher,
+            "unit_code": code, "indicator": indicator, "value": v, "published_by": publisher,
             "time": time}
 
 

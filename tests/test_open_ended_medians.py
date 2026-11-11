@@ -102,7 +102,7 @@ def _frame(with_annotation=True):
 
 def test_open_ended_medians_become_bounds():
     ind = IndicatorRegistry.load(SEEDS).get("cii_rent_burden")
-    rows, notes = ip.derive(_frame(), ind, unit_authority=GEOID, authority=None, time=None)
+    rows, notes = ip.derive(_frame(), ind, unit_authority=GEOID, published_by=None, time=None)
     by = {r["unit"]["code"]: r for r in rows}
 
     assert by["13141"]["bound"] == "50.0 or more"
@@ -128,7 +128,7 @@ def test_open_ended_medians_become_bounds():
 
 def test_without_the_annotation_column_the_edges_cannot_be_used():
     ind = IndicatorRegistry.load(SEEDS).get("cii_rent_burden")
-    rows, notes = ip.derive(_frame(with_annotation=False), ind, unit_authority=GEOID, authority=None, time=None)
+    rows, notes = ip.derive(_frame(with_annotation=False), ind, unit_authority=GEOID, published_by=None, time=None)
     assert all(r["bound"] is None for r in rows)
     assert all(r["moe_status"] != "open_ended" for r in rows)
     assert any("re-acquire" in n for n in notes)

@@ -11,8 +11,8 @@
 # so on every row. D-33.
 #
 # Output is long-form: one row per (unit, indicator), carrying the
-# measurement tuple (unit, indicator, value, authority, method, time)
-# so a second authority's claim about the same county can sit beside
+# measurement tuple (unit, indicator, value, published_by, method, time)
+# so a second publisher's claim about the same county can sit beside
 # this one later without a schema change. D-19.
 #
 # A unit is an (authority, code) pair, and a Census GEOID is unique only
@@ -50,7 +50,7 @@
 #   indicators:   list of declarations, each from $indicators.<id>
 #   spatial_unit: what each row is, e.g. "county"
 #   time:         the vintage window of the source, e.g. "2020-2024"
-#   authority:    who published the source, e.g. "us_census_acs"
+#   published_by: who published the source, e.g. "us_census_acs" (D-187)
 #   joins_to:     semantic type of the units this table joins to
 #   unit_column:  the source column naming each unit (default "GEOID")
 #   unit_pad:     zero-pad unit codes to this width, for a published file
@@ -74,7 +74,7 @@ output_path  <- args$output
 declarations <- require_param(args$params, "indicators")
 spatial_unit <- require_param(args$params, "spatial_unit")
 time_label   <- get_param(args$params, "time", NA_character_)
-authority    <- get_param(args$params, "authority", NA_character_)
+published_by <- get_param(args$params, "published_by", NA_character_)
 joins_to     <- get_param(args$params, "joins_to", NULL)
 unit_authority <- get_param(args$params, "unit_authority", NULL)
 unit_column  <- as.character(get_param(args$params, "unit_column", "GEOID"))
@@ -83,6 +83,17 @@ name_column  <- as.character(get_param(args$params, "name_column", "NAME"))
 reliability  <- get_param(args$params, "reliability", NULL)
 
 w <- warnings_collector("derive_indicator")
+
+# the publisher was `authority` until D-187. that word now means only who
+# assigns a unit's code, so the old param is refused by name, never read:
+# read, it would leave every value with no publisher and no boundary rule.
+if (!is.null(args$params[["authority"]])) {
+  primitive_failure(
+    "Renamed parameter",
+    paste0("`authority` is now `published_by`: it names who published the ",
+           "source, and `authority` means only who assigns a unit's code (D-187)."),
+    warnings = w)
+}
 
 # Contract 3, section 1. Also written in build_places.py and
 # canopy/indicators/preview.py until one seed file holds them (AUTH-1).
@@ -384,7 +395,7 @@ with_primitive_error_handling({
       households_reason = rest$reason,
       cv             = cv,
       reliability_note = note,
-      authority      = authority,
+      published_by   = published_by,
       method         = paste0("derive_indicator:", kind),
       time           = time_label,
       stringsAsFactors = FALSE

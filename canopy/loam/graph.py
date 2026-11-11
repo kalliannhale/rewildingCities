@@ -198,8 +198,8 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
     value_columns = [d[0] for d in loam.con.execute(
         "SELECT * FROM indicator_values LIMIT 0").description]
     unruled = ("TRUE" if not publishers or not ruled_levels
-               or "authority" not in value_columns else
-               f"COALESCE(v.authority, '') NOT IN {_sql_list(publishers)} "
+               or "published_by" not in value_columns else
+               f"COALESCE(v.published_by, '') NOT IN {_sql_list(publishers)} "
                f"OR p.level NOT IN {_sql_list(ruled_levels)}")
     is_statistical = ("FALSE" if not statistical else
                       f"p.level = 'cousub' AND COALESCE(p.census_funcstat, '') "

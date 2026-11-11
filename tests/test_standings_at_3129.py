@@ -33,6 +33,6 @@ def test_county_rent_burden_ranks_among_exactly_3129_counties():
     from canopy.indicators import preview as ip
     GEOID = "us_census_geoid"
     ind = IndicatorRegistry.load(REPO / "seeds" / "indicators").get("cii_rent_burden")
-    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, authority=None, time=None)
+    rows, _ = ip.derive(frame, ind, unit_authority=GEOID, published_by=None, time=None)
     _, population = ip.standings(rows, ind, sd="sample", exclude_state_fips=("72",))
     assert population["n"] == 3129

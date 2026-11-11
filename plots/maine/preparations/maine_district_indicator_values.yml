@@ -63,7 +63,7 @@ steps:
         - $indicators.cii_no_vehicle
       spatial_unit: $choices.aggregation_unit_level
       time: 2020-2024 (5-year estimates)
-      authority: us_census_acs
+      published_by: us_census_acs
       # whose codes name the units (D-131, GRAPH-1): a House district's code
       # under the Census's lower-chamber authority, never us_census_geoid
       unit_authority: us_census_sldl
@@ -89,7 +89,7 @@ steps:
         - $indicators.cii_no_vehicle
       spatial_unit: $choices.aggregation_unit_level
       time: 2020-2024 (5-year estimates)
-      authority: us_census_acs
+      published_by: us_census_acs
       # a Senate district's code under the Census's upper-chamber authority
       unit_authority: us_census_sldu
       unit_column: GEOID

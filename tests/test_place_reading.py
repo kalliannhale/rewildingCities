@@ -77,7 +77,7 @@ def value(authority, code, indicator, v, households=1000.0, counts="households",
             "unit_code": code, "indicator": indicator, "value": v, "moe": None,
             "moe_status": "not_derived", "households": households,
             "households_counts": counts, "reliability_note": note, "empty_reason": empty,
-            "authority": "us_census_acs", "time": time}
+            "published_by": "us_census_acs", "time": time}
 
 
 G = "us_census_geoid"

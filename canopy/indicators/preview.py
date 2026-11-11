@@ -25,8 +25,8 @@ what it deliberately does not do
   ~ cache. the registry and manifest are read on every call, so a preview can
     never disagree with the files on disk.
 
-rows are long-form measurements, (unit, indicator, value, authority, method,
-time), with the unit itself an (authority, code) pair, so a second authority's
+rows are long-form measurements, (unit, indicator, value, published_by, method,
+time), with the unit itself an (authority, code) pair, so a second publisher's
 claim about the same county can sit beside this one later without a schema
 change.
 
@@ -411,7 +411,7 @@ def _unit_codes(frame, unit_column: str, unit_pad) -> list[str]:
     return codes
 
 
-def derive(frame, ind: Indicator, *, unit_authority: str, authority: str | None,
+def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | None,
            time: str | None, reliability: dict | None = None,
            unit_column: str = "GEOID", unit_pad: int | None = None,
            name_column: str = "NAME") -> tuple[list[dict], list[str]]:
@@ -512,7 +512,7 @@ def derive(frame, ind: Indicator, *, unit_authority: str, authority: str | None,
             "households_reason": households_reason,
             "cv": cv,
             "reliability_note": note,
-            "authority": authority,
+            "published_by": published_by,
             "method": method,
             "time": time,
             "components": comp,
@@ -545,7 +545,7 @@ def preview(plot: str, indicator_id: str, dataset: str | None = None,
     src = choose_source(plot, indicator_id, dataset)
     frame = read_table(src["_path"])
     rows, notes = derive(frame, ind, unit_authority=unit_authority,
-                         authority=src["authority"], time=src["vintage_window"])
+                         published_by=src["authority"], time=src["vintage_window"])
     return {
         "plot": plot,
         "status": STATUS,
