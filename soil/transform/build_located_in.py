@@ -23,9 +23,33 @@ disagreement shows rather than hides. a point in no face, or in a block the
 spine does not hold, is listed as unplaced and gets no edge; it is never
 dropped silently and never placed by a guess.
 
-this file holds the logic only, as pure functions over tables. reading the
-faces and the spine, and the pr_io main, arrive once their shapes are read.
+a point on the line between faces that disagree on its block, town or
+county is listed as unplaced, naming both: which side a point on a line is
+on is a choice, not a lookup. a point with no coordinates is listed too.
 
+the edges are their own artifact, of type located_in_edges, never written
+into place_edges: loam makes the edges view from exactly one place_edges
+artifact (D-163), and a second would leave every plot with no edges at all
+(D-207). same columns, same key, read beside the graph's own edges.
+
+Contract (pr_io): argv <inputs_json> <output_path> <params_json>
+Inputs:
+  points     the layer: csv or parquet with id, latitude and longitude
+             columns, or geojson of points
+  faces      2024 TIGER/Line faces, a county zip or a zip of county zips
+  spine      the block spine (build_block_spine)
+  places     the places table (build_places)
+  divisions  optional: blocks assigned to civil divisions (GEOID, division)
+Params:
+  layer        required: the layer's dataset id, the `from_authority` of
+               every edge (Contract 3, section 2)
+  id_field     required: the column naming each feature
+  lat_field, lon_field   required for a table; ignored for geojson
+  points_crs   default EPSG:4326
+  state_fips   two digits, required
+  vintages     required mapping: state, county, town, sldl, sldu, aiannh,
+               division
+Output: the located_in edges, parquet or csv by the output's extension.
 Refuses: a feature id used twice in one layer; a placed point the spine
 gives no House or Senate district; an edge whose `to` place is not in
 places; two edges between one point and one place. ~
@@ -33,6 +57,10 @@ places; two edges between one point and one place. ~
 
 from __future__ import annotations
 
+import io
+import os
+import tempfile
+import zipfile
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -97,7 +125,8 @@ def locate(points: pd.DataFrame, spine: pd.DataFrame, divisions: pd.DataFrame | 
         who = {"layer": p.layer, "feature_id": str(p.feature_id)}
         block = _text(p.block)
         if block is None:
-            unplaced.append({**who, "why": "the point falls in no 2024 face in this state"})
+            why = _text(getattr(p, "why_unplaced", None))
+            unplaced.append({**who, "why": why or "the point falls in no 2024 face in this state"})
             continue
         if block not in by_block.index:
             unplaced.append({**who, "why": f"its face's block {block} is not in the spine"})
@@ -143,3 +172,172 @@ def output_metadata(placement: Placement) -> dict:
     return {"data_category": "tabular", "crs": None, "row_count": len(placement.edges),
             "variables": COLUMNS, "id_fields": KEY, "spatial_unit": "edge",
             "unplaced": placement.unplaced, "split_block_points": placement.split}
+
+
+# ── reading the inputs ──────────────────────────────────────────────────────
+
+FACE_COLUMNS = ["STATEFP20", "COUNTYFP20", "TRACTCE20", "BLOCKCE20",
+                "STATEFP", "COUNTYFP", "COUSUBFP"]
+
+
+def read_table(path):
+    if str(path).endswith(".parquet"):
+        return pd.read_parquet(path)
+    return pd.read_csv(path, dtype=str)
+
+
+def write_table(frame, path):
+    if str(path).endswith(".parquet"):
+        frame.to_parquet(path, index=False)
+    else:
+        frame.to_csv(path, index=False)
+
+
+def spine_table(spine: pd.DataFrame) -> pd.DataFrame:
+    """the spine in locate's words: a block's town is its 2024 cousub, and its
+    tribal area is AIANNH plus its component, the place's code (D-125)."""
+    has = spine["aiannh"].notna() & (spine["aiannh"].astype(str).str.strip() != "")
+    aiannh = (spine["aiannh"].astype(str) + spine["aiannh_comptyp"].astype(str)).where(has)
+    return pd.DataFrame({"block": spine["GEOID"].astype(str), "town": spine["cousub"].astype(str),
+                         "sldl": spine["sldl"], "sldu": spine["sldu"], "aiannh": aiannh})
+
+
+def division_table(divisions: pd.DataFrame | None) -> pd.DataFrame | None:
+    if divisions is None:
+        return None
+    return pd.DataFrame({"block": divisions["GEOID"].astype(str),
+                         "division": divisions["division"]}).dropna()
+
+
+def read_points(path, id_field, lat_field=None, lon_field=None, crs="EPSG:4326"):
+    """the layer as points, one per feature; a feature with no usable
+    coordinates keeps its row with no geometry, so it can be listed."""
+    import geopandas as gpd
+    if str(path).lower().endswith((".geojson", ".json")):
+        gdf = gpd.read_file(path)
+        if id_field not in gdf.columns:
+            raise LocatedInRefused(f"the layer has no id field {id_field!r}")
+        return gpd.GeoDataFrame({"feature_id": gdf[id_field].astype(str)},
+                                geometry=gdf.geometry, crs=gdf.crs or crs)
+    table = read_table(path)
+    for col in (id_field, lat_field, lon_field):
+        if not col or col not in table.columns:
+            raise LocatedInRefused(f"the layer has no column {col!r}; a table needs "
+                                   f"id_field, lat_field and lon_field")
+    lat = pd.to_numeric(table[lat_field], errors="coerce")
+    lon = pd.to_numeric(table[lon_field], errors="coerce")
+    geom = gpd.points_from_xy(lon, lat)
+    gdf = gpd.GeoDataFrame({"feature_id": table[id_field].astype(str)}, geometry=geom, crs=crs)
+    gdf.loc[lat.isna() | lon.isna(), "geometry"] = None
+    return gdf
+
+
+def read_face_polygons(path, state_fips):
+    """every face polygon in a county zip, or a zip of county zips, with the
+    fields that name its 2020 block and its 2024 town and county."""
+    import geopandas as gpd
+    frames = []
+
+    def read_zip_bytes(raw, label):
+        with tempfile.TemporaryDirectory() as tmp:
+            with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                shp = [n for n in z.namelist() if n.lower().endswith("_faces.shp")]
+                if len(shp) != 1:
+                    raise LocatedInRefused(f"{label}: expected one _faces.shp; found {shp}")
+                z.extractall(tmp)
+            frames.append(gpd.read_file(os.path.join(tmp, shp[0]), columns=FACE_COLUMNS))
+
+    with open(path, "rb") as fh:
+        raw = fh.read()
+    with zipfile.ZipFile(io.BytesIO(raw)) as outer:
+        names = outer.namelist()
+        if any(n.lower().endswith("_faces.shp") for n in names):
+            read_zip_bytes(raw, str(path))
+        for name in sorted(names):
+            if name.lower().endswith(".zip"):
+                read_zip_bytes(outer.read(name), name)
+    if not frames:
+        raise LocatedInRefused(f"no faces shapefile in {path}")
+    faces = pd.concat(frames, ignore_index=True)
+    faces = faces[faces["STATEFP20"] == state_fips]
+    return gpd.GeoDataFrame({
+        "block": faces["STATEFP20"] + faces["COUNTYFP20"] + faces["TRACTCE20"] + faces["BLOCKCE20"],
+        "town": faces["STATEFP"] + faces["COUNTYFP"] + faces["COUSUBFP"],
+        "county": faces["STATEFP"] + faces["COUNTYFP"]}, geometry=faces.geometry, crs=faces.crs)
+
+
+def faces_for_points(points, faces, layer: str) -> pd.DataFrame:
+    """each point with the face it falls in. a point touching faces that
+    disagree on block, town or county is on a line, and is listed, naming
+    what it touches; a point with no coordinates is listed too."""
+    import geopandas as gpd
+    rows = []
+    has = points[points.geometry.notna()]
+    for fid in points.loc[points.geometry.isna(), "feature_id"]:
+        rows.append({"layer": layer, "feature_id": fid, "block": None, "town": None,
+                     "county": None, "why_unplaced": "the feature has no usable coordinates"})
+    if len(has):
+        joined = gpd.sjoin(has.to_crs(faces.crs), faces, how="left", predicate="intersects")
+        for fid, g in joined.groupby("feature_id", sort=False):
+            hits = g.dropna(subset=["block"])[["block", "town", "county"]].drop_duplicates()
+            if len(hits) == 1:
+                h = hits.iloc[0]
+                rows.append({"layer": layer, "feature_id": fid, "block": h["block"],
+                             "town": h["town"], "county": h["county"], "why_unplaced": None})
+            elif len(hits) == 0:
+                rows.append({"layer": layer, "feature_id": fid, "block": None, "town": None,
+                             "county": None, "why_unplaced": None})
+            else:
+                touched = "; ".join(f"block {r.block}, town {r.town}" for r in hits.itertuples())
+                rows.append({"layer": layer, "feature_id": fid, "block": None, "town": None,
+                             "county": None,
+                             "why_unplaced": f"the point is on a line between faces ({touched})"})
+    return pd.DataFrame(rows, columns=["layer", "feature_id", "block", "town", "county",
+                                       "why_unplaced"])
+
+
+SOURCE = "2024 TIGER/Line faces (state, county, town); 2020 blocks through the spine (districts, tribal areas, divisions)"
+
+
+def main():
+    try:
+        from canopy.pr_io import (parse_primitive_args, get_input, get_param, require_param,
+                                  WarningsCollector, primitive_success, primitive_failure,
+                                  primitive_error_handling)
+    except ImportError:
+        from pr_io import (parse_primitive_args, get_input, get_param, require_param,
+                           WarningsCollector, primitive_success, primitive_failure,
+                           primitive_error_handling)
+    args = parse_primitive_args()
+    w = WarningsCollector("build_located_in")
+    with primitive_error_handling(w):
+        i, p = args["inputs"], args["params"]
+        layer = str(require_param(p, "layer"))
+        state = str(require_param(p, "state_fips")).zfill(2)
+        try:
+            points = read_points(get_input(i, "points"), require_param(p, "id_field"),
+                                 get_param(p, "lat_field"), get_param(p, "lon_field"),
+                                 get_param(p, "points_crs", "EPSG:4326"))
+            located = faces_for_points(points, read_face_polygons(get_input(i, "faces"), state),
+                                       layer)
+            div_path = get_input(i, "divisions", required=False)
+            placement = locate(located, spine_table(read_table(get_input(i, "spine"))),
+                               division_table(read_table(div_path) if div_path else None),
+                               read_table(get_input(i, "places")),
+                               require_param(p, "vintages"), SOURCE)
+        except LocatedInRefused as e:
+            primitive_failure("located_in refused", str(e))
+        w.info(f"{layer}: {len(points)} feature(s), {placement.edges['from_code'].nunique()} placed, "
+               f"{len(placement.edges)} edge(s)")
+        if placement.unplaced:
+            w.warn(f"{len(placement.unplaced)} feature(s) not placed, each listed in the "
+                   f"receipt with why")
+        if placement.split:
+            w.info(f"{len(placement.split)} feature(s) in a split block, placed by their "
+                   f"face and listed (D-126)")
+        write_table(placement.edges, args["output"])
+        primitive_success(output_metadata(placement), w)
+
+
+if __name__ == "__main__":
+    main()

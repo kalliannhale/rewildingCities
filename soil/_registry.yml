@@ -1219,3 +1219,36 @@ primitives:
     outputs: {semantic_type: outlet_disagreements, data_category: tabular}
     params:
       fields: {type: array, required: false}
+
+  # ── located_in (Sprint 06, step 2) ────────────────────────────────────────
+
+  build_located_in:
+    path: transform/build_located_in.py
+    version: 1.0.0
+    description: >
+      located_in edges (Contract 3): every point of a declared layer to every
+      area it falls in, weights 1 and 1. State, county and town from the 2024
+      face the point falls in; House, Senate, tribal area and MEGIS division
+      from that face's 2020 block, through the spine, since those are defined
+      on whole blocks. A point in a split block is placed by its face and
+      listed; a point in no face, on a line between disagreeing faces, or
+      with no coordinates is listed as unplaced and gets no edge. Its own
+      artifact, never place_edges (D-207). Refuses a feature id used twice,
+      a placed point with no district, and an edge to a place not in places.
+    inputs:
+      - {name: points, semantic_types: [institutional_node, formal_outlet], required: true}
+      - {name: faces, semantic_types: [census_faces], required: true}
+      - {name: spine, semantic_types: [block_spine], required: true}
+      - {name: places, semantic_types: [places], required: true}
+      - {name: divisions, semantic_types: [block_division_assignment], required: false}
+    outputs: {semantic_type: located_in_edges, data_category: tabular}
+    params:
+      layer: {type: string, required: true}
+      id_field: {type: string, required: true}
+      lat_field: {type: string, required: false}
+      lon_field: {type: string, required: false}
+      points_crs: {type: string, required: false}
+      state_fips: {type: string, required: true}
+      vintages: {type: object, required: true}
+    preconditions:
+      - no_unresolved_critical: true

@@ -110,3 +110,38 @@ def test_the_receipt_lists_unplaced_and_split_points():
     assert meta["id_fields"] == li.KEY
     assert [u["feature_id"] for u in meta["unplaced"]] == ["L4"]
     assert [s["feature_id"] for s in meta["split_block_points"]] == ["L3"]
+
+
+def test_a_listed_reason_travels_with_an_unplaced_point():
+    pts = _points([("libs", "L6", None, None, None)]).assign(
+        why_unplaced=["the feature has no usable coordinates"])
+    p = _locate(pts)
+    assert p.unplaced[0]["why"] == "the feature has no usable coordinates"
+
+
+def test_the_spine_is_read_in_its_own_words():
+    spine = pd.DataFrame([{"GEOID": "B1", "cousub": "2301360545", "sldl": "23118",
+                           "sldu": "23009", "aiannh": "2760", "aiannh_comptyp": "T"},
+                          {"GEOID": "B2", "cousub": "2301360545", "sldl": "23118",
+                           "sldu": "23009", "aiannh": None, "aiannh_comptyp": None}])
+    t = li.spine_table(spine)
+    assert list(t.columns) == ["block", "town", "sldl", "sldu", "aiannh"]
+    assert t.loc[0, "aiannh"] == "2760T"
+    assert pd.isna(t.loc[1, "aiannh"])
+
+
+def test_points_and_faces_meet_by_geometry():
+    gpd = pytest.importorskip("geopandas")
+    from shapely.geometry import Point, box
+    faces = gpd.GeoDataFrame(
+        {"block": ["B1", "B3"], "town": ["2301360545", "2301399999"],
+         "county": ["23013", "23013"]},
+        geometry=[box(0, 0, 1, 1), box(1, 0, 2, 1)], crs="EPSG:4269")
+    points = gpd.GeoDataFrame(
+        {"feature_id": ["in", "line", "out", "none"]},
+        geometry=[Point(0.5, 0.5), Point(1.0, 0.5), Point(5, 5), None], crs="EPSG:4269")
+    got = li.faces_for_points(points, faces, "libs").set_index("feature_id")
+    assert got.loc["in", "block"] == "B1"
+    assert "on a line between faces" in got.loc["line", "why_unplaced"]
+    assert pd.isna(got.loc["out", "block"]) and pd.isna(got.loc["out", "why_unplaced"])
+    assert "no usable coordinates" in got.loc["none", "why_unplaced"]

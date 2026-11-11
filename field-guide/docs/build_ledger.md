@@ -1077,3 +1077,14 @@ Built: maine_outlets (stack, groups, disagreements) as a preparation over five o
 | ID | One line | Defined |
 | --- | --- | --- |
 | **OUT-REG-1** | stack_outlet_sources' registry entry names Maine's five listings as inputs, so a plot with other listings needs its own entry; the community kit must decide how a primitive takes a declared set of inputs | this session |
+
+## Sprint 06 step 2: located_in (D-207)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-207** | located_in edges are their own type, located_in_edges, one artifact per point layer, in place_edges' columns and key; state, county and town from the 2024 face a point falls in; districts, tribal areas and divisions from that face's 2020 block through the spine. A point in a split block is placed by its face and listed; one in no face, on a line between disagreeing faces, or without coordinates is listed as unplaced. Refined option A, Claude's lean, chosen by Kalli | loam's edges view needs exactly one place_edges artifact (D-163), so a second would cost every plot its edges; each level comes from what it is defined on, so a point never contradicts its block's overlaps edges and a split block never misplaces a town | loam reads several edge artifacts as one view |
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **CON3-2** | Contract 3 section 2 still calls located_in a kind in the edges table; it needs D-207's wording | step 2 |
+| **SERVES-1** | A carrier's location is not whom it serves: a library system serves a legal jurisdiction, and a town with no building may be served by contract. A serves relation is separate from located_in | step 2 |

@@ -339,3 +339,16 @@ types:
     resolution_tier: public   # D-123, D-146: the note's text lives in seeds/notes/notes.yml (D-157)
     required_context:
       - id: census_tribal_area
+
+  located_in_edges:
+    category: tabular
+    format: parquet
+    description: >
+      A point layer's located_in edges (Contract 3): each feature, named by
+      its layer and feature id, to every place it falls in, weights 1 and 1,
+      in place_edges' columns and key. Its own type, never place_edges, since
+      loam makes the edges view from exactly one place_edges artifact and a
+      second would leave a plot with no edges view at all (D-207). One
+      artifact per layer; several are expected.
+    # no resolution_tier yet: Person 3 declares it. a point layer's tier is
+    # its own, and the edges should carry it, not a default.
