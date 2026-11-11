@@ -256,3 +256,33 @@ def test_wonder_never_offers_a_preparation_method_as_an_answer():
         methods)
     assert [m["id"] for m in by_domain] == ["cii_indicator_values"]
     assert by_name == []
+
+
+def test_an_experiment_with_no_curiosity_says_so_in_its_receipts(tmp_path, monkeypatch):
+    # E-6: the warning reaches the receipt, not only the terminal
+    plot = a_plot(tmp_path)
+    path = a_run(plot, "no_question", method={"ref": ANALYSIS_METHOD},
+                 curiosity={"ref": ""},
+                 steps=[step("units_repair", "soil/repair_geometry",
+                             {"features": "$manifest.governance_unit_county"},
+                             output="repaired")])
+    orch = orchestrator(path, tmp_path)
+    fake_builder(monkeypatch, orch)
+    assert orch.run().success
+    receipt = json.loads(
+        (plot / ".envelopes" / "units_repair_repaired.envelope.json").read_text())
+    assert any("names no curiosity" in w["message"] for w in receipt["warnings"])
+
+
+def test_a_preparation_writes_no_curiosity_warning(tmp_path, monkeypatch):
+    plot = a_plot(tmp_path)
+    path = a_run(plot, "county_units", kind="preparation", method={"ref": PREP_METHOD},
+                 steps=[step("units_repair", "soil/repair_geometry",
+                             {"features": "$manifest.governance_unit_county"},
+                             output="repaired")])
+    orch = orchestrator(path, tmp_path)
+    fake_builder(monkeypatch, orch)
+    assert orch.run().success
+    receipt = json.loads(
+        (plot / ".envelopes" / "units_repair_repaired.envelope.json").read_text())
+    assert not any("names no curiosity" in w["message"] for w in receipt["warnings"])

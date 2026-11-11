@@ -49,6 +49,8 @@ datasets:
     available: true
     description: Maine county boundaries ~ the regional grain for media markets
     semantic_type: governance_unit
+    license: terms_unknown   # D-116
+    license_note: Maine GeoLibrary / MEGIS terms not yet read and recorded
     format: geojson
     source:
       type: api
@@ -91,6 +93,8 @@ datasets:
     available: true
     description: Maine municipal boundaries ~ the finer, noisier grain
     semantic_type: governance_unit
+    license: terms_unknown   # D-116
+    license_note: Maine GeoLibrary / MEGIS terms not yet read and recorded
     format: geojson
     source:
       type: api
@@ -139,6 +143,8 @@ datasets:
       Maine local news outlets ~ print, broadcast, digital and radio, each
       with the entity that owns it
     semantic_type: formal_outlet
+    license: terms_unknown   # D-116
+    license_note: assembled from several publishers' lists; each source's terms not yet recorded
     format: geojson
     source:
       type: manual
@@ -181,6 +187,8 @@ datasets:
       Libraries, town offices, schools and government sites ~ the channels
       that carry information work no outlet census records
     semantic_type: institutional_node
+    license: terms_unknown   # D-116
+    license_note: assembled from several state sources; terms not yet recorded
     format: geojson
     source:
       type: manual
@@ -200,6 +208,8 @@ datasets:
     available: false
     description: Broadband availability ~ whether what is published can be reached
     semantic_type: access_infrastructure
+    license: terms_unknown   # D-116
+    license_note: FCC and Maine Connectivity Authority sources; terms not yet recorded per source
     format: tiff
     source:
       type: manual
@@ -234,6 +244,7 @@ datasets:
       ACS 2020-2024 five-year estimates for Maine's sixteen counties, carrying
       every variable the listed indicators need
     semantic_type: indicator_source
+    license: us_government_work   # D-116; U.S. government work, 17 U.S.C. 105
     format: parquet
     source:
       type: api
@@ -277,6 +288,7 @@ datasets:
       ACS 2020-2024 five-year estimates for every county in the nation, the
       reference population CII ranks against
     semantic_type: indicator_source
+    license: us_government_work   # D-116; U.S. government work, 17 U.S.C. 105
     format: parquet
     source:
       type: api
@@ -308,6 +320,8 @@ datasets:
       The Civic Information Index 2026 data file, all 3 144 counties, as
       downloaded from the CII site
     semantic_type: indicator_source
+    license: terms_unknown   # D-116
+    license_note: CII's terms asked for on 2026-11-10 (CII-19); no reply yet
     format: csv
     source:
       type: manual
@@ -340,6 +354,7 @@ datasets:
     available: true
     description: County internal points from the 2024 Census Gazetteer
     semantic_type: unit_locations
+    license: us_government_work   # D-116; U.S. government work, 17 U.S.C. 105
     format: parquet
     source:
       type: manual
@@ -370,6 +385,7 @@ datasets:
       ACS 2020-2024 five-year estimates for Maine's 529 county subdivisions,
       carrying every variable the listed indicators need
     semantic_type: indicator_source
+    license: us_government_work   # D-116; U.S. government work, 17 U.S.C. 105
     format: parquet
     source:
       type: api
@@ -398,6 +414,7 @@ datasets:
     description: >
       Census county subdivisions for Maine ~ the grain ACS publishes towns at
     semantic_type: governance_unit
+    license: us_government_work   # D-116; U.S. government work, 17 U.S.C. 105
     format: geojson
     source:
       type: api

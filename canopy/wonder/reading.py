@@ -129,6 +129,9 @@ class PlotReading:
     holdings: list[HoldingReading] = field(default_factory=list)
     curiosities: list[CuriosityReading] = field(default_factory=list)
     declared_unconformed: list[str] = field(default_factory=list)
+    # what may leave, judged by the one gate at `public` (Contract 1): one
+    # entry per receipt, with every refusal's reason and what would admit it
+    exposure: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -308,8 +311,12 @@ def read_plot(loam, plot: str, *, plot_name: str = "",
     order = {"runnable": 0, "runnable_with_uncertainty": 1, "blocked": 2}
     readings.sort(key=lambda c: (order.get(c.best_verdict, 3), c.curiosity_id))
 
+    from canopy.expose.check import read_exposure
+    exposure = read_exposure(plot, root=base)
+
     return PlotReading(
         plot=plot, plot_name=plot_name or plot,
+        exposure=exposure,
         tiers=_tier_counts(loam, plot),
         holdings=holdings,
         curiosities=readings,

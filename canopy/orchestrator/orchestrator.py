@@ -904,6 +904,20 @@ class Orchestrator:
         # attaching them here.
         build_result.envelope.metadata["lineage"] = self._lineage_dict()
 
+        # E-6 (Sprint 03): an experiment that names no curiosity says so in
+        # its receipts, not only on the terminal, so every reader of the
+        # receipt sees what the run lacked. written once per envelope, never
+        # repeated when an input already carries it. D-102 passes such a
+        # result through the gate, as a caveat.
+        if (self.experiment.lineage.kind != "preparation"
+                and not self.experiment.lineage.curiosity_ref):
+            from canopy.envelope import Warning as _Warning
+            text = (f"experiment '{self.experiment.id}' names no curiosity, so this "
+                    f"result cannot say what question it answers (D-64, D-102)")
+            if not any(w.message == text for w in build_result.envelope.warnings):
+                build_result.envelope.warnings.append(
+                    _Warning(level="warning", primitive="orchestrator", message=text))
+
         # Sprint 8: wrap envelope-write so schema-validation failures fail
         # the step gracefully with a clear error rather than crashing the
         # orchestrator with a traceback. Import is lazy so this catch

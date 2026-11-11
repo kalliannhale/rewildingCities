@@ -1,0 +1,53 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/licenses/licenses.yml
+# The controlled list of license terms the gate reads (Contract 1, rule 10;
+# D-116). A dataset declares one in its manifest entry as `license: <term>`,
+# with any free text in `license_note`. A term not on this list fails closed,
+# as an undeclared tier does.
+#
+# `permits` is the sharing levels a term allows redistribution at: private
+# (the owner only), organization, public. A term is a claim about someone
+# else's permission, so each says where the claim comes from and whether it
+# has been checked. An unverified term permits nothing beyond private.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+terms:
+  us_government_work:
+    name: Work of the United States government
+    permits: [private, organization, public]
+    attribution: recommended
+    verified: true
+    basis: >
+      17 U.S.C. § 105: copyright protection is not available for works of the
+      United States government. Census ACS estimates, TIGER/Line boundaries and
+      the Census Gazetteer are such works. Attribution is good practice, not a
+      condition.
+
+  cc_by_4_0:
+    name: Creative Commons Attribution 4.0
+    permits: [private, organization, public]
+    attribution: required
+    verified: true
+    basis: >
+      Redistribution in any medium is permitted with attribution, a link to
+      the license, and an indication of changes.
+
+  nyc_open_data_terms:
+    name: NYC Open Data Terms of Use
+    permits: [private]
+    attribution: unknown
+    verified: false
+    basis: >
+      Named in NYC's manifest as free text. What these terms permit has not
+      been read and recorded here, so this term permits nothing beyond
+      private until it is.
+
+  terms_unknown:
+    name: Terms unknown
+    permits: [private]
+    attribution: unknown
+    verified: true
+    basis: >
+      No published terms were found, or nobody has looked yet. Nothing leaves
+      beyond its owner until someone does. CII's published file is here while
+      its terms are asked about (CII-19).

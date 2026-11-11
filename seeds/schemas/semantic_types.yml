@@ -15,11 +15,13 @@ types:
   study_area:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Boundary defining the extent of analysis.
 
   study_boundary:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Boundary polygon defining the spatial extent of analysis. May be a city
       boundary, neighborhood, watershed, or any user-defined area of interest.
@@ -27,6 +29,7 @@ types:
   city_boundary:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Administrative boundary of a city or municipality. Commonly used as the
       study boundary for city-wide analyses.
@@ -34,11 +37,13 @@ types:
   buffer_zones:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Buffer rings with parent association removed (donut shapes).
 
   clipped_features:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Features clipped to a study boundary.
 
   governance_unit:
@@ -62,6 +67,7 @@ types:
   gi_star_z_scores:
     category: raster
     format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Getis-Ord Gi* z-scores per raster cell. Positive values indicate local
       clustering of high values (potential hot spot), negative values indicate
@@ -73,6 +79,7 @@ types:
   ndvi:
     category: raster
     format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Normalized Difference Vegetation Index.
     typical_units: index
     value_range: [-1, 1]
@@ -80,6 +87,7 @@ types:
   land_cover:
     category: raster
     format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Categorical land cover classification.
     measurement_type: categorical
 
@@ -88,16 +96,19 @@ types:
   zonal_statistics:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Summary statistics aggregated by zone.
 
   landscape_metrics:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Landscape pattern metrics (LSI, SHAPE_MN, PD, AI, etc.).
 
   land_cover_proportions:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Proportional area of each land cover class within zones.
 
   # ----- tabular: perception primitives (reusable across imagery work) -----
@@ -166,16 +177,19 @@ types:
   regression_skill:
     category: tabular
     format: json
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Held-out regression skill (R2, RMSE, MAE) on a spatial test split.
 
   correlation_matrix:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Pairwise correlation coefficients between variables.
 
   regression_results:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Regression model outputs with coefficients and diagnostics.
 
   # ----- image -----

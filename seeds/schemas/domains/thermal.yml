@@ -11,6 +11,7 @@ types:
   park_boundaries:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Raw park boundary polygons from municipal data.
     aliases:                        # retired names, resolved forward. history is read, never refused.
       - park_boundaries_checked
@@ -21,6 +22,7 @@ types:
   park_buffers:
     category: vector
     format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Concentric buffer rings for gradient analysis.
 
   # ----- raster -----
@@ -28,6 +30,7 @@ types:
   thermal_hotspot_classification:
     category: raster
     format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Integer-classified raster of thermal clusters. Codes: 99/-99 = hot/cold
       spot at 99% confidence, 95/-95 = 95% (exclusive of 99%), 90/-90 = 90%
@@ -38,6 +41,7 @@ types:
   land_surface_temperature:
     category: raster
     format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: ...  
     aliases:
       - lst_checked
@@ -50,6 +54,7 @@ types:
   cooling_differential:
     category: tabular
     format: json
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Forest-vs-open land-cover surface-temperature differential: per-class LST
       summaries, forest and open group summaries, and the open-minus-forest
@@ -67,6 +72,7 @@ types:
   counterfactual_cooling:
     category: tabular
     format: json
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       A projected cooling shift under a hypothetical land-cover conversion
       applied to a space_cooling_estimate. A projection, not a promise.
@@ -74,6 +80,7 @@ types:
   thermal_cluster_summary:
     category: tabular
     format: csv
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: >
       Summary statistics for thermal cluster classification. Rows per confidence
       tier with cell counts and percentages. Tiers are exclusive.
@@ -81,16 +88,19 @@ types:
   pci_results:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Park Cooling Intensity calculated via TPM-M or TPM-A method.
 
   park_temperatures:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Temperature statistics inside park boundaries (baseline for PCI).
     parent_type: zonal_statistics
 
   buffer_temperatures:
     category: tabular
     format: parquet
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Temperature statistics per buffer ring (gradient for PCI).
     parent_type: zonal_statistics

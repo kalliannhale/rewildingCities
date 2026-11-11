@@ -414,9 +414,30 @@ def run(args) -> int:
         return 1
 
     from canopy.visuals import PublishError, render
+    publish = getattr(args, "publish", False)
+    if publish:
+        # Sprint 03: the one gate decides first, before anything signs in.
+        # an ArcGIS item is created private to its owner, so that is the
+        # level judged. a refusal writes the map locally and exits 1, with
+        # every reason and what would admit it (Contract 1, rule 7).
+        from canopy.expose.check import check_envelope
+        decision = check_envelope(env, plot=plot, target="arcgis_online",
+                                  sharing_level="private",
+                                  plot_dir=root / "plots" / plot)
+        if decision["decision"] == "refuse":
+            local = render(env, out_dir, plot=plot, publish=False)
+            print("not published: the exposure gate refused it", file=sys.stderr)
+            for r in decision["refusals"]:
+                print(f"   rule {r['rule']}: {r['reason']}", file=sys.stderr)
+                print(f"     would admit it: {r['would_admit']}", file=sys.stderr)
+            print(f"   the map was still written locally: {local.geojson_path}",
+                  file=sys.stderr)
+            return 1
+        gate_record = Path(out_dir) / "map.gate.json"
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        gate_record.write_text(json.dumps(decision["record"], indent=2))
     try:
-        result = render(env, out_dir, plot=plot,
-                        publish=getattr(args, "publish", False))
+        result = render(env, out_dir, plot=plot, publish=publish)
     except PublishError as e:
         print(f"not published: {e}", file=sys.stderr)
         if e.geojson_path:

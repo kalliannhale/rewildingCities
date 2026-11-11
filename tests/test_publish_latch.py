@@ -94,9 +94,16 @@ def credentials(monkeypatch):
     monkeypatch.setenv("ARCGIS_API_KEY", "test-key-not-real")
 
 
-def vector_result(tmp_path):
-    return {"metadata": {"semantic_type": "park_boundaries", "data_category": "vector"},
-            "data": {"path": str(tmp_path / "not-there.geojson"), "format": "geojson"}}
+def vector_result(tmp_path, lineage=True):
+    # Sprint 03: `map --publish` asks the gate first, and the gate needs
+    # lineage (rule 4) and a declared tier (park_boundaries is public)
+    meta = {"semantic_type": "park_boundaries", "data_category": "vector"}
+    if lineage:
+        meta["lineage"] = {"kind": "experiment", "run": "parks", "method": "$methods/m",
+                           "choices": {}, "curiosity": "$curiosity-space/thermal/x"}
+    return {"metadata": meta,
+            "data": {"path": str(tmp_path / "not-there.geojson"), "format": "geojson"},
+            "provenance": [], "warnings": []}
 
 
 # ── render(): off unless asked ────────────────────────────────────────────
@@ -272,3 +279,32 @@ def test_rewilding_map_choropleth_with_publish_exits_1_and_writes_locally(
     assert str(local_map) in err
     assert local_map.exists()
     assert arcgis.signins == [] and arcgis.uploads == []
+
+
+# ── rewilding map --publish: the gate decides first (Sprint 03) ───────────
+def test_rewilding_map_publish_refused_by_the_gate_never_signs_in(
+        tmp_path, monkeypatch, capsys, arcgis):
+    online(monkeypatch, True)
+    credentials(monkeypatch)
+    envelopes = tmp_path / "plots" / "demo" / ".envelopes"
+    envelopes.mkdir(parents=True)
+    (envelopes / "parks.envelope.json").write_text(
+        json.dumps(vector_result(tmp_path, lineage=False)))
+    monkeypatch.setattr(m, "find_root", lambda: tmp_path)
+    local_map = tmp_path / "plots" / "demo" / "harvest" / "map.geojson"
+    assert m.run(parse(["map", "demo", "park_boundaries", "--publish"])) == 1
+    err = capsys.readouterr().err
+    assert "the exposure gate refused it" in err and "rule 4" in err
+    assert str(local_map) in err and local_map.exists()
+    assert arcgis.signins == [] and arcgis.uploads == []
+
+
+def test_rewilding_map_publish_allowed_by_the_gate_keeps_its_allow_record(
+        tmp_path, monkeypatch, arcgis):
+    online(monkeypatch, True)
+    credentials(monkeypatch)
+    local_map = plot_with_one_result(tmp_path, monkeypatch)
+    assert m.run(parse(["map", "demo", "park_boundaries", "--publish"])) == 0
+    record = json.loads((local_map.parent / "map.gate.json").read_text())
+    assert record["decision"] == "allow" and record["sharing_level"] == "private"
+    assert len(arcgis.uploads) == 1

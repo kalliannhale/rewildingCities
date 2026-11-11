@@ -514,3 +514,20 @@ their implication and reverse-if cells on GitHub.)
 | **D-114** | `standardize_indicator.R` and `preview.standings` carry `empty_reason`, `bound`, `households`, `households_counts`, `households_reason` and `reliability_note` unchanged from the values table, held to each other by the standings oracle. `outside_reason` keeps the exact words "no value", which the imputation oracles depend on |
 | **REL-1f** | The county rent burden layer is released: its harvest (`map_cii_rent_burden__units_geoid_with_geoid`) is ranked among 3 129 counties and carries each county's household count. Publishing it to ArcGIS Online waits for the gate (Sprint 03, Contract 1) |
 | **CLI-2** | `acquire`'s "needs a person" block printed the Census key message twice per source: `detail` and `message` carried the same text |
+
+## SPRINT 03 ~ the gate, 2026-11-10
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-115** | Consent records live one file each in `plots/<plot>/consent/`, never in the manifest the surgeon edits. A record opens exactly the plot, target, sharing level and types it names, while active and unexpired | A withdrawal is a visible edit to one file. No wildcard is honoured | Never |
+| **D-116** | Licenses are a controlled list, `seeds/licenses/licenses.yml`; a dataset declares `license: <term>` with free text in `license_note`. An unverified term may permit private only, enforced at load; a term not on the list fails closed | The gate decides rule 10 by itself, citing a term a person can read and correct. Maine: five Census sources are `us_government_work`; the other six `terms_unknown`, each with a note | A term's permissions prove wrong: correct the term |
+| **D-117** | Rule 5 is made checkable by a type-level flag: a semantic type may declare `aggregates: true`. An artifact with an aggregate-only ancestor passes rule 5 only if its own type declares it, and never if it is that aggregate-only type itself | "Counts over a declared unit" is a declaration, not a guess about a table's shape | A better signal of aggregation exists in the envelope |
+| **D-118** | 24 environmental and analytical types are declared `public` as proposals, marked in the files, for Person 3 to confirm. 18 stay undeclared and closed: ground photographs and everything derived from them, working files (models, samples, predictions, features), and `owner_crosswalk` | 40 of 58 types now declare a tier. Nothing about people's own information was guessed | Person 3 declares otherwise |
+| **D-119** | `canopy/expose/`: `gate.decide()` applies the eleven rules from the envelope alone and returns an allow record or every refusal; `exposure_tier()` is the gate's own reader of `resolution_tier`; `check.py` loads a plot's context; `PlotReading.exposure` and `wonder` show what may leave at public and, for everything withheld, why and what would admit it | One gate, one reader, every exit | Never |
+| **D-120** | `map --publish` asks the gate first, at `private` (an ArcGIS item is created private to its owner), before anything signs in. A refusal writes locally, prints every reason, exits 1; an allow is saved as `map.gate.json` beside the map | A publish the gate refuses never reaches ArcGIS | The publish door (Sprint 08) replaces it |
+
+| ID | item |
+| --- | --- |
+| **E-6f** | E-6 closed: an experiment that names no curiosity writes that warning into its receipts, once per envelope |
+| **GATE-2** | A choropleth takes its geometry from its layer, but the gate judges the result's lineage, which does not name the layer's datasets. The county map's geometry is from MEGIS (`terms_unknown`). Harmless today, since choropleths do not publish (D-96); the publish door must judge result and layer both |
+| **TST-5** | `tests/test_publish_latch.py` needs pytest fixtures the sandbox shim lacks; its gate paths were hand-run with the same fakes: refused (exit 1, no sign-in), allowed (one upload, allow record written), allowed but uncredentialed (exit 1) |
