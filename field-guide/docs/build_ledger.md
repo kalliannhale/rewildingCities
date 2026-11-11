@@ -943,3 +943,15 @@ seeds/authorities/authorities.yml (new): each authority that may assign a place'
 | ID | Decision | Why | Revisit when |
 | --- | --- | --- | --- |
 | **D-188** | AUTH-1: the authorities are declared once, in seeds/authorities/authorities.yml, and every copy in the code is held to it by a test; the copies stay, and the grove reads the seed. Option B of fork 6b, Claude's lean, chosen by Kalli | Silent drift between six copies becomes a failing test that names the file, with no runtime change and no rerun. Making the copies read the seed (option A) would let a seed edit change what a primitive does unseen by freshness (KIT-1) | Sprint 10 settles KIT-1; then the copies can read the seed |
+
+### Build 6, SRC-1 decided (D-189)
+
+A source's unit authority is a fact about the source: an SLDL acquisition is SLDL codes by nature. The method recipe already takes unit_column, unit_pad and name_column from the source; unit_authority was the one unit fact a run declared, which is where change 10's Androscoggin trap lived. Decided now, before the grove handoff, and built with NAME-4, since both touch every manifest source: one sweep, not two.
+
+| ID | Decision | Why | Revisit when |
+| --- | --- | --- | --- |
+| **D-189** | SRC-1: each manifest source declares its own unit_authority, checked against seeds/authorities/authorities.yml (D-188); runs take it as $source.unit_authority, and a run that also declares one is refused, since two declarations of one fact can disagree. Option A of fork 6c, Claude's lean, chosen by Kalli | The fact lives where it is true, so a preparation cannot mislabel its source, and all four unit facts come from the source | A source holds units under more than one authority; then it is two sources |
+
+| ID | Open item | Defined |
+| --- | --- | --- |
+| **SRC-2** | Build D-189 in NAME-4's sweep: unit_authority on every indicator source in every plot's manifest, the recipe's $parameters.unit_authority becomes $source.unit_authority, a run declaring its own is refused, and D-176's test is kept as a second guard. Resolved params stay the same strings, so freshness should read the existing receipts as fresh; check that before trusting it | build 6 |
