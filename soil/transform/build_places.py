@@ -95,6 +95,11 @@ GEOID, SLDL, SLDU, AIANNH, MEGIS = ("us_census_geoid", "us_census_sldl", "us_cen
 TRIBAL_NOTE = "census_tribal_area"
 CONTAINS_NOTE = "contains_census_tribal_area"
 TABLE_NOTE = "census_tribal_places"
+# what one row IS, and the key that names it (KEYS-1): declared in the
+# receipt, so loam and the grove join on it rather than on a guess
+KEY = ["authority", "code"]
+SPATIAL_UNIT = "place"
+
 COLUMNS = ["authority", "code", "level", "kind", "vintage", "name", "census_funcstat",
            "flags", "context_note", "part_of_authority", "part_of_code",
            "lurc_share_population"]
@@ -304,7 +309,7 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     places = pd.DataFrame(rows)[COLUMNS]
 
     # checks, each a Contract 3 invariant
-    dup = places.duplicated(["authority", "code"])
+    dup = places.duplicated(KEY)
     if dup.any():
         first = places[dup].iloc[0]
         primitive_failure("Place key used twice",
@@ -363,6 +368,13 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     return places
 
 
+def output_metadata(places):
+    """what the receipt says of the places table, its key included (KEYS-1)."""
+    return {"data_category": "tabular", "crs": None, "row_count": len(places),
+            "variables": COLUMNS, "id_fields": KEY, "spatial_unit": SPATIAL_UNIT,
+            **context_metadata(places)}
+
+
 def main():
     args = parse_primitive_args()
     w = WarningsCollector("build_places")
@@ -379,8 +391,7 @@ def main():
             str(require_param(p, "state_fips")).zfill(2), require_param(p, "state_name"),
             require_param(p, "vintages"), w)
         write_table(places, args["output"])
-        primitive_success({"data_category": "tabular", "crs": None, "row_count": len(places),
-                           "variables": COLUMNS, **context_metadata(places)}, w)
+        primitive_success(output_metadata(places), w)
 
 
 if __name__ == "__main__":

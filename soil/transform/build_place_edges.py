@@ -29,7 +29,9 @@ Params:
 Output: the edges table, parquet or csv by the output's extension.
 Checks (refuses if broken): every town has exactly one county; a town's
 shares across one chamber sum to 1 for each basis; every tribal block names
-its component type, R or T (another value is refused until it is understood).
+its component type, R or T (another value is refused until it is understood);
+no pair of places has two edges, since the key the receipt declares is the
+edge's two ends (KEYS-1).
 """
 
 from __future__ import annotations
@@ -51,6 +53,10 @@ SLDL, SLDU, AIANNH = "us_census_sldl", "us_census_sldu", "us_census_aiannh"
 COLUMNS = ["from_authority", "from_code", "to_authority", "to_code", "kind",
            "weight_population", "weight_households", "weight_reason", "source", "vintage"]
 TOLERANCE = 1e-9
+# what one row IS, and the key that names it (KEYS-1): an edge is named by its
+# two ends, each a place key, so one pair of places has at most one edge
+KEY = ["from_authority", "from_code", "to_authority", "to_code"]
+SPATIAL_UNIT = "edge"
 
 
 def read_table(path):
@@ -134,6 +140,21 @@ def check_shares(edges, to_prefix_filter, label):
                               f"{off.index[0]} sums to {off.iloc[0]:.12f}")
 
 
+def check_key(edges):
+    """the key the receipt declares names one edge (KEYS-1)."""
+    twice = edges[edges.duplicated(KEY, keep=False)]
+    if len(twice):
+        primitive_failure("Edge key used twice",
+                          f"{len(twice)} edge(s) share their two ends, e.g. "
+                          f"{twice.iloc[0][KEY].tolist()}")
+
+
+def output_metadata(edges):
+    """what the receipt says of the edges table, its key included (KEYS-1)."""
+    return {"data_category": "tabular", "crs": None, "row_count": len(edges),
+            "variables": COLUMNS, "id_fields": KEY, "spatial_unit": SPATIAL_UNIT}
+
+
 def build(spine, divisions, state_fips, vintages, division_authority, w):
     import pandas as pd
     for need in ("town", "sldl", "sldu", "aiannh"):
@@ -173,6 +194,7 @@ def build(spine, divisions, state_fips, vintages, division_authority, w):
                               "2020 block internal points in civil divisions (D-122)",
                               vintages["division"]))
     edges = pd.concat(parts, ignore_index=True)[COLUMNS]
+    check_key(edges)
 
     is_town = edges["from_authority"] == GEOID
     check_shares(edges, lambda e: is_town & (e["to_authority"] == SLDL), "town to House")
@@ -200,8 +222,7 @@ def main():
                       read_table(div_path) if div_path else None, state, vintages,
                       get_param(args["params"], "division_authority", "megis"), w)
         write_table(edges, args["output"])
-        primitive_success({"data_category": "tabular", "crs": None,
-                           "row_count": len(edges), "variables": COLUMNS}, w)
+        primitive_success(output_metadata(edges), w)
 
 
 if __name__ == "__main__":

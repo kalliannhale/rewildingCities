@@ -816,3 +816,16 @@ canopy/loam/freshness.py (new): judge() gives fresh, stale or cannot_tell for on
 garden/methods/information/legislative_seats.yml (new) and its entry in garden/methods/index.yml: a preparation method for one Legislature's seats, places critical and read through loam, rosters critical and read as acquired. plots/maine/preparations/maine_seats.yml (new): `$loam.places`, `$manifest.legislature_133_house`, `$manifest.legislature_133_senate`; legislature 133, sworn_in 2026-12-02 (D-135), state_fips 23; the four tribal seats copied from tests/test_seats.py's TRIBAL list, which matches TRIBE-3 and NAME-3, and held equal to it by a test. A later Legislature is an edit of legislature, sworn_in, the two rosters and the tribal list. tests/test_seats_preparation.py: 3 tests. The real build_seats primitive runs through the real orchestrator on places reached through loam, with a fresh verdict, and places' own provenance entry (run and step) travels into the seats receipt, which proves D-167 end to end. With rosters unavailable the run refuses at data resolution, naming both, and writes nothing.
 
 LOAM-1 is closed by changes 1 to 4. Sprint 04 step 4 is closed on its dependency (TIME-2): build_seats runs on places another run made. Carried: the 133rd's rosters after 2026-12-02 (TRIBE-4, SEN-1); NOTE-3, and confirmation of the tribal list by Kalli and Person 3, before anything is published. Do not run maine_seats on real data before 2026-12-02: the rosters are auto-acquirable, and resolution can acquire and commit (RESOLVE-1), so a run could write the outgoing Legislature's roster into the manifest before build_seats refuses it.
+
+### Plan build 1, fork, and change 5: KEYS-1
+
+| ID | Decision | Why | Reverse if |
+| --- | --- | --- | --- |
+| **D-168** | Places, edges and later place-keyed values live in loam as DuckDB views over the Parquet files its receipts point at, never as copies. Claude's lean, accepted by Kalli | Loam holds no truth of its own. And Loam.snapshot() writes the whole bed as a shareable Parquet: values copied into the bed would leave through it without ever meeting the gate, which runs only at exits | A query is too slow over files; then materialize behind the gate, never in the bed |
+
+| ID | Finding |
+| --- | --- |
+| **KEYS-1** | Resolved by change 5. build_places, build_place_edges and build_seats declare KEY and SPATIAL_UNIT and build their receipt metadata in output_metadata(): places (authority, code), a place; edges their two ends, an edge; seats (legislature, chamber, seat_kind, seat_ref), a seat. build_place_edges now refuses an edge key used twice. Receipts carry the key once the geography graph is rerun |
+| **CON3-1** | Contract 3 section 2 defines each weight as a share of "the `from` town's" population. build_place_edges defines it as a share of the `from` place's, and MEGIS divisions are the `from` end of their edges. The code is right; the contract's wording is to be widened at the close |
+
+Change 5: soil/transform/build_places.py, soil/transform/build_place_edges.py, soil/transform/build_seats.py, tests/test_graph_keys.py (5 tests).

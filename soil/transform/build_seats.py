@@ -51,6 +51,9 @@ COLUMNS = ["legislature", "chamber", "seat_kind", "seat_ref", "district_authorit
            "holder_party", "position", "email", "profile_url", "legiscan_people_id",
            "legiscan_district", "legiscan_agreement", "source", "as_of"]
 KEY = ["legislature", "chamber", "seat_kind", "seat_ref"]
+# what one row IS: an office for one Legislature, never a place (D-136);
+# declared in the receipt with KEY, so loam joins on it (KEYS-1)
+SPATIAL_UNIT = "seat"
 
 # which places are seats, in which chamber, under which authority (GRAPH-1)
 CHAMBER_OF = {"sldl": ("house", "us_census_sldl"), "sldu": ("senate", "us_census_sldu")}
@@ -174,6 +177,12 @@ def build(places, house, senate, legislature, sworn_in, tribal_seats, state_fips
     return frame
 
 
+def output_metadata(frame):
+    """what the receipt says of the seats table, its key included (KEYS-1)."""
+    return {"data_category": "tabular", "crs": None, "row_count": len(frame),
+            "variables": COLUMNS, "id_fields": KEY, "spatial_unit": SPATIAL_UNIT}
+
+
 def main():
     args = parse_primitive_args()
     w = WarningsCollector("build_seats")
@@ -186,8 +195,7 @@ def main():
                       require_param(p, "tribal_seats"),
                       str(require_param(p, "state_fips")).zfill(2), w)
         write_table(frame, args["output"])
-        primitive_success({"data_category": "tabular", "crs": None, "row_count": len(frame),
-                           "variables": COLUMNS}, w)
+        primitive_success(output_metadata(frame), w)
 
 
 if __name__ == "__main__":
