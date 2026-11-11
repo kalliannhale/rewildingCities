@@ -44,7 +44,19 @@ def test_one_source_twice_under_a_key_is_never_joined():
         ("cision", 3, "Sun Journal", "sunjournal.com", None, None, None),
         ("cision", 9, "Advertiser Democrat", "sunjournal.com", None, None, None)]))
     assert g["group_id"].nunique() == 2
-    assert "not joined" in g.loc[1, "match_note"]
+    assert "not used to join" in g.loc[1, "match_note"]
+    assert "not used to join" in g.loc[0, "match_note"]
+
+
+def test_a_key_one_source_holds_twice_joins_nothing_whatever_the_order():
+    rows = [("cision", 3, "Press Herald Sports", "pressherald.com", None, None, None),
+            ("cision", 4, "Press Herald", "pressherald.com", None, None, None),
+            ("cision_raw", 8, "Press Herald", "pressherald.com", None, None, None)]
+    for order in (rows, rows[::-1]):
+        g = gor.group_records(_stack(order)).set_index("source_line")
+        assert g.loc[4, "group_id"] == g.loc[8, "group_id"]
+        assert g.loc[3, "group_id"] != g.loc[8, "group_id"]
+        assert g.loc[8, "match_basis"] == "name_key"
 
 
 def test_a_disagreement_is_listed_for_every_source():

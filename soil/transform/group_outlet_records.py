@@ -19,8 +19,12 @@ two keys, both exact after normalizing, never fuzzy:
 
 a missed match costs a duplicate someone can see; a wrong match attributes
 one outlet's owner to another. so a key never joins two records from the
-same source: one source listing two outlets under one key is two outlets,
-and the refused join is recorded in match_note rather than made. ~
+same source: one source listing two outlets under one key is two outlets.
+and a key value one source uses twice joins nothing at all, for anyone:
+which of its two records another source's record belongs with would
+otherwise be decided by row order, a silent choice. such a value is named
+in match_note on every record that holds it. a join refused because two
+keys together would put one source in a group twice is noted the same way. ~
 """
 
 from __future__ import annotations
@@ -101,6 +105,14 @@ def group_records(stack: pd.DataFrame) -> pd.DataFrame:
     for key in ("url_key", "name_key"):
         for value, rows in out.groupby(key, sort=True).groups.items():
             rows = sorted(rows)
+            sources = out.loc[rows, "source"]
+            twice = sorted(sources[sources.duplicated(keep=False)].unique())
+            if twice:
+                msg = (f"{key} {value!r} is held by more than one record of "
+                       f"{', '.join(twice)}; not used to join")
+                for r in rows:
+                    notes[r].append(msg)
+                continue
             for other in rows[1:]:
                 joined = groups.join(rows[0], other)
                 if joined:
@@ -109,7 +121,8 @@ def group_records(stack: pd.DataFrame) -> pd.DataFrame:
                 elif joined is False:
                     msg = (f"{key} {value!r} also names {out.loc[rows[0], 'source']} "
                            f"line {out.loc[rows[0], 'source_line']}; not joined, "
-                           f"since the group would hold one source twice")
+                           f"since with the other key the group would hold one "
+                           f"source twice")
                     notes[other].append(msg)
 
     roots = [groups.find(i) for i in range(len(out))]
@@ -163,7 +176,10 @@ def main(argv=None) -> int:
     sizes = grouped.groupby("group_id")["source"].nunique()
     print(f"{len(grouped)} records in {len(sizes)} groups")
     print("groups by number of sources:", sizes.value_counts().sort_index().to_dict())
-    print("joins refused:", int(grouped["match_note"].notna().sum()))
+    notes = grouped["match_note"].fillna("")
+    print("records holding a key not used (one source holds it twice):",
+          int(notes.str.contains("not used to join").sum()))
+    print("joins refused across keys:", int(notes.str.contains("not joined").sum()))
     if len(diff):
         print("disagreeing groups by field:",
               diff.groupby("field")["group_id"].nunique().to_dict())
