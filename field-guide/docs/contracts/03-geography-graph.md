@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.7, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
+**Status:** draft 0.8, 2026-11-11 (seats, D-134, D-136 to D-138; G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -142,6 +142,66 @@ Until the grove exists, the graph lives as two Parquet tables in each plot,
 the graph. Loam reads them as holdings keyed by place (Sprint 05); the grove's
 catalog is their union across plots.
 
+## 6. Seats
+
+A seat is an office in a chamber for one Legislature. It is not a place and
+never has a row in `places`: a district seat points at its district place,
+and a tribal seat points at none. A tribal representative speaks for a
+nation's members wherever they live, so joining a tribal seat to a Census
+tribal area would claim the Census's boundary is the nation's constituency,
+the claim D-123's note refuses (D-136).
+
+**The record is the Maine Legislature (D-134).** Holders come from the
+House's member export and the Senate's district listing. LegiScan is a second
+authority, held beside the record: its `people_id` and district are carried
+and compared, never used to fill a field. LegiScan lists people with activity
+in a session, not seats, so it cannot say a seat is vacant (LEG-1).
+
+**Key:** `(legislature, chamber, seat_kind, seat_ref)`. For a district seat,
+`seat_ref` is the district code (`23042`); for a tribal seat, the nation's
+name as 3 MRSA §601(1)(A) defines the Wabanaki Nations (D-136). The kind
+travels with the ref, so a code and a name are never mistaken for each other.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `legislature` | text | declared, e.g. `133`; the record does not say |
+| `chamber` | text | `house`, `senate` |
+| `seat_kind` | text | `district`, `tribal` |
+| `seat_ref` | text | the district code, or the nation's §601 name |
+| `district_authority`, `district_code` | text or null | the district place (`us_census_sldl`, `23042`); null for a tribal seat |
+| `statute_wording` | text or null | for a tribal seat, the nation as 3 MRSA §1 words it, where it differs ("Penobscot Indian Nation", NAME-3) |
+| `seat_number` | text or null | the chamber's chair number, verbatim; never a key, it changes each Legislature |
+| `vacant` | boolean | the seat exists and the record names no holder |
+| `holder_name`, `holder_party`, `position` | text or null | verbatim from the record; null when vacant |
+| `email` | text or null | where the record gives one (the House) |
+| `profile_url` | text or null | the member's page, where the record links one (the Senate) |
+| `legiscan_people_id`, `legiscan_district` | text or null | the second authority, verbatim |
+| `legiscan_agreement` | text or null | `agrees`, `differs`, `absent` |
+| `source`, `as_of` | text | the record's address and the fetch time |
+
+**No phone numbers (D-138).** Some are members' own cell phones, published by
+the Legislature for constituents; a public harvest would republish them in a
+new context. A reader reaches a member by email or through the member's own
+page.
+
+**Where seats come from.** District seats are generated from `places`, one per
+`sldl` and `sldu` place, so all 151 and all 35 exist and a vacancy is a seat
+with no holder. Tribal seats come from a list declared per Legislature, citing
+3 MRSA §1 and §601; the 133rd has four (TRIBE-3). Seats are built for a
+Legislature only after it is sworn in (D-135).
+
+**Invariants**, refused in `build_seats` or tested:
+
+- Every House and Senate district place has exactly one seat per Legislature.
+- No seat key appears twice.
+- A holder whose district has no place is refused by name.
+- Tribal seats are House seats only, carry no district, and match the declared list exactly.
+- Holders plus vacancies equal seats, per chamber.
+- The districts a Legislature was elected on are the graph's district vintage (tested; not yet verified for the 133rd).
+
+**Storage:** a third Parquet table, `seats`, beside `places` and `edges`,
+written by a preparation with an envelope (Section 5).
+
 ## Open
 
 | ID | Question | Decided in |
@@ -154,6 +214,7 @@ catalog is their union across plots.
 | G-3 | Points stay out of `places`; they are named by layer and feature id inside their `located_in` edges (D-103) |
 | G-1 | Both population and household weights on every `overlaps` edge; the value's `rests_on.counts` chooses (D-121) |
 | G-2 | MEGIS civil divisions join Census towns through blocks: each 2020 block goes to the division containing its internal point (D-122) |
+| S-1 | Seats are their own table, keyed by legislature, chamber, kind and ref; the Legislature is the record and LegiScan the second authority; tribal seats keyed by the §601 names with no place link; no phone numbers (D-134, D-136, D-137, D-138) |
 
 ## Review
 

@@ -472,3 +472,58 @@ number.
 | ID | item |
 | --- | --- |
 | **REF-1** | `test_indicator_references.py` expected rent burden's derivation without `open_ended`, which ACS-7 added to its declaration. It failed at 37e89ad, before step 3, so step 2's "green" carried one known red. Fixed by expecting the declaration as it stands. A red test left standing hides the next one behind it |
+
+## SPRINT 04, STEP 4a ~ legislators: which source is the record, 2026-11-11
+
+Sources read: LegiScan API User Manual v1.91 (revision 20250317); legiscan.com/ME/datasets; the Maine House's ExportActiveMembers CSV and member pages (legislature.maine.gov/house, fetched 2026-11-11); the Legislature's convening schedule for the 133rd.
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-134** | The Maine Legislature is the record for seats and who holds them; LegiScan is a second authority, carried for `people_id` and checked against the record, its disagreements shown, never collapsed | Every seat is a row, including the three tribal seats and vacancies; contact comes from the Legislature; LegiScan links a holder to sponsorship and votes | The Legislature stops publishing a member list a preparation can read, or LegiScan begins publishing seats rather than activity |
+
+| ID | item |
+| --- | --- |
+| **LEG-1** | LegiScan's getSessionPeople lists people with sponsor or vote activity in a session, not seats. A vacant seat is absent, a seat that changed hands is two people, and a new session is near empty until bills and votes begin. Withdrawn: the plan's "one row per seat, vacant" from LegiScan |
+| **LEG-2** | LegiScan person records carry name, party, role, district and third-party ids (FollowTheMoney, VoteSmart, KnowWho, Ballotpedia); no email, phone or address |
+| **LEG-3** | LegiScan person records reflect current status; viewed in a prior session they may show a different role, district or party. A pull of a past session is not that session's truth |
+| **LEG-4** | LegiScan districts are written `HD-063`, `SD-015` in the manual's examples (other states). Maine's strings are unverified until a key exists; the mapping to the graph would be `23` plus the number padded to 3 |
+| **LEG-5** | The House publishes a real-time member export, CSV and Excel (ExportActiveMembers): Name, Party, District, County, Seat, Email, Phone, Residence, City, Zip, Position, Committees. District is a bare integer; County can list several; City and Zip were empty; the Speaker sits at seat 0, Position "Ex Officio". It names no Legislature number and no date, so `as_of` is the fetch time |
+| **LEG-6** | No Senate export found; the Senate publishes HTML lists (by name, by district, by municipality). Unverified that none exists. The two chambers' sources are not symmetric |
+| **TRIBE-2** | The House's three tribal seats (Penobscot Nation, Passamaquoddy Tribe, Houlton Band of Maliseet Indians) have seat numbers and no district, so they cannot join the graph by district code. Terms reported to end September and October 2026; no tribal representative was in the House export on 2026-11-11. Absence from an active list is not a statement about the nations. Secondary sources disagree on which seats were filled; MP-77 stays verified against the Legislature's own pages |
+| **LIC-1** | LegiScan's legislative datasets are CC BY 4.0 per its datasets page; the API terms themselves are not yet read. The Legislature's site states no license that I found; open before anything from it is published |
+| **KEY-1** | census_acs.py reads `source_config.get("api_key")` before CENSUS_API_KEY. The key never reaches provenance (`_public_request` strips it), but the path invites a key into a public manifest. New providers read the environment only; close this path in census_acs later |
+| **TIME-1** | The 133rd convenes and is sworn in Wednesday 2026-12-02. Until then three answers are true: the 132nd in office, members-elect, and (per one post-election report) two House races uncalled. Open: which one step 4 builds first |
+| **XCHK-1** | The House publishes its own town-to-district listing (642 towns and municipalities, 151 districts). It is a third, independent account of what build_place_edges derives from blocks, and could check the overlaps edges by town. Open; not in step 4 |
+
+**WRONG** ~ The repo had no LegiScan provider; the API's shape had been checked once and never became code.
+
+**LESSON** ~ A source's word for a thing is not ours. LegiScan's "people" are people who acted, not seats that exist, and a table shaped by one would have called every quiet seat vacant.
+
+## SPRINT 04, STEP 4b ~ legislators: timing and the tribal seats, 2026-11-11
+
+Sources read: 3 MRSA §1 and §601 (Revisor's text, extracted 2026-10-05); the Law and Legislative Reference Library's summary of PL 2025, c. 705 (LD 785); 3 MRSA §602 PDF (copyright notice).
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-135** | Step 4 builds the preparation now and acquires the 133rd Legislature after it is sworn in (2026-12-02). Today's House export is a test fixture, never a harvest | No published artifact names a legislator about to leave office or one not yet seated; step 4 closes after Dec 2, with steps 5 and 6 worked in between | An organizer or official needs the 132nd or the members-elect before Dec 2, and the artifact can say which it is |
+| **D-136** | A tribal seat is keyed by the nation's name as 3 MRSA §601(1)(A) defines the Wabanaki Nations: Passamaquoddy Tribe, Penobscot Nation, Houlton Band of Maliseet Indians, Mi'kmaq Nation. `seat_kind: tribal`, no place link. Where §1 words a nation differently ("Penobscot Indian Nation"), that wording is kept verbatim in `statute_wording`. The set of tribal seats is declared per Legislature with its statute citation, never hardcoded | A tribal seat is a row with no district and no geometry, so the Census's tribal areas are never read as the nations' constituencies (D-123); nothing joins on the name, it only identifies the row | Consultation with the nations asks otherwise, or the statute's definition changes |
+
+| ID | item |
+| --- | --- |
+| **TRIBE-3** | Corrects TRIBE-2: the 132nd had three tribal seats; PL 2025, c. 705 lets the Mi'kmaq Nation elect a representative beginning with the First Regular Session of the 133rd, so the 133rd has four. 3 MRSA §1 now names the Mi'kmaq Nation's Representative-elect. Withdrawn: "the House's three tribal seats" as a standing fact |
+| **NAME-3** | 3 MRSA §1 writes "Penobscot Indian Nation"; §601(1)(A), §602 and the Legislature's pages write "Penobscot Nation". One nation, two statutory strings; D-136 keys by §601 and keeps §1's form |
+| **LIC-1** | Addendum: the State of Maine claims copyright in its codified statutes and asks republishers to carry its disclaimer. Seats carry four names and a citation, not statutory text; record the claim, decide before publishing whether the disclaimer is owed |
+| **PEN-2** | I described PEN-1 as teaching "never mint a code". It teaches using an authority's published code where one exists (2760R, via part_of). It says nothing where no authority publishes a code, which is the tribal-seat case. The fork was decided on the corrected reading |
+
+**LESSON** ~ The seat set is law, and law moves between Legislatures. A count that is true of the 132nd was about to become a constant in the 133rd's contract.
+
+## SPRINT 04, STEP 4c ~ the seats table, 2026-11-11
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-137** | Seats are a third graph table, `seats`, keyed `(legislature, chamber, seat_kind, seat_ref)`; Contract 3 section 6 (draft 0.8). District seats are generated from `places`, tribal seats from a declared list, holders from the record | A vacancy is a stated fact, a seat with no holder; a holder with no district place is refused | The grove's catalogue needs seats keyed some other way |
+| **D-138** | No phone numbers in `seats`; contact is `email` (the House export) and `profile_url` (the Senate listing) | A public harvest never republishes members' own cell phones; the two chambers give different contact, honestly asymmetric | Members or the Legislature ask that phones be carried |
+
+| ID | item |
+| --- | --- |
+| **LEG-7** | The Senate's district listing is one line per district, `District N (Map) - Senator Name (P-County)`, all 35; no email or phone on the page. Corrects LEG-6's "fragile": one pattern parses every line |
