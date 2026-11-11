@@ -829,3 +829,11 @@ LOAM-1 is closed by changes 1 to 4. Sprint 04 step 4 is closed on its dependency
 | **CON3-1** | Contract 3 section 2 defines each weight as a share of "the `from` town's" population. build_place_edges defines it as a share of the `from` place's, and MEGIS divisions are the `from` end of their edges. The code is right; the contract's wording is to be widened at the close |
 
 Change 5: soil/transform/build_places.py, soil/transform/build_place_edges.py, soil/transform/build_seats.py, tests/test_graph_keys.py (5 tests).
+
+### The geography graph rerun, after change 5 (2026-11-11)
+
+`python -m canopy.cli sows plots/maine/preparations/maine_geography_graph.yml` ran all 12 steps. The places receipt now declares id_fields [authority, code] and spatial_unit place (1,663 rows), and every provenance entry names run maine_geography_graph and its step. Asked phase 2.5's question alone (Orchestrator on maine_seats.yml, `_judge_loam_inputs`, which resolves no data and touches no roster), `$loam.places` was reached and judged fresh, with nothing changed and nothing untold: the first real `$loam.` read on Maine data.
+
+| ID | Finding |
+| --- | --- |
+| **PREP-1** | Corrected: `python -m canopy.cli sows <run.yml>` runs a preparation, since sows builds an Orchestrator for any run file. PREP-1's "no CLI command runs a preparation" was out of date; state.md's trap was right |
