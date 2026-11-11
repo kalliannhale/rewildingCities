@@ -3,9 +3,10 @@ canopy/wonder/session.py
 
 session ~ opening a plot to be read
 
-every reader needs the same four motions before it can ask anything: load
+every reader needs the same five motions before it can ask anything: load
 the vocabulary, open the plot's bed, plant what the manifest declares, till
-what the envelopes record. the CLI does this inline; an API would too, and
+what the envelopes record, and make the graph's views over what was tilled
+(D-168). the CLI does this inline; an API would too, and
 then they would drift in some small way that matters later.
 
 so it lives here once. a session is not a cache and holds no truth: the bed
@@ -89,6 +90,11 @@ def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True,
         tilled = till_envelopes(loam, str(receipts), vocab, plot)
         report["tilled"] = len(tilled["tilled"])
         report["tilled_refused"] = [{"receipt": k, "why": w} for k, w in tilled["refused"]]
+
+    # the plot's part of the graph, as views over the files its receipts
+    # point at, never copies (D-168); a plot with no graph says so here
+    from ..loam.graph import plant_graph
+    report["graph"] = plant_graph(loam, plot, base)
 
     return vocab, loam, report
 

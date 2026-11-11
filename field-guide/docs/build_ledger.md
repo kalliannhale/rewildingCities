@@ -837,3 +837,9 @@ Change 5: soil/transform/build_places.py, soil/transform/build_place_edges.py, s
 | ID | Finding |
 | --- | --- |
 | **PREP-1** | Corrected: `python -m canopy.cli sows <run.yml>` runs a preparation, since sows builds an Orchestrator for any run file. PREP-1's "no CLI command runs a preparation" was out of date; state.md's trap was right |
+
+### Change 6: plan build 1, places and edges as views in loam (D-168)
+
+canopy/loam/graph.py (new): plant_graph() makes two DuckDB views in the bed, places and edges, over the file of the one tended or gathered receipt of type places or place_edges, resolved from the project root. No view, and a reason in the report, when there are none, several (naming each, as D-163), a receipt that declares no key (KEYS-1), a file not on disk, or a file without its declared key columns. A plot with no graph opens normally. canopy/wonder/session.py: open_plot calls it as its fifth motion and reports report["graph"]. tests/test_loam_graph.py: 8 tests, among them the plan's rebuild test (delete and rebuild the bed: the same places, edges and catalog rows) and a snapshot carrying no graph values, which is D-168's reason held as a test.
+
+Noted for plan build 5: canopy/cli/wonder.py plants and tills inline rather than through open_plot, the drift session.py's own docstring warns of, so `wonder` does not yet see the graph views.
