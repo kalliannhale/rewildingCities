@@ -96,6 +96,18 @@
       }
     },
 
+    "run": {
+      "type": "string",
+      "description": "The experiment or preparation id whose step made this entry (D-167). Absent on receipts written before D-167.",
+      "examples": ["maine_geography_graph"]
+    },
+
+    "step": {
+      "type": "string",
+      "description": "The step id, within run, that made this entry (D-167). With run, it lets staleness judge an inherited entry against its own declaration (D-165).",
+      "examples": ["graph_places"]
+    },
+
     "lineage_branch": {
       "type": ["string", "null"],
       "description": "Which input stream contributed this entry to the current envelope's provenance chain. Null for the primitive that created this envelope; named for inherited entries from input envelopes.",

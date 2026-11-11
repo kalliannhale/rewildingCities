@@ -774,3 +774,29 @@ Vintages used: blocks 2020 P.L. 94-171; towns, counties and the state 2024 (TIGE
 | **LEDGER-2** | The step 4e block appears twice above, word for word. One decision, D-141, recorded twice; left in place, since the ledger is history |
 
 Carried: LOAM-1 (with the aiannh vintage question), SRC-1 and running build_seats to Sprint 05; located_in to Sprint 06; rule 10's license and GJSON-1 to Sprint 08; the rest as listed in the report.
+
+## Sprint 05 ~ loam learns the graph
+
+### Step 1: reading, reconciling, and LOAM-1's design (2026-11-11)
+
+Order of work, reconciled with Sprint 04: LOAM-1 first (it is not in the plan's build list and comes before it), then the plan's builds 1, 2 and 3, then builds 4 and 5 designed together as one rule for what crosses an edge, then build 6 with the grove keys (NAME-2, AUTH-1, SRC-1, SEAM-1, MAP-4) decided before any handoff. Two tests added to the plan's four: a place key used twice, and a missing vintage.
+
+| ID | Decision | Why | Reverse if |
+| --- | --- | --- | --- |
+| **D-163** | A preparation reads another's output by semantic type, written `$loam.<type>`. The resolver refuses when it finds none or several, naming them, as recipe.py's bind_requirements does | LOAM-1's own wording; the vocabulary stays the contract; a renamed step breaks nothing | A consumer needs a type made more than once (place_outline is made five times); then add a qualifier |
+| **D-164** | `$loam.` is answered by the plot's loam bed, rebuilt fresh from the receipts, reading tended and gathered rows only. An arrived holding is refused by name, pointing to `$manifest.`. A preparation may not read a type it produces itself. Claude's lean, accepted by Kalli | One reader of receipts (P-01); retired names read forward; the grove federates the same beds | Replanting the bed on every run becomes too slow |
+| **D-165** | A `$loam.` read compares the producer's recorded input hashes, deduplicated and recomputed by the method each records (skipped means cannot tell), and every entry's params against its own run's declaration. Primitive code is not judged, and every message says so | The vintage decisions of this sprint live in params; input hashes alone would miss an edited declaration | KIT-1 adds hashing of primitive code |
+| **D-166** | A stale read refuses before any step runs, checked after resolve_data so the disk is as the steps will find it, naming what differs and which preparation to rerun. Cannot tell warns into each consuming step's envelope, once. A missing input file is cannot tell. No override yet (KIT-1). The resolution report lists each `$loam.` input with its verdict | D-141 refused a local copy because it would go stale silently; this answers that directly | A use needs to run on knowingly stale ground; then the override in KIT-1 |
+| **D-167** | Every provenance entry names its `run` and `step`, optional in provenance.schema.json and carried on every inherited copy | A step id alone would judge an inherited entry against the consumer's preparation; with its run, any entry is judged against its own declaration | Never expected |
+
+| ID | Finding |
+| --- | --- |
+| **HASH-2** | Resolved by Sprint 05 change 1. A skipped hash dropped its required null value on write, so a test-profile receipt could neither validate nor load. The value is now always written; from_dict tolerates its absence in older receipts |
+| **KEYS-1** | The places envelope declares no id_field, id_fields or spatial_unit, so loam's join grammar is empty for the table everything joins on. Fix upstream in build_places, and build_place_edges for its four key columns, before the plan's builds 1 and 2 |
+| **LIN-2** | `_merge_provenance` concatenates input chains with no deduplication; places carries the build_block_spine entry twice. Harmless for staleness, which deduplicates; not fixed |
+| **VER-1** | Every provenance entry says version 1.0.0. The version comes from the step definition, not the primitive, so it is not a signal of changed code |
+| **KIT-1** | What the community kit (Sprint 10) must decide before someone else's machine runs it: the `--accept-stale` override (D-166), hashing primitive code (D-165), VER-1, DEPS-1. Carried in the Sprint 05 report and state.md |
+
+Noted, not numbered: an envelope records no hash of its own output, so a file replaced after its build cannot be detected. PREP-1 says no CLI command runs a preparation, while state.md's traps describe a geography graph run through sows; one of them is out of date. In readiness.py "Holding" already means what loam holds of one type, which the plan's build 2 would reuse for place-keyed values.
+
+Change 1 (D-167, HASH-2): canopy/envelope.py, canopy/orchestrator/orchestrator.py, seeds/schemas/provenance.schema.json, tests/test_provenance_identity.py (7 tests), tests/test_preparations.py (the fake builder takes run and step; 1 test that a receipt names them). Lesson: a signature change reaches every fake of it; search for stand-ins before handing over the change.

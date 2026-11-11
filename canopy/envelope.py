@@ -62,6 +62,12 @@ class ProvenanceEntry:
     # the step that made it. inherited with the entry, so it reaches every
     # descendant; empty when the step changed nothing.
     publication: list[dict[str, Any]] = field(default_factory=list)
+    # D-167: which run and which of its steps made this entry. carried on
+    # every inherited copy, so an entry that travelled through several
+    # preparations can still be judged against its own declaration (D-165).
+    # null on receipts written before D-167: staleness then cannot tell.
+    run: str | None = None
+    step: str | None = None
 
 
 @dataclass
@@ -86,7 +92,7 @@ class Envelope:
             "data": self.data,
             "metadata": self.metadata,
             "provenance": [
-                {
+                _entry_identity(p) | {
                     "primitive": p.primitive,
                     "version": p.version,
                     "timestamp": p.timestamp,
@@ -96,9 +102,11 @@ class Envelope:
                             "name": i.name,
                             "semantic_type": i.semantic_type,
                             "path": i.path,
-                            "hash": {
+                            # HASH-2: value is required and may be null
+                            # (a skipped hash), so it is always written;
+                            # algorithm and reason are written only when known
+                            "hash": {"value": i.hash.value} | {
                                 k: v for k, v in {
-                                    "value": i.hash.value,
                                     "method": i.hash.method,
                                     "algorithm": i.hash.algorithm,
                                     "reason": i.hash.reason
@@ -141,7 +149,9 @@ class Envelope:
                             semantic_type=i["semantic_type"],
                             path=i["path"],
                             hash=HashInfo(
-                                value=i["hash"]["value"],
+                                # HASH-2: a receipt written before the fix
+                                # has no value when hashing was skipped
+                                value=i["hash"].get("value"),
                                 method=i["hash"]["method"],
                                 algorithm=i["hash"].get("algorithm"),
                                 reason=i["hash"].get("reason")
@@ -152,7 +162,10 @@ class Envelope:
                     duration_seconds=p["duration_seconds"],
                     lineage_branch=p.get("lineage_branch"),
                     # a receipt written before D-143 has no records: none
-                    publication=[dict(r) for r in p.get("publication") or []]
+                    publication=[dict(r) for r in p.get("publication") or []],
+                    # a receipt written before D-167 names no run or step
+                    run=p.get("run"),
+                    step=p.get("step")
                 )
                 for p in data["provenance"]
             ],
@@ -165,6 +178,12 @@ class Envelope:
                 for w in data["warnings"]
             ]
         )
+
+
+def _entry_identity(p: "ProvenanceEntry") -> dict:
+    """run and step, written only when known, so a receipt from before D-167
+    keeps its shape and the schema's optional fields stay optional."""
+    return {k: v for k, v in (("run", p.run), ("step", p.step)) if v is not None}
 
 
 # === Schema Validation ===
@@ -532,7 +551,9 @@ class EnvelopeBuilder:
         output_semantic_type: str,
         output_data_category: str,
         params: dict[str, Any] | None = None,
-        passthrough: bool = False
+        passthrough: bool = False,
+        run: str | None = None,
+        step: str | None = None
     ) -> "BuildResult":
         """
         Run a primitive and construct the output envelope.
@@ -546,6 +567,8 @@ class EnvelopeBuilder:
             output_semantic_type: Semantic type of output
             output_data_category: "vector", "raster", or "tabular"
             params: Parameters for the primitive
+            run: the experiment or preparation id this step belongs to (D-167)
+            step: the step id within that run (D-167)
         
         Returns:
             BuildResult with success status and envelope
@@ -604,7 +627,9 @@ class EnvelopeBuilder:
             inputs=input_records,
             duration_seconds=round(duration, 3),
             lineage_branch=None,  # This is the creating primitive
-            publication=[dict(r, by=short_name, at=timestamp) for r in records]
+            publication=[dict(r, by=short_name, at=timestamp) for r in records],
+            run=run,
+            step=step
         )
         
         # Merge provenance from input envelopes
@@ -727,7 +752,11 @@ class EnvelopeBuilder:
                         inputs=entry.inputs,
                         duration_seconds=entry.duration_seconds,
                         lineage_branch=inp.name if entry.lineage_branch is None else entry.lineage_branch,
-                        publication=[dict(r) for r in entry.publication]
+                        publication=[dict(r) for r in entry.publication],
+                        # D-167: every field is copied by hand here, so a new
+                        # one is lost from inherited copies unless named
+                        run=entry.run,
+                        step=entry.step
                     )
                     merged.append(tagged)
         

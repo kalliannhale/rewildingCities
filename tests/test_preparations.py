@@ -78,16 +78,15 @@ def fake_builder(monkeypatch, orch, warn_after=None):
     warning on its output, as a real primitive would on a bad result."""
     def run(primitive, version, inputs, output_path, output_format,
             output_semantic_type, output_data_category, params=None,
-            passthrough=False):
+            passthrough=False, run=None, step=None):
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         Path(output_path).write_text(json.dumps(
             {"type": "FeatureCollection", "features": []}))
         name = Path(primitive).stem
         # the provenance schema requires at least one input record (minItems
         # 1), so the fake records the inputs it was given, as a primitive does.
-        # the hash is a real md5 of nothing: a skipped hash (value None) is
-        # dropped by Envelope.to_dict and then fails the schema, which
-        # requires `value` (HASH-1), so the fake cannot use one.
+        # the hash is a real md5 of nothing. a skipped hash would also do now:
+        # since HASH-2 (Sprint 05) its null value is written and validates.
         records = [InputRecord(
             name=i.name, semantic_type=i.semantic_type or "governance_unit",
             path=str(i.path or "in-memory"),
@@ -104,7 +103,8 @@ def fake_builder(monkeypatch, orch, warn_after=None):
                       "crs": "EPSG:4326"},
             provenance=[ProvenanceEntry(
                 primitive=name, version=version, timestamp="2026-11-10T00:00:00Z",
-                params=params or {}, inputs=records, duration_seconds=0.0)],
+                params=params or {}, inputs=records, duration_seconds=0.0,
+                run=run, step=step)],
             warnings=warnings)
         return BuildResult(success=True, envelope=env, error=None, message=None)
     monkeypatch.setattr(orch.envelope_builder, "run", run)
@@ -136,6 +136,24 @@ def test_a_preparation_runs_with_no_curiosity_and_its_receipt_says_so(
     assert lineage["method"] == PREP_METHOD
     # absent, never empty: a receipt must not read as "a question, unknown"
     assert "curiosity" not in lineage and "sub_question" not in lineage
+
+
+def test_a_receipt_names_the_run_and_step_that_made_it(tmp_path, monkeypatch):
+    # D-167: the orchestrator hands the builder its run and step, so the
+    # receipt's own entry can later be judged against its own declaration
+    plot = a_plot(tmp_path)
+    path = a_run(plot, "county_units", kind="preparation",
+                 method={"ref": PREP_METHOD},
+                 steps=[step("units_repair", "soil/repair_geometry",
+                             {"features": "$manifest.governance_unit_county"},
+                             output="repaired")])
+    orch = orchestrator(path, tmp_path)
+    fake_builder(monkeypatch, orch)
+    assert orch.run().success
+    receipt = json.loads(
+        (plot / ".envelopes" / "units_repair_repaired.envelope.json").read_text())
+    own = receipt["provenance"][-1]
+    assert (own["run"], own["step"]) == ("county_units", "units_repair")
 
 
 def test_an_experiment_with_no_curiosity_is_still_flagged(tmp_path):

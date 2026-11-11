@@ -884,6 +884,7 @@ class Orchestrator:
             output_format=output_format, output_semantic_type=output_semantic_type,
             output_data_category=self._infer_category(output_semantic_type),
             params=resolved_params, passthrough=primitive_spec.passthrough,
+            run=self.experiment.id, step=step.id,
         )
 
         if not build_result.success:
