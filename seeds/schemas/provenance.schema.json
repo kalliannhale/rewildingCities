@@ -106,6 +106,41 @@
       "type": "number",
       "minimum": 0,
       "description": "Execution time in seconds"
+    },
+
+    "publication": {
+      "type": "array",
+      "description": "Contract 1, rule 11 (D-143): what this step changed about what could leave, one record per change, empty when it changed nothing. The primitive gives step, detail and count; by and at are stamped by the builder from this entry. Inherited with the entry, so every descendant carries it.",
+      "items": {
+        "type": "object",
+        "required": ["step", "detail", "count", "by", "at"],
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": ["held_out", "field_dropped", "renamed", "rounded", "format_changed", "simplified", "clipped"],
+            "description": "What kind of change; the closed set of Contract 1, section 8"
+          },
+          "detail": {
+            "type": "string",
+            "description": "What exactly: which units, which field, to what precision, which tolerance"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many units or fields it touched"
+          },
+          "by": {
+            "type": "string",
+            "description": "The primitive whose entry this is, stamped by the builder"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The entry's timestamp, stamped by the builder"
+          }
+        },
+        "additionalProperties": false
+      }
     }
   },
 

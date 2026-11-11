@@ -1,6 +1,6 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.3, 2026-11-10, for review (E-1 and E-2 decided, D-101, D-102). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.4, 2026-11-11, for review (E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
 **Rests on:** MP-67 (publishing is opt-in), MP-72 (Wabanaki places as a
@@ -64,7 +64,7 @@ From the infrastructure plan's Part 3, with three additions from the fusion.
 | 8 | Presence before contents: the gate may say that a kind of data exists and is withheld, and why, without showing it |
 | 9 | Required context: a type may declare a note that must travel with it; publication without the note is refused |
 | 10 | License: redistribution must be permitted at the target's sharing level |
-| 11 | Every step that changes what leaves (a unit held out, a field dropped, a rename, rounding, a format change, simplification, clipping) is recorded in provenance |
+| 11 | Every step that changes what leaves (a unit held out, a field dropped, a rename, rounding, a format change, simplification, clipping) is recorded in provenance, in the entry of the step that made it, and every descendant carries the record (D-143) |
 
 ## 4. What the gate is given, and what it returns
 
@@ -87,7 +87,7 @@ why it was allowed.
 | `license` | the license term checked under rule 10 |
 | `context_notes` | the note ids carried under rule 9 |
 | `caveats` | what the artifact lacks but may leave without, in plain words; today, an experiment that names no curiosity (rule 4) |
-| `publication_steps` | the rule 11 records, in order |
+| `publication_steps` | every rule 11 record in the artifact's provenance chain, in chain order, each once, each with the `lineage_branch` it was found through (D-143) |
 | `gate_version`, `checked_at` | which gate decided, and when |
 
 ### The refusal record
@@ -154,12 +154,30 @@ at `public` until it does.
 | `by` | the primitive or the gate |
 | `at` | when |
 
+**Where the record lives (D-143).** In the provenance entry of the step that
+made it, as that entry's `publication` list, empty when the step changed
+nothing. A primitive prints `step`, `detail` and `count` in its stdout
+metadata; the envelope builder lifts them into its provenance entry and stamps
+`by` (the entry's primitive) and `at` (the entry's timestamp). A primitive that
+stamps `by` or `at` itself is refused, never corrected, because a record that
+misnames its step would travel to every descendant. The step names are a
+closed set enforced by `provenance.schema.json` when the receipt is written,
+so a misspelled step is refused there, as a misspelled tier is under rule 1.
+
+The record is inherited with its entry, so a clip made by a preparation reaches
+every map drawn from it, and no exit has to know what happened upstream. The
+gate gathers every record in the chain into its allow record, each once
+(keyed by `by`, `at`, `step` and `detail`, since an ancestor reached through two
+inputs appears twice in the chain). `metadata.publication` is never read or
+written. `by: the gate` is for a change the exit itself makes, recorded there.
+
 ## Decided in review
 
 | ID | Decision |
 | --- | --- |
 | E-1 | Rule 3 is a conjunction, not a ranking: `aggregate-only` limits form and `custom` limits permission, so neither outranks the other and both bind (D-101) |
 | E-2 | An experiment with an empty curiosity passes rule 4: its method, choices and run make it traceable, and its missing question is carried as a caveat rather than blocking it (D-102) |
+| E-7 | Rule 11's records live in the provenance entry of the step that made them; the builder stamps `by` and `at`; the schema holds the closed set; the gate gathers them through the chain (D-143) |
 
 ## Open
 

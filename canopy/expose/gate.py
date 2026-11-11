@@ -20,8 +20,8 @@ the eleven rules, as this module applies them:
      withheld, and why, without showing it
   9  a type's required context must travel with the artifact
   10 redistribution must be permitted at the target's sharing level
-  11 publication steps are recorded: the gate carries them in its allow
-     record; the exits that make them append them (Sprint 08)
+  11 publication steps are recorded in provenance, by the step that made
+     them; the gate gathers every one in the chain into its allow record (D-143)
 
 lineage is read from the envelope alone: its own semantic type, and every
 input type in its provenance chain, inherited entries included. ~
@@ -78,6 +78,25 @@ def lineage_types(envelope: dict) -> list[tuple[str, str]]:
                 seen[st] = (f"input '{inp.get('name')}' of {entry.get('primitive')}"
                             + (f" (via {branch})" if branch else ""))
     return list(seen.items())
+
+
+def publication_steps(envelope: dict) -> list[dict]:
+    """every rule 11 record in the artifact's provenance chain, in chain
+    order, each once (D-143). a record lives in the provenance entry of the
+    step that made it and is inherited with that entry, so a clip made by a
+    preparation reaches every map drawn from it. an ancestor reached through
+    two inputs appears twice in the chain; its records are carried once.
+    metadata.publication is never read: rule 11 says provenance."""
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    for entry in envelope.get("provenance") or []:
+        for r in entry.get("publication") or []:
+            key = (r.get("by"), r.get("at"), r.get("step"), r.get("detail"))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(dict(r, lineage_branch=entry.get("lineage_branch")))
+    return out
 
 
 def lineage_datasets(envelope: dict, manifest_datasets: dict) -> list[str]:
@@ -212,7 +231,7 @@ def decide(envelope: dict, *, target: str, sharing_level: str, vocabulary,
         "decision": "allow", "target": target, "sharing_level": sharing_level,
         "tiers": tiers_bound, "consent": consents_cited, "license": licenses_checked,
         "context_notes": list(meta.get("context_notes") or []), "caveats": caveats,
-        "publication_steps": list(meta.get("publication") or []),
+        "publication_steps": publication_steps(envelope),
         "gate_version": GATE_VERSION, "checked_at": checked_at}}
 
 

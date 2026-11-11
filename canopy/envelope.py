@@ -56,6 +56,12 @@ class ProvenanceEntry:
     inputs: list[InputRecord]
     duration_seconds: float
     lineage_branch: str | None = None
+    # Contract 1, rule 11 (D-143): what this step changed about what could
+    # leave, one record per change. the primitive says step, detail and count;
+    # the builder stamps by and at from this entry, so a record always names
+    # the step that made it. inherited with the entry, so it reaches every
+    # descendant; empty when the step changed nothing.
+    publication: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -102,7 +108,8 @@ class Envelope:
                         for i in p.inputs
                     ],
                     "duration_seconds": p.duration_seconds,
-                    "lineage_branch": p.lineage_branch
+                    "lineage_branch": p.lineage_branch,
+                    "publication": [dict(r) for r in p.publication]
                 }
                 for p in self.provenance
             ],
@@ -143,7 +150,9 @@ class Envelope:
                         for i in p["inputs"]
                     ],
                     duration_seconds=p["duration_seconds"],
-                    lineage_branch=p.get("lineage_branch")
+                    lineage_branch=p.get("lineage_branch"),
+                    # a receipt written before D-143 has no records: none
+                    publication=[dict(r) for r in p.get("publication") or []]
                 )
                 for p in data["provenance"]
             ],
@@ -571,15 +580,31 @@ class EnvelopeBuilder:
                 message=result.message
             )
         
+        # Rule 11 records the primitive printed (D-143). by and at are the
+        # builder's to stamp; a primitive that writes either is refused, never
+        # quietly corrected, because a record that misnames its step would
+        # travel to every descendant.
+        records, bad = self._publication_records(result.metadata)
+        if bad:
+            return BuildResult(
+                success=False,
+                envelope=None,
+                error="Publication record not understood",
+                message=bad
+            )
+
         # Build provenance entry
+        short_name = re.sub(r'\.(R|py)$', '', primitive.split('/')[-1])
+        timestamp = datetime.now(timezone.utc).isoformat()
         provenance_entry = ProvenanceEntry(
-            primitive=re.sub(r'\.(R|py)$', '', primitive.split('/')[-1]),
+            primitive=short_name,
             version=version,
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=timestamp,
             params=params,
             inputs=input_records,
             duration_seconds=round(duration, 3),
-            lineage_branch=None  # This is the creating primitive
+            lineage_branch=None,  # This is the creating primitive
+            publication=[dict(r, by=short_name, at=timestamp) for r in records]
         )
         
         # Merge provenance from input envelopes
@@ -622,6 +647,26 @@ class EnvelopeBuilder:
             message=None
         )
     
+    @staticmethod
+    def _publication_records(primitive_metadata: dict) -> tuple[list[dict], str | None]:
+        """the rule 11 records a primitive printed, or the reason they cannot
+        be taken. the step names are checked by provenance.schema.json when
+        the receipt is written, so this checks only what the schema cannot
+        see: that the primitive left by and at to the builder."""
+        records = primitive_metadata.get("publication")
+        if records is None:
+            return [], None
+        if not isinstance(records, list) or not all(isinstance(r, dict) for r in records):
+            return [], ("publication must be a list of records, each with step, "
+                        "detail and count (Contract 1, section 8)")
+        for r in records:
+            stamped = [k for k in ("by", "at") if k in r]
+            if stamped:
+                return [], (f"the primitive stamped {', '.join(stamped)} on its own "
+                            f"publication record ({r.get('step')}); by and at are "
+                            f"written by the builder from the provenance entry (D-143)")
+        return records, None
+
     def _prepare_inputs(self, inputs: list[EnvelopeInput]) -> list[PrimitiveInput]:
         """Convert EnvelopeInputs to PrimitiveInputs for the runner."""
         primitive_inputs = []
@@ -681,7 +726,8 @@ class EnvelopeBuilder:
                         params=entry.params,
                         inputs=entry.inputs,
                         duration_seconds=entry.duration_seconds,
-                        lineage_branch=inp.name if entry.lineage_branch is None else entry.lineage_branch
+                        lineage_branch=inp.name if entry.lineage_branch is None else entry.lineage_branch,
+                        publication=[dict(r) for r in entry.publication]
                     )
                     merged.append(tagged)
         
@@ -732,6 +778,8 @@ class EnvelopeBuilder:
         # Remove warnings (they go in their own section)
         metadata.pop("warnings", None)
         metadata.pop("status", None)
+        # Rule 11 records go in the provenance entry, never in metadata (D-143)
+        metadata.pop("publication", None)
         
         # Add required fields
         metadata["semantic_type"] = semantic_type
