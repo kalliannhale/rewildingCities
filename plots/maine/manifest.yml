@@ -253,7 +253,7 @@ datasets:
     cache:
       path: .data/acs_county_2024.parquet
       refresh_policy: manual
-      fetched_at: '2026-10-07T04:20:25.805843+00:00'
+      fetched_at: '2026-11-11T01:30:07.136050+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs
@@ -290,7 +290,7 @@ datasets:
     cache:
       path: .data/acs_us_county_2024.parquet
       refresh_policy: manual
-      fetched_at: '2026-10-28T22:52:05.988079+00:00'
+      fetched_at: '2026-11-11T01:30:08.507475+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs
@@ -388,7 +388,7 @@ datasets:
     cache:
       path: .data/acs_cousub_2024.parquet
       refresh_policy: manual
-      fetched_at: '2026-10-28T22:53:02.968828+00:00'
+      fetched_at: '2026-11-11T01:30:09.629630+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
       authority: us_census_acs

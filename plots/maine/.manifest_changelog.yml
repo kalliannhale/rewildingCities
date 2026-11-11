@@ -704,3 +704,257 @@
     field: fetched_at
     value: '''2026-10-28T22:53:02.968828+00:00'''
     reason: Cache timestamp updated
+- timestamp: '2026-11-11T01:30:09.707532+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 6
+  changes_failed: 0
+  changes:
+  - dataset: acs_county_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 16 county(s); vintage 2020-2024
+      (5-year estimates); 24 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county
+      within:
+        state: '23'
+      indicators:
+      - cii_broadband
+      - limited_english_households
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 16
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,C16002_004E,C16002_007E,C16002_010E,C16002_013E,C16002_001E,C16002_004M,C16002_007M,C16002_010M,C16002_013M,C16002_001M,B25071_001E,B25070_001E,B25070_011E,B25071_001M,B25070_001M,B25070_011M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: county:*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T01:30:07.135004+00:00'
+  - dataset: acs_county_2024
+    field: fetched_at
+    value: '''2026-11-11T01:30:07.136050+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_us_county_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 3222 county(s); vintage 2020-2024
+      (5-year estimates); 14 variable(s); 20 annotated non-value(s) emptied
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county
+      within:
+        state: '*'
+      indicators:
+      - cii_broadband
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 3222
+      annotations_emptied:
+        '-222222222': 5
+        '-333333333': 10
+        '-666666666': 5
+      annotation_columns:
+      - B25071_001E_annotation
+      - B25071_001M_annotation
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,B25071_001E,B25070_001E,B25070_011E,B25071_001M,B25070_001M,B25070_011M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: county:*
+          in: state:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T01:30:08.505441+00:00'
+  - dataset: acs_us_county_2024
+    field: fetched_at
+    value: '''2026-11-11T01:30:08.507475+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_cousub_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 529 county subdivision(s);
+      vintage 2020-2024 (5-year estimates); 24 variable(s); 310 annotated non-value(s)
+      emptied
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county subdivision
+      within:
+        state: '23'
+        county: '*'
+      indicators:
+      - cii_broadband
+      - limited_english_households
+      - cii_rent_burden
+      - cii_no_vehicle
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      - C16002_004E
+      - C16002_007E
+      - C16002_010E
+      - C16002_013E
+      - C16002_001E
+      - C16002_004M
+      - C16002_007M
+      - C16002_010M
+      - C16002_013M
+      - C16002_001M
+      - B25071_001E
+      - B25070_001E
+      - B25070_011E
+      - B25071_001M
+      - B25070_001M
+      - B25070_011M
+      - B08201_002E
+      - B08201_001E
+      - B08201_002M
+      - B08201_001M
+      variables_not_returned: []
+      n_units: 529
+      annotations_emptied:
+        '-222222222': 145
+        '-333333333': 20
+        '-666666666': 145
+      annotation_columns:
+      - B25071_001E_annotation
+      - B25071_001M_annotation
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M,C16002_004E,C16002_007E,C16002_010E,C16002_013E,C16002_001E,C16002_004M,C16002_007M,C16002_010M,C16002_013M,C16002_001M,B25071_001E,B25070_001E,B25070_011E,B25071_001M,B25070_001M,B25070_011M,B08201_002E,B08201_001E,B08201_002M,B08201_001M
+          for: county subdivision:*
+          in: state:23 county:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-11T01:30:09.628243+00:00'
+  - dataset: acs_cousub_2024
+    field: fetched_at
+    value: '''2026-11-11T01:30:09.629630+00:00'''
+    reason: Cache timestamp updated
