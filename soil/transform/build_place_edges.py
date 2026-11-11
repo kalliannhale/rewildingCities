@@ -5,7 +5,9 @@ The edges of the geography graph (Contract 3), from the block spine.
 
   contains   state to county, county to town: clean nesting, weights 1 and 1
   overlaps   town to House district, town to Senate district, town to Census
-             tribal area, and (D-122) Maine civil division to Census town:
+             tribal area (D-125: keyed by the Census GEOID, AIANNH plus its
+             component type, so 2760R and 2760T are two places), and (D-122)
+             Maine civil division to Census town:
              each with weight_population and weight_households (D-121), the
              share of the `from` place's persons and households inside the
              `to` place, summed over whole 2020 blocks
@@ -26,7 +28,8 @@ Params:
   division_authority  default "megis"
 Output: the edges table, parquet or csv by the output's extension.
 Checks (refuses if broken): every town has exactly one county; a town's
-shares across one chamber sum to 1 for each basis.
+shares across one chamber sum to 1 for each basis; every tribal block names
+its component type, R or T (another value is refused until it is understood).
 """
 
 from __future__ import annotations
@@ -56,6 +59,7 @@ def read_table(path):
         return pd.read_parquet(path)
     return pd.read_csv(path, dtype={"GEOID": str, "county": str, "cousub": str,
                                     "sldl": str, "sldu": str, "aiannh": str,
+                                    "aiannh_comptyp": str,
                                     "division": str})
 
 
@@ -93,6 +97,22 @@ def overlaps(spine, from_col, to_col, from_auth, to_auth, source, vintage):
         "source": source, "vintage": vintage})
 
 
+def tribal_geoid(spine):
+    """the Census GEOID of each block's tribal area: AIANNH plus its component
+    type, as layers 38 and 39 write it. a reservation (R) and its
+    off-reservation trust land (T) share an AIANNH code but are two legal
+    areas, and keyed by the code alone they merged into one (TRIBE-1)."""
+    has = spine["aiannh"].notna()
+    comp = spine["aiannh_comptyp"]
+    bad = has & ~comp.isin(["R", "T"])
+    if bad.any():
+        primitive_failure("Tribal area without its component",
+                          f"{int(bad.sum())} block(s) name a tribal area with component "
+                          f"{sorted(comp[bad].fillna('none').astype(str).unique())}; expected R or T, "
+                          f"e.g. {spine.loc[bad, 'GEOID'].iloc[0]}")
+    return spine.assign(aiannh_geoid=(spine["aiannh"].astype(str) + comp.astype(str)).where(has))
+
+
 def contains(pairs, source, vintage):
     import pandas as pd
     return pd.DataFrame({
@@ -120,6 +140,7 @@ def build(spine, divisions, state_fips, vintages, division_authority, w):
         if not vintages.get(need):
             primitive_failure("Missing vintage", f"vintages.{need} is required")
 
+    spine = tribal_geoid(spine)
     county_of = spine.groupby("cousub")["county"].nunique()
     split = county_of[county_of != 1]
     if len(split):
@@ -136,7 +157,7 @@ def build(spine, divisions, state_fips, vintages, division_authority, w):
                  "2020 blocks", vintages["sldl"]),
         overlaps(spine, "cousub", "sldu", GEOID, SLDU, "2024 SLDU block equivalency, "
                  "2020 blocks", vintages["sldu"]),
-        overlaps(spine, "cousub", "aiannh", GEOID, AIANNH,
+        overlaps(spine, "cousub", "aiannh_geoid", GEOID, AIANNH,
                  "2020 AIANNH block assignment", vintages["aiannh"]),
     ]
     if divisions is not None:

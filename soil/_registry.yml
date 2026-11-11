@@ -1060,8 +1060,9 @@ primitives:
     path: transform/build_block_spine.py
     version: 1.0.0
     description: >
-      One row per 2020 block with its counts (P.L. 94-171) and its town and
-      tribal area (2020 block assignment file) and House and Senate district
+      One row per 2020 block with its counts (P.L. 94-171), its town (2024 faces
+      when given, D-126; else the 2020 block assignment file) and its tribal area
+      (2020 block assignment file) and House and Senate district
       (2024 block equivalency files; the 2020 file's districts predate 2021
       and are never read). Refuses a block with no assignment or two.
     inputs:
@@ -1069,6 +1070,7 @@ primitives:
       - {name: baf, semantic_types: [block_assignment], required: true}
       - {name: bef_sldl, semantic_types: [block_assignment], required: true}
       - {name: bef_sldu, semantic_types: [block_assignment], required: true}
+      - {name: faces, semantic_types: [census_faces], required: false}   # D-126: 2024 towns
     outputs: {semantic_type: block_spine, data_category: tabular}
     params:
       state_fips: {type: string, required: true}

@@ -65,6 +65,16 @@ types:
       the point is in the attributes.
     resolution_tier: public   # PROPOSED (Sprint 04): Census geography. For Person 3 to confirm
 
+  census_faces:
+    category: tabular
+    format: zip
+    description: >
+      Census TIGER/Line topological faces for one or more counties: the polygon
+      pieces that make up every 2020 block, each carrying its 2024 county
+      subdivision, House and Senate district (D-126, TOWN-1). Read from the zip
+      it arrives in; geometry is never read, only the .dbf attributes.
+    resolution_tier: public   # PROPOSED (Sprint 04): Census files. For Person 3 to confirm
+
   block_assignment:
     category: tabular
     format: csv

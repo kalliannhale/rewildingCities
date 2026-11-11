@@ -8,7 +8,7 @@ reverse it, so any of them can be revisited without archaeology.
 
 - **This ledger's IDs never change.** Decisions are D-n, lessons L-n, and
   findings carry a topic prefix (CII-, MAP-, ACS-, WON-, and so on). New
-  decisions continue from **D-114**, lessons from **L-79**.
+  decisions continue from **D-98**, lessons from **L-78**.
 - **Master Plan decisions are MP-67 to MP-81.** The plan numbered them D-67
   to D-81, which this ledger had already used (D-93). Cite them as MP-n.
 - **The infrastructure plan's D-1 to D-12 and the publish route's P-1 to P-5**
@@ -396,159 +396,34 @@ repository through the gap.
 the code, reused IDs the ledger had spent. Search the ledger before taking a
 number.
 
-## SPRINT 01, PART ONE ~ preparations, 2026-11-10
+## SPRINT 04, STEP 1 ~ the graph summary, 2026-11-10
 
-Contracts 1 to 4 are not yet written; they close this sprint.
-
-### DECISIONS
+`tests/debug/graph_summary.py` (read-only) checked the graph against Contract 3. Confirmed: 47 138 blocks, 1 362 359 persons, 16 counties, 151 House and 35 Senate districts, every district touched by a town. 46 towns touch more than one House district (at most 8); 5 touch more than one Senate district.
 
 | ID | decision | implication | reverse if |
 | --- | --- | --- | --- |
-| **D-98** | Preparations are declared with a `kind` on the experiment schema (`experiment`, the default, or `preparation`), not a schema of their own, and live in `plots/<plot>/preparations/`. A preparation names no curiosity (the block is absent, never empty), uses `soil/` primitives only, and its method is a preparation method; methods gain the same `kind`. The schema states these rules as conditionals and `Orchestrator.validate()` enforces them | One parser, one model, one run loop and one precondition gate for both kinds. Receipts carry `lineage.kind` and `lineage.run`; a preparation's receipt has no curiosity key. Wonder never offers a preparation method as an answer. An experiment with an empty curiosity runs with a warning naming D-64 | A preparation needs fields an experiment must not have: split the schema then |
-| **D-99** | Deriving an indicator is preparation: `derive_indicator` moves from `roots/indicators/` to `soil/transform/`; `standardize_indicator` stays in `roots/` | A value applies a declared definition and asks no question; a standing compares and is analysis. MP-75 becomes structural: values come from preparations, standings from experiments. The name is unchanged, so `provenance_contains: derive_indicator` still matches. Experiments may still use `soil/` steps, so the composed CII experiments keep their derive step | Deriving a value turns out to need a choice that is a question: move it back |
-| **D-100** | The Maine preparation starts from acquired data. Acquisition stays with `acquire` and the provider, recorded in the manifest changelog; the preparation's inputs are manifest datasets, which is how its lineage reaches the acquisition. Four files become preparations in `plots/maine/preparations/`: `maine_county_units` (method `county_units_for_mapping`), `maine_cousub_indicator_values` (new method `indicator_values`), `maine_counties` and `maine_governance_units` (new method `governance_units_conformed`) | The Census provider's logic stays in one place. `maine_counties` and `maine_governance_units` no longer claim the information_access curiosity and the ownership method's choices, which described the analysis their units are counted in, not themselves. `maine_county_indicator_standings` is the only Maine experiment still flagged for a missing curiosity | Acquisition needs to be a recorded step with an envelope: a provider-backed `soil/` primitive, never a second Census client |
-
-### FINDINGS
+| **D-125** | Census tribal areas are keyed by the Census GEOID, AIANNH plus its component type (`2760R`, `2760T`), in the edges as in `places`. A reservation and its off-reservation trust land are two places | Maine's 8 Census legal areas are 8 places, and the edges' keys match layers 38 and 39 (D-123) | Consultation asks otherwise, or ACS keys tribal values differently (check when tribal values are joined) |
 
 | ID | item |
 | --- | --- |
-| **PREP-1** | The preparation already existed in three disguises: `maine_county_units` (an honest preparation with an empty curiosity), `maine_counties` and `maine_governance_units` (`soil/`-only chains borrowing a curiosity and method they did not answer), and two experiments missing their curiosity |
-| **D-48v** | Answered: nothing required a curiosity. `parse_experiment` defaulted it to `""`, `validate()` never read it, and nothing validated experiments against `experiment.schema.yml`, which listed it as required |
-| **SCH-4** | `method.schema.yml` was not valid YAML (`critical:` mis-indented under `requires_data`), so nothing could have read it; its `domain` list also lacked `information`, the domain of every Maine method. Both fixed in v1.1 |
-| **WON-6c** | `maine_information_access__ownership_concentration_analysis_4a8f59` fails validation on the placeholder `roots/analysis`. Present before this sprint; unchanged by it |
-| **CNT-1** | `county_units_for_mapping`'s recipe declares `field: COUNTY` twice. Harmless, the values match; YAML keeps the second |
+| **TRIBE-1** | The edges keyed tribal areas by AIANNH alone: 6 keys for the Census's 8 areas. Houlton Maliseet (1530) and Penobscot (2760) each had reservation and trust land merged into one edge. The spine held both; the grouping dropped the component. Caught by the summary's key check |
+| **MEGIS-2** | Contract 3 said 924 MEGIS civil divisions; MEGIS holds 923 distinct GEOCODEs in 924 polygons, as the manifest has said since 2026-09-18. Withdrawn: "924 divisions". MEGIS-1's one-character GEOCODEs do not appear after the dissolve; why is open |
+| **DISS-1** | LURC (values y, n) varies within 13 GEOCODEs, so `dissolve_by_field` refused to carry it, correctly. Step 2's LURC flag cannot come from the dissolved layer |
+| **TOWN-1** | The spine has 530 towns, ACS 2024 has 529. In 2020 only: 2301742835 (45 persons), 2301918580 (26), 2302913610 (13). In 2024 only: Drew UT 2301918582, Codyville UT 2302913612. Hypothesis, unverified: deorganizations after 2020. Contract 3's vintage invariant fails for towns: boundaries 2020, values 2024 |
+| **DAS-1** | Households without persons: block 230219603011057 (2 households, 0 persons), town 2301978015, 31 division edges. Hypothesis, unverified: 2020 disclosure avoidance. Bears on D-121's null rules |
+| **ZERO-1** | Overlaps with a population share of exactly 0 (land, no residents): 3 House, 1 Senate, 11 tribal, 50 division. MP-76's "every district they touch" would list a town under a legislator who represents none of its residents. Display rule open |
+| **MEGIS-3** | Cove Point Twp and Kineo Twp hold no block internal point, so no edge; they are still places. 10 unplaced blocks hold 1 person. Of 65 divisions touching two Census towns, 3 disagree about people (Parlin Pond Twp 0.80, Tomhegan Twp 0.98, Greenbush 0.99); 62 are empty-block slivers |
 
-### OPEN
-
-| ID | item |
-| --- | --- |
-| **LOOP-1** | **The closed loop: scanning a plot for what an experiment needs.** `readiness.py` reads forward (what the ground can answer) and backward (`acquisition_gap`, what is missing). The missing middle is preparations as producers: a held-or-acquirable input that a preparation method can turn into the missing holding. Preparation methods now declare `requires_data` and `produces`, which is what a planner walks. **The trap:** types alone cannot tell raw from prepared ground; `county_units_for_mapping` takes a `governance_unit` and produces a `governance_unit`, so a scan by type would call 7 196 arc polygons ready for a GEOID join. The loop must match type plus what has been done to the data, the same predicates the precondition gate reads (`provenance_contains`), run backward over methods. Proposed home: Sprint 05, "Loam learns the graph" |
-| **SCH-5** | Experiment and method files are not validated against their schemas anywhere. Turning that on may break existing files in ways nobody has checked; do it as its own step |
-| **CON-1** | Contracts 1 to 4 for `field-guide/docs/contracts/`, and Contract 3's review. If its author reviews it, record it as reviewed by its author |
-| **TST-2** | `tests/test_preparations.py` (14 cases) was run in the sandbox through a shim, not pytest, with `jsonschema`, `referencing` and `duckdb` absent: 13 passed. **Under real pytest on Kalli's machine, 2 failed** (the receipt test and the gate test), and c627fae was pushed with them red. Both failed at envelope validation, which the sandbox had stubbed out: the fake primitive wrote provenance with no input records, and the schema requires at least one. Fixed in the test's fake; see HASH-1 |
-| **HASH-1** | A skipped input hash cannot pass the envelope schema. `Hasher` returns `value=None` for the test profile, `Envelope.to_dict` drops keys whose value is `None`, and `provenance.schema.json` requires `value` (it allows null). So every envelope built under `--profile test` would fail validation. Found while fixing TST-2; not fixed here. The fix is to keep `value: null` in `to_dict` |
-
-### RUN
-
-| ID | item |
-| --- | --- |
-| **RUN-2** | **The first Maine preparation ran end to end** (2026-11-10): `maine_cousub_indicator_values` through `sows`, two steps; mapped as `cii_broadband` on `cousub_repair_repaired`, 529 features joined on GEOID, 13 drawn empty. The harvest's lineage reads `kind: preparation`, `run: maine_cousub_indicator_values`, `method: $methods/information/indicator_values`. Before the map ran, a check against the harvest still on disk from October failed on `kind`: a stale harvest answers in its own era's terms |
-| **CLI-1** | `sows` prints "Experiment complete" for a preparation. The CLI should name the kind of run it finished |
-
-### CONTRACTS ~ drafts 0.1
-
-| ID | item |
-| --- | --- |
-| **CON-2** | Contracts 1 to 4 drafted in `field-guide/docs/contracts/` (2026-11-10), each with an Open table naming the sprint that decides each fork. Awaiting Kalli's review; Contract 3 also awaits the grove teammate's |
-| **GATE-1** | Nothing reads the exposure tier. `Vocabulary.get_tier()` reads `tier` (the loam maturity), which no type declares, and nothing calls it; nothing reads `resolution_tier`. Sprint 03's "get_tier() raises outside the closed set" would merge two meanings of tier. Contract 1 has the gate read `resolution_tier` through its own reader. 16 of 57 semantic types declare `resolution_tier`; 41 fail closed |
-| **HASH-2** | `Hasher` fingerprints inputs with md5. Canonical objects are named by sha256 (Contract 2); the canonical write computes its own and never reuses an md5 |
-| **CON-3** | Contract 3 reviewed 2026-11-10 by Kalli, its author, acting as grove teammate. Not a second-person review |
-| **CON-4** | Sprint 01 closed (2026-11-10). Contracts 1 to 4 in `field-guide/docs/contracts/`; every review question decided (D-101 to D-104); remaining forks named in each contract's Open table with the sprint that decides them |
-
-### DECISIONS ~ contract review
-
-(Moved here in Sprint 02 from the CONTRACTS table above, whose two columns hid
-their implication and reverse-if cells on GitHub.)
+**LESSON** ~ The summary's first run crashed on a keep_field it assumed had survived the dissolve. A probe that assumes a field exists repeats the bug it was written to find.
 
 | ID | decision | implication | reverse if |
 | --- | --- | --- | --- |
-| **D-101** | Contract 1, rule 3 (E-1): every tier in an artifact's lineage binds at once. `aggregate-only` limits the form data leaves in and `custom` limits permission, so neither outranks the other; an artifact descended from both leaves only as counts and only with consent, and any `excluded` ancestor stops everything. The allow record lists every binding tier with its ancestor; a refusal is one record per refusing tier | The gate never drops a constraint an ancestor carried. A ranked tier would have let a `custom` artifact leave as named points once consent existed, losing its other ancestor's aggregate-only limit | Never |
-| **D-102** | Contract 1, rule 4 (E-2): an experiment with an empty curiosity passes. Its kind, run, method and choices make it traceable; its missing question travels as a caveat in the allow record and in every product that shows it. Preparations pass without a curiosity because they answer none | `maine_county_indicator_standings` can leave now, labelled. Needs E-6: today the warning is printed by `validate()` but never written into receipts, so the gate would not see it | Products start presenting caveated experiments as answers: then block until the curiosity is written |
-| **D-103** | Contract 3 (G-3): points are not places. A carrier point is named only inside its `located_in` edges, by layer and feature id; `places` holds only the areas a profile can be built for. Both ends of `contains` and `overlaps` edges, and the `to` end of `located_in`, are rows in `places`; the `from` end of `located_in` is a feature in a declared layer, and Sprint 04 tests that every end exists | The profile's place list and `places` are the same list. Thousands of points never sit beside 700-odd areas | The grove's catalog needs uniform edge ends: add a `features` table beside `places`, never mix them |
-| **D-104** | Contract 4 (P-4): a place profile shows values, never standings. Towns have none (MP-75); a county's standing stays in its experiment's own products. Barriers are judged against the absolute standard (MP-74), and a relative rank beside an absolute threshold would invite mixing them | The profile has one way of judging. The standings maps remain where standings are read | A product needs comparison beside judgment: show it in that product, labelled, never in the profile |
-
-## SPRINT 02 ~ honest values, 2026-11-10
-
-### DECISIONS
-
-| ID | decision | implication | reverse if |
-| --- | --- | --- | --- |
-| **D-105** | An open-ended median's value rests empty at derivation, in both `derive_indicator.R` and `preview.py`: `value` and `moe` empty, `moe_status: open_ended`, the bound kept in words, `empty_reason: "open-ended median: <bound>"` | Standardization leaves it out like any missing value, so a ranking never uses the Census's encoding of an end category. The encoding's order survives only in `bound` | Never: a value that is safe only when every reader checks `moe_status` is not an honest value |
-| **D-106** | The small-sample rule has two tests, each applied where it can be: a household count wherever a value can say what it rests on, and a coefficient of variation, (MOE / 1.645) / estimate, wherever the Census published a margin. The note names which test fired, in plain words | Today the CV test applies to passthrough medians only; ratios gain it when IND-3 derives their margins | One test proves redundant in practice |
-| **D-107** | Each indicator declares exactly one `role` (need, barrier, carrier, outcome, context) in the registry. Every indicator shares the semantic type `indicator_values`, so a role on the type could not tell broadband from population | The profile places each value in one part. Carrier point layers take their role on their semantic types when Sprint 06 declares them | A value genuinely belongs in two parts: then the profile, not the registry, decides |
-| **D-108** | The declared rule, `seeds/reliability/acs_small_sample.yml`: CV above 0.30 (Washington State OFM's "use with caution"; Esri's convention, 12 to 40 "use with caution" and above 40 "unreliable", is cited beside it), or fewer than 50 households, which no published standard was found for and is named as this project's choice | The note stays rare enough to be read. Every number in it cites its source or says that none was found | A published standard for a household floor is found |
-| **D-109** | `rests_on` is required on every indicator, in one of two shapes: `{add, subtract, counts}` or `{not_published: <reason>}`. A ratio rests on its denominator; rent burden on `B25070_001E` less `B25070_011E` ("Not computed"), checked against the Census API's labels; CII's 27 published values say CII releases no counts. The variables are fetched with the value. Each row gains `households`, `households_counts`, `households_reason`, `cv` and `reliability_note`, identical in R and Python | Every Maine value can say what it rests on, or why it cannot. Adding the count's variables made every Census source stale (ACQ-4), which is the intended consequence | Never |
-| **D-110** | REG-5: of each primitive declared twice in `roots/_registry.yml`, the second copy is kept, because YAML always kept it, so nothing changes behaviour; the first, superseded block (151 lines) is removed. Primitive registries load through `UniqueKeyLoader`, which refuses any repeated mapping key, naming it and both lines | A registry can no longer change behaviour by a silent overwrite. On first load it caught a second case (SOIL-1) | Never |
-| **D-111** | The rule is cited as `$reliability.<id>`, resolved by `ReferenceResolver` like `$weights`, with the file's sha256; `canopy/indicators/reliability.py` refuses a threshold without a sources entry. The town preparation and both values recipes cite `$reliability.acs_small_sample` | Every reliability note's envelope records which rule wrote it and which version of the file | A second consumer needs another shape: add a method beside `declaration`, never a second parser |
-| **D-112** | ACQ-4: `canopy/manifest/staleness.py` compares the registry's variables for a source's declared indicators with the last acquisition's `variables_requested` in the changelog. A stale source is reported in its own bucket when dry ("declared differently than acquired") and re-acquired with `--fetch`, through `_resolve_dataset(force=True)` | Replaces ACQ-4w's hand workaround (move the file aside, set `available: false`). Only providers that record `variables_requested` can be judged; others answer "cannot tell", never "fresh" | Another provider records what it fetched: extend `staleness` to it |
-| **D-113** | The ownership chain is registered in `soil/_registry.yml` (`resolve_ownership`, `geocode_to_unit`); the ownership method lists them under `soil/`; a new semantic type, `owner_crosswalk`, types the crosswalk input. It declares no `resolution_tier`, so it fails closed until Person 3 declares one | The ownership experiment's chain can run through the orchestrator for the first time | Never |
-
-### FINDINGS
+| **D-126** | Maine's towns are 2024 county subdivisions, from the 2024 TIGER/Line topological faces (16 county zips, combined into one). Each 2020 block goes whole to the town holding most of its land; split blocks are logged with their persons | The spine's 529 towns match ACS 2024 exactly. Tribal areas and civil divisions keep their own vintages, declared on every edge | The Census publishes a 2024 block-to-town relationship file |
+| **D-127** | A block's county follows its 2024 town. The 2020 county stays as `county_2020`, and every block that changes county is listed | Counts by county match 2024 county boundaries, as ACS does | Never |
 
 | ID | item |
 | --- | --- |
-| **VAL-1** | The Sprint 02 tab, from the Fused Build Plan, said ACS-7 left open-ended medians empty. It had not: both halves kept the encoding as the value (as D-90 says), and standardization ranked it, so county rent burden ranked about 3 144 counties, not 3 129. Fixed by D-105 |
-| **REG-5c** | What the ten dropped first copies said differently from the kept ones: `train_classifier`, `apply_classifier` (description, params); `score_segmenters` (description, outputs, params); `score_composition` (description, inputs, outputs, params); `space_cooling_potential` (description, params, version); `cooling_differential`, `train_regressor`, `apply_regressor`, `score_regression`, `buffer_landcover_features` (description only) |
-| **SOIL-1** | `soil/_registry.yml` declared `passthrough: true` twice inside `validate_vector`, caught on the new loader's first run. Same value; the second line is removed |
-| **OWN-1** | `concentration_index` required `provenance_contains: resolve_owner_entity`, the name `resolve_ownership.py` gives its warnings. Provenance records a primitive by its file's name (`envelope.py`), so no entry could ever match and the gate would have refused every ownership run. Now `resolve_ownership`. The ownership method had also listed the chain under `roots/` |
-| **ROLE-1** | The roles of CII's 27 published indicators were proposed by Claude (8 need, 8 barrier, 6 carrier, 6 outcome, 3 context) and are marked as proposals in the file, for Kalli's review |
-| **CV-1** | The oracle fixture printed a CV of 2.49% as "2%, above the 2%". Percentages in the note are now written to one decimal in both halves |
-
-### CLOSED
-
-| ID | item |
-| --- | --- |
-| **REG-5f** | REG-5 closed by D-110 |
-| **ACQ-4f** | ACQ-4 closed by D-112 |
-
-### CORRECTION ~ add to "Withdrawn"
-
-| ID | claimed | actually |
-| --- | --- | --- |
-| **CNT-1r** | `county_units_for_mapping`'s recipe declares `field: COUNTY` twice | **Once.** Two overlapping printouts each showed the same line, and it was read as two. The new loader's scan of every seeds, garden and plot file found no repeated key |
-
-### OPEN
-
-| ID | item |
-| --- | --- |
-| **VAL-2** | Prove 3 129: re-acquire the three Census sources (stale under ACQ-4), then `tests/test_standings_at_3129.py`. A different number refutes CII-11's hypothesis and is a finding |
-| **REL-1** | Release the held county rent burden layer once VAL-2 holds. Locally that is a re-run and a map; publishing it to ArcGIS Online is the gate's to allow (Sprint 03, Contract 1) |
-| **TST-3** | Sprint 02's Python tests passed in the sandbox through a shim with `pytest`, `jsonschema`, `duckdb`, `pyarrow` and R absent; the R oracle has not run. Run all of it under real pytest |
-
-### SPRINT 02 ~ first run on Kalli's machine
-
-| ID | item |
-| --- | --- |
-| **TST-4** | Under real pytest, 119 of 120 passed, the R oracle included: R and Python agree on households, counts, reasons, CV and the reliability note. The one failure predated Sprint 02: `test_empty_source_value_is_named_never_zero` asserted a note citing "ACS-5", but ACS-7 (4692b72) rewrote that note to cite ACS-7 and point to the `_annotation` column. The test now checks the note's meaning, not its ticket |
-| **VAL-2f** | VAL-2 closed: after re-acquiring the three stale sources (ACQ-4 working as designed), `tests/test_standings_at_3129.py` passed. County rent burden ranks among exactly 3 129 counties. **CII-11's hypothesis is confirmed**: the 15 counties CII left blank are the ones whose median the Census publishes only as an open-ended category |
-| **D-114** | `standardize_indicator.R` and `preview.standings` carry `empty_reason`, `bound`, `households`, `households_counts`, `households_reason` and `reliability_note` unchanged from the values table, held to each other by the standings oracle. `outside_reason` keeps the exact words "no value", which the imputation oracles depend on |
-| **REL-1f** | The county rent burden layer is released: its harvest (`map_cii_rent_burden__units_geoid_with_geoid`) is ranked among 3 129 counties and carries each county's household count. Publishing it to ArcGIS Online waits for the gate (Sprint 03, Contract 1) |
-| **CLI-2** | `acquire`'s "needs a person" block printed the Census key message twice per source: `detail` and `message` carried the same text |
-
-## SPRINT 03 ~ the gate, 2026-11-10
-
-| ID | decision | implication | reverse if |
-| --- | --- | --- | --- |
-| **D-115** | Consent records live one file each in `plots/<plot>/consent/`, never in the manifest the surgeon edits. A record opens exactly the plot, target, sharing level and types it names, while active and unexpired | A withdrawal is a visible edit to one file. No wildcard is honoured | Never |
-| **D-116** | Licenses are a controlled list, `seeds/licenses/licenses.yml`; a dataset declares `license: <term>` with free text in `license_note`. An unverified term may permit private only, enforced at load; a term not on the list fails closed | The gate decides rule 10 by itself, citing a term a person can read and correct. Maine: five Census sources are `us_government_work`; the other six `terms_unknown`, each with a note | A term's permissions prove wrong: correct the term |
-| **D-117** | Rule 5 is made checkable by a type-level flag: a semantic type may declare `aggregates: true`. An artifact with an aggregate-only ancestor passes rule 5 only if its own type declares it, and never if it is that aggregate-only type itself | "Counts over a declared unit" is a declaration, not a guess about a table's shape | A better signal of aggregation exists in the envelope |
-| **D-118** | 24 environmental and analytical types are declared `public` as proposals, marked in the files, for Person 3 to confirm. 18 stay undeclared and closed: ground photographs and everything derived from them, working files (models, samples, predictions, features), and `owner_crosswalk` | 40 of 58 types now declare a tier. Nothing about people's own information was guessed | Person 3 declares otherwise |
-| **D-119** | `canopy/expose/`: `gate.decide()` applies the eleven rules from the envelope alone and returns an allow record or every refusal; `exposure_tier()` is the gate's own reader of `resolution_tier`; `check.py` loads a plot's context; `PlotReading.exposure` and `wonder` show what may leave at public and, for everything withheld, why and what would admit it | One gate, one reader, every exit | Never |
-| **D-120** | `map --publish` asks the gate first, at `private` (an ArcGIS item is created private to its owner), before anything signs in. A refusal writes locally, prints every reason, exits 1; an allow is saved as `map.gate.json` beside the map | A publish the gate refuses never reaches ArcGIS | The publish door (Sprint 08) replaces it |
-
-| ID | item |
-| --- | --- |
-| **E-6f** | E-6 closed: an experiment that names no curiosity writes that warning into its receipts, once per envelope |
-| **GATE-2** | A choropleth takes its geometry from its layer, but the gate judges the result's lineage, which does not name the layer's datasets. The county map's geometry is from MEGIS (`terms_unknown`). Harmless today, since choropleths do not publish (D-96); the publish door must judge result and layer both |
-| **TST-5** | `tests/test_publish_latch.py` needs pytest fixtures the sandbox shim lacks; its gate paths were hand-run with the same fakes: refused (exit 1, no sign-in), allowed (one upload, allow record written), allowed but uncredentialed (exit 1) |
-
-## SPRINT 04, PARTS 1 AND 2a ~ the geography graph, 2026-11-10
-
-| ID | decision | implication | reverse if |
-| --- | --- | --- | --- |
-| **D-121** | Every `overlaps` edge carries `weight_population` and `weight_households`; a value's `rests_on.counts` chooses which applies, and representation uses population. Housing units are not used: Maine's seasonal homes count as vacant housing | The weight always matches what the number counts. A town with no households has a null household share with a reason, never 0 | Never |
-| **D-122** | MEGIS civil divisions join Census towns through blocks: each 2020 block goes to the division containing its internal point (Census 2020 block layer, never the current one) | One mechanism for every overlap; a boundary disagreement shows as a share below 1 | Never |
-| **D-123** | Tribal areas appear as a qualified Census view (MP-72): `census_tribal_area`, public with a required context note, holds only the Census's legal areas (federal reservations, off-reservation trust lands; Census 2020 layers 38 and 39, selected by bounding box, never by name). The nations' own descriptions stay `sovereign_boundary`, custom | Reservation subdivisions in the town data will carry the note at the row level (still to build) | Consultation asks otherwise |
-| **D-124** | Each legislative chamber and tribal areas have their own authority (`us_census_sldl`, `us_census_sldu`, `us_census_aiannh`); counties and towns stay `us_census_geoid` | `(authority, code)` always names one place (GRAPH-1) | Never |
-
-| ID | item |
-| --- | --- |
-| **GRAPH-1** | A Census GEOID is unique only within its level: `23001` is Androscoggin County, House District 1 and Senate District 1. Caught by the share check on its first run |
-| **BAF-1** | The 2020 block assignment files' districts predate Maine's 2021 redistricting. Districts come from the 2024 block equivalency files (sldl24.zip, sldu24.zip), which match ACS 2020-2024's 2024 session-year districts. Maine split no blocks |
-| **VIN-1** | `census_tigerweb.yml` defaulted district layers to vintage 2026; ACS 2024 uses 2024 (layers 5 and 6). The seed now says so |
-| **MEGIS-1** | MEGIS `GEOCODE` is Maine's own numbering, not the Census code (0 of 924 match a GEOID). The manifest's "authoritative MCD code" holds only in Maine's scheme. Three GEOCODEs are a single character |
-| **FUNC-1** | The seed glossed FUNCSTAT F as "a placeholder, often water"; in Maine, F includes the four reservation subdivisions. Corrected |
-| **PEN-1** | Penobscot Indian Island Reservation is two Census subdivisions, 2301957936 and 2300357936, in two counties: one place in `places`, still to build |
-| **BLK-1** | 47 138 blocks in the 2020 redistricting counts and 47 138 in the Census 2020 block layer: the two sources agree |
-| **ACQ-6** | `acquire` calls `as_acquired` sources "never conformed ~ needs an experiment"; raw sources are read as acquired by design (WON-9f) |
-| **CLI-3** | The decennial fetch reports "Fetched from the Census ACS" |
+| **TOWN-1** | Closed by D-126. The 2020 spine had 530 towns against ACS's 529: three 2020-only subdivisions, and two UTs ACS has that the spine lacked |
+| **BOUND-1** | Waldo and Knox redrew their line in Penobscot Bay under P.L. 2023, c. 1 (LD 119), after the Census flagged a discrepancy in 2020. Three 2020 blocks in Knox are in Waldo's town 2302735240 in 2024: 230139711003030 (0 persons), 230139711003032 (9 persons, 2 households), 230139711003033 (0). The archipelago is the likely match; confirm on a map |
+| **LWFLAG-1** | The 2024 faces carry L (89,101), P (18,376) and I (15). The Census counts G, I, L and S as land and P as perennial water (TIGER/Line user note 7). The first version counted only L and undercounted intermittent water |
+| **FACE-1** | The Census's technical documentation says 2020 blocks never cross a boundary of an entity it tabulates. That holds for 2020 geography. After a 2024 boundary change, the faces show a block's land in another county. Contract 3 never stated the rule; contract 0.6 now carries the change instead |

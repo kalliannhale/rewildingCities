@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.4, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1). **Owner:**
+**Status:** draft 0.6, 2026-11-10 (G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -28,7 +28,7 @@ names exactly one place.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `authority` | text | who assigns the code, and at which level: `us_census_geoid` (state, county, town), `us_census_sldl` (House), `us_census_sldu` (Senate), `us_census_aiannh` (Census tribal area), `megis` (Maine civil division) |
+| `authority` | text | who assigns the code, and at which level: `us_census_geoid` (state, county, town), `us_census_sldl` (House), `us_census_sldu` (Senate), `us_census_aiannh` (Census tribal area, keyed by the Census GEOID: AIANNH plus component, `2760R` and `2760T` are two places, D-125), `megis` (Maine civil division) |
 | `code` | text | the code as that authority writes it, leading zeros kept: `23005`, `2300560825` |
 | `level` | text | `state`, `county`, `cousub`, `sldl` (Maine House), `sldu` (Maine Senate), `aiannh` (Census tribal area), `megis_division` |
 | `vintage` | text | the boundary year; it must match the ACS vintage it is joined to |
@@ -44,7 +44,7 @@ reader never mistakes a township with no government for a town with no news.
 **Counts for Maine** (Sprint 04 builds and tests them): 1 state, 16 counties,
 529 county subdivisions, 151 House districts, 35 Senate districts, the Census
 tribal areas inventoried from the AIANNH layer (never from a list of names),
-and the 924 MEGIS civil divisions.
+and the 923 MEGIS civil divisions (924 polygons, MEGIS-2).
 
 ## 2. Edges
 
@@ -65,7 +65,7 @@ columns.
 | Kind | Means | Weights |
 | --- | --- | --- |
 | `contains` | clean nesting: state to county, county to town | 1 and 1 |
-| `overlaps` | partial: town to district, town to tribal area | the town's population share and household share inside the other place, from 2020 Census block assignments and block counts (P.L. 94-171: P1 population, H1 occupied housing units) |
+| `overlaps` | partial: town to district, town to tribal area | the town's population share and household share inside the other place, summed over 2020 Census blocks (P.L. 94-171: P1 population, H1 occupied housing units). Each block's town is its 2024 town from the TIGER/Line 2024 topological faces (D-126); a block a 2024 boundary split goes whole to the town holding most of its land, and is flagged |
 | `located_in` | a point (a library, an outlet) to every area it falls in | 1 and 1 |
 
 **Two weights, chosen by the value (D-121).** Population shares answer
@@ -94,6 +94,7 @@ one; the `from` end of a `located_in` edge is a feature in a declared layer.
 These are tested where the tables are built (Sprint 04):
 
 - Every town has exactly one `contains` edge from its county.
+- A block's county is its 2024 town's county (D-127). A block whose 2020 county differs is listed by the spine, with both counties, so a boundary change shows instead of hiding (BOUND-1).
 - A town's `overlaps` weights across one chamber's districts sum to 1, for each
   basis separately; a null household share is excluded from the sum and the
   town carries the `zero_households` flag.

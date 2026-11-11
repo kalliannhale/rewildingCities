@@ -623,3 +623,18 @@ datasets:
       query_params: {where: "1=1", outFields: "*", outSR: 4326, limit: 200, geometry: "-71.1,42.9,-66.9,47.5", geometryType: esriGeometryEnvelope, inSR: 4326, spatialRel: esriSpatialRelIntersects}
     cache: {path: .data/tribal_trust_lands_2020.geojson, refresh_policy: manual}
     provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+  faces_2024_me:
+    available: true
+    description: 2024 TIGER/Line topological faces for Maine's 16 counties, combined into one zip (D-126)
+    semantic_type: census_faces
+    license: us_government_work
+    format: zip
+    source:
+      type: manual
+      notes: >
+        Download tl_2024_23001_faces.zip through tl_2024_23031_faces.zip (the odd
+        county codes) from https://www2.census.gov/geo/tiger/TIGER2024/FACES/ into
+        plots/maine/.data/. Then, from the repo root:
+        zip -j plots/maine/.data/maine_faces_2024.zip plots/maine/.data/tl_2024_*_faces.zip
+    cache: {path: .data/maine_faces_2024.zip, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, TIGER/Line 2024, authority: us_census_tiger}

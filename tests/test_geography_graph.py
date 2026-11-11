@@ -135,7 +135,24 @@ def test_a_tribal_area_is_an_overlap_by_blocks_never_by_name(tmp_path):
     e = edges(tmp_path)
     t = e[e["to_authority"] == "us_census_aiannh"]
     assert list(zip(t["from_code"], t["to_code"], t["weight_population"])) == [
-        ("2300120000", "2950", 1.0)]
+        ("2300120000", "2950R", 1.0)]
+
+
+def test_a_reservation_and_its_trust_land_are_two_places(tmp_path):
+    # D-125, TRIBE-1: one AIANNH code, two Census legal areas
+    s = spine(tmp_path)
+    s.loc[1, ["aiannh", "aiannh_comptyp"]] = ["2950", "T"]
+    e = edges_mod.build(s, None, "23", VINTAGES, "megis", W())
+    t = e[e["to_authority"] == "us_census_aiannh"]
+    assert sorted(zip(t["from_code"], t["to_code"], t["weight_population"])) == [
+        ("2300110000", "2950T", 10 / 40), ("2300120000", "2950R", 1.0)]
+
+
+def test_a_tribal_block_without_its_component_is_refused(tmp_path):
+    s = spine(tmp_path)
+    s.loc[2, "aiannh_comptyp"] = None
+    with pytest.raises(SystemExit):
+        edges_mod.build(s, None, "23", VINTAGES, "megis", W())
 
 
 def test_civil_divisions_join_towns_through_blocks(tmp_path):
@@ -178,3 +195,125 @@ def test_blocks_are_assigned_by_internal_point_and_unplaced_ones_are_counted():
     out = mod.assign(points, polygons, "GEOCODE", "division", w)
     assert list(out["division"][:2]) == ["A", "B"] and pd.isna(out["division"][2])
     assert any("1 block point(s) fall in no unit" in m for _, m in w.said)
+
+
+# ── D-126: 2024 towns from topological faces (TOWN-1) ────────────────────
+def dbf(rows, fields):
+    """a dBase III table with the fields a faces file carries: enough to test
+    the reader against a layout the Census documents (Appendix R)."""
+    import struct
+    hdr_len = 32 + 32 * len(fields) + 1
+    rec_len = 1 + sum(n for _, n, _ in fields)
+    out = bytearray(32)
+    out[4:8] = struct.pack("<I", len(rows))
+    out[8:10] = struct.pack("<H", hdr_len)
+    out[10:12] = struct.pack("<H", rec_len)
+    for name, n, t in fields:
+        d = bytearray(32)
+        d[:len(name)] = name.encode()
+        d[11] = ord(t)
+        d[16] = n
+        out += d
+    out += b"\x0d"
+    for r in rows:
+        out += b" " + b"".join(
+            (f"{v:>{n}}" if t == "N" else f"{v:<{n}}").encode()
+            for v, (_, n, t) in zip(r, fields))
+    return bytes(out)
+
+
+FACE_SPEC = [("STATEFP20", 2, "C"), ("COUNTYFP20", 3, "C"), ("TRACTCE20", 6, "C"),
+             ("BLOCKCE20", 4, "C"), ("STATEFP", 2, "C"), ("COUNTYFP", 3, "C"),
+             ("COUSUBFP", 5, "C"), ("SLDLST", 3, "C"), ("SLDUST", 3, "C"),
+             ("LWFLAG", 1, "C"), ("ATOTAL", 14, "N")]
+
+
+def face(block, town, sldl, sldu, area, lw="L"):
+    # the block's own county, and the town as a five-digit COUSUBFP within it
+    return [block[:2], block[2:5], block[5:11], block[11:], "23", block[2:5], town,
+            sldl, sldu, lw, str(area)]
+
+
+def test_a_faces_table_reads_back_its_fields(tmp_path):
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    rows = [face(BLOCKS[0][0], "10000", "001", "001", 600),
+            face(BLOCKS[0][0], "10001", "001", "001", 400)]
+    with zipfile.ZipFile(tmp_path / "faces.zip", "w") as z:
+        z.writestr("tl_2024_23001_faces.dbf", dbf(rows, FACE_SPEC))
+    f = bs.read_faces(tmp_path / "faces.zip", W())
+    assert list(f.columns) == bs.FACE_FIELDS and len(f) == 2
+    assert list(f["COUSUBFP"]) == ["10000", "10001"] and list(f["ATOTAL"]) == ["600", "400"]
+
+
+def test_a_block_split_by_a_2024_boundary_goes_whole_to_its_larger_piece(tmp_path):
+    fixture(tmp_path)
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    faces = pd.DataFrame([
+        face(BLOCKS[0][0], "10000", "001", "001", 600),
+        face(BLOCKS[0][0], "10001", "001", "001", 400),
+        face(BLOCKS[1][0], "10001", "001", "001", 100),
+        face(BLOCKS[2][0], "20000", "001", "001", 100),
+        face(BLOCKS[3][0], "30000", "002", "001", 100)],
+        columns=bs.FACE_FIELDS)
+    s = bs.build(bs.read_table(tmp_path / "counts.csv"), tmp_path / "baf.zip",
+                 tmp_path / "bef_sldl.zip", tmp_path / "bef_sldu.zip", "23", W(), faces=faces)
+    assert s.loc[0, "cousub"] == "2300110000" and bool(s.loc[0, "cousub_split"])
+    assert s.loc[1, "cousub"] == "2300110001" and s.loc[1, "cousub_2020"] == "2300110000"
+    assert not bool(s.loc[2, "cousub_split"])
+
+
+def test_a_counted_block_with_no_2024_face_is_refused(tmp_path):
+    fixture(tmp_path)
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    faces = pd.DataFrame([face(BLOCKS[0][0], "10000", "001", "001", 1)], columns=bs.FACE_FIELDS)
+    with pytest.raises(SystemExit):
+        bs.build(bs.read_table(tmp_path / "counts.csv"), tmp_path / "baf.zip",
+                 tmp_path / "bef_sldl.zip", tmp_path / "bef_sldu.zip", "23", W(), faces=faces)
+
+
+# ── D-127: a block's county follows its 2024 town (BOUND-1) ──────────────
+def test_a_block_whose_2024_town_is_in_another_county_follows_the_town(tmp_path):
+    fixture(tmp_path)
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    faces = pd.DataFrame([
+        face(BLOCKS[0][0], "10000", "001", "001", 600),
+        face(BLOCKS[1][0], "10001", "001", "001", 100),
+        face(BLOCKS[2][0], "20000", "001", "001", 100),
+        face(BLOCKS[3][0], "30000", "002", "001", 100)], columns=bs.FACE_FIELDS)
+    # block 0 was in county 001 in 2020; in 2024 its land lies in county 015's town 30000
+    faces.loc[0] = ["23", "001", "000100", "1000", "23", "015", "30000", "002", "001", "L", "600"]
+    s = bs.build(bs.read_table(tmp_path / "counts.csv"), tmp_path / "baf.zip",
+                 tmp_path / "bef_sldl.zip", tmp_path / "bef_sldu.zip", "23", W(), faces=faces)
+    assert s.loc[0, "county"] == "23015" and s.loc[0, "county_2020"] == "23001"
+    assert s.loc[0, "cousub"] == "2301530000"
+    assert s.loc[1, "county"] == s.loc[1, "county_2020"] == "23001"
+
+
+def test_a_block_whose_faces_are_all_perennial_water_has_no_land_and_takes_the_largest_piece(tmp_path):
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    faces = pd.DataFrame([
+        face(BLOCKS[0][0], "10000", "001", "001", 300, lw="P"),
+        face(BLOCKS[0][0], "10001", "001", "001", 900, lw="P")], columns=bs.FACE_FIELDS)
+    by = bs.faces_by_block(faces, "23", W())
+    assert by.loc[by["GEOID"] == BLOCKS[0][0], "cousub_2024"].iloc[0] == "2300110001"
+
+
+def test_intermittent_water_counts_as_land_as_the_census_does(tmp_path):
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("bs", REPO / "soil" / "transform" / "build_block_spine.py")
+    bs = _u.module_from_spec(spec); spec.loader.exec_module(bs)
+    faces = pd.DataFrame([
+        face(BLOCKS[0][0], "10000", "001", "001", 500, lw="I"),
+        face(BLOCKS[0][0], "10001", "001", "001", 400, lw="L")], columns=bs.FACE_FIELDS)
+    by = bs.faces_by_block(faces, "23", W())
+    assert by.loc[by["GEOID"] == BLOCKS[0][0], "cousub_2024"].iloc[0] == "2300110000"
