@@ -130,3 +130,21 @@ def test_the_repo_seed_never_reads_coverage_as_a_town():
     declared = sos.load_seed(ROOT / sos.SEED)
     assert declared["sources"]["easton"]["columns"]["served_raw"] == "Communities served"
     assert len(declared["counties"]) == 16
+
+
+def test_the_runs_inputs_must_match_the_declaration(tmp_path):
+    (tmp_path / "m.csv").write_text(MME)
+    declared = sos.check_declaration({"sources": {
+        "mme": {"columns": {"name": "Publication"}},
+        "lnc": {"columns": {"name": "Publication"}}}})
+    with pytest.raises(sos.SourceRefused, match="declared with no input: lnc"):
+        sos.stack_from(declared, {"mme": tmp_path / "m.csv"})
+    with pytest.raises(sos.SourceRefused, match="input with no declaration: extra"):
+        sos.stack_from(declared, {"mme": tmp_path / "m.csv", "lnc": tmp_path / "m.csv",
+                                  "extra": tmp_path / "m.csv"})
+
+
+def test_the_receipt_names_its_key():
+    meta = sos.output_metadata(sos.pd.DataFrame(columns=list(sos.COLUMNS)))
+    assert meta["id_fields"] == ["source", "source_line"]
+    assert meta["spatial_unit"] == "outlet_record"

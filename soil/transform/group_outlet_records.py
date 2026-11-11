@@ -1,5 +1,5 @@
 """
-soil/transform/group_outlet_records.py
+soil/transform/group_outlet_records.py  |  rewildingCities
 
 group_outlet_records ~ which stacked records may be the same outlet, and
 where their sources disagree
@@ -24,18 +24,34 @@ and a key value one source uses twice joins nothing at all, for anyone:
 which of its two records another source's record belongs with would
 otherwise be decided by row order, a silent choice. such a value is named
 in match_note on every record that holds it. a join refused because two
-keys together would put one source in a group twice is noted the same way. ~
+keys together would put one source in a group twice is noted the same way
+(D-202). ~
+
+Contract (pr_io): argv <inputs_json> <output_path> <params_json>
+Inputs:  stack   the stack from stack_outlet_sources
+Params:  none
+Output:  the stack with url_key, name_key, group_id, match_basis and
+         match_note, csv, keyed by (source, source_line)
+
+disagreements() is its own primitive, list_outlet_disagreements, since a
+step writes one output. run by hand for a look with --stack, --out and
+--disagreements. ~
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 # like is compared only with like: an office address never with a named town
+KEY = ["source", "source_line"]
+SPATIAL_UNIT = "outlet_record"
+
 COMPARED = ("frequency", "office_town", "office_county", "named_town", "named_county")
 
 
@@ -161,34 +177,65 @@ def disagreements(grouped: pd.DataFrame, fields=COMPARED) -> pd.DataFrame:
                                        "name", "value"])
 
 
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="group stacked outlet records by exact keys")
+def output_metadata(grouped: pd.DataFrame) -> dict:
+    """what the receipt says of the grouped stack, its key included (KEYS-1)."""
+    return {"data_category": "tabular", "crs": None, "row_count": len(grouped),
+            "variables": list(grouped.columns), "id_fields": KEY,
+            "spatial_unit": SPATIAL_UNIT}
+
+
+def summary(grouped: pd.DataFrame) -> list[str]:
+    sizes = grouped.groupby("group_id")["source"].nunique()
+    notes = grouped["match_note"].fillna("")
+    return [f"{len(grouped)} records in {len(sizes)} groups",
+            f"groups by number of sources: {sizes.value_counts().sort_index().to_dict()}",
+            "records holding a key not used (one source holds it twice): "
+            f"{int(notes.str.contains('not used to join').sum())}",
+            f"joins refused across keys: {int(notes.str.contains('not joined').sum())}"]
+
+
+def _pr_io():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from canopy import pr_io
+    except ImportError:
+        import pr_io
+    return pr_io
+
+
+def main():
+    io = _pr_io()
+    args = io.parse_primitive_args()
+    w = io.WarningsCollector("group_outlet_records")
+    with io.primitive_error_handling(w):
+        stack = pd.read_csv(io.get_input(args["inputs"], "stack"), dtype=str)
+        grouped = group_records(stack)
+        for line in summary(grouped):
+            w.info(line)
+        grouped.to_csv(args["output"], index=False)
+        io.primitive_success(output_metadata(grouped), w)
+
+
+def by_hand(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="group stacked outlet records, by hand")
     ap.add_argument("--stack", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--disagreements", required=True)
     args = ap.parse_args(argv)
-    stack = pd.read_csv(args.stack, dtype=str)
-    grouped = group_records(stack)
+    grouped = group_records(pd.read_csv(args.stack, dtype=str))
     diff = disagreements(grouped)
     for p in (args.out, args.disagreements):
         Path(p).parent.mkdir(parents=True, exist_ok=True)
     grouped.to_csv(args.out, index=False)
     diff.to_csv(args.disagreements, index=False)
-    sizes = grouped.groupby("group_id")["source"].nunique()
-    print(f"{len(grouped)} records in {len(sizes)} groups")
-    print("groups by number of sources:", sizes.value_counts().sort_index().to_dict())
-    notes = grouped["match_note"].fillna("")
-    print("records holding a key not used (one source holds it twice):",
-          int(notes.str.contains("not used to join").sum()))
-    print("joins refused across keys:", int(notes.str.contains("not joined").sum()))
-    if len(diff):
-        print("disagreeing groups by field:",
-              diff.groupby("field")["group_id"].nunique().to_dict())
-    else:
-        print("disagreeing groups by field: {}")
+    print("\n".join(summary(grouped)))
+    fields = diff.groupby("field")["group_id"].nunique().to_dict() if len(diff) else {}
+    print(f"disagreeing groups by field: {fields}")
     print(f"wrote {args.out} and {args.disagreements}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    if len(sys.argv) > 1 and sys.argv[1].startswith("--"):
+        raise SystemExit(by_hand())
+    main()

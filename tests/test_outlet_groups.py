@@ -87,3 +87,13 @@ def test_an_office_address_is_never_compared_with_a_named_town():
         ("cision", 3, "Advertiser Democrat", None, None, None, "South Portland"),
         ("mme", 7, "Advertiser Democrat", None, None, "Norway", None)]))
     assert gor.disagreements(g).empty
+
+
+def test_the_disagreements_primitive_uses_the_same_comparison():
+    spec = importlib.util.spec_from_file_location(
+        "list_outlet_disagreements",
+        ROOT / "soil" / "transform" / "list_outlet_disagreements.py")
+    lod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lod)
+    assert lod.COMPARED == gor.COMPARED
+    assert lod.KEY == ["group_id", "field", "source", "source_line"]
