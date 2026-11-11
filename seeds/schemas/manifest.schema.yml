@@ -185,6 +185,42 @@ properties:
             description: Overview level for overview mode
 
   # ───────────────────────────────────────────────────────────────────────────
+  # PLACES (the places this plot answers for, D-174)
+  # ───────────────────────────────────────────────────────────────────────────
+  places:
+    type: array
+    minItems: 1
+    description: >
+      The places of the geography graph this plot calls its own. Omitted, the
+      plot's places are every place in its graph. Each entry names a place by
+      its key, (authority, code), and is that place alone; with `with:
+      contained` it is that place and every place it contains, followed down
+      through contains edges; with `with: touching` it is that place and every
+      place an overlaps edge joins it to. The plot's places are the union.
+      Every key named must be a place in the graph, or none are taken. A
+      sub-plot relates to its parent through contains edges between their
+      places, never through a key here (D-175).
+    items:
+      type: object
+      required: [authority, code]
+      properties:
+        authority:
+          type: string
+          examples: [us_census_geoid, us_census_sldl]
+        code:
+          type: string
+          description: The code as its authority writes it, leading zeros kept, quoted
+          examples: ["23005", "23042"]
+        with:
+          type: string
+          enum: [contained, touching]
+      additionalProperties: false
+    examples:
+      - [{authority: us_census_geoid, code: "23005", with: contained}]
+      - [{authority: us_census_sldl, code: "23042", with: touching},
+         {authority: us_census_geoid, code: "2300560545"}]
+
+  # ───────────────────────────────────────────────────────────────────────────
   # DATASETS
   # ───────────────────────────────────────────────────────────────────────────
   datasets:

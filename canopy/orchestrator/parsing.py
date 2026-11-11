@@ -86,6 +86,7 @@ def parse_manifest(path: str | Path) -> Manifest:
         datasets=datasets, data_dir=path.parent, manifest_path=path,
         crs_working=crs_data.get("working", ""),
         gee_project=gee_data.get("project"), raw=data,
+        places=data.get("places"),
     )
 
 

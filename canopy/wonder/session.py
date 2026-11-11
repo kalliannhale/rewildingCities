@@ -81,7 +81,11 @@ def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True,
 
     report = {"planted": 0, "planted_refused": [], "tilled": 0, "tilled_refused": []}
 
-    planted = plant_manifest(loam, str(manifest_path))
+    # read once, by the one parser (P-01): planting and the plot's declared
+    # places (D-174) both come from this reading
+    from ..orchestrator.parsing import parse_manifest
+    manifest = parse_manifest(manifest_path)
+    planted = plant_manifest(loam, str(manifest_path), manifest=manifest)
     report["planted"] = len(planted["planted"])
     report["planted_refused"] = [{"dataset": k, "why": w} for k, w in planted["refused"]]
 
@@ -94,7 +98,7 @@ def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True,
     # the plot's part of the graph, as views over the files its receipts
     # point at, never copies (D-168); a plot with no graph says so here
     from ..loam.graph import plant_graph
-    report["graph"] = plant_graph(loam, plot, base)
+    report["graph"] = plant_graph(loam, plot, base, declared_places=manifest.places)
 
     return vocab, loam, report
 

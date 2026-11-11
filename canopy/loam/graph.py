@@ -40,6 +40,17 @@ values join the graph the same way (plan build 2):
 
 the rule for boundaries is a seed, seeds/vintages/boundaries.yml (D-170),
 read here and written into the view, so the view says the rule it applied. ~
+
+and the plot's own places (plan build 3, D-174):
+
+  ~ plot_places   the places this plot answers for, each with the reason it
+                  is included. a manifest that declares none answers for every
+                  place in its graph. a declared entry is one place, or one
+                  place `with: contained` (and all it contains, followed down
+                  contains edges), or `with: touching` (and all it overlaps).
+                  a key that is not a place, or an entry of any other shape,
+                  means no view, naming it: a plot never claims a place the
+                  graph does not hold
 """
 
 from __future__ import annotations
@@ -235,9 +246,116 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                               "rule": str(BOUNDARY_RULES) if rules else None}
 
 
-def plant_graph(loam, plot: str, root: str | Path) -> dict:
+PLACE_RULES = ("contained", "touching")
+
+
+def _declared_entries(declared) -> tuple[list[tuple[str, str, str]], list[str]]:
+    """the declaration's entries as (authority, code, rule), and every way it
+    is malformed. rule is self, contained or touching."""
+    if not isinstance(declared, list) or not declared:
+        return [], ["places: must be a non-empty list of place keys (D-174)"]
+    entries, problems = [], []
+    for i, entry in enumerate(declared):
+        if not isinstance(entry, dict):
+            problems.append(f"places[{i}] is not a place key: {entry!r}")
+            continue
+        extra = sorted(set(entry) - {"authority", "code", "with"})
+        rule = entry.get("with", "self")
+        if not entry.get("authority") or entry.get("code") in (None, ""):
+            problems.append(f"places[{i}] names no authority and code: {entry!r}")
+        elif extra:
+            problems.append(f"places[{i}] carries {', '.join(extra)}, which a place key does not")
+        elif rule != "self" and rule not in PLACE_RULES:
+            problems.append(f"places[{i}] says with: {rule!r}; a place is taken with "
+                            f"{' or '.join(PLACE_RULES)}, or alone")
+        else:
+            entries.append((str(entry["authority"]), str(entry["code"]), rule))
+    return entries, problems
+
+
+def _plant_plot_places(loam, declared, report: dict) -> None:
+    loam.con.execute("DROP VIEW IF EXISTS plot_places")
+    if not (report.get("places") or {}).get("made"):
+        report["plot_places"] = {"made": False, "why": "there are no places to choose from"}
+        return
+    if declared is None:
+        loam.con.execute("CREATE VIEW plot_places AS SELECT *, "
+                         "'every place in the graph; the manifest declares none' AS included_by "
+                         "FROM places")
+        count = loam.con.execute("SELECT COUNT(*) FROM plot_places").fetchone()[0]
+        report["plot_places"] = {"made": True, "declared": False, "rows": count}
+        return
+
+    entries, problems = _declared_entries(declared)
+    if entries:
+        known = {(a, c) for a, c in loam.con.execute(
+            "SELECT authority, CAST(code AS VARCHAR) FROM places").fetchall()}
+        problems += [f"{a} {c} is not a place in this plot's graph"
+                     for a, c, _ in entries if (a, c) not in known]
+    if problems:
+        report["plot_places"] = {"made": False, "why": "; ".join(problems)}
+        return
+
+    rows = ", ".join(f"({_sql_text(a)}, {_sql_text(c)}, {_sql_text(r)})" for a, c, r in entries)
+    edges_made = (report.get("edges") or {}).get("made")
+    follow_contains = ("" if not edges_made else """
+            UNION
+            SELECT CAST(e.to_authority AS VARCHAR), CAST(e.to_code AS VARCHAR), c.root
+            FROM edges e JOIN contained c
+                ON e.from_authority = c.authority AND CAST(e.from_code AS VARCHAR) = c.code
+            WHERE e.kind = 'contains'""")
+    touching = ("" if not edges_made else """
+        UNION ALL
+        SELECT CAST(e.from_authority AS VARCHAR), CAST(e.from_code AS VARCHAR),
+            'touching ' || d.authority || ' ' || d.code
+        FROM edges e JOIN declared d
+            ON e.to_authority = d.authority AND CAST(e.to_code AS VARCHAR) = d.code
+        WHERE d.rule = 'touching' AND e.kind = 'overlaps'
+        UNION ALL
+        SELECT CAST(e.to_authority AS VARCHAR), CAST(e.to_code AS VARCHAR),
+            'touching ' || d.authority || ' ' || d.code
+        FROM edges e JOIN declared d
+            ON e.from_authority = d.authority AND CAST(e.from_code AS VARCHAR) = d.code
+        WHERE d.rule = 'touching' AND e.kind = 'overlaps'""")
+    loam.con.execute(f"""
+        CREATE VIEW plot_places AS
+        WITH RECURSIVE
+        declared(authority, code, rule) AS (VALUES {rows}),
+        contained(authority, code, root) AS (
+            SELECT authority, code, authority || ' ' || code FROM declared
+            WHERE rule = 'contained'{follow_contains}
+        ),
+        reasons(authority, code, why) AS (
+            SELECT authority, code, 'declared' FROM declared WHERE rule = 'self'
+            UNION ALL
+            SELECT authority, code, 'declared, with what it overlaps' FROM declared
+            WHERE rule = 'touching'
+            UNION ALL
+            SELECT authority, code,
+                CASE WHEN authority || ' ' || code = root THEN 'declared, with what it contains'
+                     ELSE 'contained in ' || root END
+            FROM contained{touching}
+        ),
+        included AS (
+            SELECT authority, code,
+                array_to_string(list_sort(list(DISTINCT why)), '; ') AS included_by
+            FROM reasons GROUP BY authority, code
+        )
+        SELECT p.*, i.included_by
+        FROM places p JOIN included i
+            ON p.authority = i.authority AND CAST(p.code AS VARCHAR) = i.code""")
+    count = loam.con.execute("SELECT COUNT(*) FROM plot_places").fetchone()[0]
+    report["plot_places"] = {"made": True, "declared": True, "entries": len(entries),
+                             "rows": count,
+                             **({} if edges_made or all(r == "self" for *_, r in entries)
+                                else {"note": "there are no edges, so contained and touching "
+                                              "reach only the declared places themselves"})}
+
+
+def plant_graph(loam, plot: str, root: str | Path, declared_places=None) -> dict:
     """make the plot's graph views in its bed; returns, per view, whether it
-    was made and from what, or why not. ~"""
+    was made and from what, or why not. `declared_places` is the manifest's
+    places: list as written, None when it declares none (D-174). ~"""
     root = Path(root)
     report = {}
     for view, semantic_type in GRAPH_VIEWS.items():
@@ -283,4 +401,5 @@ def plant_graph(loam, plot: str, root: str | Path) -> dict:
                         "key": key, "rows": count}
 
     _plant_values(loam, plot, root, report)
+    _plant_plot_places(loam, declared_places, report)
     return report

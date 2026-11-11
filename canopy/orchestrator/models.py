@@ -111,6 +111,10 @@ class Manifest:
     crs_working: str = ""
     gee_project: str | None = None
     raw: dict = field(default_factory=dict)
+    # the places this plot declares as its own (D-174), as written: None when
+    # it declares none, which means every place in its graph. loam resolves
+    # and checks the entries; the parser only carries them.
+    places: list | None = None
 
     def available_datasets(self) -> dict[str, ManifestDataset]:
         return {k: v for k, v in self.datasets.items() if v.available}
