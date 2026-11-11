@@ -13,6 +13,9 @@ class ReferenceResolver:
         $choices.{choice_name} -> value from experiment's choices block
         $parameters.{param_name} -> value from experiment's parameters block
         $steps.{step_id}.{output_name} -> output from a previous step
+        $loam.{semantic_type} -> the one artifact of that type another run
+            in this plot made, read through the plot's loam bed, with its
+            envelope (D-163, D-164). inputs only.
         $indicators.{indicator_id} -> an indicator's declaration from the
             registry (seeds/indicators/), params only. the primitive receives
             the parsed derivation, so R never reads YAML and a variable code
@@ -24,6 +27,7 @@ class ReferenceResolver:
     CHOICES_PATTERN = re.compile(r'^\$choices\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     PARAMETERS_PATTERN = re.compile(r'^\$parameters\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     STEPS_PATTERN = re.compile(r'^\$steps\.([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    LOAM_PATTERN = re.compile(r'^\$loam\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     INDICATORS_PATTERN = re.compile(r'^\$indicators\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     WEIGHTS_PATTERN = re.compile(r'^\$weights\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     # the declared small-sample rule (D-106), resolved like $weights
@@ -33,16 +37,20 @@ class ReferenceResolver:
     LOOKS_LIKE_REFERENCE = re.compile(r'^\$[a-zA-Z]')
     
     # Valid prefixes for error messages
-    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$indicators.", "$weights.", "$reliability.")
+    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$loam.", "$indicators.", "$weights.", "$reliability.")
     
     def __init__(
         self,
         manifest: Manifest,
         experiment: Experiment,
         indicator_registry=None,
+        loam_reach=None,
     ):
         self.manifest = manifest
         self.experiment = experiment
+        # what answers $loam.<type> (canopy.loam.reach.LoamReach). None means
+        # this resolver was given no plot to read, and a $loam. input says so.
+        self.loam_reach = loam_reach
         # loaded on first use, so an experiment that never names an indicator
         # never needs the registry to exist. injectable for tests.
         self._indicator_registry = indicator_registry
@@ -84,6 +92,7 @@ class ReferenceResolver:
             self.CHOICES_PATTERN.match(ref) or
             self.PARAMETERS_PATTERN.match(ref) or
             self.STEPS_PATTERN.match(ref) or
+            self.LOAM_PATTERN.match(ref) or
             self.INDICATORS_PATTERN.match(ref) or
             self.WEIGHTS_PATTERN.match(ref) or
             self.RELIABILITY_PATTERN.match(ref)
@@ -111,6 +120,9 @@ class ReferenceResolver:
             
             if ref.startswith("$manifest.") and "." in ref[10:]:
                 suggestions.append("$manifest references should be $manifest.{dataset_name} (one level deep)")
+
+            if ref.startswith("$loam.") and "." in ref[6:]:
+                suggestions.append("$loam references name a type only, $loam.{semantic_type}, never who made it (D-163)")
             
             suggestion_text = f" {' '.join(suggestions)}" if suggestions else ""
             
@@ -119,6 +131,7 @@ class ReferenceResolver:
                 f"Starts with '$' but doesn't match valid patterns.{suggestion_text}\n"
                 f"Valid formats: $manifest.{{name}}, $choices.{{name}}, "
                 f"$parameters.{{name}}, $steps.{{step_id}}.{{output}}, "
+                f"$loam.{{semantic_type}}, "
                 f"$indicators.{{indicator_id}}, $weights.{{weighting_id}}, "
                 f"$reliability.{{rule_id}}"
             )
@@ -173,6 +186,11 @@ class ReferenceResolver:
         if match:
             dataset_name = match.group(1)
             return self._resolve_manifest_ref(dataset_name, context)
+
+        # Try $loam.{semantic_type}
+        match = self.LOAM_PATTERN.match(ref)
+        if match:
+            return self._resolve_loam_ref(match.group(1), context)
         
         # Input references shouldn't use $choices or $parameters
         if self.CHOICES_PATTERN.match(ref):
@@ -200,7 +218,8 @@ class ReferenceResolver:
         
         raise ValueError(
             f"Cannot resolve input reference '{ref}'{context_msg}. "
-            f"Expected $manifest.{{name}} or $steps.{{step_id}}.{{output_name}}."
+            f"Expected $manifest.{{name}}, $steps.{{step_id}}.{{output_name}} "
+            f"or $loam.{{semantic_type}}."
         )
     
     def _resolve_step_ref(
@@ -240,6 +259,23 @@ class ReferenceResolver:
         
         return path, semantic_type, envelope
     
+    def _resolve_loam_ref(
+        self,
+        semantic_type: str,
+        context: str = ""
+    ) -> tuple[str, str, Envelope]:
+        """Resolve a reference to what another run in this plot made (D-163).
+
+        Refusals come from the reach as ValueError, so a step that cannot
+        reach its input fails as an input resolution, naming why."""
+        context_msg = f" (in {context})" if context else ""
+        if self.loam_reach is None:
+            raise ValueError(
+                f"$loam.{semantic_type}{context_msg}: this resolver was given no "
+                f"plot to read, so nothing another run made can be reached (D-164)")
+        reached = self.loam_reach.reach(semantic_type, context)
+        return reached.path, reached.envelope.metadata["semantic_type"], reached.envelope
+
     def _resolve_manifest_ref(
         self, 
         dataset_name: str, 
@@ -397,6 +433,13 @@ class ReferenceResolver:
             raise ValueError(
                 f"Invalid param reference '{value}' in {context}. "
                 f"$steps references data outputs, not param values. "
+                f"Use $choices.{{name}} or $parameters.{{name}} for params."
+            )
+
+        if self.LOAM_PATTERN.match(value):
+            raise ValueError(
+                f"Invalid param reference '{value}' in {context}. "
+                f"$loam references data another run made, not param values. "
                 f"Use $choices.{{name}} or $parameters.{{name}} for params."
             )
         

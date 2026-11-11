@@ -243,9 +243,17 @@ class Orchestrator:
             self._dependency_resolver = DependencyResolver(self.experiment)
             self.plan = self._dependency_resolver.create_execution_plan()
 
+        # what answers $loam.<type>: this plot's bed, opened on first need,
+        # from the folder this run's manifest lives in (D-163, D-164)
+        from ..loam.reach import LoamReach
+        self.loam_reach = LoamReach(plot=self.manifest.city_id,
+                                    directory=self.manifest.data_dir,
+                                    project_root=self.project_root)
+
         self.reference_resolver = ReferenceResolver(
             manifest=self.manifest,
-            experiment=self.experiment
+            experiment=self.experiment,
+            loam_reach=self.loam_reach,
         )
 
         self.envelope_builder = EnvelopeBuilder(
@@ -283,6 +291,8 @@ class Orchestrator:
 
         for step in self.experiment.steps:
             self._validate_param_references(step, errors)
+
+        self._validate_loam_references(errors)
 
         self._validate_method_choices(warnings)
         self._validate_kind(errors, warnings)
@@ -338,6 +348,33 @@ class Orchestrator:
                     f"{lineage.method_ref} is a preparation method, which answers "
                     "no question; an experiment needs a method that does. declare "
                     "this run `kind: preparation`, or choose an analysis method")
+
+    def _validate_loam_references(self, errors: list[str]) -> None:
+        """a run may not reach for a type it makes itself (D-164).
+
+        reading its own earlier output through loam would let a rerun feed on
+        the receipt it is about to replace; inside one run, a step's output is
+        $steps.<id>.<output>. compared by what each name means today, so a
+        retired spelling cannot slip past."""
+        def meaning(name: str) -> str:
+            res = self.semantic_types.resolve(name)
+            return getattr(res, "canonical", None) or name
+
+        made = {}
+        for step in self.experiment.steps:
+            for output_name, output_type in step.outputs.items():
+                made.setdefault(meaning(output_type), (step.id, output_name))
+        for step in self.experiment.steps:
+            for input_name, ref in step.inputs.items():
+                if isinstance(ref, str) and ref.startswith("$loam."):
+                    asked = ref[len("$loam."):]
+                    if meaning(asked) in made:
+                        maker, output_name = made[meaning(asked)]
+                        errors.append(
+                            f"Step '{step.id}' input {input_name} reads {ref}, which "
+                            f"this run makes itself (step '{maker}'). read it as "
+                            f"$steps.{maker}.{output_name}, or move the step into "
+                            f"another run (D-164)")
 
     def _validate_param_references(self, step: StepDefinition, errors: list[str]) -> None:
         def check_value(value: Any, path: str) -> None:

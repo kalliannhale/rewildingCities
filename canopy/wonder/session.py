@@ -40,13 +40,18 @@ def plot_names(root: Path | None = None) -> list[str]:
                   and (d / "manifest.yml").is_file())
 
 
-def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True):
+def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True,
+              directory: Path | None = None):
     """
     open a plot for reading ~ returns (vocabulary, loam, report).
 
     plants the manifest first, so a declared-but-unacquired holding is
     visible, then tills the receipts. the report says what happened, because
     a reader that silently refused a holding is a reader you cannot trust. ~
+
+    `directory` names the plot's own folder outright, for a caller that
+    already holds it (the orchestrator does, from its manifest), so the bed
+    opened is the plot that run belongs to, wherever it sits (D-164). ~
     """
     from ..vocabulary import Vocabulary
     from ..loam.loam import Loam
@@ -54,14 +59,18 @@ def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True):
     from ..loam.envelope_reader import till_envelopes
 
     base = root or project_root()
-    directory = plot_dir(plot) if root is None else base / "plots" / plot
+    named = directory is not None
+    if named:
+        directory = Path(directory)
+    else:
+        directory = plot_dir(plot) if root is None else base / "plots" / plot
     manifest_path = directory / "manifest.yml"
 
     if not manifest_path.is_file():
         raise PlotNotFound(
             f"no plot at plots/{plot} ~ found one with: rewilding init {plot}")
 
-    bed = loam_bed(plot) if root is None else directory / ".loam" / "loam.duckdb"
+    bed = loam_bed(plot) if root is None and not named else directory / ".loam" / "loam.duckdb"
     bed.parent.mkdir(parents=True, exist_ok=True)
     if fresh and bed.exists():
         bed.unlink()
@@ -75,7 +84,7 @@ def open_plot(plot: str, *, root: Path | None = None, fresh: bool = True):
     report["planted"] = len(planted["planted"])
     report["planted_refused"] = [{"dataset": k, "why": w} for k, w in planted["refused"]]
 
-    receipts = envelopes_dir(plot) if root is None else directory / ".envelopes"
+    receipts = envelopes_dir(plot) if root is None and not named else directory / ".envelopes"
     if receipts.is_dir():
         tilled = till_envelopes(loam, str(receipts), vocab, plot)
         report["tilled"] = len(tilled["tilled"])
