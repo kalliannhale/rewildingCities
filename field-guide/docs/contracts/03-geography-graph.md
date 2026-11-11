@@ -36,7 +36,7 @@ names exactly one place.
 | `name` | text | as the authority publishes it |
 | `census_funcstat` | text or null | the Census's functional status for a town, verbatim (A, S, F, N, E). Kept, never shown as a bare word: Maine's 23 cities and its 4 reservation subdivisions are F (FUNC-2) |
 | `flags` | list of text | from the list below; empty, never null |
-| `context_note` | text or null | the id of the note Contract 1, rule 9, requires (`census_tribal_area`); its text lives with its type in `seeds/schemas` |
+| `context_note` | text or null | the id of the note Contract 1, rule 9, requires: `census_tribal_area` on a tribal area or reservation subdivision, `contains_census_tribal_area` on any other place holding a tribal block (D-158); its text lives in `seeds/notes/notes.yml` (D-157) |
 | `part_of_authority`, `part_of_code` | text or null | for a reservation subdivision, the Census tribal area it belongs to (D-129). Penobscot Indian Island is two Census subdivisions in two counties, both part of `2760R` |
 | `lurc_share_population` | number or null | for a town flagged `lurc`, the share of its people in blocks inside a LURC division; null when it has nobody |
 
