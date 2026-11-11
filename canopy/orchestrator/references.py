@@ -20,6 +20,10 @@ class ReferenceResolver:
             registry (seeds/indicators/), params only. the primitive receives
             the parsed derivation, so R never reads YAML and a variable code
             is written in exactly one place. D-33.
+        $crosswalks.{name} -> a crosswalk's declaration, the one file
+            seeds/crosswalks/**/{name}.yml, parsed, params only. resolved
+            into params so a run's receipt records the declaration it read,
+            and an edit to it is a changed param that freshness sees (D-206).
     """
     
     # Valid reference patterns
@@ -32,12 +36,14 @@ class ReferenceResolver:
     WEIGHTS_PATTERN = re.compile(r'^\$weights\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     # the declared small-sample rule (D-106), resolved like $weights
     RELIABILITY_PATTERN = re.compile(r'^\$reliability\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    # a declared crosswalk under seeds/crosswalks/, resolved like $weights (D-206)
+    CROSSWALKS_PATTERN = re.compile(r'^\$crosswalks\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     
     # Pattern to detect anything that looks like a reference attempt
     LOOKS_LIKE_REFERENCE = re.compile(r'^\$[a-zA-Z]')
     
     # Valid prefixes for error messages
-    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$loam.", "$indicators.", "$weights.", "$reliability.")
+    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$loam.", "$indicators.", "$weights.", "$reliability.", "$crosswalks.")
     
     def __init__(
         self,
@@ -95,7 +101,8 @@ class ReferenceResolver:
             self.LOAM_PATTERN.match(ref) or
             self.INDICATORS_PATTERN.match(ref) or
             self.WEIGHTS_PATTERN.match(ref) or
-            self.RELIABILITY_PATTERN.match(ref)
+            self.RELIABILITY_PATTERN.match(ref) or
+            self.CROSSWALKS_PATTERN.match(ref)
         )
         
         if not is_valid:
@@ -133,7 +140,7 @@ class ReferenceResolver:
                 f"$parameters.{{name}}, $steps.{{step_id}}.{{output}}, "
                 f"$loam.{{semantic_type}}, "
                 f"$indicators.{{indicator_id}}, $weights.{{weighting_id}}, "
-                f"$reliability.{{rule_id}}"
+                f"$reliability.{{rule_id}}, $crosswalks.{{name}}"
             )
     
     def _check_for_embedded_references(self, value: str, context: str = "") -> None:
@@ -207,6 +214,12 @@ class ReferenceResolver:
                 f"Inputs must reference data: $manifest.{{dataset}} or $steps.{{step}}.{{output}}."
             )
         
+        if self.CROSSWALKS_PATTERN.match(ref):
+            raise ValueError(
+                f"Invalid input reference '{ref}'{context_msg}. "
+                f"$crosswalks is for params, not inputs: it names a declaration "
+                f"of how to read data, not data (D-206).")
+
         if (self.INDICATORS_PATTERN.match(ref) or self.WEIGHTS_PATTERN.match(ref)
                 or self.RELIABILITY_PATTERN.match(ref)):
             raise ValueError(
@@ -420,6 +433,11 @@ class ReferenceResolver:
         match = self.RELIABILITY_PATTERN.match(value)
         if match:
             return self._resolve_reliability(match.group(1), context)
+
+        # Try $crosswalks.{name}
+        match = self.CROSSWALKS_PATTERN.match(value)
+        if match:
+            return self._resolve_crosswalk(match.group(1), context)
         
         # Check for misuse of $manifest and $steps in params
         if self.MANIFEST_PATTERN.match(value):
@@ -523,6 +541,15 @@ class ReferenceResolver:
         except (FileNotFoundError, ValueError) as e:
             raise ValueError(f"$reliability.{rule_id}{context_msg} could not be resolved: {e}")
 
+    def _resolve_crosswalk(self, name: str, context: str = "") -> dict:
+        """Resolve a crosswalk reference to its declaration, as plain JSON (D-206)."""
+        context_msg = f" (in {context})" if context else ""
+        from canopy.paths import project_root
+        try:
+            return load_crosswalk(name, project_root() / "seeds" / "crosswalks")
+        except (FileNotFoundError, ValueError) as e:
+            raise ValueError(f"$crosswalks.{name}{context_msg} could not be resolved: {e}")
+
     def _resolve_parameter(self, param_name: str, context: str = "") -> Any:
         """Resolve a parameter reference."""
         context_msg = f" (in {context})" if context else ""
@@ -608,3 +635,26 @@ class ReferenceResolver:
             )
         
         return resolved
+
+
+def load_crosswalk(name: str, root) -> dict:
+    """the declaration in the one file <root>/**/<name>.yml, parsed (D-206).
+
+    a crosswalk is found by its name alone, at any depth, so a run never
+    writes a path. none, or two files of that name, is refused by name: which
+    of two is a choice, not a lookup. the file must hold a mapping. ~"""
+    import yaml
+    root = Path(root)
+    hits = sorted(root.rglob(f"{name}.yml")) if root.is_dir() else []
+    if not hits:
+        known = sorted(p.stem for p in root.rglob("*.yml")) if root.is_dir() else []
+        raise FileNotFoundError(
+            f"no crosswalk {name}.yml under {root}. declared: {', '.join(known) or '(none)'}")
+    if len(hits) > 1:
+        raise ValueError(
+            f"{len(hits)} crosswalks are named {name}.yml: "
+            f"{', '.join(str(h.relative_to(root)) for h in hits)}; name one uniquely")
+    doc = yaml.safe_load(hits[0].read_text())
+    if not isinstance(doc, dict):
+        raise ValueError(f"{hits[0]} must hold a mapping, not {type(doc).__name__}")
+    return doc
