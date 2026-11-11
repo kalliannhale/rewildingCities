@@ -1276,3 +1276,25 @@ primitives:
       fixed_types: {type: array, required: true}
       mobile_types: {type: array, required: true}
       status_codes: {type: object, required: true}
+
+  count_located:
+    path: transform/count_located.py
+    version: 1.0.0
+    description: >
+      A carrier indicator's values (D-209): for every place at the declared
+      levels, how many of one layer's points stand in it, from located_in
+      edges, and that count per the place's own persons. Every place gets a
+      row, zeros included; a place with no persons has no rate, with its
+      reason. The count travels with the rate. Refuses edges from another
+      layer than the indicator declares, any edge kind but located_in, a
+      non-located_count indicator, and a Census tribal area (TRIBE-7).
+    inputs:
+      - {name: edges, semantic_types: [located_in_edges], required: true}
+      - {name: spine, semantic_types: [block_spine], required: true}
+      - {name: places, semantic_types: [places], required: true}
+    outputs: {semantic_type: indicator_values, data_category: tabular}
+    params:
+      indicator: {type: object, required: true}
+      levels: {type: array, required: true}
+      time: {type: string, required: true}
+      published_by: {type: string, required: true}

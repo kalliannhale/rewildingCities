@@ -1,0 +1,39 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/carriers.yml
+# Carrier indicators: counts of a point layer's located_in edges per place,
+# over the place's own people (D-209). Kept in their own file, never added to
+# rewilding.yml: a declaration carries its file's sha256, so one more entry
+# there would make every receipt that read an indicator from it stale.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+
+  library_outlets_per_1000:
+    name: Public library outlets per 1,000 people
+    defined_by: rewildingcities
+    measures: library_outlets
+    role: carrier
+    rests_on: {add: [P1_001N], counts: persons}
+    unit: per_1000_persons
+    derivation:
+      kind: located_count
+      layer: imls_pls_fy2024_outlets
+      denominator: persons
+      scale: 1000
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: rewildingcities
+      dataset: maine_libraries
+    rationale: >
+      Counts fixed library buildings (central libraries and branches) standing
+      in a place, never whom they serve: a library system serves a legal
+      jurisdiction, and a town with no building may be served by contract
+      (SERVES-1). Bookmobiles are not counted (D-208). The denominator is the
+      place's 2020 persons (P.L. 94-171 P1), the vintage of the edges, never
+      the ACS's 2024 estimate. A small place's rate is unstable (one library
+      among 60 people is 16.7 per 1,000), so the count and the persons always
+      travel with the rate. A Census tribal area has no value: the survey does
+      not see reservation libraries (TRIBE-7). Aggregation none: every place
+      has its own count, and a rate never moves along an edge (D-179).

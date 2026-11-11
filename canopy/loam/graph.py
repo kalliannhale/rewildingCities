@@ -201,8 +201,13 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                or "published_by" not in value_columns else
                f"COALESCE(v.published_by, '') NOT IN {_sql_list(publishers)} "
                f"OR p.level NOT IN {_sql_list(ruled_levels)}")
+    # the statistical class is the ACS's own rule (its decennial boundaries), so
+    # it judges only the ACS's values: a count made over the graph's own places
+    # sits on the place's boundaries by construction (D-209)
+    acs_only = ("COALESCE(v.published_by, '') = 'us_census_acs' AND "
+                if "published_by" in value_columns else "")
     is_statistical = ("FALSE" if not statistical else
-                      f"p.level = 'cousub' AND COALESCE(p.census_funcstat, '') "
+                      f"{acs_only}p.level = 'cousub' AND COALESCE(p.census_funcstat, '') "
                       f"IN {_sql_list(statistical)}")
     final_year = "regexp_extract(v.time, '.*([0-9]{4})', 1)"
 

@@ -40,7 +40,11 @@ import yaml
 DIRECTIONS = ("higher_is_better", "higher_is_worse")
 AGGREGATIONS = ("sum", "population_weighted_mean", "none", "profile", "recompute")
 UNCERTAINTIES = ("acs_moe", "published_interval", "none")
-DERIVATION_KINDS = ("ratio", "passthrough")
+# located_count (D-209): a count of one point layer's located_in edges per
+# place, over the place's own persons. it reads no published table, so it
+# adds nothing to an acquisition and never reaches derive_indicator.R
+DERIVATION_KINDS = ("ratio", "passthrough", "located_count")
+LOCATED_DENOMINATORS = ("persons", "households")
 # what a value is for, read by the place profile to put it in its part
 # (Contract 4). one role per indicator (D-107).
 ROLES = ("need", "barrier", "carrier", "outcome", "context")
@@ -56,7 +60,7 @@ REPLICATES_REQUIRED = ("publisher", "edition", "column")
 
 @dataclass(frozen=True)
 class Derivation:
-    kind: str                                   # ratio | passthrough
+    kind: str                                   # ratio | passthrough | located_count
     numerator: tuple[str, ...] = ()
     denominator: str | None = None
     scale: float = 1.0
@@ -65,6 +69,7 @@ class Derivation:
     # two end categories. a median the Census marks open-ended (-333333333 on
     # its margin) is reported as a bound past one of them, never as a number.
     open_ended: tuple[float, float] | None = None
+    layer: str | None = None                    # located_count only
 
 
 @dataclass(frozen=True)
@@ -111,8 +116,11 @@ class Indicator:
     declared_in: str = ""
 
     def estimate_variables(self) -> list[str]:
-        """every source column this indicator reads, in a stable order."""
+        """every source column this indicator reads, in a stable order. a
+        located_count reads no source table, so it has none (D-209)."""
         d = self.derivation
+        if d.kind == "located_count":
+            return []
         cols = list(d.numerator)
         if d.denominator:
             cols.append(d.denominator)
@@ -153,6 +161,8 @@ class Indicator:
         if d.kind == "ratio":
             derivation.update(numerator=list(d.numerator),
                               denominator=d.denominator, scale=d.scale)
+        elif d.kind == "located_count":
+            derivation.update(layer=d.layer, denominator=d.denominator, scale=d.scale)
         else:
             derivation.update(column=d.column)
             if d.open_ended is not None:
@@ -353,6 +363,24 @@ class IndicatorRegistry:
                 raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
             return Derivation(kind="ratio", numerator=tuple(numerator),
                               denominator=denominator, scale=float(scale))
+
+        if kind == "located_count":
+            layer, denominator = d.get("layer"), d.get("denominator")
+            if not layer or not isinstance(layer, str):
+                raise ValueError(f"{where}: a located_count needs the layer whose "
+                                 f"located_in edges it counts")
+            if denominator not in LOCATED_DENOMINATORS:
+                raise ValueError(f"{where}: a located_count's denominator must be one of "
+                                 f"{', '.join(LOCATED_DENOMINATORS)}, a count the spine holds")
+            scale = d.get("scale", None)
+            if not isinstance(scale, (int, float)) or isinstance(scale, bool) or scale <= 0:
+                raise ValueError(f"{where}: a located_count needs a positive numeric scale "
+                                 f"(1000 for per 1,000). no default")
+            extra = [k for k in d if k not in ("kind", "layer", "denominator", "scale")]
+            if extra:
+                raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
+            return Derivation(kind="located_count", layer=layer, denominator=denominator,
+                              scale=float(scale))
 
         column = d.get("column")
         if not column or not isinstance(column, str):

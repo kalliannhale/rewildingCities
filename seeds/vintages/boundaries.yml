@@ -43,3 +43,24 @@ publishers:
     # not judged here: Census tribal areas, which D-171 refuses outright while
     # places hold the 2020 legal areas (TRIBE-6), and MEGIS divisions, which
     # no ACS table is keyed by
+  rewildingcities:
+    # counts made over the graph's own places through located_in edges
+    # (D-207, D-209): a count's boundaries are its place's by construction.
+    # loam's only rule is the final year of `time`, so a count's time names
+    # the year whose places it was counted on; FY 2024 counts sit on the 2024
+    # places. a later survey counted on the same places must still say 2024
+    # here, or it would read as a mismatch (SURVEY-1)
+    boundary_year: final_year_of_time
+    levels:
+      state: graph
+      county: graph
+      cousub: graph
+      sldl: graph
+      sldu: graph
+    classes:
+      graph: >
+        Counted over the geography graph's own places, so a value's
+        boundaries are the place's: state, counties and towns from the 2024
+        topological faces, districts from the 2024 block equivalency files.
+    cites:
+      - field-guide/docs/contracts/03-geography-graph.md

@@ -117,6 +117,8 @@ def describe(ind: Indicator) -> dict:
     if d.kind == "ratio":
         derivation.update(numerator=list(d.numerator), denominator=d.denominator,
                           scale=d.scale)
+    elif d.kind == "located_count":
+        derivation.update(layer=d.layer, denominator=d.denominator, scale=d.scale)
     else:
         derivation.update(column=d.column)
     return {
@@ -228,7 +230,11 @@ def plot_summary(plot: str, registry: IndicatorRegistry) -> dict:
                             for i in s["indicators"] if i in registry.all()),
         "declared_not_acquired": sorted(i for s in sources if not s["cache_present"]
                                         for i in s["indicators"]),
-        "in_registry_not_declared_here": sorted(i for i in registry.all() if i not in listed),
+        # a located_count is never listed by a source: it is counted from
+        # edges, so its absence here is not a gap (D-209)
+        "in_registry_not_declared_here": sorted(
+            i for i in registry.all() if i not in listed
+            and registry.get(i).derivation.kind != "located_count"),
         "listed_but_not_in_registry": unknown,
     }
 
@@ -420,6 +426,18 @@ def _unit_codes(frame, unit_column: str, unit_pad) -> list[str]:
     return codes
 
 
+def _refuse_located(ind: Indicator) -> None:
+    """a located_count is counted from located_in edges by count_located, never
+    derived from an acquisition, so there is nothing here to preview (D-209)."""
+    if ind.derivation.kind == "located_count":
+        raise PreviewError(
+            "unavailable",
+            f"'{ind.id}' is a count of {ind.derivation.layer}'s located_in edges per "
+            f"place, made by soil/count_located in a preparation; it is not derived "
+            f"from an acquisition, so there is nothing to preview. read its values "
+            f"through loam's place_values.")
+
+
 def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | None,
            time: str | None, reliability: dict | None = None,
            unit_column: str = "GEOID", unit_pad: int | None = None,
@@ -428,6 +446,7 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
     unit column, padding and name column are read as derive_indicator.R
     reads them, so the twins agree by construction, not by every source
     happening to say GEOID (TWIN-2). ~"""
+    _refuse_located(ind)
     unit_authority = _unit_authority(unit_authority)
     codes = _unit_codes(frame, unit_column, unit_pad)
     estimates = ind.estimate_variables()
@@ -551,6 +570,7 @@ def preview(plot: str, indicator_id: str, dataset: str | None = None,
             registry: IndicatorRegistry | None = None, *, unit_authority: str) -> dict:
     registry = registry or load_registry()
     ind = get_indicator(registry, indicator_id)
+    _refuse_located(ind)
     src = choose_source(plot, indicator_id, dataset)
     declared = src.get("unit_authority")
     if declared is not None and declared != (unit_authority or "").strip():

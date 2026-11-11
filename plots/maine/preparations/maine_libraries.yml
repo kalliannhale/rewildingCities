@@ -5,6 +5,7 @@
 # step 3, the first carrier).
 #   the IMLS outlet file -> fixed outlets as points; bookmobiles listed
 #   the points          -> located_in edges, checked against IMLS's own block
+#   the edges           -> library outlets per 1,000 people, every place (D-209)
 # the spine, places and divisions are read through loam ($loam., LOAM-1), so
 # they are judged fresh before any step runs (D-166).
 # STATSTRU meanings from the IMLS PLS training on status structure changes;
@@ -75,3 +76,17 @@ steps:
         sldu: "2024"
         aiannh: "2020"
         division: "MEGIS METWP24P"
+
+  - id: libraries_counts
+    primitive: soil/count_located
+    inputs:
+      edges: $steps.libraries_located_in.edges
+      spine: $loam.block_spine
+      places: $loam.places
+    outputs:
+      values: indicator_values
+    params:
+      indicator: $indicators.library_outlets_per_1000
+      levels: [state, county, cousub, sldl, sldu]
+      time: FY 2024
+      published_by: rewildingcities

@@ -1108,3 +1108,17 @@ Findings:
 | **TRIBE-7** | No Maine library in the survey stands in a Census tribal area: the PLS has long not collected systematically from libraries on reservations, so a tribal area's carrier count must read as unseen, never zero. Wording with Person 3 | step 3 |
 | **SCHEMA-1** | A metadata field's type is checked only when a real run writes an envelope; fixture tests of a primitive cannot see it. A test could validate output_metadata against seeds/schemas/ | step 3 |
 | **STAT-1** | Find IMLS's definition of STATSTRU 25 in the FY 2024 documentation | step 3 |
+- ME0292-002's two blocks (230270470001044, ours; 230270470001053, IMLS's) share a town, a House district and a Senate district, so the disagreement places it the same at every level counted.
+
+## Sprint 06 step 3, continued: carriers counted (D-209)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-209** | A carrier is a registered indicator (role carrier) with a third derivation kind, located_count: one layer's located_in edges per place, over the place's own 2020 persons or households, every place a row, zeros included, the count beside the rate. It reads no source table, so it asks no acquisition for anything; preview refuses it by name; it lives in seeds/indicators/carriers.yml. Our counts get a boundary rule (publisher rewildingcities). Loam's statistical-area rule now judges ACS values only. Option A, chosen by Kalli | D-200: each barrier is a family of registered indicators. A separate file, because a declaration carries its file's sha256 and one more entry in rewilding.yml would stale every receipt that read from it | A carrier needs a margin, or loam learns per-publisher levels |
+
+- Wrong hypothesis: loam's place_values judged each publisher by its own rule. It read the ACS's levels and its statistical class for every publisher; the statistical class would have marked our counts in unorganized territories unchecked with the ACS's reason.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **SURVEY-1** | Loam's only boundary rule is the final year of `time`; a count's boundaries are the graph's, so a later survey counted on the 2024 places must still name 2024, or it reads as a mismatch | step 3 |
+| **LOAM-2** | place_values reads the ACS's `levels` for every publisher; a publisher with other levels needs loam to read its own | step 3 |
