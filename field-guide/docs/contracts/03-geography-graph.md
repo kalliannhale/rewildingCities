@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.9, 2026-11-11 (invariants, D-161, D-162; seats, D-134, D-136 to D-138; G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
+**Status:** 1.0, 2026-11-11, at Sprint 05's close (loam reads the graph as views, D-168; values attach to places, D-169 to D-172; a plot is a set of places, D-174; district values keyed by chamber, D-176; edge rules, universes and the district reading, D-179 to D-185; authority means only who assigns a code, D-186, D-188 to D-191; CON3-1). Earlier: draft 0.9 (invariants, D-161, D-162; seats, D-134, D-136 to D-138; G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -28,7 +28,7 @@ names exactly one place.
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `authority` | text | who assigns the code, and at which level: `us_census_geoid` (state, county, town), `us_census_sldl` (House), `us_census_sldu` (Senate), `us_census_aiannh` (Census tribal area, keyed by the Census GEOID: AIANNH plus component, `2760R` and `2760T` are two places, D-125), `megis` (Maine civil division) |
+| `authority` | text | who assigns the code, and at which level, and nothing else (D-186): a value's publisher is never its authority, and in value tables it is `published_by` (D-187). The authorities and their levels are declared in `seeds/authorities/authorities.yml`, and a test holds every copy in the code to it (D-188): `us_census_geoid` (state, county, town, tract), `us_census_sldl` (House), `us_census_sldu` (Senate), `us_census_aiannh` (Census tribal area, keyed by the Census GEOID: AIANNH plus component, `2760R` and `2760T` are two places, D-125), `megis` (Maine civil division) |
 | `code` | text | the code as that authority writes it, leading zeros kept: `23005`, `2300560825` |
 | `level` | text | `state`, `county`, `cousub`, `sldl` (Maine House), `sldu` (Maine Senate), `aiannh` (Census tribal area), `megis_division` |
 | `vintage` | text | the boundary year; it must match the ACS vintage it is joined to |
@@ -70,8 +70,8 @@ columns.
 | `from_authority`, `from_code` | text | the containing or overlapping place; for `located_in`, the point's layer (its dataset id) and its feature id |
 | `to_authority`, `to_code` | text | the other place |
 | `kind` | text | `contains`, `overlaps` or `located_in` |
-| `weight_population` | number or null | the share of the `from` town's population inside the `to` place; see below |
-| `weight_households` | number or null | the share of the `from` town's households (occupied housing units) inside the `to` place |
+| `weight_population` | number or null | the share of the `from` place's population inside the `to` place; see below. The `from` place is a town, or a MEGIS civil division on a division's edges (CON3-1) |
+| `weight_households` | number or null | the share of the `from` place's households (occupied housing units) inside the `to` place |
 | `weight_reason` | text or null | why a weight is null, e.g. `zero_households` |
 | `source` | text | the file or method the edge came from |
 | `vintage` | text | the vintage of that source |
@@ -85,9 +85,15 @@ columns.
 **Two weights, chosen by the value (D-121).** Population shares answer
 representation ("how much of this town does this district's legislator
 represent"); household shares answer values counted in households. A reader
-never picks one: a value uses the weight named by its indicator's
-`rests_on.counts` (households -> `weight_households`, persons ->
-`weight_population`), and representation uses `weight_population`. A town
+never picks one. Which weight counts what a value rests on is declared in
+`seeds/universes/universes.yml`, keyed by its indicator's `rests_on.counts`
+(D-181): `households` equals `weight_households`, `persons` equals
+`weight_population`, and a universe the edges do not count, such as renter
+households, is declared as contained by the weight whose universe holds it.
+A contained universe's weight judges only whether none of it is in a place;
+it is never shown as that universe's share and never allocates (D-182). A
+universe not declared has no share and no zero test, and every reading says
+so. Representation uses `weight_population`. A town
 with no households has a null household share with `weight_reason:
 zero_households`, never 0. Housing units are not used: Maine's seasonal homes
 are counted as vacant housing and would give summer camps the weight of
@@ -121,11 +127,18 @@ These are tested where the tables are built (Sprint 04):
 - Boundary and estimate vintages match, place by place. Within the graph, every
   edge's vintage is the vintage the places table declares for its family, refused
   in build_places (D-162). The match to estimates is checked where values join
-  places, which is not yet built (LOAM-1).
+  places in loam, by the publisher's cited rule in `seeds/vintages/boundaries.yml`;
+  every value says whether it attached and, if not, why (D-169, D-170).
+- Every authority a place or value names is declared in
+  `seeds/authorities/authorities.yml`, each level belongs to exactly one, and every
+  copy of the list in the code agrees with it (D-188; tests/test_authorities.py).
+- A district's values are keyed by its chamber's authority, never by
+  `us_census_geoid`, so a district code and a county code can never be one key
+  (GRAPH-1, D-176; tests/test_district_values.py).
 - Every reservation subdivision and tribal area carries its context note, and every reservation subdivision names its tribal area (D-129).
 - The towns in the places table and the 2024 county subdivision layer are the same set (D-126).
 
-## 4. The three rules
+## 4. The four rules
 
 1. **Districts come from the ACS directly.** A district's value is the ACS's
    own legislative-district estimate, never a sum or average of its towns.
@@ -134,7 +147,30 @@ These are tested where the tables are built (Sprint 04):
 3. **A larger place's value is shown with its towns' range.** A district or
    county value always travels with the minimum and maximum across the towns
    that touch it, and how many towns that is, so one number never hides the
-   places inside it.
+   places inside it. What enters that range is declared, and everything left
+   out is named:
+   - a town with none of the value's universe in the place is listed under it
+     and kept out of its range (D-180, ZERO-1);
+   - a value not attached to its place, or empty, stays out, with why;
+   - a statistical area attached unchecked, and a value on a small sample,
+     enter, and each end of a range says what it rests on (D-183);
+   - towns wholly inside the place are ranged apart from towns its line
+     splits; a split town is named one by one, with its share and the count it
+     is of, and the firm range is the towns wholly here on a sound sample
+     (D-183, D-185). The boundary between whole and split is the data's own,
+     never a chosen threshold.
+
+   Every telling says what a town range is: one estimate per town, however much
+   of the town lies in the place, so a spread of town estimates, not of the
+   place's people, and wider than the truth where samples are small.
+4. **Nothing moves along an edge but a declared count.** A median, rate or
+   percentage never moves; only a measure whose seed declares `aggregation:
+   sum` may be allocated, only by a weight that equals its universe, with a
+   warning naming the weight, and the result is a fact about one edge, never
+   added into a place (D-179). The contract sits above the seeds: an
+   indicator's `population_weighted_mean` says how its publisher combines it
+   upward and never licenses building a district from its towns. An allocated
+   count is computed on read and never stored (D-168).
 
 Split towns appear in every district they touch, with their share (MP-76).
 Towns carry values and never standings (MP-75).
@@ -144,8 +180,16 @@ Towns carry values and never standings (MP-75).
 Until the grove exists, the graph lives as two Parquet tables in each plot,
 `places` and `edges`, each written by a preparation from `soil/` primitives
 (D-98), with an envelope. A table nobody wrote by a preparation is not part of
-the graph. Loam reads them as holdings keyed by place (Sprint 05); the grove's
-catalog is their union across plots.
+the graph. Loam reads them as DuckDB views over the files their receipts point
+at, never as copies, so the bed holds no truth of its own and nothing leaves
+through a snapshot without meeting the gate (D-168). Values join them the same
+way, in `place_values`, and a plot answers for the places its manifest declares
+in `plot_places` (D-174). The grove's catalog is their union across plots.
+
+**Every source declares its own keys** (D-189, D-191). A manifest source, table
+or map layer, states the `unit_authority` its codes are under and where its
+codes are; runs and maps read those declarations rather than restate them.
+Building this is NAME-4's sweep (SRC-2, LAYER-1).
 
 ## 6. Seats
 
@@ -220,9 +264,18 @@ written by a preparation with an envelope (Section 5).
 | G-1 | Both population and household weights on every `overlaps` edge; the value's `rests_on.counts` chooses (D-121) |
 | G-2 | MEGIS civil divisions join Census towns through blocks: each 2020 block goes to the division containing its internal point (D-122) |
 | S-1 | Seats are their own table, keyed by legislature, chamber, kind and ref; the Legislature is the record and LegiScan the second authority; tribal seats keyed by the §601 names with no place link; no phone numbers (D-134, D-136, D-137, D-138) |
+| G-4 | Loam holds the graph as views over its receipts' files, never copies (D-168) |
+| G-5 | Values attach to places by (unit_authority, unit_code), a value's level is its place's, and boundaries are matched by a cited publisher's rule; two tables that agree on a key are one fact, and two that disagree make no view (D-169 to D-172) |
+| G-6 | A plot is a set of places, declared by key or by a rule over edges, resolved in plot_places (D-174, D-175) |
+| G-7 | A district's value is the ACS's own, derived by its own preparation and keyed by its chamber's authority (D-176, D-177) |
+| G-8 | Which weight counts what a value rests on is declared per universe; a contained universe shows no share; only a declared count moves along an edge, and a town with none of a universe in a place is listed and kept out of its range (D-179 to D-182) |
+| G-9 | A range's ends say what they rest on; towns wholly inside are ranged apart from towns a line splits, and the firm range is the towns wholly here on a sound sample (D-183, D-185) |
+| G-10 | authority means only who assigns a place's code, the publisher is published_by, and the authorities are declared once and held there by a test (D-186 to D-188) |
+| G-11 | Every source declares its own keys, table or layer, and an index carries its units' authority and never ranks across two (D-189 to D-191) |
 
 ## Review
 
 | Reviewer | Date | Result |
 | --- | --- | --- |
 | Kalli, author, acting as grove teammate | 2026-11-10 | Reviewed; G-3 decided. Reviewed by its author, not by a second person |
+| Kalli, author, acting as grove teammate | 2026-11-11 | 1.0 at Sprint 05's close: CON3-1 applied, G-4 to G-11 recorded. Still reviewed by its author only; the grove teammate's own review is owed before the handoff |
