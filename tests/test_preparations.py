@@ -11,13 +11,15 @@ index are used; only the primitive call itself (EnvelopeBuilder.run) is a fake
 that writes an output file and returns the envelope a primitive would.
 """
 
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 import yaml
 
-from canopy.envelope import BuildResult, Envelope, ProvenanceEntry, Warning
+from canopy.envelope import (BuildResult, Envelope, HashInfo, InputRecord,
+                             ProvenanceEntry, Warning)
 from canopy.orchestrator.orchestrator import Orchestrator
 from canopy.orchestrator.parsing import parse_experiment
 
@@ -81,6 +83,17 @@ def fake_builder(monkeypatch, orch, warn_after=None):
         Path(output_path).write_text(json.dumps(
             {"type": "FeatureCollection", "features": []}))
         name = Path(primitive).stem
+        # the provenance schema requires at least one input record (minItems
+        # 1), so the fake records the inputs it was given, as a primitive does.
+        # the hash is a real md5 of nothing: a skipped hash (value None) is
+        # dropped by Envelope.to_dict and then fails the schema, which
+        # requires `value` (HASH-1), so the fake cannot use one.
+        records = [InputRecord(
+            name=i.name, semantic_type=i.semantic_type or "governance_unit",
+            path=str(i.path or "in-memory"),
+            hash=HashInfo(value=hashlib.md5(b"").hexdigest(),
+                          method="full_file", algorithm="md5"))
+            for i in inputs]
         warnings = [Warning(level="critical", primitive=name,
                             message="every unit has the same geometry")] \
             if name == warn_after else []
@@ -91,7 +104,7 @@ def fake_builder(monkeypatch, orch, warn_after=None):
                       "crs": "EPSG:4326"},
             provenance=[ProvenanceEntry(
                 primitive=name, version=version, timestamp="2026-11-10T00:00:00Z",
-                params=params or {}, inputs=[], duration_seconds=0.0)],
+                params=params or {}, inputs=records, duration_seconds=0.0)],
             warnings=warnings)
         return BuildResult(success=True, envelope=env, error=None, message=None)
     monkeypatch.setattr(orch.envelope_builder, "run", run)
