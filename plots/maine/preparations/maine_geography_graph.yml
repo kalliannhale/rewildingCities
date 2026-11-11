@@ -115,3 +115,77 @@ steps:
         sldu: "2024"
         aiannh: "2020"
         division: "MEGIS METWP24P"
+
+  # display outlines (D-142, D-144 to D-148): one step per level, land faces
+  # only, never an input to analysis. MEGIS divisions are not outlined.
+  - id: outline_state
+    primitive: soil/build_place_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      places: $steps.graph_places.places
+    outputs:
+      outline: place_outline
+    params:
+      level: state
+      state_fips: "23"
+
+  - id: outline_counties
+    primitive: soil/build_place_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      places: $steps.graph_places.places
+    outputs:
+      outline: place_outline
+    params:
+      level: county
+      state_fips: "23"
+
+  - id: outline_towns
+    primitive: soil/build_place_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      places: $steps.graph_places.places
+    outputs:
+      outline: place_outline
+    params:
+      level: cousub
+      state_fips: "23"
+
+  - id: outline_house
+    primitive: soil/build_place_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      places: $steps.graph_places.places
+    outputs:
+      outline: place_outline
+    params:
+      level: sldl
+      state_fips: "23"
+
+  - id: outline_senate
+    primitive: soil/build_place_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      places: $steps.graph_places.places
+    outputs:
+      outline: place_outline
+    params:
+      level: sldu
+      state_fips: "23"
+
+  # tolerance 0 on the first run, on purpose: every difference beyond water
+  # is reported, and the tolerance is set from what Maine's data shows (TRIBE-5)
+  - id: outline_tribal
+    primitive: soil/build_tribal_outlines
+    inputs:
+      faces: $manifest.faces_2024_me
+      spine: $steps.graph_spine.spine
+      places: $steps.graph_places.places
+      reservations: $manifest.tribal_reservations_2020
+      trust_lands: $manifest.tribal_trust_lands_2020
+    outputs:
+      outline: census_tribal_outline
+    params:
+      level: aiannh
+      state_fips: "23"
+      tribe_tolerance_m2: 0

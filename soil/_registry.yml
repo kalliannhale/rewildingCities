@@ -1111,3 +1111,50 @@ primitives:
     preconditions:
       - no_unresolved_critical: true
 
+
+  build_place_outlines:
+    path: transform/build_place_outlines.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      Display outlines for one level of the places table (state, county,
+      cousub, sldl or sldu), dissolved from the 2024 TIGER/Line faces, land
+      faces only (D-142). Keys are derived from the face codes, never matched
+      (D-144). Refuses a key not in places, a place with no land face (by
+      name), and two places with one shape. Records a clipped publication
+      step when water left any outline. A publication output: no primitive
+      takes place_outline as an input (D-146).
+    inputs:
+      - {name: faces, semantic_types: [census_faces], required: true}
+      - {name: places, semantic_types: [places], required: true}
+    outputs: {semantic_type: place_outline, data_category: vector}
+    params:
+      level: {type: string, required: true}
+      state_fips: {type: string, required: true}
+    preconditions:
+      - no_unresolved_critical: true
+
+  build_tribal_outlines:
+    path: transform/build_place_outlines.R
+    version: 1.0.0
+    passthrough: false
+    description: >
+      The same primitive at level aiannh (D-145): Census tribal area outlines
+      dissolved through each face's 2020 block and that block's tribal area
+      in the spine, so they are 2020 places, as places keys them (D-142).
+      Each carries the census_tribal_area note. TRIBE-5: every outline is
+      compared with the Census 2020 reservation and trust land layers, and a
+      difference beyond water is reported, never refused.
+    inputs:
+      - {name: faces, semantic_types: [census_faces], required: true}
+      - {name: spine, semantic_types: [block_spine], required: true}
+      - {name: places, semantic_types: [places], required: true}
+      - {name: reservations, semantic_types: [census_tribal_area], required: true}
+      - {name: trust_lands, semantic_types: [census_tribal_area], required: true}
+    outputs: {semantic_type: census_tribal_outline, data_category: vector}
+    params:
+      level: {type: string, required: true}
+      state_fips: {type: string, required: true}
+      tribe_tolerance_m2: {type: number, required: true}
+    preconditions:
+      - no_unresolved_critical: true

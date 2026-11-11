@@ -101,6 +101,24 @@
           "typecategory"
         ]
       ]
+    },
+    "size_bytes": {
+      "tier": "optional",
+      "type": "integer",
+      "minimum": 0,
+      "description": "Size of the output file in bytes, measured after it is written (SIZE-1, D-148). Says whether a layer can travel before anyone simplifies it.",
+      "examples": [
+        48213077
+      ]
+    },
+    "vertex_count": {
+      "tier": "optional",
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total coordinate count across every feature, rings included (SIZE-1, D-148).",
+      "examples": [
+        1204331
+      ]
     }
   },
   "additionalProperties": true

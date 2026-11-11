@@ -84,7 +84,7 @@ types:
       status, its flags and the context note that must travel with it.
     resolution_tier: public   # PROPOSED (Sprint 04): built from public Census and MEGIS data
     required_context:
-      - id: census_tribal_area
+      - id: census_tribal_places
         text: >
           This table includes Census tribal areas and the town records that
           coincide with reservations. Those boundaries are the U.S. Census
@@ -322,3 +322,27 @@ types:
       One row per seat per Legislature, keyed (legislature, chamber,
       seat_kind, seat_ref); Contract 3, section 6. A vacant seat is one the
       record names no holder for.
+
+  place_outline:
+    category: vector
+    format: geojson
+    description: >
+      A place's display outline, one feature per (authority, code) at one
+      level of the places table, dissolved from the 2024 TIGER/Line faces,
+      land only (D-142, D-146). For maps and publication; never an input to
+      analysis, and no primitive takes it. Each row carries the context note
+      its place carries, so a reservation subdivision drawn among towns keeps
+      its note.
+    resolution_tier: public
+
+  census_tribal_outline:
+    category: vector
+    format: geojson
+    description: >
+      A Census tribal area's display outline, dissolved from the 2024 faces
+      through 2020 blocks, so the outline of a 2020 place (D-142, D-146).
+      The Census's view, never the nation's own (that is sovereign_boundary,
+      which leaves only with consent). Never an input to analysis.
+    resolution_tier: public   # D-123, D-146: the note's text lives on census_tribal_area
+    required_context:
+      - id: census_tribal_area
