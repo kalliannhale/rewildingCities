@@ -87,6 +87,11 @@ methods:
       name: "Outlet Records, Side by Side"
       answers: [outlets, ownership, preparation]
 
+    - id: library_carriers
+      path: information/library_carriers.yml
+      name: "Library Outlets, Placed"
+      answers: [libraries, carriers, located_in, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"

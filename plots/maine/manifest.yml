@@ -786,3 +786,26 @@ datasets:
       known_issues:
         - Print holds frequency for print media and a station's format for radio (D-201).
         - County holds region and multi-county values for some rows (Maine, Waldo/Knox, Central Maine).
+
+  # ── carriers (Sprint 06, step 3) ──────────────────────────────────────────
+
+  pls_fy2024:
+    available: true
+    description: >
+      The IMLS Public Libraries Survey, FY 2024, public-use CSV files: the
+      outlet file (one row per central library, branch and bookmobile) and
+      the library system file (visits and legal service area population)
+    semantic_type: library_survey_release
+    license: us_government_work
+    license_note: public-use files, publicly available without restriction, requiring no license (IMLS)
+    format: zip
+    source: {type: url, url: "https://www.imls.gov/sites/default/files/2026-06/pls_fy2024_csv.zip"}
+    cache: {path: .data/pls_fy2024_csv.zip, refresh_policy: manual}
+    provenance: {source: Institute of Museum and Library Services, Public Libraries Survey FY 2024, published_by: imls}
+    quality:
+      known_issues:
+        - The outlet file is Windows-1252, not UTF-8. Its only byte where Latin-1 and Windows-1252 disagree, 0x96, is an en dash between words in two branch names (Virginia, Washington).
+        - FSCSKEY names a library system and repeats across its outlets; an outlet is FSCSKEY with FSCS_SEQ.
+        - Each Maine bookmobile carries its home library's coordinates (SERVES-1).
+        - Visits are reported for the library system, never the outlet.
+        - The README does not say which vintage CENBLOCK's blocks are; the located_in block check shows it.

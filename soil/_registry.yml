@@ -1248,7 +1248,31 @@ primitives:
       lat_field: {type: string, required: false}
       lon_field: {type: string, required: false}
       points_crs: {type: string, required: false}
+      check_block_field: {type: string, required: false}
       state_fips: {type: string, required: true}
       vintages: {type: object, required: true}
     preconditions:
       - no_unresolved_critical: true
+
+  prepare_library_points:
+    path: transform/prepare_library_points.py
+    version: 1.0.0
+    description: >
+      One state's fixed IMLS library outlets as points, each named
+      FSCSKEY-FSCS_SEQ. Mobile outlets (bookmobiles, books-by-mail) are
+      listed in the receipt and never placed (SERVES-1). The encoding is
+      declared, never sniffed, and a byte where Latin-1 and Windows-1252
+      disagree is refused. Flags a hand-placed geocode, a structure status
+      with its declared meaning or unknown, and a system the survey does not
+      count as a public library. Refuses an outlet type in neither list and a
+      feature id used twice.
+    inputs:
+      - {name: survey, semantic_types: [library_survey_release], required: true}
+    outputs: {semantic_type: institutional_node, data_category: vector}
+    params:
+      member: {type: string, required: true}
+      state: {type: string, required: true}
+      encoding: {type: string, required: true}
+      fixed_types: {type: array, required: true}
+      mobile_types: {type: array, required: true}
+      status_codes: {type: object, required: true}

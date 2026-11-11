@@ -1,0 +1,45 @@
+# ============================================================================
+# garden/methods/information/library_carriers.yml
+# ============================================================================
+# a preparation method (D-98): public library outlets as carriers, placed in
+# every area they fall in (Sprint 06, step 3). a library's location is not
+# whom it serves (SERVES-1): this places buildings, and a bookmobile, which
+# serves places and sits in none, is listed, never placed. ~
+# ============================================================================
+
+id: library_carriers
+domain: information
+kind: preparation
+name: "Library Outlets, Placed"
+
+description: >
+  Reads one state's fixed library outlets (central libraries and branches)
+  from the IMLS Public Libraries Survey as points, then places each in its
+  state, county, town, House and Senate districts, Census tribal area and
+  civil division through located_in edges: towns from the 2024 face a point
+  falls in, districts from that face's 2020 block (D-207).
+
+requires_data:
+  - {name: survey, type: tabular, semantic_types: [library_survey_release], critical: true, as_acquired: true,
+     role: "The IMLS outlet file, with coordinates and outlet types.",
+     uncertainty_without: "No library can be placed."}
+  - {name: faces, type: vector, semantic_types: [census_faces], critical: true, as_acquired: true,
+     role: "The 2024 faces, to place each point in its town and block.",
+     uncertainty_without: "No point can be placed."}
+
+choices: {}
+
+requires_primitives:
+  - soil/prepare_library_points
+  - soil/build_located_in
+
+produces:
+  semantic_type: located_in_edges
+  data_category: tabular
+  description: Each fixed library outlet to every place it falls in.
+
+interpretation: >
+  A located_in edge says a library building stands in a place, never that
+  the place is served by it or only by it. A library system serves a legal
+  jurisdiction, and a town with no building may be served by contract
+  (SERVES-1). Visits are the system's, never split across its outlets.

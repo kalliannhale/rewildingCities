@@ -145,3 +145,13 @@ def test_points_and_faces_meet_by_geometry():
     assert "on a line between faces" in got.loc["line", "why_unplaced"]
     assert pd.isna(got.loc["out", "block"]) and pd.isna(got.loc["out", "why_unplaced"])
     assert "no usable coordinates" in got.loc["none", "why_unplaced"]
+
+
+def test_the_publishers_block_is_checked_never_used():
+    located = pd.DataFrame([{"feature_id": "a", "block": "B1"}, {"feature_id": "b", "block": "B2"},
+                            {"feature_id": "c", "block": None}])
+    points = pd.DataFrame({"feature_id": ["a", "b", "c"],
+                           "declared_block": ["B1", "B9", "B3"]})
+    check = li.block_check(located, points, "cenblock")
+    assert (check["checked"], check["agree"]) == (2, 1)
+    assert check["disagree"] == [{"feature_id": "b", "ours": "B2", "theirs": "B9"}]

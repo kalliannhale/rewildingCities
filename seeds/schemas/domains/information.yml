@@ -189,3 +189,16 @@ types:
     format: parquet
     description: Derived score of ownership consolidation per unit.
     resolution_tier: public   # output type of concentration_index (already wired)
+
+  # ----- carriers (Sprint 06, step 3) -----
+
+  library_survey_release:
+    category: tabular
+    format: zip
+    description: >
+      An IMLS Public Libraries Survey release as published: a zip of CSV
+      files, one for library systems (visits, legal service area population)
+      and one for outlets (central libraries, branches, bookmobiles, with
+      coordinates). Read only by declared member and encoding.
+    resolution_tier: public   # public-use files, no license required
+

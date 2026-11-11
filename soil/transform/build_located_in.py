@@ -46,6 +46,10 @@ Params:
   id_field     required: the column naming each feature
   lat_field, lon_field   required for a table; ignored for geojson
   points_crs   default EPSG:4326
+  check_block_field  optional: a layer property naming each feature's block
+               as its publisher placed it. compared with the face's block,
+               never used to place; the receipt says how many agree and
+               lists every one that does not
   state_fips   two digits, required
   vintages     required mapping: state, county, town, sldl, sldu, aiannh,
                division
@@ -209,16 +213,22 @@ def division_table(divisions: pd.DataFrame | None) -> pd.DataFrame | None:
                          "division": divisions["division"]}).dropna()
 
 
-def read_points(path, id_field, lat_field=None, lon_field=None, crs="EPSG:4326"):
+def read_points(path, id_field, lat_field=None, lon_field=None, crs="EPSG:4326",
+                check_block_field=None):
     """the layer as points, one per feature; a feature with no usable
-    coordinates keeps its row with no geometry, so it can be listed."""
+    coordinates keeps its row with no geometry, so it can be listed. a
+    declared check field travels as declared_block."""
     import geopandas as gpd
     if str(path).lower().endswith((".geojson", ".json")):
         gdf = gpd.read_file(path)
-        if id_field not in gdf.columns:
-            raise LocatedInRefused(f"the layer has no id field {id_field!r}")
-        return gpd.GeoDataFrame({"feature_id": gdf[id_field].astype(str)},
-                                geometry=gdf.geometry, crs=gdf.crs or crs)
+        for col in (id_field, check_block_field):
+            if col and col not in gdf.columns:
+                raise LocatedInRefused(f"the layer has no field {col!r}")
+        out = gpd.GeoDataFrame({"feature_id": gdf[id_field].astype(str)},
+                               geometry=gdf.geometry, crs=gdf.crs or crs)
+        if check_block_field:
+            out["declared_block"] = gdf[check_block_field].astype("string")
+        return out
     table = read_table(path)
     for col in (id_field, lat_field, lon_field):
         if not col or col not in table.columns:
@@ -229,6 +239,10 @@ def read_points(path, id_field, lat_field=None, lon_field=None, crs="EPSG:4326")
     geom = gpd.points_from_xy(lon, lat)
     gdf = gpd.GeoDataFrame({"feature_id": table[id_field].astype(str)}, geometry=geom, crs=crs)
     gdf.loc[lat.isna() | lon.isna(), "geometry"] = None
+    if check_block_field:
+        if check_block_field not in table.columns:
+            raise LocatedInRefused(f"the layer has no column {check_block_field!r}")
+        gdf["declared_block"] = table[check_block_field].astype("string")
     return gdf
 
 
@@ -296,6 +310,23 @@ def faces_for_points(points, faces, layer: str) -> pd.DataFrame:
                                        "why_unplaced"])
 
 
+def block_check(located: pd.DataFrame, points: pd.DataFrame, field: str) -> dict:
+    """our face block against the publisher's, for every placed point that
+    has both. a check only: it never moves a point."""
+    declared = dict(zip(points["feature_id"].astype(str),
+                        points["declared_block"].astype(object)))
+    disagree, checked = [], 0
+    for r in located.itertuples(index=False):
+        ours, theirs = _text(r.block), _text(declared.get(str(r.feature_id)))
+        if ours is None or theirs is None:
+            continue
+        checked += 1
+        if ours != theirs:
+            disagree.append({"feature_id": str(r.feature_id), "ours": ours, "theirs": theirs})
+    return {"field": field, "checked": checked, "agree": checked - len(disagree),
+            "disagree": disagree}
+
+
 SOURCE = "2024 TIGER/Line faces (state, county, town); 2020 blocks through the spine (districts, tribal areas, divisions)"
 
 
@@ -315,9 +346,10 @@ def main():
         layer = str(require_param(p, "layer"))
         state = str(require_param(p, "state_fips")).zfill(2)
         try:
+            check_field = get_param(p, "check_block_field")
             points = read_points(get_input(i, "points"), require_param(p, "id_field"),
                                  get_param(p, "lat_field"), get_param(p, "lon_field"),
-                                 get_param(p, "points_crs", "EPSG:4326"))
+                                 get_param(p, "points_crs", "EPSG:4326"), check_field)
             located = faces_for_points(points, read_face_polygons(get_input(i, "faces"), state),
                                        layer)
             div_path = get_input(i, "divisions", required=False)
@@ -335,8 +367,14 @@ def main():
         if placement.split:
             w.info(f"{len(placement.split)} feature(s) in a split block, placed by their "
                    f"face and listed (D-126)")
+        meta = output_metadata(placement)
+        if check_field:
+            check = block_check(located, points, check_field)
+            meta["block_check"] = check
+            w.info(f"block check against {check_field}: {check['agree']} of "
+                   f"{check['checked']} agree; every disagreement is listed")
         write_table(placement.edges, args["output"])
-        primitive_success(output_metadata(placement), w)
+        primitive_success(meta, w)
 
 
 if __name__ == "__main__":

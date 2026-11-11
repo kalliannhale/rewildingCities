@@ -1,0 +1,77 @@
+# ============================================================================
+# plots/maine/preparations/maine_libraries.yml
+# ============================================================================
+# a preparation (D-98): Maine's public library outlets as carriers (Sprint 06,
+# step 3, the first carrier).
+#   the IMLS outlet file -> fixed outlets as points; bookmobiles listed
+#   the points          -> located_in edges, checked against IMLS's own block
+# the spine, places and divisions are read through loam ($loam., LOAM-1), so
+# they are judged fresh before any step runs (D-166).
+# STATSTRU meanings from the IMLS PLS training on status structure changes;
+# a code it does not name is flagged unknown, never guessed.
+# the outlet file is Windows-1252, by its own text: its one byte in 0x80 to
+# 0x9F, 0x96, appears twice, each a dash between words in a branch's name
+# (Tazewell County, Virginia; Bremerton, Washington), Windows-1252's en dash.
+# declared Latin-1, the step refused the file rather than read a control
+# character into a name.
+# ============================================================================
+
+id: maine_libraries
+name: "Maine's public library outlets, placed"
+kind: preparation
+description: >
+  Places every fixed public library outlet in Maine in each area it falls
+  in, and lists the bookmobiles, which serve places and sit in none.
+
+method:
+  ref: $methods/information/library_carriers
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: libraries_points
+    primitive: soil/prepare_library_points
+    inputs:
+      survey: $manifest.pls_fy2024
+    outputs:
+      points: institutional_node
+    params:
+      member: CSV/pls_fy24_outlet_pud24i.csv
+      state: ME
+      encoding: windows-1252
+      fixed_types: [CE, BR]
+      mobile_types: [BS, BM]
+      status_codes:
+        "01": adopted another outlet
+        "02": new outlet
+        "03": closed permanently
+        "23": closed temporarily
+        "24": reopened after a temporary closure
+
+  - id: libraries_located_in
+    primitive: soil/build_located_in
+    inputs:
+      points: $steps.libraries_points.points
+      faces: $manifest.faces_2024_me
+      spine: $loam.block_spine
+      places: $loam.places
+      divisions: $loam.block_division_assignment
+    outputs:
+      edges: located_in_edges
+    params:
+      layer: imls_pls_fy2024_outlets
+      id_field: feature_id
+      check_block_field: cenblock
+      state_fips: "23"
+      vintages:
+        state: "2024"
+        county: "2024"
+        town: "2024"
+        sldl: "2024"
+        sldu: "2024"
+        aiannh: "2020"
+        division: "MEGIS METWP24P"

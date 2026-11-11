@@ -1088,3 +1088,23 @@ Built: maine_outlets (stack, groups, disagreements) as a preparation over five o
 | --- | --- | --- |
 | **CON3-2** | Contract 3 section 2 still calls located_in a kind in the edges table; it needs D-207's wording | step 2 |
 | **SERVES-1** | A carrier's location is not whom it serves: a library system serves a legal jurisdiction, and a town with no building may be served by contract. A serves relation is separate from located_in | step 2 |
+
+## Sprint 06 step 3: libraries, the first carrier (D-208)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-208** | A library outlet is FSCSKEY-FSCS_SEQ; only fixed outlets (CE, BR) are points; mobile outlets (BS, BM) are listed in the receipt and never placed; a hand-placed geocode, a structure status other than 00 (with IMLS's meaning or `unknown`) and a non-FSCS system are flagged, never dropped; the outlet file's encoding is declared, Windows-1252, from its own text. Claude's leans, small choices | FSCSKEY repeats across a system's outlets; every Maine bookmobile wears its home library's coordinates, so as a point it would count a second library where it is garaged (SERVES-1); 0x96 appears twice, each a dash between words | IMLS publishes a bookmobile's stops, or names its file's encoding |
+
+Findings:
+
+- maine_libraries: 262 fixed outlets placed, none unplaced, no split blocks, 1,572 edges (6 each). IMLS's CENBLOCK agrees with our face block for 261 of 262; ME0292-002 differs by a neighbouring block in one Waldo County block group.
+- CENBLOCK is a 2020 block, shown by the check; the README does not say so.
+- Declared Latin-1, the step refused the outlet file on byte 0x96 rather than read a control character into two branch names (Virginia, Washington). The first probe's silent fallback to Latin-1 would have read it wrong without a word.
+- Wrong hypothesis: a point layer's total_area_m2 could be null. The envelope schema requires a number; a point layer's area is 0.0, measured.
+- Status 25 has no meaning in IMLS's status-structure training; flagged unknown on one Maine outlet.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **TRIBE-7** | No Maine library in the survey stands in a Census tribal area: the PLS has long not collected systematically from libraries on reservations, so a tribal area's carrier count must read as unseen, never zero. Wording with Person 3 | step 3 |
+| **SCHEMA-1** | A metadata field's type is checked only when a real run writes an envelope; fixture tests of a primitive cannot see it. A test could validate output_metadata against seeds/schemas/ | step 3 |
+| **STAT-1** | Find IMLS's definition of STATSTRU 25 in the FY 2024 documentation | step 3 |
