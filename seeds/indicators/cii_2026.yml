@@ -19,12 +19,17 @@
 # a test asserts it is an exact header.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# role and rests_on (Sprint 02, D-107, item 2): what each value is for, and
+# the count of households it rests on, from the same release.
+
 indicators:
 
   cii_broadband:
     name: Households with broadband of any type
     defined_by: cii_2026
     measures: household_broadband_subscription
+    role: barrier
+    rests_on: {add: [B28002_001E], counts: households}
     unit: percent_of_households
     derivation:
       kind: ratio
@@ -57,6 +62,15 @@ indicators:
     name: Median gross rent as a percentage of household income
     defined_by: cii_2026
     measures: median_rent_burden
+    role: barrier
+    # a median's count is its universe, not its denominator: renter
+    # households for whom gross rent as a share of income is computed,
+    # B25070's total less its "Not computed" line (verified against the
+    # Census API's variable labels, 2026-11-10).
+    rests_on:
+      add: [B25070_001E]
+      subtract: [B25070_011E]
+      counts: renter households with rent burden computed
     unit: percent_of_household_income
     derivation:
       kind: passthrough
@@ -101,6 +115,8 @@ indicators:
     name: Households with no vehicle available
     defined_by: cii_2026
     measures: households_without_vehicle
+    role: barrier
+    rests_on: {add: [B08201_001E], counts: households}
     unit: percent_of_households
     derivation:
       kind: ratio

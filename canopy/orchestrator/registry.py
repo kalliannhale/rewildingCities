@@ -59,6 +59,32 @@ def _normalize_preconditions(raw, primitive_name: str, layer: str) -> list:
         f"got {type(raw).__name__}")
 
 
+class UniqueKeyLoader(yaml.SafeLoader):
+    """a SafeLoader that refuses a mapping key written twice (REG-5).
+
+    plain YAML keeps the last of two equal keys and says nothing, so a
+    registry could declare a primitive twice and silently run the second.
+    this raises instead, naming the key and both lines. ~"""
+
+
+def _construct_unique_mapping(loader, node, deep=False):
+    seen: dict = {}
+    for key_node, _ in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in seen:
+            raise ValueError(
+                f"duplicate key '{key}' in {getattr(loader, 'name', 'a registry')}: "
+                f"first at line {seen[key] + 1}, again at line "
+                f"{key_node.start_mark.line + 1}. YAML would keep the second "
+                f"silently; declare it once (REG-5)")
+        seen[key] = key_node.start_mark.line
+    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+
+
+UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
+
+
 def load_registry(layer: str, project_root: Path | None = None) -> dict[str, PrimitiveSpec]:
     """Load a layer's primitive registry."""
     # Path.cwd() was the old default and it only worked from a checkout;
@@ -73,7 +99,7 @@ def load_registry(layer: str, project_root: Path | None = None) -> dict[str, Pri
         raise FileNotFoundError(f"Registry not found: {registry_path}")
     
     with open(registry_path, 'r') as f:
-        data = yaml.safe_load(f)
+        data = yaml.load(f, Loader=UniqueKeyLoader)
     
     specs = {}
     for name, spec_data in data.get("primitives", {}).items():

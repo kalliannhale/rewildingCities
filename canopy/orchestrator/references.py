@@ -26,12 +26,14 @@ class ReferenceResolver:
     STEPS_PATTERN = re.compile(r'^\$steps\.([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     INDICATORS_PATTERN = re.compile(r'^\$indicators\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     WEIGHTS_PATTERN = re.compile(r'^\$weights\.([a-zA-Z_][a-zA-Z0-9_]*)$')
+    # the declared small-sample rule (D-106), resolved like $weights
+    RELIABILITY_PATTERN = re.compile(r'^\$reliability\.([a-zA-Z_][a-zA-Z0-9_]*)$')
     
     # Pattern to detect anything that looks like a reference attempt
     LOOKS_LIKE_REFERENCE = re.compile(r'^\$[a-zA-Z]')
     
     # Valid prefixes for error messages
-    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$indicators.", "$weights.")
+    VALID_PREFIXES = ("$manifest.", "$choices.", "$parameters.", "$steps.", "$indicators.", "$weights.", "$reliability.")
     
     def __init__(
         self,
@@ -83,7 +85,8 @@ class ReferenceResolver:
             self.PARAMETERS_PATTERN.match(ref) or
             self.STEPS_PATTERN.match(ref) or
             self.INDICATORS_PATTERN.match(ref) or
-            self.WEIGHTS_PATTERN.match(ref)
+            self.WEIGHTS_PATTERN.match(ref) or
+            self.RELIABILITY_PATTERN.match(ref)
         )
         
         if not is_valid:
@@ -116,7 +119,8 @@ class ReferenceResolver:
                 f"Starts with '$' but doesn't match valid patterns.{suggestion_text}\n"
                 f"Valid formats: $manifest.{{name}}, $choices.{{name}}, "
                 f"$parameters.{{name}}, $steps.{{step_id}}.{{output}}, "
-                f"$indicators.{{indicator_id}}, $weights.{{weighting_id}}"
+                f"$indicators.{{indicator_id}}, $weights.{{weighting_id}}, "
+                f"$reliability.{{rule_id}}"
             )
     
     def _check_for_embedded_references(self, value: str, context: str = "") -> None:
@@ -185,7 +189,8 @@ class ReferenceResolver:
                 f"Inputs must reference data: $manifest.{{dataset}} or $steps.{{step}}.{{output}}."
             )
         
-        if self.INDICATORS_PATTERN.match(ref) or self.WEIGHTS_PATTERN.match(ref):
+        if (self.INDICATORS_PATTERN.match(ref) or self.WEIGHTS_PATTERN.match(ref)
+                or self.RELIABILITY_PATTERN.match(ref)):
             raise ValueError(
                 f"Invalid input reference '{ref}'{context_msg}. "
                 f"$indicators is for params, not inputs: it names a definition, "
@@ -374,6 +379,11 @@ class ReferenceResolver:
         match = self.WEIGHTS_PATTERN.match(value)
         if match:
             return self._resolve_weights(match.group(1), context)
+
+        # Try $reliability.{id}
+        match = self.RELIABILITY_PATTERN.match(value)
+        if match:
+            return self._resolve_reliability(match.group(1), context)
         
         # Check for misuse of $manifest and $steps in params
         if self.MANIFEST_PATTERN.match(value):
@@ -456,6 +466,19 @@ class ReferenceResolver:
             raise ValueError(f"{e.args[0]}{context_msg}")
         except (FileNotFoundError, ValueError) as e:
             raise ValueError(f"$weights.{weighting_id}{context_msg} could not be resolved: {e}")
+
+    def _resolve_reliability(self, rule_id: str, context: str = "") -> dict:
+        """Resolve a small-sample rule to its declaration, as plain JSON (D-106)."""
+        context_msg = f" (in {context})" if context else ""
+        from canopy.indicators.reliability import ReliabilityRegistry
+        from canopy.paths import project_root
+        try:
+            reg = ReliabilityRegistry.load(project_root() / "seeds" / "reliability")
+            return reg.declaration(rule_id)
+        except KeyError as e:
+            raise ValueError(f"{e.args[0]}{context_msg}")
+        except (FileNotFoundError, ValueError) as e:
+            raise ValueError(f"$reliability.{rule_id}{context_msg} could not be resolved: {e}")
 
     def _resolve_parameter(self, param_name: str, context: str = "") -> Any:
         """Resolve a parameter reference."""

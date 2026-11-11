@@ -4,7 +4,8 @@ tests/test_open_ended_medians.py
 ACS-7, the declaration and the Python half. A median the Census places in an
 open-ended category arrives as 9 or 51 with -333333333 on its margin. The
 registry declares where the end categories begin; preview.derive writes the
-bound in words and marks the margin open_ended. The R half is held to the same
+bound in words, marks the margin open_ended, and since D-105 leaves the value
+empty, so the encoding is never ranked as a measurement. The R half is held to the same
 strings by tests/test_derive_indicator_oracle.py.
 
 Runs without R, pyarrow or network.
@@ -26,6 +27,8 @@ indicators:
     name: test median
     defined_by: test
     measures: test_median
+    role: barrier
+    rests_on: {{not_published: a test fixture}}
     unit: percent
     derivation:
       kind: passthrough
@@ -84,6 +87,9 @@ def _frame(with_annotation=True):
         "NAME": ["Hancock GA", "Borden TX", "Cumberland ME", "inside", "empty"],
         "B25071_001E": [51.0, 9.0, 29.4, 30.0, None],
         "B25071_001M": [None, None, 1.2, None, None],
+        # what rent burden rests on (Sprint 02): B25070 total less not computed
+        "B25070_001E": [120.0, 40.0, 30000.0, 500.0, 0.0],
+        "B25070_011E": [20.0, 4.0, 1500.0, 0.0, 0.0],
     })
     if with_annotation:
         # stored the ways the code can arrive: text, text with a decimal, and none
@@ -101,10 +107,10 @@ def test_open_ended_medians_become_bounds():
     assert by["48033"]["bound"] == "less than 10.0"
     for code in ("13141", "48033"):
         assert by[code]["moe_status"] == "open_ended"
-        assert by[code]["empty_reason"] is None
-
-    # the Census's encoding is kept as the value: it sorts correctly
-    assert by["13141"]["value"] == 51.0 and by["48033"]["value"] == 9.0
+        # D-105: the encoding is not a measurement, so the value rests empty
+        # and says why, with the bound in the reason
+        assert by[code]["value"] is None
+        assert by[code]["empty_reason"] == f"open-ended median: {by[code]['bound']}"
 
     # an ordinary median is untouched
     assert by["23005"]["bound"] is None and by["23005"]["moe_status"] == "published"

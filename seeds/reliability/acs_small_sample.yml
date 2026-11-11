@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/reliability/acs_small_sample.yml
+# The declared small-sample rule (D-106, D-108). A value that fails either test
+# carries a plain-words reliability note; it is never hidden or rounded away.
+#
+# Two tests, each applied where it can be:
+#   ~ a household count, everywhere a value can say what it rests on
+#   ~ a coefficient of variation, CV = (MOE / 1.645) / estimate, wherever the
+#     Census published a margin of error (today: passthrough medians; ratios
+#     gain it when IND-3 derives their margins)
+#
+# Neither number is a Census Bureau rule. The Bureau publishes margins and
+# leaves the judgment to the reader; these are conventions, and this file says
+# whose.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+id: acs_small_sample
+name: ACS small-sample rule
+declared_by: rewildingcities
+max_cv: 0.30
+min_households: 50
+sources:
+  - test: max_cv
+    claim: >
+      Washington State's Office of Financial Management treats an ACS estimate
+      with a CV above 30 percent as "use with caution". Esri's documented
+      convention is stricter in the middle (12 to 40 percent is "use with
+      caution") and calls above 40 percent unreliable. 30 percent was chosen
+      as a public threshold between the two (D-108).
+    references:
+      - "Washington State OFM, ACS user guide (ofm_acs_user_guide.pdf), as cited in the ACS Data Users Group forum"
+      - "https://doc.arcgis.com/EN/ESRI-DEMOGRAPHICS/DATA/acs.htm"
+  - test: min_households
+    claim: >
+      No published standard was found for a minimum household count behind an
+      ACS rate. 50 is this project's own choice, a deliberately modest floor,
+      and is named as such wherever it is used (D-108).
+    references: []

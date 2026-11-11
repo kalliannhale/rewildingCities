@@ -83,3 +83,4 @@ recipe:
       unit_pad: $source.unit_pad
       name_column: $source.name_column
       joins_to: governance_unit
+      reliability: $reliability.acs_small_sample

@@ -324,7 +324,9 @@ class ResolutionEngine:
             transaction = ManifestTransaction(self.manifest.manifest_path)
 
         present, acquirable, blocked, undeclared, ambiguous = [], [], [], [], []
-        acquired_unconformed = []
+        acquired_unconformed, stale = [], []
+        from canopy.manifest.staleness import staleness as _staleness
+        changelog = self.manifest.data_dir / ".manifest_changelog.yml"
 
         for semantic_type in semantic_types:
             candidates = self.datasets_providing(semantic_type)
@@ -359,7 +361,20 @@ class ResolutionEngine:
                     continue
 
                 full_path = self.manifest.data_dir / dataset.path
-                if dataset.available and full_path.exists():
+                # ACQ-4: on disk is not the same as acquired as declared. a
+                # source whose declaration now needs variables its acquisition
+                # never requested is stale: reported when dry, re-acquired
+                # with --fetch, never called "already have this".
+                judged = (_staleness(dataset, changelog)
+                          if dataset.available and full_path.exists() else None)
+                is_stale = bool(judged and judged["stale"])
+                if is_stale and dry:
+                    stale.append({"semantic_type": semantic_type,
+                                  "dataset": dataset.name,
+                                  "message": judged["message"],
+                                  "next_step": "run again with --fetch to re-acquire"})
+                    continue
+                if dataset.available and full_path.exists() and not is_stale:
                     # present is not the same as ANALYSABLE. a holding can be
                     # declared, acquired, and sitting on disk while never
                     # having been through the pipeline ~ arrived but never
@@ -428,10 +443,13 @@ class ResolutionEngine:
                     "path": str(dataset.path),
                 }
 
+                if is_stale:
+                    entry["message"] = judged["message"]
                 if dry:
                     acquirable.append(entry)
                 else:
-                    resolution = self._resolve_dataset(dataset.name, [], transaction)
+                    resolution = self._resolve_dataset(dataset.name, [], transaction,
+                                                       force=is_stale)
                     entry["status"] = resolution.status
                     entry["message"] = resolution.message
                     if resolution.status in ("available", "acquired"):
@@ -460,6 +478,7 @@ class ResolutionEngine:
             "requested": list(semantic_types),
             "present": present,
             "acquired_unconformed": acquired_unconformed,
+            "stale": stale,
             "acquirable": acquirable,
             "blocked": blocked,
             "undeclared": undeclared,
@@ -662,8 +681,13 @@ class ResolutionEngine:
         dataset_name: str,
         dependent_steps: list[str],
         transaction,
+        force: bool = False,
     ) -> DatasetResolution:
-        """Resolve a single dataset: check availability, attempt acquisition."""
+        """Resolve a single dataset: check availability, attempt acquisition.
+
+        force re-acquires a dataset that is on disk, for a stale source
+        (ACQ-4). it replaces the old workaround of moving the file aside and
+        setting `available: false` by hand (ACQ-4w)."""
 
         dataset = self.manifest.datasets.get(dataset_name)
 
@@ -683,7 +707,7 @@ class ResolutionEngine:
         full_path = self.manifest.data_dir / dataset.path
 
         # Available and file exists
-        if dataset.available and full_path.exists():
+        if dataset.available and full_path.exists() and not force:
             return DatasetResolution(
                 dataset_name=dataset_name,
                 semantic_type=dataset.semantic_type,

@@ -104,7 +104,10 @@ choices:
       small outlets and understate consolidation.
 
 requires_primitives:
-  - roots/resolve_ownership
+  # resolve_ownership and geocode_to_unit are soil/ primitives: they ready the
+  # outlets (who owns each, which unit it is in) and answer nothing (Sprint 02)
+  - soil/resolve_ownership
+  - soil/geocode_to_unit
   - roots/count_by_unit
   - roots/concentration_index
 

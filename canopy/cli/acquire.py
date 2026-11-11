@@ -107,6 +107,7 @@ def run(args) -> int:
 
     headings = {
         "acquired_unconformed": "you already have this ~ it has never been run",
+        "stale": "declared differently than acquired ~ re-acquire",
         "acquirable": ("acquired" if args.fetch else "this machine could fetch"),
         "blocked": "needs a person",
         "undeclared": "nothing here provides this yet",

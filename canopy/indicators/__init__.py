@@ -12,6 +12,6 @@ the registry is the package's public face, so `from canopy.indicators import
 IndicatorRegistry` reads the same as it always has. ♡
 """
 
-from .registry import Derivation, Indicator, IndicatorRegistry
+from .registry import Derivation, Indicator, IndicatorRegistry, RestsOn
 
-__all__ = ["Derivation", "Indicator", "IndicatorRegistry"]
+__all__ = ["Derivation", "Indicator", "IndicatorRegistry", "RestsOn"]

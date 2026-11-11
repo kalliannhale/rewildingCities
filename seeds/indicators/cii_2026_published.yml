@@ -19,11 +19,18 @@
 # here claims a rule for combining them across units.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# role (D-107): PROPOSED by Claude on 2026-11-10 for Kalli's review, one per
+# indicator, read by the place profile to place each value. rests_on: CII's
+# file carries no counts, so none of these can say how many households they
+# rest on.
+
 indicators:
   cii_pub_news_outlets:
     name: Total news outlets
     defined_by: cii_2026
     measures: news_outlets
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: count
     derivation:
       kind: passthrough
@@ -42,6 +49,8 @@ indicators:
     name: Local Journalist Equivalent per 100,000 people
     defined_by: cii_2026
     measures: journalist_equivalents
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: per_100000_people
     derivation:
       kind: passthrough
@@ -62,6 +71,8 @@ indicators:
     name: Percent of households with broadband
     defined_by: cii_2026
     measures: household_broadband_subscription
+    role: barrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -80,6 +91,8 @@ indicators:
     name: Library visits per 10,000 population
     defined_by: cii_2026
     measures: library_visits
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: per_10000_population
     derivation:
       kind: passthrough
@@ -98,6 +111,8 @@ indicators:
     name: Public good Facebook pages per 10,000 users
     defined_by: cii_2026
     measures: public_good_facebook_pages
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: per_10000_users
     derivation:
       kind: passthrough
@@ -116,6 +131,8 @@ indicators:
     name: Percent who speak a language other than English at home
     defined_by: cii_2026
     measures: language_other_than_english
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -137,6 +154,8 @@ indicators:
     name: Average literacy score
     defined_by: cii_2026
     measures: literacy
+    role: barrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: score
     derivation:
       kind: passthrough
@@ -155,6 +174,8 @@ indicators:
     name: Voter turnout (percent)
     defined_by: cii_2026
     measures: voter_turnout
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -173,6 +194,8 @@ indicators:
     name: Active voters (percent)
     defined_by: cii_2026
     measures: active_voters
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -191,6 +214,8 @@ indicators:
     name: Social associations per 10,000 population
     defined_by: cii_2026
     measures: social_associations
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: per_10000_population
     derivation:
       kind: passthrough
@@ -209,6 +234,8 @@ indicators:
     name: Volunteer rate (percent)
     defined_by: cii_2026
     measures: volunteer_rate
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -230,6 +257,8 @@ indicators:
     name: Percent of AGI that is charitable contributions
     defined_by: cii_2026
     measures: charitable_agi
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -248,6 +277,8 @@ indicators:
     name: Census response rate (percent)
     defined_by: cii_2026
     measures: census_response
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -266,6 +297,8 @@ indicators:
     name: Life expectancy
     defined_by: cii_2026
     measures: life_expectancy
+    role: outcome
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: years
     derivation:
       kind: passthrough
@@ -284,6 +317,8 @@ indicators:
     name: Percent with medical debt
     defined_by: cii_2026
     measures: medical_debt
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -302,6 +337,8 @@ indicators:
     name: Percent of youth ages 16 to 19 who are not working or enrolled in school
     defined_by: cii_2026
     measures: disconnected_youth
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -322,6 +359,8 @@ indicators:
     name: Percent in high poverty neighborhoods
     defined_by: cii_2026
     measures: high_poverty_neighborhoods
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -340,6 +379,8 @@ indicators:
     name: Unemployment rate (percent)
     defined_by: cii_2026
     measures: unemployment
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -358,6 +399,8 @@ indicators:
     name: Percent uninsured
     defined_by: cii_2026
     measures: uninsured
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -376,6 +419,8 @@ indicators:
     name: Mental health providers per 10,000 population
     defined_by: cii_2026
     measures: mental_health_providers
+    role: carrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: per_10000_population
     derivation:
       kind: passthrough
@@ -394,6 +439,8 @@ indicators:
     name: Percent with a Bachelor's degree or higher
     defined_by: cii_2026
     measures: bachelors_or_higher
+    role: context
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -412,6 +459,8 @@ indicators:
     name: Percent of income spent on rent
     defined_by: cii_2026
     measures: median_rent_burden
+    role: barrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -430,6 +479,8 @@ indicators:
     name: Percent without adequate access to food
     defined_by: cii_2026
     measures: food_access
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -448,6 +499,8 @@ indicators:
     name: Percent with no vehicle available
     defined_by: cii_2026
     measures: households_without_vehicle
+    role: barrier
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -466,6 +519,8 @@ indicators:
     name: Household energy burden (percent)
     defined_by: cii_2026
     measures: energy_burden
+    role: need
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
       kind: passthrough
@@ -484,6 +539,8 @@ indicators:
     name: Damages from natural disasters per capita
     defined_by: cii_2026
     measures: disaster_damages
+    role: context
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: dollars_per_capita
     derivation:
       kind: passthrough
@@ -502,6 +559,8 @@ indicators:
     name: Heat wave days
     defined_by: cii_2026
     measures: heat_wave_days
+    role: context
+    rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: days
     derivation:
       kind: passthrough

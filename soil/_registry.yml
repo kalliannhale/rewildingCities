@@ -131,7 +131,6 @@ primitives:
     repairs: []  # Diagnostic only — does not modify
     
     may_exclude_features: false
-    passthrough: true
 
   validate_raster:
     path: validate/validate_raster.R
@@ -986,9 +985,73 @@ primitives:
         type: string
         default: null
         description: "Who published the source"
+      reliability:
+        type: object
+        default: null
+        description: "The declared small-sample rule, written as $reliability.<id> (D-106)"
       joins_to:
         type: string
         default: null
         description: "Semantic type of the units the table joins to, for mapping"
     preconditions:
       - no_unresolved_critical: true
+
+  # ── the ownership chain (Sprint 02, item 5) ───────────────────────────────
+  # both ready the outlets and answer no question, so both are soil/. they
+  # were in soil/validate/ but unregistered, so nothing could run them.
+  resolve_ownership:
+    path: validate/resolve_ownership.py
+    version: 1.0.0
+    description: >
+      Resolves raw owner strings to canonical owner entities through an
+      auditable crosswalk. Case and whitespace are normalized automatically;
+      every real merge is a crosswalk row with a confidence flag; near
+      duplicates not in the crosswalk are suggested, never merged. Raw values
+      are kept beside the resolved ones.
+    inputs:
+      - name: outlets
+        semantic_types: [formal_outlet]
+        required: true
+        description: Outlets with a raw owner field
+      - name: crosswalk
+        semantic_types: [owner_crosswalk]
+        required: true
+        description: raw, owner_entity, confidence, note
+    outputs:
+      semantic_type: formal_outlet
+      data_category: tabular
+    params:
+      owner_field: {type: string, default: "Ownership"}
+      output_field: {type: string, default: "owner_entity"}
+      confidence_field: {type: string, default: "owner_confidence"}
+      unrecorded_label: {type: string, default: "Not recorded"}
+      suggest_fuzzy: {type: boolean, default: true}
+      fuzzy_cutoff: {type: number, default: 0.88}
+
+  geocode_to_unit:
+    path: validate/geocode_to_unit.py
+    version: 1.0.0
+    description: >
+      Assigns each outlet to a governance unit's feature_id by matching its
+      place-name field against the units' names, at a declared level, with an
+      optional finer fallback field whose parent is taken. Every match records
+      how it was made (match_source). No place names are written in the code.
+    inputs:
+      - name: outlets
+        semantic_types: [formal_outlet]
+        required: true
+        description: Outlets carrying place-name fields
+      - name: units
+        semantic_types: [governance_unit]
+        required: true
+        description: feature_id, unit_name, unit_level, parent_name
+    outputs:
+      semantic_type: formal_outlet
+      data_category: tabular
+    params:
+      target_level: {type: string, default: "county"}
+      name_field: {type: string, default: "County"}
+      fallback_field: {type: string, default: null}
+      fuzzy: {type: boolean, default: true}
+      fuzzy_cutoff: {type: number, default: 0.8}
+

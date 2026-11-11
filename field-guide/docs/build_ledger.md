@@ -8,7 +8,7 @@ reverse it, so any of them can be revisited without archaeology.
 
 - **This ledger's IDs never change.** Decisions are D-n, lessons L-n, and
   findings carry a topic prefix (CII-, MAP-, ACS-, WON-, and so on). New
-  decisions continue from **D-101**, lessons from **L-79**.
+  decisions continue from **D-114**, lessons from **L-79**.
 - **Master Plan decisions are MP-67 to MP-81.** The plan numbered them D-67
   to D-81, which this ledger had already used (D-93). Cite them as MP-n.
 - **The infrastructure plan's D-1 to D-12 and the publish route's P-1 to P-5**
@@ -428,7 +428,6 @@ Contracts 1 to 4 are not yet written; they close this sprint.
 | **TST-2** | `tests/test_preparations.py` (14 cases) was run in the sandbox through a shim, not pytest, with `jsonschema`, `referencing` and `duckdb` absent: 13 passed. **Under real pytest on Kalli's machine, 2 failed** (the receipt test and the gate test), and c627fae was pushed with them red. Both failed at envelope validation, which the sandbox had stubbed out: the fake primitive wrote provenance with no input records, and the schema requires at least one. Fixed in the test's fake; see HASH-1 |
 | **HASH-1** | A skipped input hash cannot pass the envelope schema. `Hasher` returns `value=None` for the test profile, `Envelope.to_dict` drops keys whose value is `None`, and `provenance.schema.json` requires `value` (it allows null). So every envelope built under `--profile test` would fail validation. Found while fixing TST-2; not fixed here. The fix is to keep `value: null` in `to_dict` |
 
-
 ### RUN
 
 | ID | item |
@@ -443,9 +442,71 @@ Contracts 1 to 4 are not yet written; they close this sprint.
 | **CON-2** | Contracts 1 to 4 drafted in `field-guide/docs/contracts/` (2026-11-10), each with an Open table naming the sprint that decides each fork. Awaiting Kalli's review; Contract 3 also awaits the grove teammate's |
 | **GATE-1** | Nothing reads the exposure tier. `Vocabulary.get_tier()` reads `tier` (the loam maturity), which no type declares, and nothing calls it; nothing reads `resolution_tier`. Sprint 03's "get_tier() raises outside the closed set" would merge two meanings of tier. Contract 1 has the gate read `resolution_tier` through its own reader. 16 of 57 semantic types declare `resolution_tier`; 41 fail closed |
 | **HASH-2** | `Hasher` fingerprints inputs with md5. Canonical objects are named by sha256 (Contract 2); the canonical write computes its own and never reuses an md5 |
+| **CON-3** | Contract 3 reviewed 2026-11-10 by Kalli, its author, acting as grove teammate. Not a second-person review |
+| **CON-4** | Sprint 01 closed (2026-11-10). Contracts 1 to 4 in `field-guide/docs/contracts/`; every review question decided (D-101 to D-104); remaining forks named in each contract's Open table with the sprint that decides them |
+
+### DECISIONS ~ contract review
+
+(Moved here in Sprint 02 from the CONTRACTS table above, whose two columns hid
+their implication and reverse-if cells on GitHub.)
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
 | **D-101** | Contract 1, rule 3 (E-1): every tier in an artifact's lineage binds at once. `aggregate-only` limits the form data leaves in and `custom` limits permission, so neither outranks the other; an artifact descended from both leaves only as counts and only with consent, and any `excluded` ancestor stops everything. The allow record lists every binding tier with its ancestor; a refusal is one record per refusing tier | The gate never drops a constraint an ancestor carried. A ranked tier would have let a `custom` artifact leave as named points once consent existed, losing its other ancestor's aggregate-only limit | Never |
 | **D-102** | Contract 1, rule 4 (E-2): an experiment with an empty curiosity passes. Its kind, run, method and choices make it traceable; its missing question travels as a caveat in the allow record and in every product that shows it. Preparations pass without a curiosity because they answer none | `maine_county_indicator_standings` can leave now, labelled. Needs E-6: today the warning is printed by `validate()` but never written into receipts, so the gate would not see it | Products start presenting caveated experiments as answers: then block until the curiosity is written |
 | **D-103** | Contract 3 (G-3): points are not places. A carrier point is named only inside its `located_in` edges, by layer and feature id; `places` holds only the areas a profile can be built for. Both ends of `contains` and `overlaps` edges, and the `to` end of `located_in`, are rows in `places`; the `from` end of `located_in` is a feature in a declared layer, and Sprint 04 tests that every end exists | The profile's place list and `places` are the same list. Thousands of points never sit beside 700-odd areas | The grove's catalog needs uniform edge ends: add a `features` table beside `places`, never mix them |
-| **CON-3** | Contract 3 reviewed 2026-11-10 by Kalli, its author, acting as grove teammate. Not a second-person review |
 | **D-104** | Contract 4 (P-4): a place profile shows values, never standings. Towns have none (MP-75); a county's standing stays in its experiment's own products. Barriers are judged against the absolute standard (MP-74), and a relative rank beside an absolute threshold would invite mixing them | The profile has one way of judging. The standings maps remain where standings are read | A product needs comparison beside judgment: show it in that product, labelled, never in the profile |
-| **CON-4** | Sprint 01 closed (2026-11-10). Contracts 1 to 4 in `field-guide/docs/contracts/`; every review question decided (D-101 to D-104); remaining forks named in each contract's Open table with the sprint that decides them |
+
+## SPRINT 02 ~ honest values, 2026-11-10
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-105** | An open-ended median's value rests empty at derivation, in both `derive_indicator.R` and `preview.py`: `value` and `moe` empty, `moe_status: open_ended`, the bound kept in words, `empty_reason: "open-ended median: <bound>"` | Standardization leaves it out like any missing value, so a ranking never uses the Census's encoding of an end category. The encoding's order survives only in `bound` | Never: a value that is safe only when every reader checks `moe_status` is not an honest value |
+| **D-106** | The small-sample rule has two tests, each applied where it can be: a household count wherever a value can say what it rests on, and a coefficient of variation, (MOE / 1.645) / estimate, wherever the Census published a margin. The note names which test fired, in plain words | Today the CV test applies to passthrough medians only; ratios gain it when IND-3 derives their margins | One test proves redundant in practice |
+| **D-107** | Each indicator declares exactly one `role` (need, barrier, carrier, outcome, context) in the registry. Every indicator shares the semantic type `indicator_values`, so a role on the type could not tell broadband from population | The profile places each value in one part. Carrier point layers take their role on their semantic types when Sprint 06 declares them | A value genuinely belongs in two parts: then the profile, not the registry, decides |
+| **D-108** | The declared rule, `seeds/reliability/acs_small_sample.yml`: CV above 0.30 (Washington State OFM's "use with caution"; Esri's convention, 12 to 40 "use with caution" and above 40 "unreliable", is cited beside it), or fewer than 50 households, which no published standard was found for and is named as this project's choice | The note stays rare enough to be read. Every number in it cites its source or says that none was found | A published standard for a household floor is found |
+| **D-109** | `rests_on` is required on every indicator, in one of two shapes: `{add, subtract, counts}` or `{not_published: <reason>}`. A ratio rests on its denominator; rent burden on `B25070_001E` less `B25070_011E` ("Not computed"), checked against the Census API's labels; CII's 27 published values say CII releases no counts. The variables are fetched with the value. Each row gains `households`, `households_counts`, `households_reason`, `cv` and `reliability_note`, identical in R and Python | Every Maine value can say what it rests on, or why it cannot. Adding the count's variables made every Census source stale (ACQ-4), which is the intended consequence | Never |
+| **D-110** | REG-5: of each primitive declared twice in `roots/_registry.yml`, the second copy is kept, because YAML always kept it, so nothing changes behaviour; the first, superseded block (151 lines) is removed. Primitive registries load through `UniqueKeyLoader`, which refuses any repeated mapping key, naming it and both lines | A registry can no longer change behaviour by a silent overwrite. On first load it caught a second case (SOIL-1) | Never |
+| **D-111** | The rule is cited as `$reliability.<id>`, resolved by `ReferenceResolver` like `$weights`, with the file's sha256; `canopy/indicators/reliability.py` refuses a threshold without a sources entry. The town preparation and both values recipes cite `$reliability.acs_small_sample` | Every reliability note's envelope records which rule wrote it and which version of the file | A second consumer needs another shape: add a method beside `declaration`, never a second parser |
+| **D-112** | ACQ-4: `canopy/manifest/staleness.py` compares the registry's variables for a source's declared indicators with the last acquisition's `variables_requested` in the changelog. A stale source is reported in its own bucket when dry ("declared differently than acquired") and re-acquired with `--fetch`, through `_resolve_dataset(force=True)` | Replaces ACQ-4w's hand workaround (move the file aside, set `available: false`). Only providers that record `variables_requested` can be judged; others answer "cannot tell", never "fresh" | Another provider records what it fetched: extend `staleness` to it |
+| **D-113** | The ownership chain is registered in `soil/_registry.yml` (`resolve_ownership`, `geocode_to_unit`); the ownership method lists them under `soil/`; a new semantic type, `owner_crosswalk`, types the crosswalk input. It declares no `resolution_tier`, so it fails closed until Person 3 declares one | The ownership experiment's chain can run through the orchestrator for the first time | Never |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **VAL-1** | The Sprint 02 tab, from the Fused Build Plan, said ACS-7 left open-ended medians empty. It had not: both halves kept the encoding as the value (as D-90 says), and standardization ranked it, so county rent burden ranked about 3 144 counties, not 3 129. Fixed by D-105 |
+| **REG-5c** | What the ten dropped first copies said differently from the kept ones: `train_classifier`, `apply_classifier` (description, params); `score_segmenters` (description, outputs, params); `score_composition` (description, inputs, outputs, params); `space_cooling_potential` (description, params, version); `cooling_differential`, `train_regressor`, `apply_regressor`, `score_regression`, `buffer_landcover_features` (description only) |
+| **SOIL-1** | `soil/_registry.yml` declared `passthrough: true` twice inside `validate_vector`, caught on the new loader's first run. Same value; the second line is removed |
+| **OWN-1** | `concentration_index` required `provenance_contains: resolve_owner_entity`, the name `resolve_ownership.py` gives its warnings. Provenance records a primitive by its file's name (`envelope.py`), so no entry could ever match and the gate would have refused every ownership run. Now `resolve_ownership`. The ownership method had also listed the chain under `roots/` |
+| **ROLE-1** | The roles of CII's 27 published indicators were proposed by Claude (8 need, 8 barrier, 6 carrier, 6 outcome, 3 context) and are marked as proposals in the file, for Kalli's review |
+| **CV-1** | The oracle fixture printed a CV of 2.49% as "2%, above the 2%". Percentages in the note are now written to one decimal in both halves |
+
+### CLOSED
+
+| ID | item |
+| --- | --- |
+| **REG-5f** | REG-5 closed by D-110 |
+| **ACQ-4f** | ACQ-4 closed by D-112 |
+
+### CORRECTION ~ add to "Withdrawn"
+
+| ID | claimed | actually |
+| --- | --- | --- |
+| **CNT-1r** | `county_units_for_mapping`'s recipe declares `field: COUNTY` twice | **Once.** Two overlapping printouts each showed the same line, and it was read as two. The new loader's scan of every seeds, garden and plot file found no repeated key |
+
+### OPEN
+
+| ID | item |
+| --- | --- |
+| **VAL-2** | Prove 3 129: re-acquire the three Census sources (stale under ACQ-4), then `tests/test_standings_at_3129.py`. A different number refutes CII-11's hypothesis and is a finding |
+| **REL-1** | Release the held county rent burden layer once VAL-2 holds. Locally that is a re-run and a map; publishing it to ArcGIS Online is the gate's to allow (Sprint 03, Contract 1) |
+| **TST-3** | Sprint 02's Python tests passed in the sandbox through a shim with `pytest`, `jsonschema`, `duckdb`, `pyarrow` and R absent; the R oracle has not run. Run all of it under real pytest |
+
+### SPRINT 02 ~ first run on Kalli's machine
+
+| ID | item |
+| --- | --- |
+| **TST-4** | Under real pytest, 119 of 120 passed, the R oracle included: R and Python agree on households, counts, reasons, CV and the reliability note. The one failure predated Sprint 02: `test_empty_source_value_is_named_never_zero` asserted a note citing "ACS-5", but ACS-7 (4692b72) rewrote that note to cite ACS-7 and point to the `_annotation` column. The test now checks the note's meaning, not its ticket |

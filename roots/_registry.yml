@@ -145,157 +145,12 @@ primitives:
         default: "lst_median"
         description: Column name for LST values in the stats tables
   
-  # roots/_registry.yml  — consolidated additions (append under `primitives:`)
-# Supersedes every inline roots registry snippet pasted in chat.
+  # REG-5 (Sprint 02): an earlier "consolidated additions" block declared ten
+  # primitives that are declared again below. YAML kept the second copy
+  # silently, so the second is what has always run; the first is removed and
+  # the loader now refuses a repeated key. What the dropped copies said is in
+  # the build ledger (REG-5c).
 
-  # --- ml (general) ---
-  train_classifier:
-    path: statistics/train_classifier.py
-    version: 1.0.0
-    description: Fit a classifier (random_forest|gradient_boost|logistic) on a feature_table; save a model bundle. General.
-    inputs:
-      - {name: table, semantic_types: [feature_table], required: true}
-    outputs: {semantic_type: classifier_model, data_category: tabular}
-    params:
-      estimator: {type: string, default: "random_forest", options: [random_forest, gradient_boost, logistic]}
-      label_col: {type: string, default: "label"}
-      feature_cols: {type: array, default: null}
-      exclude_cols: {type: array, default: ["id", "frame", "partition", "x", "y"]}
-      n_estimators: {type: integer, default: 200}
-      max_depth: {type: integer, default: null}
-      seed: {type: integer, default: 0}
-      class_weight: {type: string, default: null}
-
-  apply_classifier:
-    path: statistics/apply_classifier.py
-    version: 1.0.0
-    description: Apply a classifier_model to a feature_table; bind features by name; predictions out. General.
-    inputs:
-      - {name: model, semantic_types: [classifier_model], required: true}
-      - {name: table, semantic_types: [feature_table], required: true}
-    outputs: {semantic_type: predictions, data_category: tabular}
-    params:
-      id_col: {type: string, default: "id"}
-      proba: {type: boolean, default: true}
-
-  # --- metrics ---
-  score_segmenters:
-    path: metrics/score_segmenters.py
-    version: 1.0.0
-    description: Per-class accuracy, mean IoU, Cohen's Kappa for RF and optional deep vs a truth mask; RF-only if deep absent.
-    inputs:
-      - {name: truth, semantic_types: [land_cover_labels], required: true}
-      - {name: pred_rf, semantic_types: [land_cover_prediction], required: true}
-      - {name: pred_deep, semantic_types: [land_cover_prediction], required: false}
-    outputs: {semantic_type: segmenter_comparison, data_category: tabular}
-    params:
-      nodata: {type: integer, default: 0}
-      class_names: {type: object, default: null}
-
-  score_composition:
-    path: metrics/score_composition.py
-    version: 1.0.0
-    description: Falsification score for a known-geometry target; raw vs rectified vs truth fraction with coverage guard.
-    inputs:
-      - {name: pose, semantic_types: [ground_pose], required: true}
-      - {name: intrinsics, semantic_types: [camera_intrinsics], required: true}
-    outputs: {semantic_type: composition_falsification, data_category: tabular}
-    params:
-      ground_extent: {type: array}
-      target_extent: {type: array}
-      coverage_fraction: {type: number, default: 1.0}
-      coverage_min: {type: number, default: 0.5}
-      target_name: {type: string, default: "board"}
-  
-  cooling_differential:
-    path: metrics/cooling_differential.py
-    version: 1.0.0
-    description: >
-      Forest-vs-open surface-temperature differential: mask LST by land-cover
-      class (land cover majority-resampled onto the LST grid), report the
-      open-minus-forest median/mean LST. Relative, robust to absolute LST bias.
-    inputs:
-      - {name: lst, semantic_types: [land_surface_temperature], required: true}
-      - {name: land_cover, semantic_types: [land_cover], required: true}
-    outputs: {semantic_type: cooling_differential, data_category: tabular}
-    params:
-      forest_classes: {type: array, default: [10]}
-      open_classes: {type: array, default: [30, 40]}
-      central_tendency: {type: string, default: "median", options: [median, mean]}
-      lst_nodata: {type: number, default: null}
-      lc_nodata: {type: integer, default: 0}
-      min_pixels: {type: integer, default: 20}
-  
-  train_regressor:
-    path: statistics/train_regressor.py
-    version: 1.0.0
-    description: Fit a regressor (random_forest|linear|gradient_boost) on a feature_table with a continuous target; report coefficients/importances (dominant factors). Guards compositional collinearity. General.
-    inputs:
-      - {name: table, semantic_types: [feature_table], required: true}
-    outputs: {semantic_type: regressor_model, data_category: tabular}
-    params:
-      estimator: {type: string, default: "random_forest", options: [random_forest, linear, gradient_boost]}
-      target_col: {type: string, default: "lst"}
-      feature_cols: {type: array, default: null}
-      exclude_cols: {type: array, default: ["id", "x", "y", "partition"]}
-      n_estimators: {type: integer, default: 300}
-      max_depth: {type: integer, default: null}
-      seed: {type: integer, default: 0}
-
-  apply_regressor:
-    path: statistics/apply_regressor.py
-    version: 1.0.0
-    description: Apply a regressor_model to a feature_table; bind features by name; continuous predictions out. General.
-    inputs:
-      - {name: model, semantic_types: [regressor_model], required: true}
-      - {name: table, semantic_types: [feature_table], required: true}
-    outputs: {semantic_type: predictions, data_category: tabular}
-    params:
-      id_col: {type: string, default: "id"}
-
-  score_regression:
-    path: metrics/score_regression.py
-    version: 1.0.0
-    description: Held-out R2, RMSE, MAE between predicted and true continuous target.
-    inputs:
-      - {name: pred, semantic_types: [predictions], required: true}
-      - {name: truth, semantic_types: [feature_table], required: true}
-    outputs: {semantic_type: regression_skill, data_category: tabular}
-    params:
-      id_col: {type: string, default: "id"}
-      pred_col: {type: string, default: "pred"}
-      truth_col: {type: string, default: "lst"}
-
-  buffer_landcover_features:
-    path: metrics/buffer_landcover_features.py
-    version: 1.0.0
-    description: Sample points across an LST scene; per point, blue-green-grey land-cover fractions within a buffer (land cover majority-resampled to LST grid) + point LST. Feature table for the predictive thermal model.
-    inputs:
-      - {name: lst, semantic_types: [land_surface_temperature], required: true}
-      - {name: land_cover, semantic_types: [land_cover], required: true}
-    outputs: {semantic_type: feature_table, data_category: tabular}
-    params:
-      n_samples: {type: integer, default: 1500}
-      buffer_radius_m: {type: number, default: 100}
-      seed: {type: integer, default: 0}
-      bgg_mapping: {type: object, default: null}
-      lst_nodata: {type: number, default: null}
-      lc_nodata: {type: integer, default: 0}
-      min_buffer_valid: {type: integer, default: 10}
-
-  space_cooling_potential:
-    path: metrics/space_cooling_potential.py
-    version: 1.0.0
-    description: Estimate a photographed space's relative cooling potential from its (rectified) blue-green-grey composition and the satellite-derived land-cover/temperature relationship. Estimate, not measurement.
-    inputs:
-      - {name: mask, semantic_types: [land_cover_prediction, rectified_land_cover, land_cover_labels], required: true}
-    outputs: {semantic_type: space_cooling_estimate, data_category: tabular}
-    params:
-      class_to_bgg: {type: object, default: null}
-      cooling_weights: {type: object, default: null}
-      space_id: {type: string, default: null}
-      nodata: {type: integer, default: 0}
-  
   # ============================================================
 # roots/_registry.yml  — consolidated additions
 # Append these entries under the existing `primitives:` block.
@@ -670,7 +525,11 @@ primitives:
       min_outlets: {type: integer, default: 3}
       min_coverage: {type: number, default: 0.5}
     preconditions:
-      provenance_contains: resolve_owner_entity
+      # provenance records a primitive by its file's name, resolve_ownership.
+      # this said resolve_owner_entity, the name its warnings use, which no
+      # provenance entry ever carries, so the gate would have refused every
+      # run (OWN-1, Sprint 02).
+      provenance_contains: resolve_ownership
 
   # --- indicators/ ---
 

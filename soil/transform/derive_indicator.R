@@ -45,6 +45,11 @@
 #   unit_pad:     zero-pad unit codes to this width, for a published file
 #                 that lost leading zeros (CII-6); default none
 #   name_column:  the source column with a readable name (default "NAME")
+#   reliability:  optional, the declared small-sample rule (D-106):
+#                 {min_households, max_cv}. Without it, no reliability note.
+# Every value also says what it rests on (Sprint 02): the count from its
+# declaration's `rests_on`, add minus subtract, or why there is none. An
+# open-ended median's value rests empty, its bound in words (D-105).
 # Output:
 #   indicator_values, long-form, format from the output extension
 # ============================================================
@@ -63,6 +68,7 @@ joins_to     <- get_param(args$params, "joins_to", NULL)
 unit_column  <- as.character(get_param(args$params, "unit_column", "GEOID"))
 unit_pad     <- get_param(args$params, "unit_pad", NULL)
 name_column  <- as.character(get_param(args$params, "name_column", "NAME"))
+reliability  <- get_param(args$params, "reliability", NULL)
 
 w <- warnings_collector("derive_indicator")
 
@@ -100,6 +106,57 @@ UNIT_AUTHORITY <- "us_census_geoid"
       warnings = w)
   }
   v
+}
+
+# What a value rests on: the count behind it, from the declaration's
+# rests_on, add minus subtract, in the same row of the same release. Returns
+# the counts and, where there is none, why. preview._rests_on is its twin.
+.rests_on <- function(df, ro) {
+  n <- nrow(df)
+  if (is.null(ro)) {
+    primitive_failure(
+      "Malformed declaration",
+      "A declaration has no `rests_on`. Declarations come from $indicators.<id>, which always carries it (Sprint 02).",
+      warnings = w)
+  }
+  if (!is.null(ro$not_published)) {
+    return(list(count = rep(NA_real_, n), reason = rep(as.character(ro$not_published), n)))
+  }
+  add <- unlist(ro$add)
+  sub <- unlist(ro$subtract)
+  vars <- c(add, sub)
+  m <- as.data.frame(lapply(vars, function(v) as.numeric(df[[v]])))
+  names(m) <- vars
+  empty <- apply(is.na(as.matrix(m)), 1, function(row) paste(vars[row], collapse = ", "))
+  count <- rowSums(as.matrix(m[, add, drop = FALSE]))
+  if (length(sub) > 0) count <- count - rowSums(as.matrix(m[, sub, drop = FALSE]))
+  count[empty != ""] <- NA_real_
+  reason <- ifelse(empty != "", paste0("source count empty: ", empty), NA_character_)
+  list(count = count, reason = reason)
+}
+
+# The declared small-sample rule, in plain words (D-106). The same strings as
+# preview._reliability_note: counts as %.0f, percentages as %.1f, on both sides.
+.reliability_note <- function(value, households, counts, cv, rule) {
+  n <- length(value)
+  if (is.null(rule)) return(rep(NA_character_, n))
+  floor_h <- rule$min_households
+  ceiling_cv <- rule$max_cv
+  label <- if (is.null(counts)) "households" else counts
+  vapply(seq_len(n), function(i) {
+    if (is.na(value[i])) return(NA_character_)
+    said <- character(0)
+    if (!is.null(floor_h) && !is.na(households[i]) && households[i] < floor_h) {
+      said <- c(said, sprintf("rests on %.0f %s, fewer than the %.0f the small-sample rule asks for",
+                              households[i], label, floor_h))
+    }
+    if (!is.null(ceiling_cv) && !is.na(cv[i]) && cv[i] > ceiling_cv) {
+      said <- c(said, sprintf("its margin of error is wide: a coefficient of variation of %.1f%%, above the %.1f%% the small-sample rule allows",
+                              cv[i] * 100, ceiling_cv * 100))
+    }
+    if (length(said) == 0) return(NA_character_)
+    paste0("read with care: ", paste(said, collapse = "; and "), ".")
+  }, character(1))
 }
 
 # ACS-7. The Census code on a median's margin meaning the median falls
@@ -191,6 +248,8 @@ with_primitive_error_handling({
         warnings = w)
     }
 
+    ro <- d$rests_on
+    if (is.null(ro$not_published)) needed <- c(needed, unlist(ro$add), unlist(ro$subtract))
     absent <- setdiff(needed, names(df))
     if (length(absent) > 0) {
       primitive_failure(
@@ -201,7 +260,10 @@ with_primitive_error_handling({
         warnings = w)
     }
 
-    reason <- .empty_reason(df, needed)
+    # the value's own emptiness is judged on what derives it, not on the
+    # count it rests on; an empty count is reported in households_reason.
+    value_vars <- if (kind == "ratio") c(numerator, denominator) else column
+    reason <- .empty_reason(df, value_vars)
     moe <- rep(NA_real_, nrow(df))
     bound <- rep(NA_character_, nrow(df))
 
@@ -229,8 +291,13 @@ with_primitive_error_handling({
         if (any(open)) {
           moe_status[open] <- "open_ended"
           bound[open] <- .bound_label(value[open], edges)
+          # D-105: the encoding is not a measurement. The value rests empty,
+          # the bound says what is known, and no ranking can use it.
+          value[open] <- NA_real_
+          moe[open] <- NA_real_
+          reason[open] <- paste0("open-ended median: ", bound[open])
           w$info(sprintf(
-            "%s: %d unit(s) have an open-ended median. The value is the Census's encoding of an end category and sorts correctly, but it is a bound, not a measurement; read `bound` for these.",
+            "%s: %d unit(s) have an open-ended median, so their value rests empty (D-105): the Census publishes only the end category, and `bound` says which, in words. They stand outside any ranking.",
             id, sum(open)))
           odd <- open & startsWith(bound, "open-ended interval")
           if (any(odd)) {
@@ -245,6 +312,12 @@ with_primitive_error_handling({
           id, ann_col))
       }
     }
+
+    rest <- .rests_on(df, ro)
+    cv <- rep(NA_real_, nrow(df))
+    has_cv <- !is.na(value) & !is.na(moe) & moe_status == "published" & value != 0
+    cv[has_cv] <- (moe[has_cv] / 1.645) / abs(value[has_cv])
+    note <- .reliability_note(value, rest$count, ro$counts, cv, reliability)
 
     n_empty <- sum(is.na(value))
     if (n_empty > 0) {
@@ -264,6 +337,11 @@ with_primitive_error_handling({
       moe_status     = moe_status,
       bound          = bound,
       empty_reason   = reason,
+      households     = rest$count,
+      households_counts = if (is.null(ro$counts)) NA_character_ else ro$counts,
+      households_reason = rest$reason,
+      cv             = cv,
+      reliability_note = note,
       authority      = authority,
       method         = paste0("derive_indicator:", kind),
       time           = time_label,

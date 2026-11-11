@@ -26,6 +26,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PRIMITIVE = ROOT / "soil" / "transform" / "derive_indicator.R"
 SEEDS = ROOT / "seeds" / "indicators"
 IDS = ["cii_broadband", "cii_rent_burden", "cii_no_vehicle"]
+# a small-sample rule both halves apply (D-106); its numbers are a fixture,
+# not the declared rule
+RULE = {"min_households": 1000, "max_cv": 0.02}
 
 
 def _r_ready() -> bool:
@@ -52,6 +55,9 @@ def fixture_source(tmp_path):
         "B25071_001E": [29.4, None, 51.0], "B25071_001M": [1.2, None, None],
         "B08201_002E": [90.0, 30.0, 0.0], "B08201_001E": [1200.0, 600.0, 0.0],
         "B08201_002M": [15.0, 9.0, 0.0], "B08201_001M": [60.0, 30.0, 0.0],
+        # what rent burden rests on (Sprint 02); the third is left empty
+        "B25070_001E": [30000.0, 9000.0, None], "B25070_011E": [1500.0, 300.0, 10.0],
+        "B25070_001M": [400.0, 200.0, None], "B25070_011M": [90.0, 40.0, 5.0],
     })
     for c in frame.columns[2:]:
         frame[c] = frame[c].astype("Float64")
@@ -64,7 +70,7 @@ def fixture_source(tmp_path):
     return path, frame
 
 
-def _run_primitive(tmp_path, source_path, declarations):
+def _run_primitive(tmp_path, source_path, declarations, reliability=None):
     inputs = tmp_path / "inputs.json"
     params = tmp_path / "params.json"
     out = tmp_path / "derive_values.parquet"
@@ -72,7 +78,8 @@ def _run_primitive(tmp_path, source_path, declarations):
     params.write_text(json.dumps({
         "indicators": declarations, "spatial_unit": "county",
         "time": "2020-2024 (5-year estimates)", "authority": "us_census_acs",
-        "joins_to": "governance_unit"}))
+        "joins_to": "governance_unit",
+        **({"reliability": reliability} if reliability else {})}))
     proc = subprocess.run(
         ["Rscript", str(PRIMITIVE), str(inputs), str(out), str(params)],
         capture_output=True, text=True, cwd=ROOT)
@@ -93,18 +100,21 @@ def test_r_agrees_with_the_preview_exactly(tmp_path, fixture_source):
     reg = IndicatorRegistry.load(SEEDS)
     decls = [reg.declaration(i) for i in IDS]
 
-    response, out, proc = _run_primitive(tmp_path, source_path, decls)
+    response, out, proc = _run_primitive(tmp_path, source_path, decls, reliability=RULE)
     assert response["status"] == "success", (response, proc.stderr)
     r_rows = pd.read_parquet(out)
 
     for ind_id in IDS:
-        py_rows, _ = ip.derive(frame, reg.get(ind_id), authority=None, time=None)
+        py_rows, _ = ip.derive(frame, reg.get(ind_id), authority=None, time=None,
+                               reliability=RULE)
         mine = r_rows[r_rows["indicator"] == ind_id].reset_index(drop=True)
         assert len(mine) == len(py_rows), ind_id
         for i, py in enumerate(py_rows):
             r = mine.iloc[i]
             assert r["unit_code"] == py["unit"]["code"]
-            for field in ("value", "moe", "moe_status", "bound", "empty_reason"):
+            for field in ("value", "moe", "moe_status", "bound", "empty_reason",
+                          "households", "households_counts", "households_reason",
+                          "cv", "reliability_note"):
                 rv = r[field]
                 rv = None if pd.isna(rv) else (rv.item() if hasattr(rv, "item") else rv)
                 assert _same(py[field], rv), (ind_id, py["unit"]["code"], field, py[field], rv)
@@ -119,8 +129,23 @@ def test_an_open_ended_median_is_a_bound_in_both_languages(tmp_path, fixture_sou
     r = pd.read_parquet(out).set_index("unit_code").loc["23999"]
     assert r["moe_status"] == "open_ended"
     assert r["bound"] == "50.0 or more"
-    assert r["value"] == 51.0
-    assert pd.isna(r["empty_reason"])
+    # D-105: the encoding is not a measurement, so the value rests empty
+    assert pd.isna(r["value"])
+    assert r["empty_reason"] == "open-ended median: 50.0 or more"
+
+
+def test_every_value_says_what_it_rests_on_in_r(tmp_path, fixture_source):
+    import pandas as pd
+    source_path, _ = fixture_source
+    reg = IndicatorRegistry.load(SEEDS)
+    response, out, proc = _run_primitive(tmp_path, source_path, [reg.declaration(i) for i in IDS])
+    assert response["status"] == "success", (response, proc.stderr)
+    rows = pd.read_parquet(out).set_index(["indicator", "unit_code"])
+    assert rows.loc[("cii_broadband", "23005"), "households"] == 1200.0
+    assert rows.loc[("cii_rent_burden", "23005"), "households"] == 28500.0
+    assert pd.isna(rows.loc[("cii_rent_burden", "23999"), "households"])
+    assert rows.loc[("cii_rent_burden", "23999"), "households_reason"] == \
+        "source count empty: B25070_001E"
 
 
 def test_the_envelope_metadata_is_what_the_schema_expects(tmp_path, fixture_source):

@@ -318,7 +318,47 @@ def _bound_label(value: float, edges: tuple[float, float] | None) -> str:
     return "open-ended interval (value inside the declared edges)"
 
 
-def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) -> tuple[list[dict], list[str]]:
+def _rests_on(ind: Indicator, r) -> tuple[float | None, str | None]:
+    """the count of households (or persons) this unit's value rests on, from
+    the same row of the same release: `add` minus `subtract`. returns the
+    count and, when there is none, why. never a silent blank."""
+    ro = ind.rests_on
+    if ro.not_published is not None:
+        return None, ro.not_published
+    vals = {v: _number(r[v]) for v in ro.variables()}
+    empty = [v for v, x in vals.items() if x is None]
+    if empty:
+        return None, f"source count empty: {', '.join(empty)}"
+    return (sum(vals[v] for v in ro.add) - sum(vals[v] for v in ro.subtract)), None
+
+
+def _reliability_note(value, households, counts, cv, rule) -> str | None:
+    """the declared small-sample rule (D-106), in plain words. two tests, each
+    applied where it can be: a household count everywhere a count exists, and
+    a coefficient of variation wherever the Census published a margin. the
+    note says which test fired. no rule declared, no note."""
+    if value is None or not rule:
+        return None
+    said = []
+    floor = rule.get("min_households")
+    if floor is not None and households is not None and households < floor:
+        # counts as whole numbers and percentages to one decimal, as the R half
+        # formats them (sprintf %.0f and %.1f),
+        # so the two notes are identical strings (oracle test)
+        said.append(f"rests on {households:.0f} {counts or 'households'}, fewer than "
+                    f"the {floor:.0f} the small-sample rule asks for")
+    ceiling = rule.get("max_cv")
+    if ceiling is not None and cv is not None and cv > ceiling:
+        said.append(f"its margin of error is wide: a coefficient of variation of "
+                    f"{cv * 100:.1f}%, above the {ceiling * 100:.1f}% the small-sample "
+                    f"rule allows")
+    if not said:
+        return None
+    return "read with care: " + "; and ".join(said) + "."
+
+
+def derive(frame, ind: Indicator, *, authority: str | None, time: str | None,
+           reliability: dict | None = None) -> tuple[list[dict], list[str]]:
     """long-form preview rows for one indicator over one acquisition."""
     estimates = ind.estimate_variables()
     absent = [v for v in estimates if v not in frame.columns]
@@ -370,8 +410,14 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
             if value is None:
                 reason = f"source value empty: {d.column}"
             elif has_ann and _annotation(r[ann_col]) == OPEN_ENDED:
+                # D-105: the Census's number for an end category is an
+                # encoding, not a measurement. the value rests empty and the
+                # bound says, in words, what is known, so nothing downstream
+                # can rank or average the encoding by forgetting to check.
                 moe_status = "open_ended"
                 bound = _bound_label(value, d.open_ended)
+                value, moe = None, None
+                reason = f"open-ended median: {bound}"
         else:
             moe_status = "not_derived"
             empty = [v for v in (*d.numerator, d.denominator) if comp[v]["estimate"] is None]
@@ -385,6 +431,12 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
                 else:
                     value = (num / den) * d.scale
 
+        households, households_reason = _rests_on(ind, r)
+        cv = None
+        if value is not None and moe is not None and moe_status == "published" and value != 0:
+            cv = (moe / 1.645) / abs(value)
+        note = _reliability_note(value, households, ind.rests_on.counts, cv, reliability)
+
         rows.append({
             "unit": {"authority": UNIT_AUTHORITY, "code": str(r["GEOID"])},
             "name": str(r["NAME"]) if "NAME" in frame.columns else "",
@@ -394,6 +446,11 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
             "moe_status": moe_status,
             "bound": bound,
             "empty_reason": reason,
+            "households": households,
+            "households_counts": ind.rests_on.counts,
+            "households_reason": households_reason,
+            "cv": cv,
+            "reliability_note": note,
             "authority": authority,
             "method": method,
             "time": time,
@@ -409,9 +466,9 @@ def derive(frame, ind: Indicator, *, authority: str | None, time: str | None) ->
     open_rows = [row for row in rows if row["moe_status"] == "open_ended"]
     if open_rows:
         notes.append(
-            f"{len(open_rows)} unit(s) have an open-ended median: the value is the "
-            f"Census's encoding of an end category and sorts correctly, but it is "
-            f"a bound, not a measurement. read `bound`, not `value`, for these.")
+            f"{len(open_rows)} unit(s) have an open-ended median, so their value "
+            f"rests empty (D-105): the Census publishes only the end category, and "
+            f"`bound` says which, in words. they stand outside any ranking.")
         odd = [row for row in open_rows if row["bound"].startswith("open-ended interval")]
         if odd:
             notes.append(

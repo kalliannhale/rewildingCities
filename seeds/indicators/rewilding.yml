@@ -10,6 +10,8 @@ indicators:
     name: Limited English speaking households
     defined_by: rewildingcities
     measures: limited_english_speaking_households
+    role: barrier
+    rests_on: {add: [C16002_001E], counts: households}
     unit: percent_of_households
     derivation:
       kind: ratio

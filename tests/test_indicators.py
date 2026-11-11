@@ -22,6 +22,8 @@ GOOD = {
     "direction": "higher_is_better", "aggregation": "population_weighted_mean",
     "weight_by": "A_002E", "uncertainty": "acs_moe",
     "source": {"provider": "census_acs", "dataset": "acs/acs5"},
+    "role": "barrier",
+    "rests_on": {"add": ["A_002E"], "counts": "households"},
 }
 
 

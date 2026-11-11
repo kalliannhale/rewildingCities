@@ -41,9 +41,13 @@ DIRECTIONS = ("higher_is_better", "higher_is_worse")
 AGGREGATIONS = ("sum", "population_weighted_mean", "none", "profile", "recompute")
 UNCERTAINTIES = ("acs_moe", "published_interval", "none")
 DERIVATION_KINDS = ("ratio", "passthrough")
+# what a value is for, read by the place profile to put it in its part
+# (Contract 4). one role per indicator (D-107).
+ROLES = ("need", "barrier", "carrier", "outcome", "context")
 
 REQUIRED = ("name", "defined_by", "measures", "unit", "derivation",
-            "direction", "aggregation", "uncertainty", "source")
+            "direction", "aggregation", "uncertainty", "source",
+            "role", "rests_on")
 OPTIONAL = ("weight_by", "replicates", "rationale")
 KNOWN = REQUIRED + OPTIONAL
 
@@ -64,6 +68,30 @@ class Derivation:
 
 
 @dataclass(frozen=True)
+class RestsOn:
+    """what a value rests on: the count of households (or persons) behind it,
+    from the same release (Sprint 02, item 2).
+
+    either a count built from source variables, `add` minus `subtract`, with
+    `counts` naming what is counted ("households"), or `not_published` with
+    the reason the count cannot be known. a value never rests on nothing in
+    silence."""
+    add: tuple[str, ...] = ()
+    subtract: tuple[str, ...] = ()
+    counts: str | None = None
+    not_published: str | None = None
+
+    def variables(self) -> list[str]:
+        return list(self.add) + list(self.subtract)
+
+    def as_dict(self) -> dict:
+        if self.not_published is not None:
+            return {"not_published": self.not_published}
+        return {"add": list(self.add), "subtract": list(self.subtract),
+                "counts": self.counts}
+
+
+@dataclass(frozen=True)
 class Indicator:
     id: str
     name: str
@@ -75,6 +103,8 @@ class Indicator:
     aggregation: str
     uncertainty: str
     source: dict
+    role: str = ""
+    rests_on: RestsOn = RestsOn(not_published="undeclared")
     weight_by: str | None = None
     replicates: dict | None = None
     rationale: str = ""
@@ -90,6 +120,9 @@ class Indicator:
             cols.append(d.column)
         if self.weight_by:
             cols.append(self.weight_by)
+        # the count a value rests on is fetched with it, so an acquisition
+        # that lacks it reads as stale (ACQ-4) rather than silently countless.
+        cols.extend(self.rests_on.variables())
         seen: list[str] = []
         for c in cols:
             if c not in seen:
@@ -135,6 +168,8 @@ class Indicator:
             "direction": self.direction,
             "aggregation": self.aggregation,
             "uncertainty": self.uncertainty,
+            "role": self.role,
+            "rests_on": self.rests_on.as_dict(),
             "moe_variables": self.moe_variables(),
             "declared_in": self.declared_in,
             "declaration_sha256": declaration_sha256,
@@ -196,6 +231,7 @@ class IndicatorRegistry:
             return v
 
         direction = enum("direction", DIRECTIONS)
+        role = enum("role", ROLES)
         aggregation = enum("aggregation", AGGREGATIONS)
         uncertainty = enum("uncertainty", UNCERTAINTIES)
 
@@ -206,6 +242,7 @@ class IndicatorRegistry:
                 f"is declared. a weighted mean without a weight is a mean of means.")
 
         derivation = IndicatorRegistry._parse_derivation(where, spec["derivation"])
+        rests_on = IndicatorRegistry._parse_rests_on(where, spec["rests_on"])
 
         source = spec["source"]
         if not isinstance(source, dict) or not source.get("provider"):
@@ -232,6 +269,8 @@ class IndicatorRegistry:
             aggregation=aggregation,
             uncertainty=uncertainty,
             source=dict(source),
+            role=role,
+            rests_on=rests_on,
             weight_by=weight_by,
             replicates=dict(replicates) if replicates else None,
             rationale=(spec.get("rationale") or "").strip(),
@@ -252,6 +291,36 @@ class IndicatorRegistry:
                     f"fetched. not estimates: {', '.join(map(str, not_estimates))}")
 
         return ind
+
+    @staticmethod
+    def _parse_rests_on(where: str, r) -> RestsOn:
+        """`rests_on` is required on every indicator and has two shapes:
+        {add: [...], subtract: [...], counts: households} or
+        {not_published: <reason>}. nothing else, and never empty."""
+        if not isinstance(r, dict):
+            raise ValueError(f"{where}: rests_on must be a mapping")
+        if "not_published" in r:
+            if set(r) != {"not_published"} or not str(r["not_published"]).strip():
+                raise ValueError(
+                    f"{where}: rests_on with not_published takes only that field, "
+                    f"with the reason the count cannot be known")
+            return RestsOn(not_published=str(r["not_published"]).strip())
+        extra = [k for k in r if k not in ("add", "subtract", "counts")]
+        if extra:
+            raise ValueError(f"{where}: unknown rests_on field(s): {', '.join(extra)}")
+        add, subtract = r.get("add"), r.get("subtract", [])
+        if not isinstance(add, list) or not add:
+            raise ValueError(
+                f"{where}: rests_on needs add as a non-empty list of source "
+                f"variables, or not_published with a reason")
+        if not isinstance(subtract, list):
+            raise ValueError(f"{where}: rests_on subtract must be a list")
+        counts = r.get("counts")
+        if not counts or not isinstance(counts, str):
+            raise ValueError(
+                f"{where}: rests_on needs counts, naming what is counted "
+                f"(households, persons), so a count is never read as the wrong unit")
+        return RestsOn(add=tuple(add), subtract=tuple(subtract), counts=counts)
 
     @staticmethod
     def _parse_derivation(where: str, d: dict) -> Derivation:

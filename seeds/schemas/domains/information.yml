@@ -26,6 +26,16 @@ types:
     description: Print, broadcast, digital, radio outlets.
     resolution_tier: public
 
+  owner_crosswalk:
+    category: tabular
+    format: csv
+    description: >
+      Raw owner strings mapped to canonical owner entities, one row per raw
+      string, with a confidence flag and a note (raw, owner_entity,
+      confidence, note). Every merge of two owners is a row a person can read.
+    # no resolution_tier yet: Person 3 declares it (Sprint 03). until then it
+    # fails closed, which is right for a working file.
+
   institutional_node:
     category: vector
     format: geojson

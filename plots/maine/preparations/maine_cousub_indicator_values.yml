@@ -71,3 +71,6 @@ steps:
       unit_column: GEOID
       name_column: NAME
       joins_to: governance_unit
+      # the declared small-sample rule (D-106, D-108): a town value resting on
+      # fewer than 50 households, or with a CV above 30%, says so in words
+      reliability: $reliability.acs_small_sample

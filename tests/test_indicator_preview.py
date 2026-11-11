@@ -18,12 +18,14 @@ from canopy.indicators import IndicatorRegistry
 HEADER = ("GEOID,NAME,state,county,"
           "B28002_004E,B28002_001E,B28002_004M,B28002_001M,"
           "B25071_001E,B25071_001M,"
-          "B08201_002E,B08201_001E,B08201_002M,B08201_001M")
+          "B08201_002E,B08201_001E,B08201_002M,B08201_001M,"
+          # what rent burden rests on (Sprint 02): B25070 total, not computed
+          "B25070_001E,B25070_011E,B25070_001M,B25070_011M")
 
 ROWS = [
-    "23005,Cumberland County Maine,23,005,1000,1200,50,60,29.4,1.2,90,1200,15,60",
-    "23029,Washington County Maine,23,029,500,600,40,30,,,30,600,9,30",
-    "23999,Nowhere County Maine,23,999,0,0,0,0,31.0,2.0,0,0,0,0",
+    "23005,Cumberland County Maine,23,005,1000,1200,50,60,29.4,1.2,90,1200,15,60,400,20,30,8",
+    "23029,Washington County Maine,23,029,500,600,40,30,,,30,600,9,30,150,10,20,5",
+    "23999,Nowhere County Maine,23,999,0,0,0,0,31.0,2.0,0,0,0,0,0,0,0,0",
 ]
 
 
@@ -81,7 +83,10 @@ def test_new_entries_declare_what_they_are():
     rent = reg.get("cii_rent_burden")
     assert rent.derivation.kind == "passthrough"
     assert rent.aggregation == "none"
-    assert rent.acquisition_variables() == ["B25071_001E", "B25071_001M"]
+    # what it rests on is fetched with it (Sprint 02)
+    assert rent.acquisition_variables() == [
+        "B25071_001E", "B25070_001E", "B25070_011E",
+        "B25071_001M", "B25070_001M", "B25070_011M"]
     car = reg.get("cii_no_vehicle")
     assert car.direction == "higher_is_worse"
     assert car.acquisition_variables() == [
@@ -141,7 +146,7 @@ def test_empty_source_value_is_named_never_zero(repo):
     assert row["value"] is None
     assert row["empty_reason"] == "source value empty: B25071_001E"
     assert p["n_empty"] == 1
-    assert any("ACS-5" in n for n in p["notes"])
+    assert any("_annotation column" in n for n in p["notes"])
 
 
 def test_geoid_stays_a_string(repo):
