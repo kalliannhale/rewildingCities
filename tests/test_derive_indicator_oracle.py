@@ -23,7 +23,7 @@ from canopy.indicators import preview as ip
 from canopy.indicators import IndicatorRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
-PRIMITIVE = ROOT / "roots" / "indicators" / "derive_indicator.R"
+PRIMITIVE = ROOT / "soil" / "transform" / "derive_indicator.R"
 SEEDS = ROOT / "seeds" / "indicators"
 IDS = ["cii_broadband", "cii_rent_burden", "cii_no_vehicle"]
 

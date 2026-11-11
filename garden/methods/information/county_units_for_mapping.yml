@@ -8,6 +8,9 @@
 
 id: county_units_for_mapping
 domain: information
+# a preparation method (D-98): only a preparation run may use it, and wonder
+# never offers it as an answer to a question.
+kind: preparation
 name: "County Units, Keyed for Mapping"
 
 description: >

@@ -1,6 +1,9 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# METHOD SCHEMA v1.0
+# METHOD SCHEMA v1.1
 # seeds/schemas/method.schema.yml
+# v1.1 (Sprint 01, D-98): a method has a kind. A preparation method readies
+# data and answers no question; only a preparation run may use one, and a
+# preparation run may use no other.
 # A method declares HOW to answer certain types of questions, with explicit
 # choice points that change meaning. Abstract approach, not instantiated.
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -34,8 +37,20 @@ properties:
 
   domain:
     type: string
-    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, statistical, perception, remote_sensing, policy]
+    enum: [thermal, landscape, hydrology, biodiversity, equity, air_quality, statistical, perception, remote_sensing, policy, information]
     description: Scientific domain this method belongs to
+
+  kind:
+    type: string
+    enum: [experiment, preparation]
+    default: experiment
+    description: >
+      Which kind of run may use this method. experiment methods answer
+      curiosities. preparation methods ready data: they declare what they
+      require and what they produce like any method, so a reading can find
+      the preparation that would supply a missing holding, but they answer
+      no question and are never offered as an answer to one. Omitted means
+      experiment.
 
   description:
     type: string
@@ -95,6 +110,7 @@ properties:
 
   requires_data:
     type: array
+    description: Data this method needs to execute
     items:
       type: object
       required: [name, type, semantic_types]
@@ -115,9 +131,7 @@ properties:
         guidance:
           type: string
           description: Advice on selecting appropriate data
-    description: Data this method needs to execute
-
-    critical:
+        critical:
           type: boolean
           default: true
           description: >

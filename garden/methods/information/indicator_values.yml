@@ -1,0 +1,85 @@
+# ============================================================================
+# garden/methods/information/indicator_values.yml
+# ============================================================================
+# a preparation method (D-98, D-99): it turns raw published counts into
+# indicator values, one declaration at a time, and asks no question. a value
+# applies a definition; a standing compares a unit with others and is
+# analysis, so standings stay in cii_indicator_values. ~
+# ============================================================================
+
+id: indicator_values
+domain: information
+kind: preparation
+name: "Indicator Values from Published Sources"
+
+description: >
+  Derives indicator values from the raw counts their publishers release, one
+  declaration at a time. Each indicator is defined once in seeds/indicators/:
+  which numerator over which denominator, at what scale, or which published
+  value passes through untouched. This applies those definitions to an
+  acquisition and records, on every value, which definition produced it and
+  from which release. It ranks nothing and compares nothing, so it needs no
+  question to run: every place's values are ready for whichever question
+  later asks about them.
+
+requires_data:
+  - name: source
+    type: tabular
+    semantic_types: [indicator_source]
+    critical: true
+    # read as it arrived: a raw published table goes straight into the
+    # derivation, with nothing to conform (WON-9).
+    as_acquired: true
+    role: >
+      Raw published estimates, one row per unit, carrying every variable the
+      chosen indicators need and their margins of error.
+    uncertainty_without: >
+      Nothing to derive from. The preparation cannot run.
+
+choices:
+  aggregation_unit_level:
+    options: [county, county subdivision, tract]
+    default: county
+    description: >
+      The grain the source was acquired at, which is the grain every value
+      describes. A county figure averages over places a town or tract figure
+      would separate; finer grains carry much wider margins of error. In
+      Maine, a county subdivision is a town as the Census publishes it: 529
+      units, not the 924 civil divisions in Maine's own GIS.
+
+requires_primitives:
+  - soil/derive_indicator
+
+produces:
+  semantic_type: indicator_values
+  data_category: tabular
+  description: >
+    One row per unit and indicator: the value, its margin of error or the
+    reason it has none, its authority and its vintage. Values, never
+    standings (MP-75 for towns).
+
+interpretation: >
+  A value is a measurement of one thing, defined one way, at one vintage. A
+  ratio's margin of error is not yet derived and is marked so; read small
+  places with that in mind. A value says nothing about how a place compares
+  with others, and nothing about whether it is enough.
+
+# a preparation is written by hand, not composed from a curiosity, so the
+# indicators are named by the preparation file itself, as a parameter.
+recipe:
+  - id: derive
+    primitive: soil/derive_indicator
+    description: Indicator values from the source, one declaration at a time
+    inputs:
+      source: $requires.source
+    outputs:
+      values: indicator_values
+    params:
+      indicators: $parameters.indicators
+      spatial_unit: $choices.aggregation_unit_level
+      time: $source.vintage
+      authority: $source.authority
+      unit_column: $source.unit_column
+      unit_pad: $source.unit_pad
+      name_column: $source.name_column
+      joins_to: governance_unit

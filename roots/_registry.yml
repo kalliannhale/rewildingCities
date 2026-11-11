@@ -674,47 +674,8 @@ primitives:
 
   # --- indicators/ ---
 
-  derive_indicator:
-    path: indicators/derive_indicator.R
-    version: 0.1.0
-    description: >
-      Indicator values from raw published counts, by declaration. Each
-      indicator arrives as `$indicators.<id>`, resolved by the orchestrator
-      from seeds/indicators/, so the primitive does only the arithmetic it is
-      told: a ratio of summed numerators over a denominator at a declared
-      scale, or a published column passed through. Long-form output, one row
-      per unit and indicator, carrying (unit, indicator, value, authority,
-      method, time). Ratio rows carry no derived margin of error; a
-      passthrough carries its published one.
-    inputs:
-      - name: source
-        semantic_types: [indicator_source]
-        required: true
-        description: Raw published estimates with a GEOID column
-    outputs:
-      semantic_type: indicator_values
-      data_category: tabular
-    params:
-      indicators:
-        type: array
-        description: "Declarations, each written as $indicators.<id>"
-      spatial_unit:
-        type: string
-        description: "What each row is, e.g. county"
-      time:
-        type: string
-        default: null
-        description: "The source's vintage window"
-      authority:
-        type: string
-        default: null
-        description: "Who published the source"
-      joins_to:
-        type: string
-        default: null
-        description: "Semantic type of the units the table joins to, for mapping"
-    preconditions:
-      - no_unresolved_critical: true
+  # derive_indicator moved to soil/_registry.yml (D-99): a value applies a
+  # declared definition, which readies data; a standing is analysis.
 
   standardize_indicator:
     path: indicators/standardize_indicator.R

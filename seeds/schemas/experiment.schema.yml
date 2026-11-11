@@ -1,7 +1,12 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# EXPERIMENT SCHEMA v1.0
+# EXPERIMENT SCHEMA v1.1
 # An experiment binds curiosity to method with resolved choices, applied to
 # a specific place. The instantiation — where abstraction becomes action.
+#
+# v1.1 (Sprint 01, D-98): one schema for two kinds of run. An experiment
+# answers a curiosity. A preparation readies data without asking a question:
+# it has no curiosity, only soil/ primitives, and a method of its own kind.
+# Both run through the same orchestrator and the same precondition gate.
 # seeds/schemas/experiment.schema.yml
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -9,13 +14,52 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "https://rewilding.city/schemas/experiment.schema.json"
 title: "Experiment"
 description: >
-  The instantiation of a method to address a curiosity in a specific place.
-  Resolves all choices, declares the workflow, and binds to a manifest.
+  The instantiation of a method in a specific place. An experiment addresses
+  a curiosity; a preparation readies data and addresses none. Either way it
+  resolves all choices, declares the workflow, and binds to a manifest.
 
 type: object
-required: [id, name, curiosity, method, choices, city, manifest, steps]
+required: [id, name, method, choices, city, manifest, steps]
+
+# the two kinds differ in exactly two ways, and both are enforced here and
+# again by the orchestrator's validate(), so a file that skips the schema
+# is still held to them.
+allOf:
+  - if:
+      properties:
+        kind:
+          const: preparation
+      required: [kind]
+    then:
+      # a preparation answers no question, so it may not name one. absent,
+      # not empty: an empty ref would still read as "a question, unknown".
+      not:
+        required: [curiosity]
+      properties:
+        steps:
+          items:
+            properties:
+              primitive:
+                pattern: "^soil/"
+    else:
+      required: [curiosity]
+      properties:
+        curiosity:
+          properties:
+            ref:
+              minLength: 1
 
 properties:
+
+  kind:
+    type: string
+    enum: [experiment, preparation]
+    default: experiment
+    description: >
+      experiment answers a curiosity with roots/ and soil/ primitives.
+      preparation readies data with soil/ primitives only, names no
+      curiosity, and records its method and choices in lineage as
+      `kind: preparation` (MP-79, D-98). Omitted means experiment.
 
   # ───────────────────────────────────────────────────────────────────────────
   # IDENTITY
@@ -202,7 +246,9 @@ $defs:
       
       primitive:
         type: string
-        description: Primitive to run (soil/{path} or roots/{path})
+        description: >
+          Primitive to run (soil/{path} or roots/{path}). A preparation may
+          use soil/ primitives only.
         examples: ["soil/validate_boundaries", "roots/geometry/generate_buffers"]
       
       version:

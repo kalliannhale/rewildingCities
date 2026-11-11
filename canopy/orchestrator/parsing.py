@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 from .models import (
+    RUN_KINDS,
     Lineage,
     Manifest,
     ManifestDataset,
@@ -88,19 +89,43 @@ def parse_manifest(path: str | Path) -> Manifest:
     )
 
 
+def _run_kind(value, path) -> str:
+    """the declared kind of a run or method, refusing anything but the two
+    known kinds. omitted means experiment, the only kind that existed before
+    D-98, so every older file reads as it always did."""
+    if value is None:
+        return "experiment"
+    if value not in RUN_KINDS:
+        raise ValueError(
+            f"{path}: kind must be one of {', '.join(RUN_KINDS)}; got {value!r}")
+    return value
+
+
 def parse_experiment(path: str | Path) -> Experiment:
     """Parse an experiment YAML file."""
     path = Path(path)
     with open(path, 'r') as f:
         data = yaml.safe_load(f)
 
-    curiosity_data = data.get("curiosity", {})
+    kind = _run_kind(data.get("kind"), path)
     method_data = data.get("method", {})
+    curiosity_data = data.get("curiosity")
+    if kind == "preparation" and curiosity_data is None:
+        # a preparation names no question, so it has no curiosity at all.
+        curiosity_ref, sub_question = None, None
+    else:
+        # an experiment, or a preparation that names a curiosity anyway. the
+        # latter is kept as written so validate() refuses it by name rather
+        # than it vanishing here.
+        curiosity_data = curiosity_data or {}
+        curiosity_ref = curiosity_data.get("ref", "")
+        sub_question = curiosity_data.get("sub_question")
     lineage = Lineage(
-        curiosity_ref=curiosity_data.get("ref", ""),
-        sub_question=curiosity_data.get("sub_question"),
+        curiosity_ref=curiosity_ref,
+        sub_question=sub_question,
         method_ref=method_data.get("ref", ""),
-        choices=data.get("choices", {})
+        choices=data.get("choices", {}),
+        kind=kind,
     )
 
     steps = []
@@ -142,5 +167,6 @@ def parse_method(path: str | Path) -> Method:
     return Method(
         id=data.get("id", path.stem),
         name=data.get("name", path.stem),
-        choices=choices
+        choices=choices,
+        kind=_run_kind(data.get("kind"), path),
     )

@@ -160,18 +160,26 @@ def _candidate_methods(curiosity: dict, methods: dict[str, dict]) -> list[dict]:
         yet, and wonder should say so rather than offer the whole domain
       ~ the field is absent                 -> every method in the domain
     a named method that is not in the index is dropped here, by id; the
-    curiosity loader is where an unknown ref should be refused (WON-3). ~
+    curiosity loader is where an unknown ref should be refused (WON-3).
+
+    a preparation method answers no question, so it is never a candidate,
+    by domain or by name (D-98). the domain fallback would otherwise offer
+    "county units, keyed for mapping" as an answer to a question about
+    news. ~
     """
+
+    answering = {k: m for k, m in methods.items()
+                 if m.get("kind", "experiment") != "preparation"}
 
     if "compatible_methods" not in curiosity:
         dom = curiosity.get("domain")
-        return [m for m in methods.values() if m.get("domain") == dom]
+        return [m for m in answering.values() if m.get("domain") == dom]
 
     named = []
     for entry in curiosity.get("compatible_methods") or []:
         mid = method_id_of(entry)
-        if mid in methods and methods[mid] not in named:
-            named.append(methods[mid])
+        if mid in answering and answering[mid] not in named:
+            named.append(answering[mid])
     return named
 
 

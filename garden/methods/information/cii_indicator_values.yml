@@ -77,7 +77,7 @@ choices:
       groups unorganized townships into single units.
 
 requires_primitives:
-  - roots/derive_indicator
+  - soil/derive_indicator
   - roots/standardize_indicator
 
 produces:
@@ -106,7 +106,7 @@ interpretation: >
 # left for the orchestrator. see canopy/wonder/recipe.py.
 recipe:
   - id: derive
-    primitive: roots/derive_indicator
+    primitive: soil/derive_indicator
     description: Indicator values from the source, one declaration at a time
     inputs:
       source: $requires.source

@@ -285,8 +285,59 @@ class Orchestrator:
             self._validate_param_references(step, errors)
 
         self._validate_method_choices(warnings)
+        self._validate_kind(errors, warnings)
 
         return errors, warnings
+
+    def _validate_kind(self, errors: list[str], warnings: list[str]) -> None:
+        """the two kinds of run, held to what each one is (D-98).
+
+        a preparation readies data and answers no question: it names no
+        curiosity, uses only soil/ primitives, and its method is a
+        preparation method. any of those broken is an error, because a
+        preparation that asks a question is an experiment mislabelled, and
+        its receipts would say so wrongly.
+
+        an experiment answers a curiosity. one with an empty curiosity is a
+        warning, not an error: older Maine experiments predate the curiosity
+        space (D-48, D-64) and still run, but every run says what they lack.
+        the experiment schema requires the curiosity; nothing else enforced
+        it before this, so an empty one ran in silence. ~"""
+        lineage = self.experiment.lineage
+        method_kind = (self._load_method_data() or {}).get("kind", "experiment")
+
+        if lineage.kind == "preparation":
+            if lineage.curiosity_ref is not None:
+                errors.append(
+                    "a preparation names no curiosity, and this one names "
+                    f"{lineage.curiosity_ref!r}. remove the curiosity block, or "
+                    "make it an experiment if it answers that question")
+            roots = [s.id for s in self.experiment.steps
+                     if not s.primitive.startswith("soil/")]
+            if roots:
+                errors.append(
+                    "a preparation uses soil/ primitives only; these steps do "
+                    f"not: {', '.join(roots)}. analysis belongs in an experiment")
+            if not lineage.method_ref:
+                errors.append(
+                    "a preparation records a method and choices in its lineage "
+                    "(MP-79); this one names no method")
+            elif method_kind != "preparation":
+                errors.append(
+                    f"a preparation's method must be a preparation method; "
+                    f"{lineage.method_ref} is kind {method_kind!r}")
+        else:
+            if not lineage.curiosity_ref:
+                warnings.append(
+                    f"experiment '{self.experiment.id}' names no curiosity, so its "
+                    "receipts cannot say what question they answer (D-64). write "
+                    "or choose the curiosity and recompose it, or, if it answers "
+                    "no question, declare it `kind: preparation`")
+            if method_kind == "preparation":
+                errors.append(
+                    f"{lineage.method_ref} is a preparation method, which answers "
+                    "no question; an experiment needs a method that does. declare "
+                    "this run `kind: preparation`, or choose an analysis method")
 
     def _validate_param_references(self, step: StepDefinition, errors: list[str]) -> None:
         def check_value(value: Any, path: str) -> None:
@@ -904,13 +955,20 @@ class Orchestrator:
         """The experiment's scientific lineage and resolution context, as it
         is written into every receipt. One builder, so the copy on disk and the
         copy in memory cannot drift."""
-        lineage_dict = {
-            "curiosity": self.experiment.lineage.curiosity_ref,
-            "sub_question": self.experiment.lineage.sub_question,
-            "method": self.experiment.lineage.method_ref,
-            "choices": self.experiment.lineage.choices,
-            "parameters": self.experiment.parameters
-        }
+        lineage = self.experiment.lineage
+        # `run` names the file that produced the receipt, so a harvest can say
+        # which experiment or preparation it came from, not only its method.
+        lineage_dict = {"kind": lineage.kind, "run": self.experiment.id}
+        # a preparation's receipt names no question: the keys are absent,
+        # never empty, so no reader takes "" for an unknown question (D-98).
+        if lineage.kind != "preparation":
+            lineage_dict["curiosity"] = lineage.curiosity_ref
+            lineage_dict["sub_question"] = lineage.sub_question
+        lineage_dict.update({
+            "method": lineage.method_ref,
+            "choices": lineage.choices,
+            "parameters": self.experiment.parameters,
+        })
         if self._resolution_report:
             lineage_dict["data_resolution"] = self._resolution_report.to_envelope_context()
         return lineage_dict

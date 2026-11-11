@@ -38,7 +38,7 @@ parameters: {}
 
 steps:
   - id: county_derive
-    primitive: roots/derive_indicator
+    primitive: soil/derive_indicator
     description: "Indicator values for every U.S. county"
     inputs:
       source: $manifest.acs_us_county_2024

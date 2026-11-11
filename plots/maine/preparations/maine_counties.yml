@@ -1,5 +1,5 @@
 # ════════════════════════════════════════════════════════════
-# plots/maine/experiments/maine_counties.yml
+# plots/maine/preparations/maine_counties.yml
 # ════════════════════════════════════════════════════════════
 # Conform Maine's county source into administrative units.
 #
@@ -34,18 +34,20 @@ description: >
   an ownership-concentration analysis has a denominator that counts the right
   number of places and carries the FIPS code that joins it to the nation.
 
-curiosity:
-  ref: $curiosity-space/information/information_access
+# a preparation (D-98): this readies data and answers no question. it used
+# to name the information_access curiosity and the ownership method, which
+# described the analysis these units are counted in, not this run.
+kind: preparation
+
 method:
-  ref: $methods/information/ownership_concentration_analysis
+  ref: $methods/information/governance_units_conformed
 
 city: maine
 manifest: ../manifest.yml
 
-choices:
-  concentration_measure: hhi
-  aggregation_unit_level: county
-  outlet_weighting: count
+# the ownership method's choices used to be restated here; none of them
+# changes how a boundary is conformed, so a preparation makes none.
+choices: {}
 
 parameters:
   target_crs: "EPSG:4326"

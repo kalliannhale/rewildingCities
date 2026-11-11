@@ -1,5 +1,5 @@
 # ============================================================================
-# plots/maine/experiments/maine_cousub_indicator_values.yml
+# plots/maine/preparations/maine_cousub_indicator_values.yml
 # ============================================================================
 # four civic indicators at the town grain, where "town" is the Census county
 # subdivision: the unit ACS actually publishes. Maine has 529 of them, not
@@ -17,9 +17,9 @@
 # (D-18). a small town's value should be read as an estimate with a wide
 # band, and the map says so.
 #
-# hand-written, not composed: it answers no single curiosity, since its four
-# indicators belong to different questions. curiosity is left empty rather
-# than borrowed from one of them.
+# a preparation (D-98, D-99), written by hand: it readies values for four
+# indicators that belong to different questions, and answers none of them.
+# it names no curiosity rather than borrowing one.
 # ============================================================================
 
 id: maine_cousub_indicator_values
@@ -29,11 +29,10 @@ description: >
   broadband subscription, limited-English households, rent burden and
   households without a vehicle for each subdivision from ACS 2020-2024.
 
-curiosity:
-  ref: ""
+kind: preparation
 
 method:
-  ref: $methods/information/cii_indicator_values
+  ref: $methods/information/indicator_values
 
 city: maine
 manifest: ../manifest.yml
@@ -54,7 +53,7 @@ steps:
     params: {}
 
   - id: cousub_derive
-    primitive: roots/derive_indicator
+    primitive: soil/derive_indicator
     description: "Indicator values for each county subdivision, one declaration at a time"
     inputs:
       source: $manifest.acs_cousub_2024

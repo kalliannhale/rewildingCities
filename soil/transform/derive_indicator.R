@@ -1,5 +1,5 @@
 # ============================================================
-# roots/indicators/derive_indicator.R
+# soil/transform/derive_indicator.R  (was roots/indicators/, moved by D-99)
 # indicator values from raw published counts, by declaration
 # ============================================================
 # The registry (seeds/indicators/) says what an indicator is: which

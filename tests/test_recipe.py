@@ -41,7 +41,7 @@ DATASETS = {
 METHOD = {"id": "m",
           "requires_data": [{"name": "source", "semantic_types": ["indicator_source"]},
                             {"name": "locations", "semantic_types": ["unit_locations"]}],
-          "recipe": [{"id": "derive", "primitive": "roots/derive_indicator",
+          "recipe": [{"id": "derive", "primitive": "soil/derive_indicator",
                       "inputs": {"source": "$requires.source", "where": "$requires.locations"},
                       "outputs": {"values": "indicator_values"},
                       "params": {"indicators": "$curiosity.indicated_by", "sd": "$choices.sd",

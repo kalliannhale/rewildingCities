@@ -157,13 +157,22 @@ class StepDefinition:
     params: dict[str, Any]
 
 
+RUN_KINDS = ("experiment", "preparation")
+
+
 @dataclass
 class Lineage:
-    """Scientific lineage — where this experiment comes from."""
-    curiosity_ref: str
+    """Scientific lineage — where this run comes from.
+
+    kind is "experiment" (answers a curiosity) or "preparation" (readies data
+    and answers none, D-98). A preparation has no curiosity at all, so
+    curiosity_ref is None for it, never "": an empty string would still read
+    as "a question, unknown"."""
+    curiosity_ref: str | None
     sub_question: str | None
     method_ref: str
     choices: dict[str, Any]
+    kind: str = "experiment"
 
 
 @dataclass
@@ -229,10 +238,11 @@ class MethodChoice:
 
 @dataclass
 class Method:
-    """A parsed method file."""
+    """A parsed method file. kind says which kind of run may use it (D-98)."""
     id: str
     name: str
     choices: dict[str, MethodChoice]
+    kind: str = "experiment"
 
 
 @dataclass

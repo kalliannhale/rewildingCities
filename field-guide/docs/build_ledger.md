@@ -1,13 +1,39 @@
-# Build Ledger ~ additions for Civic Sprint 2a (demo prep)
+# Build Ledger ~ rewildingCities
 
-A delta for `build_ledger.md`. Every decision below was made by Claude without
-consultation, at Kalli's request ("go with what you lean toward"). Each says
-what was decided, what it implies, and what would reverse it, so any of them
-can be revisited without archaeology.
+One ledger for the whole build. Every finding, decision, lesson and wrong
+hypothesis is recorded here with an ID, what it implies, and what would
+reverse it, so any of them can be revisited without archaeology.
+
+## How IDs work here
+
+- **This ledger's IDs never change.** Decisions are D-n, lessons L-n, and
+  findings carry a topic prefix (CII-, MAP-, ACS-, WON-, and so on). New
+  decisions continue from **D-101**, lessons from **L-79**.
+- **Master Plan decisions are MP-67 to MP-81.** The plan numbered them D-67
+  to D-81, which this ledger had already used (D-93). Cite them as MP-n.
+- **The infrastructure plan's D-1 to D-12 and the publish route's P-1 to P-5**
+  are defined in those documents, not here. Cite them as "infrastructure D-n"
+  and "publish route P-n" so they are never read as this ledger's.
+- **Cited but not defined in this file:** D-1 to D-15, L-1 to L-73, P-22,
+  C-65, COR-1, COR-2 (LED-1). D-51 and D-52 were never assigned.
+
+## Where this file came from
+
+Merged in Sprint 00 (2026-11-10) from `build_ledger.md`, which held only the
+Civic Sprint 2a delta, and `ledger_civic_sprint_2a.md`, which held that delta
+and everything through 2026-10-08. Every entry from both is kept with its ID
+and its words. The 2a delta's open, findings, closed, correction and lessons
+blocks, which had drifted to the end of the file, now sit with the rest of 2a.
 
 ---
 
-## DECISIONS ~ add to "Decisions made"
+## CIVIC SPRINT 2a ~ demo prep
+
+Every decision below was made by Claude without consultation, at Kalli's
+request ("go with what you lean toward").
+
+
+### DECISIONS
 
 | ID | decision | implication | reverse if |
 | --- | --- | --- | --- |
@@ -29,7 +55,8 @@ can be revisited without archaeology.
 | **D-32** | Agreement is judged at the publisher's precision: ours agrees if it is within half a unit of the column's last published decimal (revised by PRV-3; it was per row) | The demo claim becomes "agrees at the precision CII published" rather than "difference 0", which full precision cannot print against a 7-decimal file. A real difference still shows as DIFFERS | Never; it is what "matches" means against a rounded publication |
 | **D-28** | `cii_no_vehicle` assumes B08201; B25044 recorded as the second hypothesis in its rationale | The hand check decides. A mismatch is a finding, not a failure | The check fails and B25044 matches: change two codes |
 
-## OPEN ~ add
+
+### OPEN ~ add
 
 | ID | item |
 | --- | --- |
@@ -42,7 +69,7 @@ can be revisited without archaeology.
 | **TST-1** | `test_indicator_preview.py` (31 cases, CSV fixtures) passed in the sandbox through a pytest shim, not pytest itself. Run it under real pytest. Check whether any existing registry test asserts exactly two indicators; it now finds four |
 | **ARG-1** | (carried from last session) `args.R` parses params from a file with `read_json` and inline with `fromJSON(simplifyVector = TRUE)`, so a list param arrives as a list under the orchestrator and a vector by hand |
 
-## FINDINGS ~ add
+### FINDINGS ~ add
 
 | ID | item |
 | --- | --- |
@@ -51,7 +78,7 @@ can be revisited without archaeology.
 | **CII-5** | Published column names, copied from the header for the two unverified entries: `Percent of income spent on rent` (one decimal, consistent with B25071's published precision) and `Percent with no vehicle available` (about 8 decimals, consistent with a derived ratio) |
 | **CII-6** | 318 of 3 144 FIPS codes are four digits, with the leading zero lost (states 01 to 09). `normalise_fips` restores them; any join that skips this silently drops nine states |
 
-## CLOSED ~ add
+### CLOSED ~ add
 
 | ID | item |
 | --- | --- |
@@ -63,13 +90,13 @@ can be revisited without archaeology.
 | **D-17v** | Verified on Kalli's machine: `plots/maine/.data/acs_county_2024.parquet` exists, so plot-relative cache resolution is correct |
 | **API-1** | Router mounted at the end of `canopy/api/app.py`. Checked every existing route: nothing shadows `/plots/{plot}/indicators`, and CORS already allows GET |
 
-## CORRECTION ~ add to "Withdrawn"
+### CORRECTION ~ add to "Withdrawn"
 
 | ID | claimed | actually |
 | --- | --- | --- |
 | **COUNT-2** | Adding rent burden and no-vehicle takes the acquisition from 14 to 22 variables | **20.** The no-vehicle weight is its own denominator and is deduplicated. Verified by `resolve_variables` (21 in the request with NAME). Plausible arithmetic stated as fact; the fifth instance of L-69's family |
 
-## LESSONS ~ add
+### LESSONS ~ add
 
 **L-74 ~ A preview that says it is a preview is honest; one that does not is a
 lie with good formatting.** The label has to be on every row, not only on the
@@ -79,3 +106,324 @@ response, because rows get copied out of responses.
 Written once tonight, caught on reread, replaced with an explicit branch. A
 line that needs a second read to know what it iterates over will eventually
 be read once.
+
+## SPRINT 2b ~ the pipeline path (added after the demo-prep commit 66be662)
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-33** | A new reference type, `$indicators.<id>`, resolved by `ReferenceResolver` in params only, to the indicator's declaration from the registry | R never reads YAML; a variable code is written in one place. The full declaration lands in the step's provenance params, so every envelope records the definition that produced it. `$indicators` as an input is refused by name | A second consumer needs a different shape: add a method beside `as_declaration`, never a second parser |
+| **D-34** | `IndicatorRegistry.declaration(id)` carries the sha256 of the file the indicator is declared in | An edit to `cii_2026.yml` changes the hash, so two envelopes made from different versions of a definition are distinguishable even where the values agree | A per-indicator hash is wanted rather than per-file: hash the canonical JSON of the declaration instead |
+| **D-35** | `time`, `authority`, `spatial_unit` reach `derive_indicator` as experiment params, written in the experiment | **A duplication**: the vintage is already in the manifest. Accepted for one experiment; the fix is a `$sources.<dataset>.<field>` reference so the experiment points at the manifest instead of restating it | That reference exists |
+| **D-36** | `derive_indicator.R` refuses declarations that arrive as a data.frame (inline JSON) instead of half-parsing them | ARG-1 is contained at this primitive; hand-testing must pass params as a file, which is what the oracle test does | ARG-1 is fixed in `args.R` |
+| **D-37** | The oracle test runs the primitive through `Rscript` with params as a file, exactly as the orchestrator does, and compares value, moe, moe_status and empty_reason to the Python preview | The preview is now used as what D-16 said it was. Skipped where Rscript or rewildr is absent, so it is silent in CI without R | Never |
+
+| **D-38** | The method `cii_indicator_values` requires only `indicator_source`, and says in its own words that it produces raw values, not scores | A value from this method cannot be read as a rank or a standard, because the method declares it is neither |  Never |
+| **D-39** | `map` refuses a choice it used to make: more than one candidate result or layer is refused with their names, chosen with `--result` / `--layer` (fixes MAP-1) | **Behaviour change.** A command that worked by luck now asks. If the NYC flow relied on first-by-filename, it will now name its candidates and stop | Never; the luck was the bug |
+| **D-40** | A long-form table maps one indicator at a time (`--indicator`), joined on its declared key: `unit_authority: us_census_geoid` means the layer's `GEOID`. A layer without it is refused by name | No county is ever matched by name. Each indicator writes its own `harvest/map_<indicator>.geojson` | A second unit authority appears: add it to `_UNIT_KEYS` |
+| **D-41** | An empty value is drawn grey at lower opacity, counted in `rewilding:map.empty_values`, and never placed on the color ramp | A gap reads as a gap, not as the lowest value. NaN no longer breaks the ramp for the whole map | Never |
+| **D-42** | `soil/transform/assign_geoid.R` derives GEOID as state FIPS + county code zero-padded, refusing non-numeric codes, codes wider than declared, duplicate GEOIDs, and an existing output field | The join the manifest called derivable becomes a recorded step with an envelope. Refusing duplicates keeps an undissolved layer from multiplying joined rows | A layer arrives already carrying an authoritative GEOID: skip the step |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **MAP-1** | `map` keyed envelopes by semantic type and kept the first by filename. Maine's counties and towns are both `governance_unit`; counties won because "c" sorts before "t". Fixed by D-39 |
+| **MAP-2** | `map` colored by the first numeric column when nothing was declared, and refused to color at all if any value was empty, since one NaN failed the all-numeric check. Fixed by D-40 and D-41 |
+| **EXP-1v** | Verified on Kalli's machine: `visuals.render` calls `_publish_arcgis` whenever `_arcgis_reachable()`, lines 162 to 164. Her `visuals.py` differs from the project copy (sha 4814f98 vs 21ac8aa), so the fix waits for the current file. **Until then, the descriptor path of `rewilding map` publishes to ArcGIS Online whenever credentials are present** |
+| **REG-5** | `roots/_registry.yml` declares ten primitives twice. YAML keeps the second silently. All ten pairs differ: most in description, `score_composition` in inputs, outputs and params, `space_cooling_potential` in version and params. The vocabulary refuses this loudly; the registry loader does not. Left untouched tonight |
+| **COR-3** | `correlation_analysis.R` emits no `crs`, which `envelope.schema.json` requires, so its envelope would fail validation. It is also absent from `roots/_registry.yml`, so nothing can run it. Joins COR-1 and COR-2 |
+| **EXP-1** | **From the project-folder copy of `canopy/visuals.py`, possibly stale; verify.** `render()` publishes to ArcGIS Online whenever the machine is online and `GIS("home")` has credentials, with no gate and no confirmation, and swallows any publish error. The choropleth path in `map.py` never publishes; only the descriptor fallback does. If current, this is the publish P-22 exists to prevent |
+| **TPL-1** | `method_template.yml` and `experiment_template.yml` in the project folder are empty files |
+| **API-4** | `derive_indicator.R` was written without R in the sandbox. **First execution, on Kalli's machine: the oracle test passed.** R and Python agree exactly on every value, margin, status and empty reason |
+| **API-5** | `assign_geoid.R` was written without R in the sandbox and has not run. It needs a soil registry entry, which waits for the current `soil/_registry.yml` |
+
+## SPRINT 2c ~ standing among the nation
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **CII-8** | **CII's per-indicator percentile rule, recovered from CII's own file.** Average rank of the oriented value (negated for the 12 reversed indicators), divided by the **largest rank**, times 100, over the counties that have a value. Reproduces **26 of 27** percentile columns across all 3 144 counties to CII's rounding (max difference 5e-8). The textbook `rank / n` differs only when the top value is tied, and then badly: 22 points for total news outlets, 17 for high-poverty neighbourhoods, 0.14 for no-vehicle (ten counties tied at 0%). Each indicator's reference population is its own: rent burden ranks 3 129 counties, not 3 144, so missing values are excluded, not imputed, at this stage |
+| **CII-9** | The 27th, journalist equivalents, fails by 0.68 because CII's published raw values are rounded to 8 decimals while its percentiles were computed unrounded: about 100 Illinois counties show an identical `0.05545795`, yet CII ranks Clark County above the rest. A lossy publication, not a different rule. **Hypothesis, unverified:** a whole state sharing one per-capita value looks like a state figure broadcast to counties, as volunteer rate is |
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-43** | The Maine plot holds a national acquisition, `acs_us_county_2024` (`state: "*"`), because CII's reference population is the nation and Maine is a view onto it | 3 222 rows, Puerto Rico's 78 included. Belongs in the grove; lives here, declared, until the grove exists. `indicator_preview` and `compare` now need `--dataset` for these indicators, since two sources list them (D-21 working as designed) | The grove holds reference populations |
+| **D-44** | Puerto Rico is excluded from the reference population by a declared param (`exclude_state_fips: ["72"]`), never by filtering the acquisition | The data stays whole; the population is a stated choice; an excluded unit keeps its row with no standing and the reason | Never |
+| **D-45** | One primitive, `standardize_indicator.R`, gives an oriented z-score and CII's percentile per unit and indicator | The percentile is checkable against CII and checked; the z is not, and says so | Pillar composition needs z separately: split then |
+| **D-46** | The z-score's SD convention is a required choice (`sd: sample` or `population`), with no default anywhere in the primitive | CII does not publish z-scores, so its convention cannot be recovered; making it a choice keeps an unrecoverable fact from becoming a silent one. At n of about 3 000 the two differ by under 0.02 percent | CII publishes its z-scores or documents the convention |
+| **D-47** | A new semantic type, `indicator_standings`, named for what it is: a relative standing. Its description states it cannot express a standard | Nothing downstream can read a percentile as sufficiency without contradicting its own type | Never |
+| **D-48** | The experiment's `curiosity.ref` is empty, because no civic-information curiosity exists in the curiosity space yet | **Unverified** whether the resolution engine or lineage enrichment requires one. If the run complains, the fix is a curiosity file, not a workaround | A curiosity is written |
+| **D-49** | `map` colors a long-form table by `percentile` when it has one, else by `value` | A standings map shows standing. Joined to Maine's 16, the other 3 206 rows are reported as unjoined, which is expected and printed | A `--color-by` option is wanted |
+| **D-50** | The national manifest block is delivered as an append file, not a whole-manifest replacement | The live manifest has been edited by the surgeon since it was last shared; replacing it would undo recorded acquisition state | Never for the manifest |
+
+### OPEN
+
+| ID | item |
+| --- | --- |
+| **API-6** | `standardize_indicator.R` has not run; `tests/test_standardize_oracle.py` is its first execution |
+| **CII-10** | Run `compare --percentile --dataset acs_us_county_2024 --exclude-states 72` for each indicator once the national source is acquired: ours against CII's percentile columns, all 3 144 counties |
+
+## DEMO ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **DEMO-1** | `demo/civic.html`: a sibling to `index.html`. The agreement matrix is computed in the browser from the live API against CII's published Maine values, embedded with their original strings so precision is the column's. Simulated against Kalli's real values from 2026-10-07: 48 of 48. Registry and sources are live; the 409 refusal to choose between two sources is shown live. The 27-indicator rule table and the findings are static and labelled static |
+| **DEMO-2** | `garden/experiments/demo_precondition_gate.yml`, wrong on purpose: raw ACS into `standardize_indicator`. The real `check_preconditions` was run against it: refused with "provenance_contains: derive_indicator not satisfied"; the correctly wired input is approved with both approvals recorded as notes |
+| **DEMO-3** | `demo/RUN_OF_SHOW.md`: 25 minutes, nine moments, a do-not-claim list |
+| **TMP-1** | Temporal tracking, located: the manifest schema's `temporal` block (snapshot, seasonal, annual, multi-year composite; year; range; season), carried on `ManifestDataset.temporal` but read by nothing found so far; the provider's `vintage_window`; the append-only `.manifest_changelog.yml`; `time` on every derived row; D-21's refusal to mix vintages. Not built: series across vintages |
+
+## NATIONAL CHECK ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **ACQ-5** | `acs_us_county_2024` acquired: 3 222 counties (Puerto Rico's 78 included), 10 variables, 2 changelog entries. The acquire report named both indicator_source holdings as "a choice for you, not for the engine" |
+| **PRV-4** | The column-precision rule from PRV-3 was wrong for CII's percentile columns, which are written to a fixed **width** of 10 characters, not fixed decimals: `92.3664122` (7 dp), `5.08905852` (8 dp), `0.03180662` (8 dp). It reported 593 of 3 144 agreeing for broadband when every difference was under 5e-8. Precision is now inferred from the format: where at least 75 percent of rows share one width, each row is held to the decimals a full-width rendering would have, so a short row with dropped zeros is held strictly (this also covers PRV-3: "30" in a width-4 column is 30.0). Otherwise, the column's most decimals. Validated by feeding CII's own raw values through `compare`: 3 144, 3 129 and 3 144 agree. A real 1e-6 difference still fails |
+| **CII-11** | **CII left rent burden blank for 15 counties the ACS publishes**: Hancock GA, West Feliciana LA, Esmeralda and Eureka NV, Harding NM, Harding SD, Borden, Briscoe, Glasscock, Kenedy, King, Loving, McMullen and Terrell TX, Webster WV. Among the smallest counties in the country (Loving: 33 people). Ranking 3 144 counties instead of CII's 3 129 shifts every percentile by up to 0.25 points. **Why CII dropped them is unknown.** Hypothesis: the ACS median sits in an open-ended interval there ("50.0+" or "10.0-"), which ACS-6 also points at. Check by printing our values for those 15 |
+| **D-53** | `compare --match-published-population` ranks only the units the publisher has a value for, so a check of the percentile rule is not confounded by a difference in who was ranked. Units left out are listed by name. A replication setting, not an analytical one: the experiment's own population stays the declared one |
+| **CMP-1** | `compare` listed the 78 Puerto Rico municipios as `only_ours` though they were excluded by declaration. Now counted separately as outside the population by declaration |
+
+## SPRINT 2d ~ CII's method, end to end
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **CII-12** | **Who CII imputes, and who gets an index, recovered from its file.** Exactly 461 counties miss one indicator, and every one has all five pillars and an overall index: those are the imputed. The 163 missing two or more have no overall index and keep only the pillars with no missing component: a pillar with a gap is dropped, never averaged over what remains. Reproduced exactly by the oracle for all five pillars and the overall |
+| **CII-13** | **Environmental Resilience is three indicators, not five:** household energy burden, disaster damages, heat wave days. The build guide's membership (adding unemployment and rent burden, "each in two pillars") was wrong. In all 13 multi-gap counties missing rent burden, CII still publishes this index, which is impossible if rent burden were a member; and these three on equal weights reproduce CII's ordering at Spearman 0.9993. With the correction, the 27 indicators partition the five pillars exactly, 7 + 6 + 4 + 7 + 3. This is the pillar the documentation-discrepancy finding said has no source documentation |
+| **CII-14** | **Equal chips nearly reproduce CII's ordering.** Spearman against CII's published indices: News 0.990, Civic 0.988, Equity 0.999, Health 0.992, Environmental 0.999, Overall 0.987. The remaining gap is the unpublished advisory-group weights. Maine's overall percentiles land within 0 to 12 points of CII's |
+| **RWR-1** | `safe_read_table` read CSV with R's default `check.names = TRUE`, which silently rewrote any column name with a space or punctuation: `Percent of households with broadband` became `Percent.of.households.with.broadband`, so a declaration naming the published column could never find it. Fixed with `check.names = FALSE`. **rewildr must be reinstalled for it to take effect** |
+| **IDX-1** | The oracle treated only `None` as missing, so a `NaN` (what every value read back from parquet becomes) passed as present and poisoned the composite: overall Spearman fell to 0.099. Now `None`, `NaN` and `pd.NA` are all missing |
+| **MAN-1** | The manifest append file for the national acquisition still began with `acs_us_county_2024`, already appended. Appending it again would have duplicated the key and YAML would have kept the second silently. Split into a file with only the new datasets |
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-54** | CII's published file is an authority in the system: `cii_2026_published`, an `indicator_source`, with 27 passthrough indicators generated from its header (`seeds/indicators/cii_2026_published.yml`) | CII's full method runs today. Three of the 27 share `measures` with this system's Census derivations, so `registry.measuring()` returns both authorities side by side | Providers exist for the original sources: the published passthroughs remain as the replication reference |
+| **D-55** | `$weights.<id>` resolves a declared weighting with its sha256, as `$indicators` does. Weightings live in `seeds/weights/`, loaded by `canopy/weights.py`, which refuses a missing `is_publishers_weighting`, an undeclared indicator, or a CII chip budget spent wrongly | Every index records whose weights produced it and which version of the file | Never |
+| **D-56** | Tonight's weighting is `cii_2026_equal_chips`: CII's budget (10 x n within, 50 across), spent evenly, declared `is_publishers_weighting: false` | `weighted_index` warns on every run that the weighting is not CII's | CII publishes its allocation: add it as a second file |
+| **D-57** | `derive_indicator` reads a unit key other than GEOID (`unit_column`, `unit_pad`, `name_column`), refusing codes that are not digits, wider than declared, or duplicated | A published file that lost leading zeros (CII-6) is repaired by declaration, and the padding is recorded as an info warning | Never |
+| **D-58** | `impute_nearest_neighbor.R`: only units missing exactly one; donors are complete units; stage one is the k = 10 smallest sums of absolute z differences across the other indicators, stage two the nearest by great-circle distance (mean Earth radius 6371.0088 km). Ties break on similarity then GEOID in C-locale order. The donor's z is copied; each imputed row records donor, similarity, distance and shortlist | Exact agreement with the oracle is designed for: sequential sums in declared order, `s * s` squares. Percentiles are not recomputed for imputed values, since CII's precede imputation | CII documents a different similarity or donor rule |
+| **D-59** | `weighted_index.R` serves both levels: pillars from z-scores, composite from pillar percentiles, all components required at both | One rule, used twice, held to one oracle | CII's composite turns out to average pillar scores rather than percentiles: the presence check could not tell, and the 0.987 suggests percentiles are right |
+| **D-60** | `unit_locations` is stored as parquet, and `impute_nearest_neighbor` refuses a numeric GEOID | CSV read by R would turn 01001 into 1001 and silently match nothing in nine states | Never |
+| **D-61** | A method of its own, `cii_full_method`, declaring locations as critical and naming what their absence costs: no county is imputed, and 461 lose their overall index | The experiment's lineage names the method that actually describes it | Never |
+
+### OPEN
+
+| ID | item |
+| --- | --- |
+| **API-7** | `impute_nearest_neighbor.R` and `weighted_index.R` have not run; `tests/test_index_r_oracle.py` is their first execution |
+| **MAP-3** | The end-to-end map still needs the dissolved Maine counties to carry a GEOID: `assign_geoid.R` needs its soil registry entry and the county chain from the ownership experiment |
+| **GUIDE-1** | The CII replication build guide's pillar table is wrong for Environmental Resilience (CII-13) and its volunteer rate is wrong (CII-4). Correct both before it travels |
+
+## THE CURIOSITY SPACE ~ 2026-10-08
+
+### CORRECTIONS, from the 2026 CII report itself
+
+| ID | claimed | actually |
+| --- | --- | --- |
+| **CII-13r** | Environmental Resilience was "the pillar with no source documentation", and its three-member composition a discovery | The report lists exactly those three indicators (p. 14) and every pillar's membership (pp. 15-19). The build guide was wrong; CII was not. What remains true: the data file's documented-sources table omits the pillar's sources |
+| **CII-4r** | Volunteer rate is a state value broadcast to counties, unflagged | The report labels it "percent of state residents" (p. 16). Unflagged in the data file and dashboard, disclosed in the report |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **CII-15** | **CII's "Total news outlets" column holds only 0, 1 or 2**, integers, for every county in the nation. The report describes "total news outlets per 10,000 population" (p. 15). Cumberland is 2; Androscoggin, home of the Sun Journal, is 0. Likely an ordinal class (perhaps Medill's news-desert categories) rather than a count or rate. **Hypothesis: verify against Medill's coding.** If true, it explains why CII-8's `rank / n` ran 22 points off for this column: three values, enormous ties |
+| **CII-16** | The report gives mental health providers per 100 000 on p. 14 and per 10 000 on pp. 18 and 39; the data column says per 10 000, and Maine's values (32 to 89) fit per 10 000 |
+| **CII-17** | CII lists its own missing indicators: multilingual media, newsroom diversity, power-building organisations, belonging, civic education and attitudes, representation, community priorities, historical news deserts, cost of voting, working two or more jobs, walkability. Each is a curiosity with no method yet |
+| **WON-1** | `possibility._candidate_methods` treats `compatible_methods: []` like an absent key and falls back to every method in the domain. A curiosity declaring "no method yet" would be offered every information method, including ownership concentration for "how does information move through my community". Absent should fall back; empty should mean none. Not fixed: the current `possibility.py` is needed |
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-62** | Canopy reorganisation, agreed in principle, not yet done: `canopy/indicators/` (registry, weights, preview, oracle), `canopy/core/` (envelope, primitive, pr_io, vocabulary, introspect, paths), `canopy/render/` (visuals), `canopy/infra/` (aws, terraform) | Every import moves; the grep of current imports comes first so no move is guessed | |
+| **D-63** | Fifteen brainstorm curiosities in `garden/curiosity-space/information/`, v0.1.0. Each is one question; its sub-questions name their indicators in a proposed `indicated_by` field; four declare `compatible_methods: []` on purpose | All 31 registry indicators are asked about by some curiosity. `indicated_by` is read by nothing yet; compose needs it to bind a curiosity's indicators into the experiment it writes | The field is rejected: move the bindings into methods |
+| **D-64** | The experiments written by hand earlier (`maine_cii_standings_2024`, `cii_full_method_2026`) predate the curiosity space and carry empty `curiosity.ref`. They should be recomposed by wonder once compose reads `indicated_by` | Hand-written experiments are scaffolding, not the design | |
+
+## CURIOSITY SCHEMA v1.1 ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **D-65** | `seeds/schemas/curiosity.schema.yml` v1.1 declares `compatible_methods` (array of `{ref, fit, description, sub_questions}`, `fit` in direct, complementary, partial) and `indicated_by` on sub-questions. An empty `compatible_methods` declares "no method yet"; omitting it falls back to the domain. Refs name a method by its index `id`. The schema stays open; closing it waits until existing curiosities conform. `partial` and `sub_questions` are new; `direct` and `complementary` were already in use |
+| **D-66** | The 15 information curiosities, v0.2.0, use the object form: 11 bind methods with an honest fit, 4 declare none. All valid under v1.1, cross-references included (methods in the index, sub-question keys real, indicators in the registry) |
+| **WON-2** | `possibility._candidate_methods` does `str(ref).split("/")[-1]` on each entry, which on the established object form produces a fragment of a dict's repr and matches nothing. The thermal curiosity's explicit bindings have never been used; it has always fallen back to every thermal method, which looked plausible and so was invisible. Fix: read `entry["ref"]` when an entry is a mapping |
+| **WON-3** | `thermal_landscape_analysis` refers to `$methods/thermal/thermal_gradient_analysis`, the method's file name; its id is `buffer_gradient_analysis`. With WON-2 fixed, this binding would still miss. Fix the ref, and have the loader refuse a ref that names no indexed id |
+| **SCH-1** | In the project-folder copy (possibly stale), `thermal_landscape_analysis` did not conform to v1.0 either: `name` instead of the required `question`, sub-questions without `question`, and a `requires` data block in a curiosity, which the schema says declares no data. Worth checking the live file |
+| **WON-4** | A curiosity loader should check what JSON Schema cannot: a method's `sub_questions` are keys of the curiosity, `depends_on` names real keys, `indicated_by` ids are declared indicators, refs name indexed methods. The validation script used tonight does all four and could become `canopy/wonder/curiosities.py`'s loader |
+
+## WONDER BINDING ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **SCH-1v** | Verified on Kalli's machine with jsonschema: `thermal_landscape_analysis.yml` fails v1.1 and v1.0 alike (no top-level `question`; three sub-questions without one). `image_composition_validity` and `park_cooling_effect` are valid |
+| **SCH-2** | `information_access.yml` writes `compatible_methods` as a bare string, `information/ownership_concentration_analysis`. Both shapes exist in the garden. v1.1 declares only the object form; the reader accepts both (L-70), and the file should migrate once its `fit` is chosen by its author |
+| **WON-1f, WON-2f** | `possibility._candidate_methods` now reads both shapes through `method_id_of`, treats `[]` as no method and an absent field as the domain fallback, and de-duplicates. **Not yet verified as the live path:** `explore()` binds through `reading.read_plot`, and nothing in `possibility.py` calls `_candidate_methods`; whether `reading.py` imports it is unknown until that file is read |
+| **WON-3c** | Consequence of honest binding: `thermal_landscape_analysis`'s complementary method, referenced by file name, used to appear through the domain fallback and now does not. The fix is the ref (`buffer_gradient_analysis`), not a fallback |
+| **WON-5** | Both loaders, `possibility._load_dir` and `wondering._load_by_id`, swept every `*.yml` and loaded `curiosity-space/index.yml` as a curiosity named `index`. Both now skip `index.yml` |
+| **WON-6** | `compose` could not draft an indicator experiment: a string `requires_primitives` entry fell through to the placeholder `roots/analysis`; a tabular input was given `soil/validate_vector` and a reprojection, against the frame law; and no params were bound. The first two are fixed. **The third is a design fork:** compose has no way to fill a primitive's params, such as `indicators`, from the curiosity's `indicated_by` |
+
+## RECIPES ~ option A, 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **D-67** | A method may declare a `recipe:`, its own steps. `compose` fills compose-time references and writes plain values into the experiment: `$requires.<name>` (bound dataset), `$curiosity.indicated_by` (the chosen sub-question's indicators the bound source can serve), `$weighting.<id>.components`, and `$source.<fact>` (authority, vintage, unit_column, unit_pad, name_column, read from the manifest). `$choices`, `$steps`, `$weights`, `$indicators` and literals pass through for the orchestrator. Implemented in `canopy/wonder/recipe.py`, wired into `wondering.compose`; a method without a recipe gets the old draft |
+| **D-68** | Binding a requirement: chosen, or the only candidate, or none (left visibly missing). Two or more candidates is a refusal naming them. A chosen dataset that cannot serve the requirement is refused |
+| **D-69** | An indicator the curiosity names but the bound source cannot serve becomes a guidance note naming the dataset that can, never a silent drop and never averaged in. One question with two authorities composes as two experiments |
+| **D-70** | A compose-time parameter that resolves to nothing is left out of the experiment, so the primitive's default applies and the file never claims a null |
+| **D-71** | `cii_2026_published` declares `unit_column: FIPS`, `unit_pad: 5`, `name_column: Name` and `temporal.label: CII 2026 edition` in the manifest. The unit repair and vintage are said once, by the source. Retires D-35's hand-typed duplication for composed experiments |
+| **D-72** | Hand-written experiments `maine_cii_standings_2024` and `cii_full_method_2026` are superseded: compose now writes the same chains with real curiosity and method refs. Keep them until a composed run has succeeded, then retire them |
+| **WON-7** | `wondering._manifest_types` keeps the first dataset of each semantic type, so the generic draft would bind `acs_county_2024` over `acs_us_county_2024` in silence (MAP-1's pattern). The recipe path uses `_manifest_datasets` and refuses instead; the generic draft still has the old behaviour |
+| **SCH-3** | `recipe` is not declared in the method schema. Needs the current `method_schema.yml` |
+
+Verified in the sandbox against a copy of the real seeds, curiosities and methods: broadband's `subscription` composes to `cii_broadband` from the ACS and `cii_pub_broadband` from CII's file, each naming the other; `civic_health_overall` composes CII's five-step chain with 27 indicators; every composed parameter resolves through the real `ReferenceResolver`, and no compose-time reference reaches an experiment. 11 recipe tests, 10 binding tests.
+
+## D-62, PART ONE ~ canopy/indicators/
+
+| ID | item |
+| --- | --- |
+| **D-62a** | `canopy/indicators/` is a package: `registry.py` (was `canopy/indicators.py`), `preview.py` (was `canopy/indicator_preview.py`), `oracle.py` (was `canopy/index_oracle.py`), `weights.py` (was `canopy/weights.py`). `__init__.py` exports `Derivation`, `Indicator`, `IndicatorRegistry`, so `from canopy.indicators import IndicatorRegistry` is unchanged everywhere, including `census_acs.py`. 26 references rewritten across code, tests and docs; none of the old paths remain. The hand check is now `python -m canopy.indicators.preview`. 107 Python tests pass in the new layout |
+| **REORG-1** | The move was started by hand without an `__init__.py`, so Python treated the folder as a namespace package and `canopy.indicators` exported nothing ("unknown location"). It surfaced in one test because only that one imported the registry in that run |
+| **REORG-2** | The hand-moved `indicator_preview.py` (30 725 bytes) was older than the latest (34 079): it lacked PRV-4's format-aware precision and `--match-published-population`. The finished package carries the latest |
+| **D-62 remaining** | `canopy/core/`, `canopy/render/`, `canopy/infra/` still to move, each after its own import grep |
+
+## FIRST COMPOSED RUN, AND WHAT WONDER WOULD HAVE SAID ~ 2026-10-08
+
+| ID | item |
+| --- | --- |
+| **RUN-1** | **The first composed experiment ran end to end**: `maine_broadband_access_subscription__cii_indicator_values_91b5c0`, composed by `wonder.compose` from `broadband_access.subscription` and the `cii_indicator_values` recipe, bound to `acs_us_county_2024`. Two steps, two envelopes, 3 222 rows. All 16 Maine percentiles agree with CII's published broadband percentiles to the four decimals printed (max 0.00005) |
+| **WON-1v, WON-2v** | Verified as the live path: `reading.read_plot` imports `_candidate_methods` from `possibility`, so the binding fix governs `wonder` |
+| **WON-8** | A method's `reference_population` choice does not constrain which source binds. Binding `acs_county_2024` under the default `nation_50_states_dc` would label a Maine-only percentile as national. The choice should constrain the binding, or the binding should set the choice |
+| **WON-9f** | `reading._read_method` met requirements only from conformed tiers, so a raw indicator source, which a derivation reads as it arrived, could never be met and every civic method read as blocked. A requirement may now declare `as_acquired: true`; it is met when the manifest marks the dataset available and its file is on disk, and the reading labels it `as_acquired`. Declared-but-unfetched stays a gap. Both civic methods declare it on their source (and the full method on its locations). `compose` still counts any tier as present, a looser reading than this; the two should converge |
+| **WON-10** | `compose`'s guidance lists every sub-question under "what you will learn" even when composed for one. It should name the chosen sub-question and list the rest as needing other data |
+| **WON-11** | `explore` emitted one possibility per method, so a curiosity declaring `compatible_methods: []` vanished from `wonder`. It is now rendered with the verdict `unanswered`, last in order, saying no method answers it yet |
+| **WON-12** | `read_plot` skips any curiosity without a `question`, silently. `thermal_landscape_analysis` (SCH-1) is therefore absent from `wonder`. Correct to skip, wrong to be silent: the reading should report what it could not read |
+| **D-73** | `assign_geoid` registered in `soil/_registry.yml`. A preparation method, `county_units_for_mapping`, carries the county chain as a recipe (repair, dissolve on COUNTY after filtering ISLAND n and LAND y, GEOID from CNTYCODE). A hand-written experiment, `plots/maine/experiments/maine_county_units.yml`, runs it with `units_*` step ids so the ownership experiment's county artifacts are not overwritten. Preparation answers no curiosity, so it is not composed from one |
+| **MAP-4** | With the GEOID'd counties, `rewilding map maine indicator_standings --indicator cii_broadband --layer units_geoid_with_geoid` should draw Maine's 16 counties colored by national percentile, reporting the other 3 206 rows as unjoined. The publish latch (EXP-1) is still not built; the map writes geojson only |
+
+
+## AFTER 2026-10-08 ~ the commits the October ledger never recorded
+
+Written in Sprint 00 from `git show --stat`, commit messages and the code
+comments each change left behind. Where a commit's intent cannot be read from
+its files, the line says so and leaves it to Kalli rather than guessing.
+
+### ID collisions found in code comments
+
+The code reused four IDs the October ledger had already given to other
+things. The code comments are left as they are for now; the ledger gives each
+code meaning a fresh ID and says which comment it answers to.
+
+| ledger ID | code comment says | what the October ledger meant by that ID |
+| --- | --- | --- |
+| **MAP-5** | MAP-2 (`map.py`, 6c8ffeb) | MAP-2: `map` colored by the first numeric column (fixed by D-40, D-41) |
+| **MAP-6** | MAP-3 (`map.py`, 6c8ffeb) | MAP-3: dissolved counties need a GEOID (open) |
+| **MAP-7** | MAP-4 (`map.py`, 6c8ffeb) | MAP-4: the end-to-end county map should draw (expected result) |
+| **ACS-8** | ACS-6 (`census_acs.py`, 6f1fa76) | ACS-6: `-333333333` labelled "not applicable", unverified |
+
+### DECISIONS
+
+| ID | commit | decision | implication | reverse if |
+| --- | --- | --- | --- | --- |
+| **D-82** | 035b89a | `dissolve_by_field.R` fails, never warns, when the groups do not each get their own geometry or two groups come out the same shape (GEO-1) | A dissolve that hands every unit one geometry stops the run instead of producing sixteen counties that are each the whole state. Tested against the real R primitive; skipped without R | Never; the reduction lying about itself is the bug |
+| **D-83** | 035b89a | `demo/render_choropleth.py` draws a harvest GeoJSON to a readable PNG | The demo image is a rendering of a harvest, so it is regenerable from one | A rendering is wanted from the publish door instead |
+| **D-84** | 6c8ffeb | Scientific lineage is attached to every envelope **before** its receipt is written; gap scars, known only after the run, are rewritten into the scarred receipts in place, and a failed rewrite is reported (LIN-1) | Receipts on disk and the harvests read from them carry lineage instead of `lineage: null`, and a caveat the run earned reaches the harvest | Never |
+| **D-85** | 6c8ffeb | A choropleth keeps every unit of its layer: a unit with no row is drawn empty and counted, never dropped (MAP-5). Unmatched rows are split by GEOID state prefix into rows outside this place (expected) and rows of this place that failed to join (a defect) | A town the source never measured stays on the map. A join defect can no longer hide inside the national reference population's unjoined count | A second unit authority needs its own scope rule: add it beside the GEOID one |
+| **D-86** | 6c8ffeb | The result's processing chain and warnings travel inside the harvest as `rewilding:provenance` (MAP-6); the layer is part of the harvest's name, `map_<indicator>__<layer>.geojson` (MAP-7) | A published layer can say what produced it and what the run warned about. County and town maps of one indicator no longer overwrite each other | Never |
+| **D-87** | 6c8ffeb | Towns are the Census's county subdivisions: `acs_cousub_2024` and `governance_unit_cousub` (TIGERweb, layer 1), 529 units, not the 924 civil divisions in Maine's own GIS | Values exist at the grain the ACS publishes. Unorganized townships are grouped as the Census groups them | Maine's 924-division geography is needed: a crosswalk, built as a preparation |
+| **D-88** | 6f1fa76 | Census annotations are matched as numbers, whatever decimals they are written with (ACS-8) | `-666666666.0` on a median is recognised like `-666666666` on a count. Maine towns without renters no longer carry a rent burden of minus 666 million on the town map | Never |
+| **D-89** | 4692b72 | Codes the provider empties are kept in a `<variable>_annotation` column; `-333333333` and `-222222222` relabelled | Which cell was emptied, and why, is no longer lost. Closes ACS-5 and the October ACS-6. A source acquired before this has no annotation column, and preview says so and asks for a re-acquire | The Census API's `_EA`/`_MA` variables prove cleaner |
+| **D-90** | a607c53 | A passthrough derivation may declare `open_ended: {lower, upper}`, the edges of its distribution's end categories; an open-ended median (`-333333333` on its margin) is reported as a bound in words, never as a number, by both `preview.py` and `derive_indicator.R` | `cii_rent_burden` declares 10 and 50. Its value for those units sorts correctly but is an encoding, and the row says to read `bound` | Never for an end category |
+| **D-91** | a607c53 | `cii_indicator_values` declares `aggregation_unit_level` as a choice: county (default), county subdivision, tract | The grain of a value is stated, never assumed. Finer grains carry wider margins, and the method says so | Never |
+| **D-92** | e1c925b, 224efb7 | Publishing to ArcGIS is opt-in (MP-67); every publish that was asked for and could not happen raises `PublishError`, and `rewilding map` exits 1. Written by Ajitesh, reviewed and merged by Kalli | Nothing leaves for AGOL without `--publish`. 11 tests, a fake ArcGIS, the network refused | Never |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **LED-1** | `field-guide/docs/build_ledger.md` was created in 5ab2875 as the Civic Sprint 2a delta and was never the master ledger. `ledger_civic_sprint_2a.md` held all of it plus everything through 2026-10-08. Neither defines D-1 to D-15, L-1 to L-73, P-22, C-65, COR-1 or COR-2, though both cite them, and D-51 and D-52 were never assigned. `git log -S "L-69"` touches 66be662, fe52842 and 5ab2875; **whether 66be662 holds the master ledger is unverified** |
+| **COM-1** | 5ab2875 committed the work this ledger had already recorded on 2026-10-08 (D-73's `assign_geoid` and county preparation, WON-9f's `test_reading_acquired.py`, DEMO-1's page and DEMO-2's experiment), the Maine harvests (about 350 MB, raw), and also a YouTube provider, three comment soil scripts (`normalize_yt_comments`, `stratify_comments`, `window_comments`), `tests/llm_pilot.py`, `tests/pilot_pull.py`, `r_rev_codebook_v1.yml`, and the deletion of `tests/sprinting/test_injection_points.py`. **Intent of these: to be stated by Kalli.** |
+| **DEMO-1c** | DEMO-1 names the page `demo/civic.html`; the file is `demo/index.html` |
+
+## SPRINT 00 ~ clear the ground, 2026-11-10
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-93** | Master Plan decisions are cited as **MP-67 to MP-81**. The plan numbered them D-67 to D-81, which this ledger had already used for other decisions, and code cites this ledger's D-67. This ledger's IDs never change; new decisions continue from D-82 | One ID means one thing. The plan doc's tables still say D-67 to D-81 until they are relabelled | Never; renumbering the ledger would break the code's citations |
+| **D-94** | Plot harvests leave git: `plots/*/harvest/` in `.gitignore`, removed from the index, kept on disk. Their canonical home becomes S3 (Sprint 07) | `git ls-files` lists no harvest outputs. A fresh clone has no `map_cii_broadband.png`, so the demo page's figure is missing there until it is regenerated with D-83 | Never |
+| **D-95** | `garden/reference/` leaves git: in `.gitignore`, removed from the index, kept on disk | CII's file is no longer redistributed by new commits. The two tests that read it skip by name when it is absent, so a fresh clone passes. The analysis path reads `.data/cii_2026_published.csv`, already ignored | CII's terms allow redistribution, and committing the file is wanted |
+| **D-96** | `rewilding map` exits 1 when `--publish` is given for a choropleth, after writing the map locally, with the descriptor path's words (`not published:`). Two tests: without the flag it exits 0; with it, online and credentialed, it exits 1, writes, names the path, and never signs in | A publish that was asked for and did not happen is never a quiet success. 13 tests pass | The publish door publishes choropleths: then the flag goes through it |
+| **D-97** | The stray backups `canopy/indicators/preview.py.save` (tracked) and `canopy/providers/base.py.save` (untracked) are deleted | One copy of each module | Never |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **GIT-1** | The harvest rules (`harvest/maps/*` and the rest) contain a slash, so git anchors them to the root: they matched the top-level `harvest/` and never `plots/*/harvest/`. The Terraform section of the same file already explains this exact rule |
+| **REPO-1** | The GitHub repository is **public** (checked 2026-11-10) |
+| **CII-18** | **CII's full published file is in public history.** `garden/reference/cii_2026.csv` (3 144 counties, all 27 indicators) was committed in fe52842. `demo/index.html`, still tracked, embeds CII's published values and percentiles for Maine's 16 counties on three indicators, and the 27-indicator rule table |
+| **CII-19** | No published terms of use or license for the CII data file was found. The 2026 edition is co-created by Listening Post Collective (Internews) and the Information Futures Lab (Brown); one trade article names the Civic News Company as publisher, so the licensor is uncertain. **Asked 2026-11-10** (to Listening Post's communications contact, Information Futures Lab copied): who holds the rights, whether the file may be kept in a repository, whether values computed from the ACS with CII's method may be published with attribution, and whether the demo's excerpt is acceptable. **Awaiting reply** |
+| **CII-20** | No harvest file holds CII's data. The `cii_` prefix names this system's replication indicators: town maps carry `authority: us_census_acs`, and county standings are computed from `acs_us_county_2024` with CII's rule, matching CII's published percentiles to seven decimals. Whether a reproduced number counts as redistributing the publisher's number is part of the question asked in CII-19 |
+| **AGOL-1** | The layers uploaded to Northeastern's ArcGIS Online from the `__upload` harvests are shared **private or organization**, not public. Nothing needed narrowing |
+| **F4** | (from the publish route assignment) `introspect.has_credentials("arcgis")` checks `ARCGIS_API_KEY` or `ARCGIS_USERNAME`; the login is `GIS("home")`, which ignores both. `test_publish_online_with_credentials_uploads_once` encodes this as expected and now says so in a comment. Resolved by per-target identity in the publish door |
+| **GIT-2** | The local pack is 7.54 GiB, but the largest reachable objects are the harvests at about 6 MB each on disk. **Hypothesis, unverified:** the bulk is unreachable local objects (old stashes, reflog, interrupted writes; two `tmp_obj` garbage files were reported), not shared history |
+
+### OPEN
+
+| ID | item |
+| --- | --- |
+| **HIST-1** | Rewrite history with `git filter-repo` to remove `garden/reference/cii_2026.csv` (and the harvests) from the public history, or not. Every teammate re-clones if so. Waits on CII-19's answer and on the team's timing |
+| **COM-1a** | Kalli states the intent of 5ab2875's YouTube, comment and pilot files and the deleted injection-points test |
+| **PLAN-1** | Relabel the Master Plan doc's decision tables from D-67 to D-81 to MP-67 to MP-81 (D-93) |
+| **TAG-1** | Rename the code comments MAP-2, MAP-3, MAP-4 and ACS-6 to their ledger IDs MAP-5, MAP-6, MAP-7 and ACS-8 |
+
+### LESSONS
+
+**L-76 ~ A rule written down once in one section of a file is not yet a rule
+for the file.** The Terraform block of `.gitignore` explained anchoring; the
+harvest block above it broke the same rule, and 350 MB went to a public
+repository through the gap.
+
+**L-77 ~ An ID is a promise that it means one thing.** The plan, and later
+the code, reused IDs the ledger had spent. Search the ledger before taking a
+number.
+
+## SPRINT 01, PART ONE ~ preparations, 2026-11-10
+
+Contracts 1 to 4 are not yet written; they close this sprint.
+
+### DECISIONS
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-98** | Preparations are declared with a `kind` on the experiment schema (`experiment`, the default, or `preparation`), not a schema of their own, and live in `plots/<plot>/preparations/`. A preparation names no curiosity (the block is absent, never empty), uses `soil/` primitives only, and its method is a preparation method; methods gain the same `kind`. The schema states these rules as conditionals and `Orchestrator.validate()` enforces them | One parser, one model, one run loop and one precondition gate for both kinds. Receipts carry `lineage.kind` and `lineage.run`; a preparation's receipt has no curiosity key. Wonder never offers a preparation method as an answer. An experiment with an empty curiosity runs with a warning naming D-64 | A preparation needs fields an experiment must not have: split the schema then |
+| **D-99** | Deriving an indicator is preparation: `derive_indicator` moves from `roots/indicators/` to `soil/transform/`; `standardize_indicator` stays in `roots/` | A value applies a declared definition and asks no question; a standing compares and is analysis. MP-75 becomes structural: values come from preparations, standings from experiments. The name is unchanged, so `provenance_contains: derive_indicator` still matches. Experiments may still use `soil/` steps, so the composed CII experiments keep their derive step | Deriving a value turns out to need a choice that is a question: move it back |
+| **D-100** | The Maine preparation starts from acquired data. Acquisition stays with `acquire` and the provider, recorded in the manifest changelog; the preparation's inputs are manifest datasets, which is how its lineage reaches the acquisition. Four files become preparations in `plots/maine/preparations/`: `maine_county_units` (method `county_units_for_mapping`), `maine_cousub_indicator_values` (new method `indicator_values`), `maine_counties` and `maine_governance_units` (new method `governance_units_conformed`) | The Census provider's logic stays in one place. `maine_counties` and `maine_governance_units` no longer claim the information_access curiosity and the ownership method's choices, which described the analysis their units are counted in, not themselves. `maine_county_indicator_standings` is the only Maine experiment still flagged for a missing curiosity | Acquisition needs to be a recorded step with an envelope: a provider-backed `soil/` primitive, never a second Census client |
+
+### FINDINGS
+
+| ID | item |
+| --- | --- |
+| **PREP-1** | The preparation already existed in three disguises: `maine_county_units` (an honest preparation with an empty curiosity), `maine_counties` and `maine_governance_units` (`soil/`-only chains borrowing a curiosity and method they did not answer), and two experiments missing their curiosity |
+| **D-48v** | Answered: nothing required a curiosity. `parse_experiment` defaulted it to `""`, `validate()` never read it, and nothing validated experiments against `experiment.schema.yml`, which listed it as required |
+| **SCH-4** | `method.schema.yml` was not valid YAML (`critical:` mis-indented under `requires_data`), so nothing could have read it; its `domain` list also lacked `information`, the domain of every Maine method. Both fixed in v1.1 |
+| **WON-6c** | `maine_information_access__ownership_concentration_analysis_4a8f59` fails validation on the placeholder `roots/analysis`. Present before this sprint; unchanged by it |
+| **CNT-1** | `county_units_for_mapping`'s recipe declares `field: COUNTY` twice. Harmless, the values match; YAML keeps the second |
+
+### OPEN
+
+| ID | item |
+| --- | --- |
+| **LOOP-1** | **The closed loop: scanning a plot for what an experiment needs.** `readiness.py` reads forward (what the ground can answer) and backward (`acquisition_gap`, what is missing). The missing middle is preparations as producers: a held-or-acquirable input that a preparation method can turn into the missing holding. Preparation methods now declare `requires_data` and `produces`, which is what a planner walks. **The trap:** types alone cannot tell raw from prepared ground; `county_units_for_mapping` takes a `governance_unit` and produces a `governance_unit`, so a scan by type would call 7 196 arc polygons ready for a GEOID join. The loop must match type plus what has been done to the data, the same predicates the precondition gate reads (`provenance_contains`), run backward over methods. Proposed home: Sprint 05, "Loam learns the graph" |
+| **SCH-5** | Experiment and method files are not validated against their schemas anywhere. Turning that on may break existing files in ways nobody has checked; do it as its own step |
+| **CON-1** | Contracts 1 to 4 for `field-guide/docs/contracts/`, and Contract 3's review. If its author reviews it, record it as reviewed by its author |
+| **TST-2** | `tests/test_preparations.py` (14 cases) was run in the sandbox through a shim, not pytest, with `jsonschema`, `referencing` and `duckdb` absent: 13 passed; the wonder test needs `duckdb`. Run it under real pytest |
+

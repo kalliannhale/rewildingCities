@@ -1,0 +1,57 @@
+# ============================================================================
+# garden/methods/information/governance_units_conformed.yml
+# ============================================================================
+# a preparation method (D-98): Maine's arc-derived boundary polygons become
+# administrative units, one feature per county or civil division. it asks no
+# question. the counties and towns it makes are the denominators other
+# methods count over, so getting their number right is the whole point. ~
+# ============================================================================
+
+id: governance_units_conformed
+domain: information
+kind: preparation
+name: "Governance Units, Conformed"
+
+description: >
+  Maine's county and town boundaries arrive as arc-derived polygons, one per
+  landmass, tidal split and ledge: 7 196 polygons for 16 counties, 8 421 for
+  924 civil divisions. This validates and repairs their geometry and
+  dissolves them into one feature per administrative unit, carrying the
+  authority codes and the governance flag (LURC) through, so a denominator
+  counts the right number of places and knows which of them govern
+  themselves. The dissolve is a declared reduction, and its envelope records
+  what it cost.
+
+requires_data:
+  - name: units
+    type: vector
+    semantic_types: [governance_unit]
+    critical: true
+    role: >
+      The state's own boundary polygons, carrying the name, code and
+      governance fields the dissolve groups by and carries through.
+    uncertainty_without: >
+      No units to count over. Any rate per county or per town has no
+      denominator.
+
+# no choices: the unit a run dissolves into is named by its dissolve step's
+# field (COUNTY, or the civil-division code), and one run may conform both.
+choices: {}
+
+requires_primitives:
+  - soil/validate_vector
+  - soil/repair_geometry
+  - soil/dissolve_by_field
+
+produces:
+  semantic_type: governance_unit
+  data_category: vector
+  description: >
+    One feature per administrative unit, with its authority codes and, for
+    civil divisions, the LURC governance flag.
+
+interpretation: >
+  Four sources disagree about how many towns Maine has, because they count
+  different things: about 490 organized municipalities, 924 civil divisions,
+  651 places on the Legislature's list, 529 Census county subdivisions. None
+  is wrong. Name the count you used and why.

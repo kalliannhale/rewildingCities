@@ -62,6 +62,16 @@ methods:
       name: "County Units, Keyed for Mapping"
       answers: [boundaries, mapping, preparation]
 
+    - id: indicator_values
+      path: information/indicator_values.yml
+      name: "Indicator Values from Published Sources"
+      answers: [indicator values, preparation]
+
+    - id: governance_units_conformed
+      path: information/governance_units_conformed.yml
+      name: "Governance Units, Conformed"
+      answers: [boundaries, denominators, preparation]
+
     - id: cii_indicator_values
       path: information/cii_indicator_values.yml
       name: "Civic Information Indicators from Published Sources"

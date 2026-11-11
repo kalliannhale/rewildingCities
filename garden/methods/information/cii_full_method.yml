@@ -74,7 +74,7 @@ choices:
       counties.
 
 requires_primitives:
-  - roots/derive_indicator
+  - soil/derive_indicator
   - roots/standardize_indicator
   - roots/impute_nearest_neighbor
   - roots/weighted_index
@@ -100,7 +100,7 @@ interpretation: >
 # recorded, with its hash, in every index it produces.
 recipe:
   - id: derive
-    primitive: roots/derive_indicator
+    primitive: soil/derive_indicator
     inputs:
       source: $requires.source
     outputs:

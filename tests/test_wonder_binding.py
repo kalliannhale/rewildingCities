@@ -71,10 +71,10 @@ def test_an_index_is_not_loaded_as_a_curiosity(tmp_path):
 
 def test_a_tabular_method_composes_without_a_vector_chain():
     m = {"requires_data": [{"name": "source", "type": "tabular", "semantic_types": ["indicator_source"]}],
-         "requires_primitives": ["roots/derive_indicator"],
+         "requires_primitives": ["soil/derive_indicator"],
          "produces": {"semantic_type": "indicator_values"}}
     steps = W._compose_steps(m, {"indicator_source": "acs_county_2024"}, "EPSG:4326")
-    assert [s["primitive"] for s in steps] == ["roots/derive_indicator"]
+    assert [s["primitive"] for s in steps] == ["soil/derive_indicator"]
     assert steps[0]["inputs"] == {"source": "$manifest.acs_county_2024"}
 
 

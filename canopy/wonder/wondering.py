@@ -211,7 +211,7 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
             prim_ref = f"{(pspec or {}).get('from', 'roots')}/{pname}"
             purpose = (pspec or {}).get("purpose", "")
         elif isinstance(first, str) and "/" in first:
-            # the string form, `roots/derive_indicator`, is already a full
+            # the string form, `soil/derive_indicator`, is already a full
             # reference. it used to fall through to the placeholder
             # roots/analysis, which names no primitive (WON-6).
             prim_ref = first.strip()

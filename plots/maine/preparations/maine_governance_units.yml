@@ -1,5 +1,5 @@
 # ════════════════════════════════════════════════════════════
-# plots/maine/experiments/maine_governance_units.yml
+# plots/maine/preparations/maine_governance_units.yml
 # ════════════════════════════════════════════════════════════
 # Conform Maine's boundary sources into administrative units.
 #
@@ -46,10 +46,13 @@ description: >
   ownership-concentration analysis has a denominator that counts the right
   number of places and knows which of them govern themselves.
 
-curiosity:
-  ref: $curiosity-space/information/information_access
+# a preparation (D-98): this readies data and answers no question. it used
+# to name the information_access curiosity and the ownership method, which
+# described the analysis these units are counted in, not this run.
+kind: preparation
+
 method:
-  ref: $methods/information/ownership_concentration_analysis
+  ref: $methods/information/governance_units_conformed
 
 city: maine
 # the orchestrator resolves this relative to the experiment's own directory
@@ -57,10 +60,9 @@ city: maine
 # writes the project-root form and produces an unrunnable file. C-61.
 manifest: ../manifest.yml
 
-choices:
-  concentration_measure: hhi
-  aggregation_unit_level: county
-  outlet_weighting: count
+# the ownership method's choices used to be restated here; none of them
+# changes how a boundary is conformed, so a preparation makes none.
+choices: {}
 
 parameters:
   target_crs: "EPSG:4326"
