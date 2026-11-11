@@ -631,3 +631,78 @@ Files: `seeds/schemas/provenance.schema.json`, `canopy/envelope.py`, `canopy/exp
 Files: `soil/transform/build_place_outlines.R` (new), `soil/_registry.yml` (build_place_outlines, build_tribal_outlines), `seeds/schemas/semantic_types.yml` (place_outline, census_tribal_outline), `seeds/schemas/metadata.vector.schema.json` (size_bytes, vertex_count), `plots/maine/preparations/maine_geography_graph.yml` (six outline steps), `tests/test_place_outlines.py` (new). Next decision ID: D-149.
 
 **D-149. One id, one note: the places table's note is census_tribal_places.** test_place_outlines found census_tribal_area with two texts in semantic_types.yml: the places type's, about a table ("This table includes Census tribal areas and the town records that coincide with reservations..."), and census_tribal_area's, about one boundary ("This boundary is the U.S. Census Bureau's..."). Both are right for what they describe; one id cannot name both. The gate reads ids only, so no reader was shown the wrong text, but anything resolving the id to its text (a legend, the publish door) would have had to guess. The places type now requires census_tribal_places; census_tribal_area stays the boundary note; every places row keeps context_note census_tribal_area, because a row's note is about that row's boundary. Outlines list both ids in context_notes (amends D-146; NOTE-2 still holds, and step 6 narrows it). Set aside: one merged wording, which would put a note on one of the two that does not describe it. Files: `seeds/schemas/semantic_types.yml` (places' note id), `soil/transform/build_place_outlines.R`, `tests/test_place_outlines.py`. Next decision ID: D-150.
+
+## Sprint 04 step 5b: the first run of the outline steps (D-150 to D-152)
+
+### Findings
+- A preparation runs through the same orchestrator as an experiment: `parse_experiment` reads `kind: preparation`, and `python -m canopy.cli sows <path>` runs it. The exposure gate is never called inside a run; only the precondition gate is. Rule 9 binds at exits (`check_envelope`, `read_exposure`), never mid-run.
+- Every run writes `compost/logs/<run_id>.yml`. Three runs of maine_geography_graph on 2026-11-11 (041928, 043526, 043757) each finished seven steps and name no outline step, so the outlines had never run on real Maine before this one. Whether those stamps are local time or UTC is not settled; a fresh run made it moot.
+- Two CLI doors reach the orchestrator, `sows` (canopy/cli/sows.py) and canopy/cli/experiment.py, with the same --dry-run and --resolve-only flags. Whether this is what CLI-1 to CLI-3 recorded is not checked.
+- RESOLVE-1: `--resolve-only` says "check data without running", but it calls `resolve_data()`, which acquires missing datasets and commits manifest changes. Only `dry_resolve()` is read-only. Harmless on this run (13 of 13 available). Open.
+- First run of the outlines: 10 of 12 steps completed; stopped at outline_towns.
+
+| level | outlines | clipped | size_bytes | vertex_count |
+|---|---|---|---|---|
+| state | 1 | 1 | 27,173,437 | 1,191,643 |
+| county | 16 | 16 | 27,898,507 | 1,223,335 |
+| sldl | 151 | 149 | 29,713,677 | 1,301,604 |
+| sldu | 35 | 35 | 28,220,938 | 1,237,274 |
+
+- The coast is nearly every vertex: counties add about 3% over the state outline, senate about 4%, house about 9%. If a layer must get lighter, simplify the coast (SIZE-1).
+- No key refusal at sldl or sldu, so no land face carries an undefined district code (no 23ZZZ).
+- The envelope's `count` is the clipped count, not the outline count; outlines were counted from the GeoJSON features.
+- Maine's 2024 faces carry three LWFLAG values: L 89,101, P 18,376, I 15. G and S never occur here.
+- WATER-1: outline_towns refused 2300357936 Penobscot Indian Island Reservation, "no land face". Probe (tests/debug/indian_island_faces.py): county subdivision 57936 has one face in county 003 (Aroostook), flag P, and 118 L and 45 P faces in county 019 (Penobscot). The refused place is the Aroostook piece, a single perennial water face. Tribal area 2760 spans counties 003, 007, 019 and 021 and nine county subdivision codes, ten county pieces.
+- PENOB-1: D-142 clips perennial water from every outline. For the Penobscot Nation this matches one side of a lawsuit: the en banc First Circuit (2021, 3 to 2) held that the reservation does not include the waters of the Main Stem; the dissent cited the river's place in the Nation's culture, language and historic sovereign rights. The Nation petitioned the Supreme Court (No. 21-838); the outcome is not verified here. The census puts water inside this place. A context note saying the water was left out for display and that the river's status is contested belongs at the town and tribal levels. Open, for step 6.
+
+### Wrong hypotheses
+- That the outline run would stop at rule 9 before giving numbers (NOTE-1). The gate does not run inside the orchestrator.
+- That the earlier graph outputs came from direct primitive calls. They came from orchestrator runs.
+- That Indian Island's land faces carry a flag outside LAND_FLAGS. They are L.
+- That its land faces carry a different county subdivision code. They carry 57936; the refused key was another county's piece.
+
+### Decisions
+- D-150: a place whose faces are all water is let through only when the run declares it in a new `water_only` param of build_place_outlines (default empty). It is named in a `water_only` publication record (detail naming each place, count) and not drawn, so an outline stays land and the place stays present (rule 8). Any undeclared place with no land face is still refused.
+- D-151: a declaration is refused by name if its key is not a place at the level, if the place has land faces (a stale declaration), or if it has no face at all. The third was not in the design shown; without it a key with no faces would be excused silently.
+- D-152: outline_towns declares water_only: ["2300357936"], the Aroostook piece of Penobscot Indian Island Reservation. Registry declares the param as an array, not required, default []. Primitive version not bumped.
+- Tests: the fixture gains town 00300, one water face in block 1003. Four new R tests: a declared water-only place is named, not drawn; and each refusal of D-151 fires for its own reason. The undeclared case is the existing Gamma test, which now also asserts "1 of them have only water faces".
+
+### Lessons
+- Read the run path before predicting how a run fails: both mid-run predictions here were wrong, and the code answered them in one read.
+- A refusal that names a place by key and name made a four-county story findable in two probes.
+
+### Sprint 04 step 5b, second run (D-153, D-154)
+- D-153 corrects D-150: the record of a declared water-only place is publication step `held_out`, not `water_only`. provenance.schema.json enumerates publication steps (held_out, field_dropped, renamed, rounded, format_changed, simplified, clipped), so `water_only` would have failed envelope validation at outline_towns. held_out already means a thing kept out of the drawing and named; no schema change. The detail names WATER-1 and each place.
+- GJSON-1: the second run stopped at outline_state, "Failed to write vector data ... Creation failed". Cause, reproduced outside the run: `safe_write_sf` calls `write_sf(delete_dsn = TRUE)`, so GDAL first opens the old file to delete it. The whole-state outline is one feature too large for GDAL to parse at its defaults ("GeoJSON object too complex/large", OGR_GEOJSON_MAX_OBJ_SIZE), the delete fails, and the GeoJSON driver does not overwrite. The first run worked only because no file existed. Counties, house and senate rewrote because each of their features is smaller.
+- Wrong hypotheses for GJSON-1: a lock (lsof: nothing open), a full disk (170 GB free), the macOS com.apple.provenance attribute (all four files carry it).
+- D-154: build_place_outlines removes its own output before writing. Narrow on purpose: the general bug is in rewildr's safe_write_sf, where any GeoJSON holding one large feature cannot be overwritten. Open in GJSON-1.
+- GJSON-1, also open: the state outline cannot be read by GDAL at default settings, so any reader (loam, the publish route, QGIS) may need OGR_GEOJSON_MAX_OBJ_SIZE raised, or the outline made lighter (SIZE-1).
+
+### Sprint 04 step 5b, third run: all 12 steps (D-155)
+- The graph preparation ran end to end: 12 of 12 steps. D-154 worked: outline_state rewrote its file.
+
+| level | outlines | clipped | held out | size_bytes | vertex_count |
+|---|---|---|---|---|---|
+| cousub | 528 | 517 | 1 | 31,064,310 | 1,357,329 |
+| aiannh | 8 | 6 | 0 | 721,936 | 31,552 |
+
+- cousub: 528 outlines plus 2300357936 held out (WATER-1). The towns layer is the heaviest of the six, about 14% more vertices than the state.
+- aiannh: 8 outlines, every places row at the level. The 6 clipped are exactly the 6 with water left out of their blocks.
+- TRIBE-5, all 8 warned at tolerance 0. A = outline outside the Census 2020 layer, B = layer outside the outline, W = perennial water left out of its blocks (m2). A nest is A near 0 and B near W.
+
+| area | A | B | W | B minus W |
+|---|---|---|---|---|
+| 0115T Aroostook Band of Micmac Trust Land | 175,681 | 69,504 | 0 | 69,504 |
+| 1530R Houlton Maliseet Reservation | 1,034 | 23,630 | 22,653 | 977 |
+| 1530T Houlton Maliseet Off-Reservation Trust Land | 1,280 | 1,277 | 0 | 1,277 |
+| 1575R Indian Township Reservation | 1,395 | 17,828,071 | 17,867,564 | -39,493 |
+| 2695T Passamaquoddy Trust Land | 24,549 | 15,416,780 | 15,428,674 | -11,894 |
+| 2760R Penobscot Reservation | 33 | 38,124,198 | 38,211,558 | -87,360 |
+| 2760T Penobscot Off-Reservation Trust Land | 6,212,606 | 22,608,247 | 20,006,248 | 2,601,999 |
+| 2850R Pleasant Point Reservation | 618 | 1,053,880 | 1,055,604 | -1,724 |
+
+- Two clusters. Noise: every residual at or under 1,395 m2 (A for six areas, B minus W for 1530R and 1530T). Negative B minus W is also noise: W sums the Census's ATOTAL while A and B are areas sf computes, so the two measures differ slightly. Not noise: 0115T (A 175,681), 2760T (A 6.2 km2, B minus W 2.6 km2), and 2695T (A 24,549), 17 times the largest noise value.
+- D-155: tribe_tolerance_m2 = 2000, at the natural break between 1,395 and 24,549, so the next run should warn for 0115T, 2695T and 2760T only. Not 25,000, which would be fitted to let 2695T pass. Not rerun after the change: the tolerance changes warnings only.
+- TRIBE-5 stays open for 0115T, 2695T and 2760T: block-built outlines that do not nest in the Census 2020 layers by more than water, against FACE-1's premise. Causes not known. Candidates to test, not assume: trust land changed between the 2020 tabulation and the 2020 layer; the 2024 faces' edges moved; blocks split by a tribal boundary.
+- PENOB-1, now measured: 2760R nests almost exactly (A 33 m2), and the Census 2020 reservation layer holds about 38.1 km2 that the outline leaves out, matching the 38.2 km2 of water in its blocks. So the Census's own reservation boundary includes the river water around the islands that D-142 clips and that the 2021 en banc ruling excluded. The context note must say this plainly. Step 6.
+- tests/debug/indian_island_faces.py is committed as the WATER-1 evidence. It imports pyogrio (DEPS-1); tests/debug is not collected by pytest.

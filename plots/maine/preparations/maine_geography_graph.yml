@@ -150,6 +150,9 @@ steps:
     params:
       level: cousub
       state_fips: "23"
+      # WATER-1: the Aroostook County piece of Penobscot Indian Island
+      # Reservation is one perennial water face; it is named, not drawn
+      water_only: ["2300357936"]
 
   - id: outline_house
     primitive: soil/build_place_outlines
@@ -188,4 +191,4 @@ steps:
     params:
       level: aiannh
       state_fips: "23"
-      tribe_tolerance_m2: 0
+      tribe_tolerance_m2: 2000

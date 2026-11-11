@@ -112,7 +112,8 @@ def _r_ready() -> bool:
 needs_r = pytest.mark.skipif(not _r_ready(), reason="Rscript with rewildr and sf not available")
 
 # town 00100 is a land square and a water square in block 1001; town 00200,
-# block 1002, is land and lies in tribal area 1950R
+# block 1002, is land and lies in tribal area 1950R; town 00300, block 1003,
+# is one water face and nothing else (WATER-1)
 FIXTURE_R = r'''
 library(sf)
 a <- commandArgs(trailingOnly = TRUE)
@@ -121,11 +122,12 @@ sq <- function(x0, y0, s = 0.01) st_polygon(list(rbind(c(x0, y0), c(x0 + s, y0),
 x0 <- -69; y0 <- 45
 faces <- st_sf(
   STATEFP20 = "23", COUNTYFP20 = "001", TRACTCE20 = "000100",
-  BLOCKCE20 = c("1001", "1001", "1002"),
-  STATEFP = "23", COUNTYFP = "001", COUSUBFP = c("00100", "00100", "00200"),
-  SLDLST = c("001", "001", "002"), SLDUST = "001",
-  LWFLAG = c("L", "P", "L"), ATOTAL = c(1000, 1000, 1000),
-  geometry = st_sfc(sq(x0, y0), sq(x0 + 0.01, y0), sq(x0, y0 + 0.01), crs = 4269))
+  BLOCKCE20 = c("1001", "1001", "1002", "1003"),
+  STATEFP = "23", COUNTYFP = "001", COUSUBFP = c("00100", "00100", "00200", "00300"),
+  SLDLST = c("001", "001", "002", "001"), SLDUST = "001",
+  LWFLAG = c("L", "P", "L", "P"), ATOTAL = c(1000, 1000, 1000, 1000),
+  geometry = st_sfc(sq(x0, y0), sq(x0 + 0.01, y0), sq(x0, y0 + 0.01),
+                    sq(x0 + 0.01, y0 + 0.01), crs = 4269))
 st_write(faces, file.path(a[1], "tl_2024_23001_faces.shp"), quiet = TRUE)
 st_write(st_sf(GEOID = "1950R", NAME = "Test Reservation",
                geometry = st_sfc(sq(x0, y0 + 0.01), crs = 4269)), a[2], quiet = TRUE)
@@ -164,7 +166,7 @@ def maine(tmp_path):
         z.write(inner, inner.name)
     spine = tmp_path / "spine.csv"
     spine.write_text("GEOID,aiannh,aiannh_comptyp\n"
-                     "230010001001001,,\n230010001001002,1950,R\n")
+                     "230010001001001,,\n230010001001002,1950,R\n230010001001003,,\n")
     return {"dir": tmp_path, "faces": outer, "spine": spine,
             "reservations": res, "trust_lands": trust}
 
@@ -239,6 +241,52 @@ def test_a_place_with_no_land_faces_is_refused_by_name(maine):
                   {"level": "cousub", "state_fips": "23"})
     assert resp["status"] == "failure"
     assert "no land face" in resp["message"] and "Gamma plantation" in resp["message"]
+    assert "1 of them have only water faces" in resp["message"]
+
+
+GAMMA = ("us_census_geoid", "2300100300", "cousub", "Gamma plantation", "")
+
+
+@needs_r
+def test_a_declared_water_only_place_is_named_not_drawn(maine):
+    places = write_places(maine, PLACES + [GAMMA])
+    resp, out = run(maine, {"faces": maine["faces"], "places": places},
+                    {"level": "cousub", "state_fips": "23", "water_only": ["2300100300"]})
+    assert resp["status"] == "success", resp
+    codes = {f["properties"]["code"] for f in json.loads(out.read_text())["features"]}
+    assert codes == {"2300100100", "2300100200"}
+    assert [(r["step"], r["count"]) for r in resp["publication"]] == [
+        ("clipped", 1), ("held_out", 1)]
+    assert "2300100300 Gamma plantation" in resp["publication"][1]["detail"]
+
+
+@needs_r
+def test_a_water_only_declaration_not_in_places_is_refused(maine):
+    places = write_places(maine, PLACES)
+    resp, _ = run(maine, {"faces": maine["faces"], "places": places},
+                  {"level": "cousub", "state_fips": "23", "water_only": ["2300199999"]})
+    assert resp["status"] == "failure"
+    assert "declared water_only key(s) are not places" in resp["message"]
+    assert "2300199999" in resp["message"]
+
+
+@needs_r
+def test_a_water_only_declaration_with_land_is_refused(maine):
+    places = write_places(maine, PLACES)
+    resp, _ = run(maine, {"faces": maine["faces"], "places": places},
+                  {"level": "cousub", "state_fips": "23", "water_only": ["2300100100"]})
+    assert resp["status"] == "failure"
+    assert "the declaration is stale" in resp["message"] and "Alpha town" in resp["message"]
+
+
+@needs_r
+def test_a_water_only_declaration_with_no_faces_is_refused(maine):
+    places = write_places(maine, PLACES + [
+        ("us_census_geoid", "2300100400", "cousub", "Delta township", "")])
+    resp, _ = run(maine, {"faces": maine["faces"], "places": places},
+                  {"level": "cousub", "state_fips": "23", "water_only": ["2300100400"]})
+    assert resp["status"] == "failure"
+    assert "no face at all" in resp["message"] and "Delta township" in resp["message"]
 
 
 @needs_r

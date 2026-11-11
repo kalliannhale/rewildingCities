@@ -27,6 +27,10 @@
 # Refuses: a key the faces make that places does not hold at this level; a
 # place at this level with no land face, by name (a finding, not a failure to
 # work around); a tribal row without its note; two places with one shape.
+# A place whose faces are all water is let through only when the run declares
+# it in `water_only`, and is then named in a held_out publication record
+# instead of drawn. A declaration is refused if its key is not a place at
+# this level, if the place has land, or if it has no face at all (WATER-1).
 # ============================================================
 
 library(rewildr)
@@ -118,6 +122,7 @@ with_primitive_error_handling({
   }
   authority <- LEVEL_AUTHORITY[[level]]
   state_fips <- zfill(as.character(require_param(args$params, "state_fips")), 2)
+  declared <- unique(as.character(unlist(args$params$water_only)))
 
   faces <- read_faces(get_input(args$inputs, "faces"), w)
   places <- read_codes_table(get_input(args$inputs, "places"), w)
@@ -185,16 +190,46 @@ with_primitive_error_handling({
               length(stray), level, paste(head(stray, 5), collapse = ", ")),
       warnings = w)
   }
-  bare <- setdiff(mine$code, outline_codes)
+  name_of <- function(k) paste(k, mine$name[match(k, mine$code)])
+
+  # --- WATER-1: a declared water-only place must be exactly that ---
+  if (length(declared) > 0) {
+    unknown_decl <- setdiff(declared, mine$code)
+    if (length(unknown_decl) > 0) {
+      primitive_failure("Declared water-only place not in places",
+        sprintf("%d declared water_only key(s) are not places at level %s: %s (WATER-1)",
+                length(unknown_decl), level, paste(unknown_decl, collapse = ", ")),
+        warnings = w)
+    }
+    landed <- intersect(declared, outline_codes)
+    if (length(landed) > 0) {
+      primitive_failure("Declared water-only place has land",
+        sprintf(paste("%d declared water_only place(s) at level %s have land faces,",
+                      "so the declaration is stale: %s. Remove them from water_only (WATER-1)"),
+                length(landed), level, paste(name_of(landed), collapse = "; ")),
+        warnings = w)
+    }
+    faceless <- setdiff(declared, faces$code)
+    if (length(faceless) > 0) {
+      primitive_failure("Declared water-only place has no faces",
+        sprintf(paste("%d declared water_only place(s) at level %s have no face at all,",
+                      "land or water: %s. water_only is for places whose faces are all water (WATER-1)"),
+                length(faceless), level, paste(name_of(faceless), collapse = "; ")),
+        warnings = w)
+    }
+  }
+
+  bare <- setdiff(setdiff(mine$code, outline_codes), declared)
   if (length(bare) > 0) {
-    water_only <- intersect(bare, faces$code)
-    named <- paste(bare, mine$name[match(bare, mine$code)])
+    wet_only <- intersect(bare, faces$code)
     primitive_failure("Place with no land faces",
       sprintf(paste("%d place(s) at level %s have no land face, so no outline: %s.",
                     "%d of them have only water faces. This is a finding for the",
-                    "ledger, not a check to work around (D-144)."),
-              length(bare), level, paste(head(named, 10), collapse = "; "),
-              length(water_only)),
+                    "ledger, not a check to work around (D-144). A place whose",
+                    "faces are all water may be declared in water_only once its",
+                    "finding is recorded (WATER-1)."),
+              length(bare), level, paste(head(name_of(bare), 10), collapse = "; "),
+              length(wet_only)),
       warnings = w)
   }
 
@@ -296,6 +331,11 @@ with_primitive_error_handling({
   }
 
   # --- write, measure (SIZE-1), report ---
+  # the GeoJSON driver will not overwrite a file, and delete_dsn first has
+  # GDAL read the old one, which fails when a single feature is too large to
+  # parse at GDAL's defaults (the whole-state outline). removing it here lets
+  # a rerun write fresh (GJSON-1)
+  if (file.exists(args$output)) unlink(args$output)
   safe_write_sf(outlines, args$output, warnings = w)
   clipped <- sum(outlines$water_clipped)
   size_bytes <- as.integer(file.size(args$output))
@@ -319,6 +359,18 @@ with_primitive_error_handling({
                              "%s were left out before the dissolve (D-142)"),
                        paste(LAND_FLAGS, collapse = ", ")),
       count = as.integer(clipped)))
+  }
+  if (length(declared) > 0) {
+    meta$publication <- c(meta$publication, list(list(
+      step = "held_out",
+      detail = sprintf(paste("left without an outline: every face is perennial water",
+                             "(LWFLAG not one of %s), so there is no land to draw",
+                             "(WATER-1): %s"),
+                       paste(LAND_FLAGS, collapse = ", "),
+                       paste(name_of(sort(declared)), collapse = "; ")),
+      count = as.integer(length(declared)))))
+    w$info(sprintf("outlines: %d declared water-only place(s) named, not drawn (WATER-1)",
+                   length(declared)))
   }
 
   w$info(sprintf("outlines: %d place(s) at level %s from %d land face(s); %d lost water area; %d bytes, %d vertices (SIZE-1)",
