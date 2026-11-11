@@ -955,3 +955,11 @@ A source's unit authority is a fact about the source: an SLDL acquisition is SLD
 | ID | Open item | Defined |
 | --- | --- | --- |
 | **SRC-2** | Build D-189 in NAME-4's sweep: unit_authority on every indicator source in every plot's manifest, the recipe's $parameters.unit_authority becomes $source.unit_authority, a run declaring its own is refused, and D-176's test is kept as a second guard. Resolved params stay the same strings, so freshness should read the existing receipts as fresh; check that before trusting it | build 6 |
+
+### Change 15: an index carries its units' authority (build 6, SEAM-1, D-190)
+
+roots/indicators/weighted_index.R: every pillar and composite row carries unit_authority, and its measurement_id is index:unit_authority:code, as every value's is (D-132). Standings with no unit_authority column, or rows naming none, are refused by name; so is an index across more than one authority, naming each. impute_nearest_neighbor.R is unchanged: it builds its output from its input (out <- df), so the authority passes through the chain. Maine holds no index receipts, so nothing was rerun. tests/test_index_r_oracle.py: the fixture's standings carry us_census_geoid; the chain test checks the authority and the id on pillar and composite rows; 2 new tests, a missing authority refused and an index across us_census_geoid and us_census_sldl refused by name. 531 tests pass.
+
+| ID | Decision | Why | Revisit when |
+| --- | --- | --- | --- |
+| **D-190** | SEAM-1: an index carries its units' unit_authority, ids it index:authority:code, and refuses to rank units of more than one authority, or of none. Option A of fork 6d, widened from the id alone when the code showed the rows carried no authority at all; Claude's proposal, accepted by Kalli | A row without its authority cannot be joined to a place, so fixing the id alone would put an authority in the id that the row does not hold; and ranking counties beside districts compares units never measured beside each other. With no index receipts in Maine, it costs no rerun now | A composite across levels is wanted on purpose; then it is a new method, not this one |
