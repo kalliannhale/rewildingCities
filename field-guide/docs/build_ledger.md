@@ -1036,3 +1036,32 @@ Findings and wrong hypotheses:
 ## garden/experiments/in-the-cloud removed, 2026-11-11
 
 Kalli removed garden/experiments/in-the-cloud/ from the repo: a vendored pyyaml (twice, with compiled cpython-313-darwin .so files), validator.zip, a Lambda validator, deploy scripts and an early Terraform pipeline. Not needed, and not fit for a public repo. The infrastructure work lives in terraform/ and canopy/terraform/ (Sprints 07 and 10). The files remain in git history; nothing in them was found to be a secret.
+
+## Sprint 06 session 1: P-9, SRC-2's check, the outlet stack (D-201 to D-205)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-201** | Outlet sources are read only as seeds/crosswalks/outlets/outlet_sources.yml declares: a header is found by its declared column names, an undeclared column is never read, and a never_read column cannot be declared (Easton's Contact, the SimilarWeb figures) | P-9 found headers on line 2 or 3 and a column naming people; position or a default would read both wrong | A source arrives whose layout no column names can find |
+| **D-202** | Stacked records are grouped by exact url (path kept) and name keys, never fuzzy. A group never holds one source twice, and a key value one source holds twice joins nothing. Claude's lean | A missed match leaves a visible duplicate; a wrong one hands one outlet's owner to another. The first run let row order choose 204 matches | A matching method with its own receipt per match is built |
+| **D-203** | Place fields keep their meaning (office_* a postal address, named_* a town a source names, served_raw coverage) and are compared only like with like | Cision's address is the publisher's office: it puts Norway's Advertiser Democrat in South Portland | A source says which meaning its place field has |
+| **D-204** | An outlet's county comes from the graph through its town; a source's county is a check, never an input. Claude's lean, a small choice | Cision's Outlet County reads Cook (Illinois) on 235 of 353 rows, across every outlet type, so no Cision county can be told right from lucky | Never for Cision; for another source, if its counties check clean against the graph |
+| **D-205** | The outlet files stay in garden/reference/ (ignored, line 86) and will be read as manifest datasets whose paths reach outside the plot. Kalli's choice over copying them into plots/maine/.data | One copy of each reference; nothing duplicated | The community kit needs a plot to carry its own references |
+
+Findings and wrong hypotheses:
+
+- P-9 answered: frequency is carried by three sources in three shapes (Cision declared; the ecosystem file's Print for print media only; Easton's Format as free text). Language of publication and paywall status are carried by none. Cision's Outlet Language reads English on every row and omits Amjambo Africa, which publishes in seven languages.
+- SRC-2's check: 28 Maine receipts, 20 fresh, 8 cannot_tell, none stale. The 8 are maine_counties, maine_county_units and maine_governance_units, recorded before D-167. Left until something reads them through $loam.
+- Wrong hypothesis: every receipt would read fresh. The 8 cannot_tell predate NAME-4.
+- Wrong hypothesis: the 353-row Cision file is the 412-row export filtered. They are separate pulls: 297 names in both, 115 and 56 apart.
+- Wrong hypothesis: Cision's Cook county was a default on most rows. It is on 235 of 353, across every outlet type, with no pattern.
+- Cision's Still Operates? is a hand-added observation (323 yes, 21 ceased, 9 a last-post date) and is stronger evidence for "outdated" than any declared frequency. Who checked, and when, is not recorded.
+- The aggregated-signals file is a survey about which data exists, with respondent files; it is kept out of the outlet layer.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **P-9** | Closed: what the outlet files carry, as above | this session |
+| **SRC-2's check** | Closed: nothing checkable changed; the 8 untellable receipts carried as RECEIPT-1 | this session |
+| **RECEIPT-1** | Rerun maine_counties, maine_county_units and maine_governance_units when anything reads them through $loam. | this session |
+| **OBS-1** | Language and paywall need our own observation of each outlet, a receipt per observation: a status under D-200 | this session |
+| **WHERE-1** | Which place meaning counts as where an outlet is, for located_in | this session |
+| **SRC-4** | The ecosystem file's publisher, the Still Operates? receipt, and every outlet source's terms | this session |
