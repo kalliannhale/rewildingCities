@@ -1,0 +1,45 @@
+# ============================================================================
+# seeds/vintages/boundaries.yml ~ which boundaries a publisher's values sit on
+# ============================================================================
+# Contract 3 requires a value's boundaries and its place's to match, place by
+# place. a value says when it was estimated (`time`), not on which boundaries,
+# so this declares the publisher's own rule, cited, and loam reads it when
+# values attach to places (D-170). a publisher not named here attaches
+# nothing, and says why. this map is the file's last key.
+# ============================================================================
+
+publishers:
+  us_census_acs:
+    # the boundary year is the last four-digit year in the value's `time`:
+    # "2020-2024 (5-year estimates)" -> 2024
+    boundary_year: final_year_of_time
+    # how each level of places is treated, by the Census's own classes
+    levels:
+      state: legal
+      county: legal
+      cousub: legal
+      sldl: legislative
+      sldu: legislative
+    classes:
+      legal: >
+        Legal areas reflect the boundaries in effect on January 1 of the
+        estimate's final year, so a 5-year estimate uses the same boundaries
+        as the 1-year estimate of its final year.
+      legislative: >
+        State legislative districts reflect the legislative session year of
+        the estimate's final year, which for Maine is the 2024 block
+        equivalency files Sprint 04 built the districts from.
+      statistical: >
+        Statistical areas mostly reflect the decennial census's boundaries,
+        not the estimate year's. A county subdivision whose census_funcstat
+        is S (a statistical entity) is treated as one. Its value attaches,
+        marked unchecked: the 2024 layer is expected to carry its 2020
+        boundaries unchanged, which is not yet verified.
+    statistical_funcstat: [S]
+    decennial_year: "2020"
+    cites:
+      - https://www.census.gov/help/topics/faq.what-boundaries-do-you-use-for-legal-areas-and-statistical-areas.html
+      - https://www.census.gov/programs-surveys/acs/geography-acs/geography-boundaries-by-year.2021.html
+    # not judged here: Census tribal areas, which D-171 refuses outright while
+    # places hold the 2020 legal areas (TRIBE-6), and MEGIS divisions, which
+    # no ACS table is keyed by
