@@ -1,0 +1,62 @@
+# ============================================================================
+# seeds/authorities/authorities.yml ~ who assigns a place's code, and at which levels
+# ============================================================================
+# a place is named by (authority, code) (Contract 3 section 1, D-19). since
+# D-186, "authority" means only this: who assigns the code. a Census GEOID
+# is unique only within its level, so the authority names the level wherever
+# codes could collide (GRAPH-1): 23001 is a county, a House district and a
+# Senate district, under three authorities.
+#
+# this is the declared list (AUTH-1, D-188). the code still carries copies
+# (preview.py, derive_indicator.R, build_places.py, build_place_edges.py,
+# build_place_outlines.R, build_seats.py), and tests/test_authorities.py
+# fails, naming the file, whenever a copy and this list disagree. the grove
+# reads this list as the keys a plot may hold. widths and examples are
+# measured from Maine's places, not remembered.
+#
+# each level belongs to exactly one authority. this map is the file's last key.
+# ============================================================================
+
+authorities:
+  us_census_geoid:
+    meaning: >
+      The Census GEOID for legal and statistical areas whose codes nest by
+      length and never collide: a state, a county, a county subdivision (a
+      town as the Census publishes it), a tract.
+    levels:
+      state: {width: 2, example: "23"}
+      county: {width: 5, example: "23001"}
+      cousub: {width: 10, example: "2300102060"}
+      # declared for tract values (indicator_values' tract grain); no plot's
+      # graph holds tracts yet, so this width is the Census's, not measured
+      tract: {width: 11}
+
+  us_census_sldl:
+    meaning: >
+      A state legislative district, lower chamber (the Maine House), coded
+      as the Census codes it: state FIPS and district number.
+    levels:
+      sldl: {width: 5, example: "23001"}
+
+  us_census_sldu:
+    meaning: >
+      A state legislative district, upper chamber (the Maine Senate), coded
+      as the Census codes it: state FIPS and district number.
+    levels:
+      sldu: {width: 5, example: "23001"}
+
+  us_census_aiannh:
+    meaning: >
+      A Census American Indian, Alaska Native and Native Hawaiian area: four
+      digits and a component letter, R for a reservation and T for trust
+      land, so 2760R and 2760T are two places (D-125). A Census view, never
+      a nation's own boundary (D-123, MP-72).
+    levels:
+      aiannh: {width: 5, example: "0115T"}
+
+  megis:
+    meaning: >
+      A Maine civil division as the Maine GeoLibrary (MEGIS) codes it; joined
+      to Census towns through blocks, never by name (D-122).
+    levels:
+      megis_division: {width: 5, example: "01010"}

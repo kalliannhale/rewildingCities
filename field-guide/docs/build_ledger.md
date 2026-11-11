@@ -935,3 +935,11 @@ Two lessons, both from this change. A signature's callers are found by searching
 | ID | Open item | Defined |
 | --- | --- | --- |
 | **NAME-4** | Manifests still name a source's publisher provenance.authority, which preview.py and recipe.py's SOURCE_FACTS read and the method recipes reach as $source.authority. One sweep renames it to published_by across every plot's manifest, block and inline forms, with the resolver | change 13 |
+
+### Change 14: the place-code authorities have one declared home (build 6, AUTH-1, D-188)
+
+seeds/authorities/authorities.yml (new): each authority that may assign a place's code, its levels, each level's code width, and one real example, measured from Maine's places (923 MEGIS divisions at 5, 8 Census tribal areas at 5, 529 towns at 10, 16 counties at 5, 151 House and 35 Senate districts at 5, the state at 2); tracts declared under us_census_geoid at the Census's width of 11, marked as not measured, since no plot's graph holds them yet. AUTH-1 named four copies of the list; there are six: preview.py, derive_indicator.R, build_places.py, build_place_edges.py, build_place_outlines.R's level map, and build_seats.py's chambers. tests/test_authorities.py (new, 8 tests) holds every copy to the seed, importing the Python ones and reading the R ones as text, and checks that each level belongs to exactly one authority and every example has its level's width. 529 tests pass.
+
+| ID | Decision | Why | Revisit when |
+| --- | --- | --- | --- |
+| **D-188** | AUTH-1: the authorities are declared once, in seeds/authorities/authorities.yml, and every copy in the code is held to it by a test; the copies stay, and the grove reads the seed. Option B of fork 6b, Claude's lean, chosen by Kalli | Silent drift between six copies becomes a failing test that names the file, with no runtime change and no rerun. Making the copies read the seed (option A) would let a seed edit change what a primitive does unseen by freshness (KIT-1) | Sprint 10 settles KIT-1; then the copies can read the seed |
