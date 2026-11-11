@@ -237,6 +237,11 @@ class Orchestrator:
         # step loudly; approvals would otherwise be invisible, and a gate
         # whose judgments cannot be audited is a gate you cannot trust.
         self._precondition_notes: dict[str, list[str]] = {}
+        # what was found about each $loam. input before any step ran (D-166):
+        # one record per reached type for the receipts' lineage, and, per
+        # step, the cannot-tell notes that step's receipt must carry
+        self._loam_records: list[dict] = []
+        self._loam_notes: dict[str, list[str]] = {}
         self._inject_profile_steps()
 
         if self._steps_injected:
@@ -348,6 +353,74 @@ class Orchestrator:
                     f"{lineage.method_ref} is a preparation method, which answers "
                     "no question; an experiment needs a method that does. declare "
                     "this run `kind: preparation`, or choose an analysis method")
+
+    def _judge_loam_inputs(self, warnings: list[str]) -> OrchestrationResult | None:
+        """reach every $loam. input and judge it, before any step runs.
+
+        returns the failed result when an input cannot be reached or is stale,
+        or None when the run may proceed. each reached type is judged once,
+        however many steps read it; a cannot-tell verdict is noted for every
+        step that reads it, so each of their receipts says so (D-166)."""
+        from ..loam.freshness import judge, STALE, CANNOT_TELL
+
+        def refused(step_id: str, error: str, message: str) -> OrchestrationResult:
+            return OrchestrationResult(
+                success=False, completed_steps=[], failed_step=step_id,
+                step_results={}, final_envelopes={},
+                lineage=self.experiment.lineage, warnings=warnings,
+                error=error, message=message)
+
+        verdicts = {}
+        for step_id in self.plan.steps_in_order:
+            step = self._get_step(step_id)
+            for input_name, ref in step.inputs.items():
+                if not (isinstance(ref, str) and ref.startswith("$loam.")):
+                    continue
+                asked = ref[len("$loam."):]
+                try:
+                    reached = self.loam_reach.reach(asked, f"step '{step.id}' inputs.{input_name}")
+                except ValueError as e:
+                    return refused(step.id, "Input resolution failed", str(e))
+                if asked not in verdicts:
+                    verdict = judge(reached.envelope, self.project_root, self._declared_params)
+                    verdicts[asked] = verdict
+                    self._loam_records.append(verdict.as_record(asked, reached.receipt))
+                    warnings.append(verdict.summary(asked, reached.receipt))
+                verdict = verdicts[asked]
+                if verdict.status == STALE:
+                    return refused(step.id, "Stale input", verdict.summary(asked, reached.receipt))
+                if verdict.status == CANNOT_TELL:
+                    self._loam_notes.setdefault(step.id, []).append(
+                        verdict.summary(asked, reached.receipt))
+        return None
+
+    def _declared_params(self, run: str, step_id: str) -> tuple[dict | None, str | None]:
+        """a step's params as its run declares them today, resolved exactly as
+        a run resolves them, or (None, why). the run is found by its id among
+        this plot's preparations/ and experiments/ (D-165)."""
+        folder = self.manifest.data_dir
+        for sub in ("preparations", "experiments"):
+            for path in sorted((folder / sub).glob("*.yml")):
+                try:
+                    doc = yaml.safe_load(path.read_text()) or {}
+                except Exception:
+                    continue
+                if not isinstance(doc, dict) or doc.get("id") != run:
+                    continue
+                try:
+                    declared = parse_experiment(path)
+                except Exception as e:
+                    return None, f"its declaration {path.name} could not be read: {e}"
+                step = next((s for s in declared.steps if s.id == step_id), None)
+                if step is None:
+                    return None, f"{path.name} no longer declares a step {step_id}"
+                try:
+                    resolver = ReferenceResolver(manifest=self.manifest, experiment=declared)
+                    return resolver.resolve_step_params(step), None
+                except ValueError as e:
+                    return None, f"its params could not be resolved today: {e}"
+        return None, (f"no run with id {run} is declared in this plot's "
+                      f"preparations/ or experiments/")
 
     def _validate_loam_references(self, errors: list[str]) -> None:
         """a run may not reach for a type it makes itself (D-164).
@@ -798,6 +871,15 @@ class Orchestrator:
         for r in data_report.acquired:
             validation_warnings.append(f"Acquired '{r.dataset_name}': {r.message}")
 
+        # PHASE 2.5: what this run reaches for through loam is reached and
+        # judged now, after resolve_data, so the disk is as the steps will
+        # find it, and before any step, so a stale input stops the run before
+        # anything is written (D-165, D-166)
+        loam_failure = self._judge_loam_inputs(validation_warnings)
+        if loam_failure is not None:
+            self._write_run_log(loam_failure)
+            return loam_failure
+
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.envelope_dir.mkdir(parents=True, exist_ok=True)
 
@@ -956,6 +1038,15 @@ class Orchestrator:
                 build_result.envelope.warnings.append(
                     _Warning(level="warning", primitive="orchestrator", message=text))
 
+        # D-166: an input reached through loam whose freshness cannot be fully
+        # told says so in the receipt of the step that read it, once
+        if self._loam_notes.get(step.id):
+            from canopy.envelope import Warning as _LoamWarning
+            for text in self._loam_notes[step.id]:
+                if not any(w.message == text for w in build_result.envelope.warnings):
+                    build_result.envelope.warnings.append(
+                        _LoamWarning(level="warning", primitive="orchestrator", message=text))
+
         # Sprint 8: wrap envelope-write so schema-validation failures fail
         # the step gracefully with a clear error rather than crashing the
         # orchestrator with a traceback. Import is lazy so this catch
@@ -1023,6 +1114,10 @@ class Orchestrator:
         })
         if self._resolution_report:
             lineage_dict["data_resolution"] = self._resolution_report.to_envelope_context()
+        # D-166: every input reached through loam, with its verdict, so the
+        # receipt tells where all of its data came from, not only the manifest's
+        if self._loam_records:
+            lineage_dict["loam_inputs"] = [dict(r) for r in self._loam_records]
         return lineage_dict
 
     def _enrich_with_lineage(self, envelopes: dict[str, Envelope]) -> list[str]:

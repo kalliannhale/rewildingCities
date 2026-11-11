@@ -1,11 +1,16 @@
 """
-tests/test_loam_reach.py  |  rewildingCities, Sprint 05 change 2
+tests/test_loam_reach.py  |  rewildingCities, Sprint 05 changes 2 and 3
 
 LOAM-1: one run reads another run's output by semantic type, `$loam.<type>`
 (D-163), answered by the plot's loam bed, rebuilt fresh from its receipts
 (D-164). Exactly one tended or gathered artifact of the type must be there;
 none, several, a manifest dataset, an unknown type, and a type the run makes
 itself are each refused, naming why.
+
+Change 3 judges what was reached before any step runs (D-165, D-166): a
+changed input or a changed declaration is stale and refuses; an unhashed
+input, a missing file, a missing declaration, or a step from before D-167
+cannot be told, and the run proceeds, saying so in its receipt.
 
 Nothing here runs a primitive. As in test_preparations.py, the real
 orchestrator, registries, vocabulary and methods index are used, and only
@@ -14,7 +19,6 @@ envelope a primitive would. The small helpers are repeated here rather than
 imported, so each test file can be read on its own.
 """
 
-import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -22,7 +26,8 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-from canopy.envelope import BuildResult, Envelope, HashInfo, InputRecord, ProvenanceEntry
+from canopy.envelope import (BuildResult, Envelope, HashInfo, Hasher, InputRecord,
+                             ProvenanceEntry)
 from canopy.orchestrator.orchestrator import Orchestrator
 from canopy.orchestrator.references import ReferenceResolver
 from canopy.wonder.session import open_plot
@@ -66,6 +71,14 @@ def a_step(step_id, inputs, output_name, output_type):
             "outputs": {output_name: output_type}, "params": {}}
 
 
+def recorded_hash(path):
+    """the hash a full-profile run would record, so freshness can recompute
+    it later; a path that is not a file is recorded as skipped."""
+    if Path(path).is_file():
+        return Hasher(profile="full").hash_file(path)
+    return HashInfo(value=None, method="skipped", reason="test fixture")
+
+
 def run(path, tmp_path, seen=None):
     """run one preparation with a fake primitive; `seen` collects, per step,
     the inputs the builder was handed."""
@@ -82,7 +95,7 @@ def run(path, tmp_path, seen=None):
             name=i.name,
             semantic_type=(i.envelope.metadata["semantic_type"] if i.envelope else i.semantic_type),
             path=str(i.envelope.data["path"] if i.envelope else i.path),
-            hash=HashInfo(value=hashlib.md5(b"").hexdigest(), method="full_file", algorithm="md5"))
+            hash=recorded_hash(i.envelope.data["path"] if i.envelope else i.path))
             for i in inputs]
         env = Envelope(
             data={"path": str(output_path), "format": output_format},
@@ -106,6 +119,7 @@ def make_places(plot, tmp_path, step_id="graph_places", name="geography"):
         step_id, {"features": "$manifest.governance_unit_county"}, "places", "places")])
     _, result = run(path, tmp_path)
     assert result.success, result.error or result.message
+    return path
 
 
 def read_places(plot, name="seats"):
@@ -203,3 +217,104 @@ def test_a_resolver_given_no_plot_says_so():
 def test_loam_names_a_type_never_its_maker():
     with pytest.raises(ValueError, match="never who made it"):
         a_resolver().resolve_input("$loam.geography.places")
+
+
+# ── freshness, judged before any step runs (change 3) ─────────────────────
+def receipt(plot, name):
+    return json.loads((plot / ".envelopes" / f"{name}.envelope.json").read_text())
+
+
+def rewrite_receipt(plot, name, change):
+    path = plot / ".envelopes" / f"{name}.envelope.json"
+    doc = json.loads(path.read_text())
+    change(doc)
+    path.write_text(json.dumps(doc))
+
+
+def test_an_unchanged_input_reads_as_fresh_and_the_receipt_says_so(tmp_path):
+    plot = a_plot(tmp_path)
+    make_places(plot, tmp_path)
+    _, result = run(read_places(plot), tmp_path)
+    assert result.success, result.error or result.message
+    (record,) = receipt(plot, "seats_seats")["metadata"]["lineage"]["loam_inputs"]
+    assert record["type"] == "places" and record["verdict"] == "fresh"
+    assert record["not_judged"] == "primitive code"
+    assert any("is fresh" in w and "primitive code is not checked" in w for w in result.warnings)
+
+
+def test_a_changed_input_is_stale_and_nothing_runs(tmp_path):
+    plot = a_plot(tmp_path)
+    make_places(plot, tmp_path)
+    (plot / ".data" / "counties.geojson").write_text(json.dumps(
+        {"type": "FeatureCollection", "features": [], "edited": True}))
+    _, result = run(read_places(plot), tmp_path)
+    assert not result.success
+    assert result.error == "Stale input" and result.failed_step == "seats"
+    assert "counties.geojson" in result.message and "has changed since" in result.message
+    assert "rerun geography" in result.message
+    assert "primitive code is not checked" in result.message
+    assert not (plot / ".envelopes" / "seats_seats.envelope.json").exists()
+
+
+def test_a_changed_declaration_is_stale(tmp_path):
+    plot = a_plot(tmp_path)
+    producer = make_places(plot, tmp_path)
+    doc = yaml.safe_load(producer.read_text())
+    doc["steps"][0]["params"] = {"tolerance_m": 5}
+    producer.write_text(yaml.safe_dump(doc, sort_keys=False))
+    _, result = run(read_places(plot), tmp_path)
+    assert result.error == "Stale input"
+    assert ("step graph_places of geography is now declared with different params "
+            "(tolerance_m)") in result.message
+
+
+def test_a_receipt_from_before_d167_cannot_be_told_and_says_so(tmp_path):
+    plot = a_plot(tmp_path)
+    make_places(plot, tmp_path)
+
+    def forget_identity(doc):
+        for entry in doc["provenance"]:
+            entry.pop("run", None)
+            entry.pop("step", None)
+    rewrite_receipt(plot, "graph_places_places", forget_identity)
+
+    _, result = run(read_places(plot), tmp_path)
+    assert result.success, result.error or result.message
+    seats = receipt(plot, "seats_seats")
+    assert seats["metadata"]["lineage"]["loam_inputs"][0]["verdict"] == "cannot_tell"
+    told = [w["message"] for w in seats["warnings"] if "cannot be fully told" in w["message"]]
+    assert len(told) == 1 and "recorded before D-167" in told[0]
+
+
+def test_a_missing_input_file_cannot_be_told(tmp_path):
+    plot = a_plot(tmp_path)
+    make_places(plot, tmp_path)
+    (plot / ".data" / "counties.geojson").unlink()
+    _, result = run(read_places(plot), tmp_path)
+    assert result.success, result.error or result.message
+    assert any("no longer on disk" in w for w in result.warnings)
+
+
+def test_a_missing_declaration_cannot_be_told(tmp_path):
+    plot = a_plot(tmp_path)
+    producer = make_places(plot, tmp_path)
+    producer.unlink()
+    _, result = run(read_places(plot), tmp_path)
+    assert result.success, result.error or result.message
+    assert any("no run with id geography is declared" in w for w in result.warnings)
+
+
+def test_one_input_recorded_twice_is_checked_once(tmp_path):
+    from canopy.loam.freshness import judge, FRESH
+    f = tmp_path / "blocks.csv"
+    f.write_text("block,pop\n1,10\n")
+    entry = ProvenanceEntry(
+        primitive="build_block_spine", version="1.0.0", timestamp="2026-11-11T00:00:00Z",
+        params={}, inputs=[InputRecord(name="counts", semantic_type="census_block_counts",
+                                       path=str(f), hash=recorded_hash(f))],
+        duration_seconds=0.0, run="geography", step="graph_spine")
+    env = Envelope(data={"path": "x"}, metadata={"semantic_type": "places"},
+                   provenance=[entry, entry], warnings=[])
+    verdict = judge(env, tmp_path, lambda run, step: ({}, None))
+    assert verdict.status == FRESH
+    assert verdict.checked_inputs == 1 and verdict.checked_steps == 1
