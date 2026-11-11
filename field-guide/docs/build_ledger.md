@@ -1122,3 +1122,20 @@ Findings:
 | --- | --- | --- |
 | **SURVEY-1** | Loam's only boundary rule is the final year of `time`; a count's boundaries are the graph's, so a later survey counted on the 2024 places must still name 2024, or it reads as a mismatch | step 3 |
 | **LOAM-2** | place_values reads the ACS's `levels` for every publisher; a publisher with other levels needs loam to read its own | step 3 |
+
+## Sprint 06 session 1: hand-off
+
+Built since D-209: place.py reads a carrier apart (count first, its persons, its maker, no town range), tests/test_place_carrier.py. 643 passed with -rs.
+
+- Wrong hypothesis: a MEGIS town office layer exists. The only MEGIS town point layer (METWP24PT) is town centroids by its own description, so as carriers it would give every town exactly one office; refused by name.
+- MEGIS publishes a Libraries point layer of 390 features against IMLS's 262 fixed outlets; the difference is unread.
+- Nothing in the repo geocodes: soil/validate/geocode_to_unit.py, in the October snapshot, matches place names to units with fuzzy matching and produces no coordinate (check the current file).
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **GEO-1** | No geocoder exists. Lean: the Census Geocoder first (free, batch 10,000, match type and 2020 block per address, interpolated along street centerlines), with ArcGIS World Geocoding (credits, KEY-1) or Maine NG911 address points beside it as second authorities, never merged | hand-off |
+| **TOWN-OFF-1** | Town offices need an address list to geocode; the MEGIS centroid layer is refused as a carrier | hand-off |
+| **LIB-2** | MEGIS Libraries (390) against IMLS fixed outlets (262): a second authority, read side by side | hand-off |
+| **INDFILE-1** | carriers.yml's hash is in libraries_counts' receipt; one file per carrier family (lean) or rerun on every addition | hand-off |
+| **SCALE-1** | place.py writes "per 1,000" while the scale lives in the declaration; carry it in each value row | hand-off |
+| **LOC-VIEW-1** | No loam view of located_in edges; needed to name the carriers in a place | hand-off |
