@@ -1065,3 +1065,15 @@ Findings and wrong hypotheses:
 | **OBS-1** | Language and paywall need our own observation of each outlet, a receipt per observation: a status under D-200 | this session |
 | **WHERE-1** | Which place meaning counts as where an outlet is, for located_in | this session |
 | **SRC-4** | The ecosystem file's publisher, the Still Operates? receipt, and every outlet source's terms | this session |
+
+## Sprint 06 session 1, continued: the maine_outlets preparation (D-206)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-206** | `$crosswalks.<name>` resolves the one file seeds/crosswalks/**/<name>.yml into a step's params, refused as an input, refused when none or two files share the name. Claude's lean, option A | Seeds reach runs as params ($weights, $reliability, $indicators), so a receipt records what was read and freshness sees an edit as a changed param; a path param would let a seed change silently | A crosswalk grows too large to carry in every receipt's params |
+
+Built: maine_outlets (stack, groups, disagreements) as a preparation over five outlet_listing manifest datasets in garden/reference/ (D-205); method outlet_reconciliation; types outlet_listing (excluded), outlet_stack, outlet_groups and outlet_disagreements (tiers left to Person 3). 595 passed with -rs.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **OUT-REG-1** | stack_outlet_sources' registry entry names Maine's five listings as inputs, so a plot with other listings needs its own entry; the community kit must decide how a primitive takes a declared set of inputs | this session |
