@@ -543,3 +543,14 @@ Built: canopy/providers/maine_legislature.py (House CSV, Senate listing, phones 
 | **SEN-1** | The Senate listing was verified at autodiscover.legislature.maine.gov; whether legislature.maine.gov serves the same page is unchecked |
 | **PREP-1** | How one preparation reads another's output (places into build_seats) is not known in this chat; the seats preparation waits on it |
 | **LEGI-1** | LegiScan columns exist in `seats` and stay empty until a key is held and the provider is built |
+
+## SPRINT 04, STEP 4e ~ the seats preparation waits for loam, 2026-11-11
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-141** | No seats preparation until loam (Sprint 05) lets one preparation read another's output. Not a step in maine_geography_graph (unavailable rosters would block the graph), not a local copy of places (it would go stale silently) | Step 4 is built and tested but not run; it runs when loam reads places and the 133rd's rosters exist (after 2026-12-02) | Seats are needed before loam lands |
+
+| ID | item |
+| --- | --- |
+| **PREP-1** | Resolved by D-141. Preparations run through the orchestrator; a step's output is `plots/<plot>/.data/<step>_<output>.<ext>` with its receipt at `.envelopes/<step>_<output>.envelope.json` (places: `.data/graph_places_places.parquet`). Steps reach each other only inside one run; no CLI command runs a preparation |
+| **LOAM-1** | Sprint 05: loam must let a preparation read another preparation's output by semantic type, with staleness. First consumer: build_seats reading places |
