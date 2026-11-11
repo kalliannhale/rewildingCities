@@ -38,14 +38,18 @@ requires_data:
 
 choices:
   aggregation_unit_level:
-    options: [county, county subdivision, tract]
+    options: [county, county subdivision, tract, state legislative district]
     default: county
     description: >
       The grain the source was acquired at, which is the grain every value
       describes. A county figure averages over places a town or tract figure
       would separate; finer grains carry much wider margins of error. In
       Maine, a county subdivision is a town as the Census publishes it: 529
-      units, not the 924 civil divisions in Maine's own GIS.
+      units, not the 924 civil divisions in Maine's own GIS. A state
+      legislative district is a House or a Senate district; one grain names
+      both, and the chamber is named by the authority that codes it,
+      us_census_sldl or us_census_sldu (GRAPH-1, D-177), since a value's
+      level is its place's, never its own (D-169).
 
 requires_primitives:
   - soil/derive_indicator

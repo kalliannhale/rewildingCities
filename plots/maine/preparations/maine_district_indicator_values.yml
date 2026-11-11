@@ -1,0 +1,98 @@
+# ============================================================================
+# plots/maine/preparations/maine_district_indicator_values.yml
+# ============================================================================
+# the same four civic indicators for Maine's 151 House and 35 Senate
+# districts, from the ACS's own legislative-district estimates. Contract 3,
+# rule 1: a district's value is the publisher's estimate for the district,
+# never a sum or average of its towns. the towns travel beside it as a
+# range, read through the graph's edges; they never make it.
+#
+# KEYED BY CHAMBER, on purpose (GRAPH-1, D-176). a Census GEOID is unique
+# only within its level: 23005 is Cumberland County, House District 5 and
+# Senate District 5. keyed as us_census_geoid, House District 5's value would
+# attach to Cumberland County and pass its vintage rule, a wrong value with
+# a clean status. so each step names the authority that codes its chamber,
+# exactly as build_places keys the district places, and
+# tests/test_district_values.py holds every step to it.
+#
+# one grain for both chambers (D-177): the choice says "state legislative
+# district", and the chamber is named by unit_authority. a value's level is
+# its place's, never its own (D-169), so nothing is lost.
+#
+# VALUES, NOT STANDINGS, as for towns: a district percentile would need a
+# declared reference population, and CII sets no district standard.
+#
+# a preparation (D-98, D-99), written by hand. it readies values and answers
+# no question, so it names no curiosity.
+# ============================================================================
+
+id: maine_district_indicator_values
+name: "Four civic indicators for Maine's House and Senate districts"
+description: >
+  Derives broadband subscription, limited-English households, rent burden
+  and households without a vehicle for each of Maine's 151 House and 35
+  Senate districts from ACS 2020-2024, keyed by the authority that codes
+  each chamber.
+
+kind: preparation
+
+method:
+  ref: $methods/information/indicator_values
+
+city: maine
+manifest: ../manifest.yml
+
+choices:
+  aggregation_unit_level: state legislative district
+
+parameters: {}
+
+steps:
+  - id: sldl_derive
+    primitive: soil/derive_indicator
+    description: "Indicator values for each Maine House district, one declaration at a time"
+    inputs:
+      source: $manifest.acs_sldl_2024
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.cii_broadband
+        - $indicators.limited_english_households
+        - $indicators.cii_rent_burden
+        - $indicators.cii_no_vehicle
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      authority: us_census_acs
+      # whose codes name the units (D-131, GRAPH-1): a House district's code
+      # under the Census's lower-chamber authority, never us_census_geoid
+      unit_authority: us_census_sldl
+      unit_column: GEOID
+      name_column: NAME
+      # the layer a map draws this table on, read by map.py and visuals.py;
+      # kept as the method writes it, and checked by the publish door
+      joins_to: governance_unit
+      reliability: $reliability.acs_small_sample
+
+  - id: sldu_derive
+    primitive: soil/derive_indicator
+    description: "Indicator values for each Maine Senate district, one declaration at a time"
+    inputs:
+      source: $manifest.acs_sldu_2024
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.cii_broadband
+        - $indicators.limited_english_households
+        - $indicators.cii_rent_burden
+        - $indicators.cii_no_vehicle
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      authority: us_census_acs
+      # a Senate district's code under the Census's upper-chamber authority
+      unit_authority: us_census_sldu
+      unit_column: GEOID
+      name_column: NAME
+      joins_to: governance_unit
+      reliability: $reliability.acs_small_sample
