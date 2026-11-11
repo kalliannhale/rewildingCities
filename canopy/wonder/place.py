@@ -46,6 +46,13 @@ a town range is one estimate per town, however much of the town lies in
 the place: a spread of town estimates, not of the place's people, and wider
 than the truth where samples are small. every telling says so.
 
+a carrier is read apart (D-209). its value is a count of points standing in
+the place, exact at every level from the place's own located_in edges, so no
+town range stands in for it and none is read. it leads with the count and the
+persons it rests on, says who counted it, and is never called an estimate.
+a value is a carrier when its row's method is count_located's, which the
+receipt writes; never by the indicator's name.
+
 the parts are towns by default (`cousub`); `part_level` reads any other
 level an edge reaches, so the same reader serves tracts or divisions in
 another plot (D-184).
@@ -142,6 +149,12 @@ class IndicatorReading:
     whole_minimum_towns: list[str] = field(default_factory=list)
     whole_maximum_towns: list[str] = field(default_factory=list)
     whole_count: int = 0
+    # a carrier (D-209): a count of points standing here, exact, never ranged
+    carrier: bool = False
+    own_count: int | None = None
+    own_universe_count: float | None = None
+    counted_by: str = ""
+    counts_noun: str = ""
 
     @property
     def in_range(self) -> list[TownValue]:
@@ -207,13 +220,28 @@ def _views(con) -> set[str]:
     return {r[0] for r in con.execute("SELECT table_name FROM information_schema.tables").fetchall()}
 
 
-def _indicator_names(root: Path) -> dict[str, str]:
-    names: dict[str, str] = {}
+def _indicator_field(root: Path, field_name: str) -> dict[str, str]:
+    out: dict[str, str] = {}
     for f in sorted((root / "seeds" / "indicators").glob("*.yml")):
         doc = yaml.safe_load(f.read_text()) or {}
         for key, spec in (doc.get("indicators") or {}).items():
-            names[key] = (spec or {}).get("name") or key
+            value = (spec or {}).get(field_name)
+            if value:
+                out[key] = str(value)
+    return out
+
+
+def _indicator_names(root: Path) -> dict[str, str]:
+    names = _indicator_field(root, "name")
     return names
+
+
+CARRIER_METHOD = "count_located"
+
+
+def _is_carrier(row: dict | None) -> bool:
+    """a carrier's row says so in its method, written by count_located (D-209)."""
+    return _text((row or {}).get("method")).startswith(CARRIER_METHOD)
 
 
 # plain words for the reasons a derivation gives when it has no value; the
@@ -315,11 +343,27 @@ def read_place(loam, authority: str, code: str, *, root: str | Path | None = Non
                 town_rows[key] = row
 
     names = _indicator_names(base)
+    measures = _indicator_field(base, "measures")
     indicators = sorted({r["indicator"] for r in own_rows} | {k[2] for k in town_rows})
     readings: list[IndicatorReading] = []
     for indicator in indicators:
         own = next((r for r in own_rows if r["indicator"] == indicator and r.get("attached")),
                    next((r for r in own_rows if r["indicator"] == indicator), None))
+        if _is_carrier(own):
+            count = _number(own.get("count"))
+            readings.append(IndicatorReading(
+                indicator=indicator, name=names.get(indicator, indicator),
+                own_value=_number(own.get("value")), own_status=own.get("status"),
+                own_why=(_text(own.get("why")) if not own.get("attached") else
+                         _text(own.get("empty_reason"))),
+                own_moe=None, own_moe_status=None, own_reliability="",
+                universe=_text(own.get("households_counts")) or None,
+                universe_relation=None, universe_note="",
+                carrier=True, own_count=None if count is None else int(count),
+                own_universe_count=_number(own.get("households")),
+                counted_by=_text(own.get("published_by")),
+                counts_noun=measures.get(indicator, indicator).replace("_", " ")))
+            continue
         counts = _text((own or {}).get("households_counts")) or next(
             (_text(r.get("households_counts")) for k, r in town_rows.items()
              if k[2] == indicator and _text(r.get("households_counts"))), "")
@@ -465,6 +509,27 @@ def _span(low, high, low_names, high_names, towns, universe, across: str) -> str
             f"{_end(high, high_names, towns, universe)}, {across}")
 
 
+def _rate(v: float | None) -> str:
+    """a carrier's rate, to two places: at one, one library and two among
+    seven thousand people read alike."""
+    return "no rate" if v is None else f"{v:.2f}"
+
+
+def _say_carrier(ind: IndicatorReading) -> list[str]:
+    """a carrier, said: the count first, what it rests on, who counted it."""
+    if ind.own_status is not None and ind.own_status not in ("attached", "unchecked_statistical"):
+        return [f"     not shown here: {ind.own_why or ind.own_status}"]
+    persons = _count(ind.own_universe_count)
+    count = "an unknown number of" if ind.own_count is None else f"{ind.own_count:,}"
+    line = f"     this place: {count} {ind.counts_noun} on {persons} {ind.universe or 'people'}"
+    line += (f" (no rate: {ind.own_why or 'none here'})" if ind.own_value is None
+             else f" ({_rate(ind.own_value)} per 1,000)")
+    return [line + f", counted by {ind.counted_by or 'an unnamed maker'} from where "
+                   f"each stands (D-209)",
+            "     a count is exact at every level, read from this place's own edges, so "
+            "no range of towns stands in for it"]
+
+
 def say_place(reading: PlaceReading) -> str:
     """speak a place reading, plainly. it computes nothing. ~"""
     if not reading.found:
@@ -487,11 +552,14 @@ def say_place(reading: PlaceReading) -> str:
                      f"residents, {households} of its households")
         if t.note:
             lines.append(f"         {t.note}")
-    if reading.indicators:
+    if any(not ind.carrier for ind in reading.indicators):
         lines.append(f"\n   {RANGE_STATEMENT}.")
 
     for ind in reading.indicators:
         lines.append(f"\n   {ind.name} ({ind.indicator})")
+        if ind.carrier:
+            lines.extend(_say_carrier(ind))
+            continue
         own = f"     this place: {_figure(ind.own_value)}"
         if ind.own_value is None:
             own += f" ({ind.own_why})"
