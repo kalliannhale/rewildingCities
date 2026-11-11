@@ -15,6 +15,8 @@ def register(subparsers) -> None:
     p.add_argument("plot", help="the plot name, e.g. nyc")
     p.add_argument("question", nargs="?", default="",
                    help="a plain question about this community")
+    p.add_argument("--place", default=None, metavar="AUTHORITY:CODE",
+                   help="read one place through its edges, e.g. us_census_sldl:23042")
     p.set_defaults(func=run)
 
 
@@ -24,6 +26,13 @@ def run(args) -> int:
     from canopy.wonder.possibility import explore
 
     plot, question = args.plot, args.question
+    place = getattr(args, "place", None)
+    if place is not None:
+        authority, _, code = place.partition(":")
+        if not authority or not code:
+            print(f"--place takes a place's key as authority:code, e.g. "
+                  f"us_census_sldl:23042; got {place!r}", file=sys.stderr)
+            return 2
 
     # one way to open a plot for every reader (session.py): a fresh bed,
     # the manifest planted, the receipts tilled, and the graph's views made
@@ -58,6 +67,17 @@ def run(args) -> int:
 
     _say_graph(report.get("graph") or {})
     print()
+
+    # a place is asked about by its key, never by a name that could mean
+    # three places (GRAPH-1). the reading replaces the plot's possibilities:
+    # it answers what is true of one place, not what this ground can ask
+    # (D-184).
+    if place is not None:
+        from canopy.wonder.place import read_place, say_place
+        reading = read_place(loam, authority, code, root=root)
+        print(say_place(reading))
+        print()
+        return 0 if reading.found else 1
 
     possibilities = explore(loam, plot, question, root=root)
     if not possibilities:

@@ -1,0 +1,49 @@
+# ============================================================================
+# seeds/universes/universes.yml ~ which edge weight counts what a value rests on
+# ============================================================================
+# every indicator says what its value counts, in rests_on.counts (Sprint 02,
+# D-107). every overlaps edge carries two weights, the share of the town's
+# persons and of its households inside the other place (Contract 3, D-121).
+# this says, for each universe an indicator counts, which weight counts the
+# same thing, or which weight's universe contains it (D-181).
+#
+#   equals    the weight is this universe's share. it may be shown beside a
+#             value, judges whether a town has none of the universe in a
+#             place (D-180), and is the only relation a count may be
+#             allocated by (D-179)
+#   contains  the weight's universe holds this one, so a weight of 0 means
+#             none of this universe is there either. that is all it may
+#             say: it judges zero, and it is never shown as this
+#             universe's share and never allocates
+#
+# keyed by the counts phrase exactly as the indicators write it, so the
+# indicator seeds and their receipts are untouched. a phrase not here has no
+# share and no zero test, and every reading says so; a test holds every
+# indicator's phrase to this file. "weights" in seeds/weights/ are index
+# weightings ($weights.), a different idea. this map is the file's last key.
+# ============================================================================
+
+universes:
+  households:
+    weight: weight_households
+    relation: equals
+    reason: >
+      The household weight is the town's share of its occupied housing units,
+      2020 Census H1, which is what the ACS counts as households (D-121).
+
+  persons:
+    weight: weight_population
+    relation: equals
+    reason: >
+      The population weight is the town's share of its residents, 2020 Census
+      P1 (D-121). Representation always reads this weight.
+
+  renter households with rent burden computed:
+    weight: weight_households
+    relation: contains
+    reason: >
+      Renters are a subset of households. A town with none of its households
+      in a place has none of its renters there; the reverse does not hold,
+      so the household share is never shown as a renter share. A renter
+      share would need a renter weight on the edges, built from tenure
+      counts by block; which 2020 table carries them is not yet checked.
