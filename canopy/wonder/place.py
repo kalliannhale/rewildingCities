@@ -26,8 +26,10 @@ what enters the range is declared, and everything left out is named:
     a Census tribal area) or with no value stays out, with why
   ~ a statistical area attached unchecked, and a value resting on a small
     sample, enter the range, and the range's ends say what they rest on.
-    when either is in the range, a firm range without them is read too,
-    so a shaky value can never quietly set an end (D-183)
+    when either is among the towns wholly here, a firm range is read too:
+    the towns wholly here without them, the core whose values describe
+    this place's people on a sound sample, so neither a shaky value nor a
+    split town can quietly set an end of it (D-183, D-185)
   ~ a share is shown only where the universe equals its weight; a
     contained universe shows its count and no share (D-182)
   ~ a town wholly inside the place is told apart from a town its line
@@ -126,8 +128,9 @@ class IndicatorReading:
     maximum: float | None = None
     minimum_towns: list[str] = field(default_factory=list)
     maximum_towns: list[str] = field(default_factory=list)
-    # the same range without small samples or unchecked areas (D-183); None
-    # when nothing shaky entered, since then the two are one range
+    # the towns wholly here without small samples or unchecked areas (D-183,
+    # D-185); None when no town wholly here is shaky, since then the firm
+    # range is the range of towns wholly here
     firm_minimum: float | None = None
     firm_maximum: float | None = None
     firm_minimum_towns: list[str] = field(default_factory=list)
@@ -365,8 +368,8 @@ def read_place(loam, authority: str, code: str, *, root: str | Path | None = Non
         low, high, low_names, high_names = _range(entered)
         whole = [t for t in entered if t.whole]
         w_low, w_high, w_low_names, w_high_names = _range(whole)
-        firm = [t for t in entered if not (t.small_sample or t.unchecked)]
-        shaky = len(firm) < len(entered)
+        firm = [t for t in whole if not (t.small_sample or t.unchecked)]
+        shaky = len(firm) < len(whole)
         f_low, f_high, f_low_names, f_high_names = _range(firm) if shaky else (None, None, [], [])
         readings.append(IndicatorReading(
             indicator=indicator, name=names.get(indicator, indicator),
@@ -452,6 +455,16 @@ def _end(value: float | None, names: list[str], towns: list[TownValue],
     return f"{_figure(value)} ({'; '.join(said)})"
 
 
+def _span(low, high, low_names, high_names, towns, universe, across: str) -> str:
+    """a range, said once: `low to high`, or `all X` when its ends are one."""
+    if low == high:
+        names = sorted(set(low_names) | set(high_names),
+                       key=lambda n: next(i for i, t in enumerate(towns) if t.name == n))
+        return f"all {_end(low, names, towns, universe)}, {across}"
+    return (f"{_end(low, low_names, towns, universe)} to "
+            f"{_end(high, high_names, towns, universe)}, {across}")
+
+
 def say_place(reading: PlaceReading) -> str:
     """speak a place reading, plainly. it computes nothing. ~"""
     if not reading.found:
@@ -509,27 +522,27 @@ def say_place(reading: PlaceReading) -> str:
         if not entered:
             lines.append(f"     range: none; no town of {len(ind.towns)} has a value that enters it")
             continue
-        lines.append(f"     range: {_end(ind.minimum, ind.minimum_towns, entered, ind.universe)} "
-                     f"to {_end(ind.maximum, ind.maximum_towns, entered, ind.universe)}, "
-                     f"across {len(entered)} of {len(ind.towns)} towns")
-        if ind.whole_count:
-            whole = [t for t in entered if t.whole]
-            lines.append(f"     towns wholly here: "
-                         f"{_end(ind.whole_minimum, ind.whole_minimum_towns, whole, ind.universe)} to "
-                         f"{_end(ind.whole_maximum, ind.whole_maximum_towns, whole, ind.universe)}, "
-                         f"across {ind.whole_count}")
+        lines.append("     range: " + _span(
+            ind.minimum, ind.maximum, ind.minimum_towns, ind.maximum_towns, entered,
+            ind.universe, f"across {len(entered)} of {len(ind.towns)} towns"))
+        whole = [t for t in entered if t.whole]
+        if whole:
+            lines.append("     towns wholly here: " + _span(
+                ind.whole_minimum, ind.whole_maximum, ind.whole_minimum_towns,
+                ind.whole_maximum_towns, whole, ind.universe, f"across {len(whole)}"))
         else:
             lines.append("     towns wholly here: none with a value in the range")
         if ind.split:
             lines.append("     towns split by its line: " + "; ".join(
                 f"{_figure(t.value)} ({_about(t, ind.universe)})" for t in ind.split))
         if ind.firm_count is not None:
+            label = "     wholly here, without small samples or unchecked areas: "
             if ind.firm_count:
-                lines.append(f"     without small samples or unchecked areas: "
-                             f"{_figure(ind.firm_minimum)} ({', '.join(ind.firm_minimum_towns)}) "
-                             f"to {_figure(ind.firm_maximum)} ({', '.join(ind.firm_maximum_towns)}), "
-                             f"across {ind.firm_count} of {len(ind.towns)} towns")
+                firm = [t for t in whole if not (t.small_sample or t.unchecked)]
+                lines.append(label + _span(
+                    ind.firm_minimum, ind.firm_maximum, ind.firm_minimum_towns,
+                    ind.firm_maximum_towns, firm, ind.universe, f"across {ind.firm_count}"))
             else:
-                lines.append("     without small samples or unchecked areas: no range; every "
-                             "value in it rests on one or the other")
+                lines.append(label + "none; every town wholly here rests on a small "
+                                     "sample or is a statistical area attached unchecked")
     return "\n".join(lines)

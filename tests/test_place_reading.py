@@ -6,10 +6,11 @@ one made from its towns (Contract 3 rule 1); every town that touches it with
 its shares (MP-76); and their range per indicator (rule 3). A town with none
 of a value's universe here is listed and kept out of the range (D-180); a
 value on other boundaries stays out, named; a statistical area and a small
-sample enter, the range's ends say what they rest on, and a firm range is
-read beside it (D-183); a contained universe shows no share (D-182); towns
-wholly inside are ranged apart from towns the line splits, and a split town
-always says how much of it is here and of how many (D-185).
+sample enter, and the range's ends say what they rest on (D-183); a
+contained universe shows no share (D-182); towns wholly inside are ranged
+apart from towns the line splits, a split town always says how much of it
+is here and of how many, and the firm range is the towns wholly here on a
+sound sample (D-183, D-185). A range whose ends are one says so once.
 """
 
 import json
@@ -174,13 +175,14 @@ def test_a_statistical_area_and_a_small_sample_enter_the_range_and_are_named(tmp
     assert entered["Cove Twp"].unchecked and entered["Beta town"].small_sample
 
 
-def test_a_firm_range_is_read_whenever_a_shaky_value_entered(tmp_path):
+def test_the_firm_range_is_the_towns_wholly_here_on_a_sound_sample(tmp_path):
     reading = read_place(opened(tmp_path), *DISTRICT, root=REPO)
     broadband = indicator(reading, "cii_broadband")
-    assert (broadband.firm_minimum, broadband.firm_maximum) == (70.0, 80.0)
-    assert broadband.firm_maximum_towns == ["Fox town"] and broadband.firm_count == 2
+    assert (broadband.firm_minimum, broadband.firm_maximum) == (70.0, 70.0)
+    assert broadband.firm_minimum_towns == ["Alpha town"] and broadband.firm_count == 1
+    assert "Fox town" not in broadband.firm_maximum_towns, "a split town never sets a firm end"
     rent = indicator(reading, "cii_rent_burden")
-    assert rent.firm_count is None, "nothing shaky entered, so there is one range"
+    assert rent.firm_count is None, "no town wholly here is shaky, so the firm range is theirs"
 
 
 def test_whole_towns_are_ranged_apart_from_towns_the_line_splits(tmp_path):
@@ -238,8 +240,8 @@ def test_the_telling_says_each_town_its_value_and_what_the_range_rests_on(tmp_pa
             "attached unchecked), across 2") in said
     assert ("towns split by its line: 88.0 (Beta town, 35.0% of its 40 households here, a small "
             "sample); 80.0 (Fox town, 2.0% of its 1,000 households here)") in said
-    assert ("without small samples or unchecked areas: 70.0 (Alpha town) to 80.0 (Fox town), "
-            "across 2 of 7 towns") in said
+    assert ("wholly here, without small samples or unchecked areas: all 70.0 (Alpha town), "
+            "across 1") in said
     assert "Dune gore (gore): its land touches this place; none of its residents live here" in said
     assert "~ Echo plantation: 50.0, left out of the range:" in said
     assert "Fox town (town): 1.5% of its residents, 2.0% of its households" in said
