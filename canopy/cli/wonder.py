@@ -6,6 +6,9 @@ import sys
 
 from ._common import find_root
 
+# the graph's views, in the order a reader meets them (D-168 to D-175)
+GRAPH_ORDER = ("places", "edges", "indicator_values", "place_values", "plot_places")
+
 
 def register(subparsers) -> None:
     p = subparsers.add_parser("wonder", help="what can this ground wonder about?")
@@ -17,19 +20,18 @@ def register(subparsers) -> None:
 
 def run(args) -> int:
     root = find_root()
-    from canopy.vocabulary import Vocabulary
-    from canopy.loam.loam import Loam
-    from canopy.loam.envelope_reader import till_envelopes
-    from canopy.loam.manifest_reader import plant_manifest
+    from canopy.wonder.session import open_plot, PlotNotFound
     from canopy.wonder.possibility import explore
 
     plot, question = args.plot, args.question
-    schemas = root / "seeds" / "schemas"
-    plot_dir = root / "plots" / plot
-    envelopes_dir = plot_dir / ".envelopes"
-    bed = plot_dir / ".loam" / "loam.duckdb"
 
-    if not plot_dir.is_dir():
+    # one way to open a plot for every reader (session.py): a fresh bed,
+    # the manifest planted, the receipts tilled, and the graph's views made
+    # over them. the CLI used to do the first four by hand and never made
+    # the views, so it could not see a single place (D-178).
+    try:
+        _vocab, loam, report = open_plot(plot, root=root)
+    except PlotNotFound:
         print(f"no plot at plots/{plot} ~ found one with:  python -m canopy.cli init {plot}",
               file=sys.stderr)
         return 2
@@ -37,35 +39,25 @@ def run(args) -> int:
     print((f'🌍  wondering about {plot}: "{question}"' if question
            else f"🌍  wondering about {plot}") + "\n")
 
-    # a fresh, re-derivable bed each time, so a schema change never collides
-    # with a stale one; loam re-tills from the receipts.
-    bed.parent.mkdir(parents=True, exist_ok=True)
-    if bed.exists():
-        bed.unlink()
-
-    vocab = Vocabulary.load(str(schemas))
-    loam = Loam(vocab, str(bed))
-
     # plant first: the manifest is the bronze registry, and a declared-but-
     # unacquired holding is invisible to everything downstream until it is
     # planted. that gap between declared and acquired is exactly what the
     # backward read calls the seed still missing. S-04.
-    manifest_path = plot_dir / "manifest.yml"
-    if manifest_path.is_file():
-        planted = plant_manifest(loam, str(manifest_path))
-        line = f"planted {len(planted['planted'])} declared holding(s) from the manifest"
-        if planted["refused"]:
-            line += f", {len(planted['refused'])} refused"
-        print(line)
+    line = f"planted {report['planted']} declared holding(s) from the manifest"
+    if report["planted_refused"]:
+        line += f", {len(report['planted_refused'])} refused"
+    print(line)
 
-    if envelopes_dir.is_dir():
-        report = till_envelopes(loam, str(envelopes_dir), vocab, plot)
-        line = f"tilled {len(report['tilled'])} envelope(s) from plots/{plot}/.envelopes"
-        if report["refused"]:
-            line += f", {len(report['refused'])} refused"
-        print(line + "\n")
+    if (root / "plots" / plot / ".envelopes").is_dir():
+        line = f"tilled {report['tilled']} envelope(s) from plots/{plot}/.envelopes"
+        if report["tilled_refused"]:
+            line += f", {len(report['tilled_refused'])} refused"
+        print(line)
     else:
-        print(f"(no plots/{plot}/.envelopes yet ~ this ground holds no conformed data)\n")
+        print(f"(no plots/{plot}/.envelopes yet ~ this ground holds no conformed data)")
+
+    _say_graph(report.get("graph") or {})
+    print()
 
     possibilities = explore(loam, plot, question, root=root)
     if not possibilities:
@@ -75,6 +67,46 @@ def run(args) -> int:
         print()
     _say_exposure(plot, root)
     return 0
+
+
+def _rows(entry: dict) -> int | None:
+    """a made view's size: its rows, or for place_values the sum of its
+    statuses, since that report counts by status rather than in total."""
+    if entry.get("rows") is not None:
+        return entry["rows"]
+    by_status = entry.get("by_status")
+    return sum(by_status.values()) if by_status else None
+
+
+def _say_graph(graph: dict) -> None:
+    """
+    what the plot's part of the graph made, and every view it did not make,
+    with why (D-178). a plot with no places has no graph, said once rather
+    than five times. a view that was not made is the reason a reading
+    through it would come back empty, so it is never left unsaid. the whole
+    report stays in open_plot's return for any reader that wants more. ~
+    """
+    places = graph.get("places") or {}
+    if not places.get("made"):
+        print(f"(no graph in this plot ~ {places.get('why', 'no run has made places')})")
+        return
+
+    made, unmade = [], []
+    for view in GRAPH_ORDER:
+        entry = graph.get(view)
+        if entry is None:
+            continue
+        if entry.get("made"):
+            rows = _rows(entry)
+            made.append(f"{view} ({rows:,})" if rows is not None else view)
+        else:
+            unmade.append((view, entry.get("why", "no reason was given")))
+
+    print(f"🕸  graph: {', '.join(made)}")
+    for view, why in unmade:
+        print(f"   ~ no {view}: {why}")
+    for left in (graph.get("indicator_values") or {}).get("left_out") or []:
+        print(f"   ~ a value receipt left out: {left}")
 
 
 def _say_exposure(plot: str, root) -> None:

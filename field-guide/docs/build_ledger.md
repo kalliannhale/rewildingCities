@@ -889,3 +889,13 @@ plots/maine/preparations/maine_district_indicator_values.yml (new): two derive s
 | **D-177** | One grain, state legislative district, names both chambers; the chamber is named by unit_authority. Claude's lean, accepted by Kalli | A value's level is its place's, never its own (D-169), so spatial_unit only describes the grain and the authority carries the chamber without loss. One file, one choice | A reader needs the chamber from spatial_unit alone, without the place |
 
 On real Maine data, after change 10: place_values holds 604 sldl rows and 140 sldu rows, all attached (151 and 35 districts, 4 indicators each); no district row collapsed into another receipt's. indicator_values reads 12,526 rows, 3,222 collapsed, the collapsed rows all from receipts older than this change. 485 tests pass.
+
+### Change 11: wonder opens its plot through open_plot, and says what the graph made (plan builds 4 and 5, D-178)
+
+canopy/cli/wonder.py: run() opens the plot with open_plot instead of planting and tilling inline, so wonder sees the graph's views for the first time (the noted, unnumbered gap in state.md, closed). PlotNotFound prints the init hint, exit 2, as before; a folder with no manifest.yml is now refused rather than read, matching plot_names. The planted and tilled lines are unchanged, built from open_plot's report. _say_graph (new) says what the graph made: one line for a plot with no places, else one line naming every view made with its size, then a line for every view not made and every value receipt left out, each with why. The full report stays in open_plot's return. tests/test_wonder_graph_voice.py (new): 4 tests.
+
+| ID | Decision | Why | Revisit when |
+| --- | --- | --- | --- |
+| **D-178** | wonder says what the graph made: views made with their sizes in one line, every view not made and every value receipt left out with why, and a plot with no graph in one line. Option A of fork 11a, Claude's lean, chosen by Kalli | A view not made is why a reading through it comes back empty, so leaving it unsaid is a silent choice; printing the whole report (agreeing lists, collapsed counts) would bury the possibilities a person came to read | A reader needs the agreeing or collapsed detail every time; then a --graph flag, never a longer default |
+
+On real Maine data, after change 11: wonder maine says "graph: places (1,663), edges (2,693), indicator_values (12,526), place_values (12,526), plot_places (1,663)", with no view refused and no value receipt left out; wonder nyc says it has no graph, once. 489 tests pass.
