@@ -21,6 +21,45 @@ class PrimitiveSpec:
     # a YAML mapping cannot hold two predicates of the same kind, so a list
     # is the honest shape: `provenance_contains` twice is a legitimate ask.
     preconditions: list = field(default_factory=list)
+    # which params repeat a fact one input's manifest declaration already
+    # states, and where it states it: {"input": name, "params": {param:
+    # "source.<key>" or "provenance.<key>"}}. empty means none. the
+    # orchestrator holds every run's copy to the declaration (D-192).
+    source_facts: dict = field(default_factory=dict)
+
+SOURCE_FACT_BLOCKS = ("source", "provenance")
+
+
+def _normalize_source_facts(raw, primitive_name: str, layer: str) -> dict:
+    """
+    Check a primitive's `source_facts:` and return it as written, or {}.
+
+        source_facts:
+          input: source
+          params:
+            unit_authority: source.unit_authority
+            published_by: provenance.published_by
+
+    An unusable shape raises rather than declaring nothing, for the same
+    reason a malformed precondition does: a check that quietly checks
+    nothing is worse than no check.
+    """
+    if not raw:
+        return {}
+    where = f"primitive '{primitive_name}' ({layer}/_registry.yml): `source_facts:`"
+    if not isinstance(raw, dict) or not isinstance(raw.get("input"), str):
+        raise ValueError(f"{where} must name the input it reads, as `input: <name>`")
+    params = raw.get("params")
+    if not isinstance(params, dict) or not params:
+        raise ValueError(f"{where} must map each param to where its fact is declared")
+    for param, at in params.items():
+        block, _, key = at.partition(".") if isinstance(at, str) else ("", "", "")
+        if block not in SOURCE_FACT_BLOCKS or not key:
+            raise ValueError(
+                f"{where} param '{param}' must point at "
+                f"{' or '.join(b + '.<key>' for b in SOURCE_FACT_BLOCKS)}, got {at!r}")
+    return {"input": raw["input"], "params": dict(params)}
+
 
 def _normalize_preconditions(raw, primitive_name: str, layer: str) -> list:
     """
@@ -112,7 +151,9 @@ def load_registry(layer: str, project_root: Path | None = None) -> dict[str, Pri
             params=spec_data.get("params", {}),
             passthrough=spec_data.get("passthrough", False),
             preconditions=_normalize_preconditions(
-                spec_data.get("preconditions"), name, layer)
+                spec_data.get("preconditions"), name, layer),
+            source_facts=_normalize_source_facts(
+                spec_data.get("source_facts"), name, layer),
         )
     
     return specs

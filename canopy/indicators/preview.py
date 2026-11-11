@@ -150,8 +150,10 @@ def load_manifest(plot: str) -> tuple[Path, dict]:
     manifest = plot_dir / "manifest.yml"
     if not manifest.is_file():
         raise PreviewError("not_found", f"no manifest for plot '{plot}' at {manifest}")
-    doc = yaml.safe_load(manifest.read_text()) or {}
-    return plot_dir, doc
+    # read through the one manifest reader (P-01, NAME-4); preview works on
+    # the declarations as written, so it keeps the raw document
+    from canopy.orchestrator.parsing import parse_manifest
+    return plot_dir, parse_manifest(manifest).raw
 
 
 def _vintage(src: dict) -> str | None:
@@ -180,6 +182,12 @@ def indicator_sources(plot: str) -> list[dict]:
         spec = spec or {}
         if spec.get("semantic_type") != SOURCE_TYPE:
             continue
+        from canopy.orchestrator.parsing import declaration_problems
+        problems = declaration_problems(spec)
+        if problems:
+            raise PreviewError(
+                "malformed",
+                f"source '{name}' in plot '{plot}' cannot be read: " + "; ".join(problems))
         src = spec.get("source") or {}
         cache = spec.get("cache") or {}
         path = (plot_dir / cache["path"]) if cache.get("path") else None
@@ -196,7 +204,8 @@ def indicator_sources(plot: str) -> list[dict]:
             "geography": src.get("geography"),
             "within": dict(src.get("within") or {}),
             "indicators": list(src.get("indicators") or []),
-            "authority": (spec.get("provenance") or {}).get("authority"),
+            "published_by": (spec.get("provenance") or {}).get("published_by"),
+            "unit_authority": src.get("unit_authority"),
             "_path": path,
         })
     return out
@@ -543,9 +552,16 @@ def preview(plot: str, indicator_id: str, dataset: str | None = None,
     registry = registry or load_registry()
     ind = get_indicator(registry, indicator_id)
     src = choose_source(plot, indicator_id, dataset)
+    declared = src.get("unit_authority")
+    if declared is not None and declared != (unit_authority or "").strip():
+        raise PreviewError(
+            "malformed",
+            f"unit_authority '{unit_authority}' disagrees with source "
+            f"'{src['dataset']}', which declares '{declared}'. the source's is "
+            f"the fact (D-189, D-192)")
     frame = read_table(src["_path"])
     rows, notes = derive(frame, ind, unit_authority=unit_authority,
-                         published_by=src["authority"], time=src["vintage_window"])
+                         published_by=src["published_by"], time=src["vintage_window"])
     return {
         "plot": plot,
         "status": STATUS,

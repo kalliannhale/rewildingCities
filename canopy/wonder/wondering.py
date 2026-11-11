@@ -94,7 +94,10 @@ def _manifest_datasets(root: Path, plot: str) -> dict[str, dict]:
     mpath = root / "plots" / plot / "manifest.yml"
     if not mpath.exists():
         return {}
-    doc = yaml.safe_load(mpath.read_text()) or {}
+    # read through the one manifest reader, so this and the orchestrator can
+    # never see two different files in one (P-01, NAME-4)
+    from canopy.orchestrator.parsing import parse_manifest
+    doc = parse_manifest(mpath).raw
     return {n: (s or {}) for n, s in (doc.get("datasets") or {}).items()}
 
 

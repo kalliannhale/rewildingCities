@@ -22,8 +22,14 @@ compose-time references, resolved here and never seen by the orchestrator:
   $weighting.<id>.components every indicator a weighting names, in declared
                              order, written as [$indicators.<id>, ...]
   $source.<fact>             a fact about the bound indicator source, read
-                             from the manifest: authority, vintage,
-                             unit_column, unit_pad, name_column
+                             from the manifest where it is declared:
+                             published_by (provenance), unit_authority,
+                             unit_column, unit_pad and name_column (source),
+                             and vintage. published_by and unit_authority are
+                             required: a source that does not declare one is
+                             refused when a step asks for it, never left out
+                             (D-189). the orchestrator then holds the run's
+                             copy to the declaration (D-192)
 
 everything else, $choices, $parameters, $steps, $weights, $indicators and
 literals, passes through untouched for the orchestrator to resolve at run
@@ -42,7 +48,11 @@ import re
 from dataclasses import dataclass, field
 
 SOURCE_TYPE = "indicator_source"
-SOURCE_FACTS = ("authority", "vintage", "unit_column", "unit_pad", "name_column")
+SOURCE_FACTS = ("published_by", "vintage", "unit_authority", "unit_column",
+                "unit_pad", "name_column")
+# facts with no safe absence, and where the manifest declares each
+REQUIRED_FACTS = {"published_by": "provenance.published_by",
+                  "unit_authority": "source.unit_authority"}
 
 _REQUIRES = re.compile(r"^\$requires\.([a-zA-Z_][a-zA-Z0-9_]*)$")
 _CURIOSITY = re.compile(r"^\$curiosity\.indicated_by$")
@@ -108,7 +118,14 @@ def serves(indicator, dataset_name: str, spec: dict) -> bool:
 
 
 def source_facts(dataset_name: str, spec: dict) -> dict:
-    """what the bound source says about itself, for $source.<fact>."""
+    """what the bound source says about itself, for $source.<fact>. a source
+    declared in a retired word is refused, by the same rule parse_manifest
+    applies (NAME-4)."""
+    from canopy.orchestrator.parsing import declaration_problems
+    problems = declaration_problems(spec)
+    if problems:
+        raise ComposeRefusal(
+            f"source '{dataset_name}' cannot be composed from: " + "; ".join(problems))
     src = (spec or {}).get("source") or {}
     prov = (spec or {}).get("provenance") or {}
     vintage = None
@@ -118,8 +135,9 @@ def source_facts(dataset_name: str, spec: dict) -> dict:
     else:
         vintage = ((spec or {}).get("temporal") or {}).get("label") or src.get("edition")
     return {
-        "authority": prov.get("authority"),
+        "published_by": prov.get("published_by"),
         "vintage": vintage,
+        "unit_authority": src.get("unit_authority"),
         "unit_column": src.get("unit_column", "GEOID"),
         "unit_pad": src.get("unit_pad"),
         "name_column": src.get("name_column", "NAME"),
@@ -180,7 +198,13 @@ def _resolve(value, ctx: dict):
             raise ComposeRefusal(f"{value}: known source facts are {', '.join(SOURCE_FACTS)}")
         if ctx["source"] is None:
             raise ComposeRefusal(f"{value}: the method requires no {SOURCE_TYPE}, so there is no source")
-        return ctx["source"][fact]
+        held = ctx["source"][fact]
+        if held is None and fact in REQUIRED_FACTS:
+            raise ComposeRefusal(
+                f"{value}: the bound source {ctx['source_dataset']} declares no "
+                f"{REQUIRED_FACTS[fact]}. the source says what it is (D-189); "
+                f"declare it in the manifest")
+        return held
     raise ComposeRefusal(f"{value}: not a compose-time reference this recipe language knows")
 
 
@@ -231,7 +255,8 @@ def compose_recipe(method: dict, curiosity: dict, sub_question: str | None,
         return out
 
     ctx = {"binding": binding, "missing_label": missing_label, "indicators": served,
-           "source": source, "weighting_components": components, "uses_curiosity": False}
+           "source": source, "source_dataset": source_ds,
+           "weighting_components": components, "uses_curiosity": False}
     steps = [_resolve(copy.deepcopy(step), ctx) for step in recipe]
 
     if ctx["uses_curiosity"] and not served:

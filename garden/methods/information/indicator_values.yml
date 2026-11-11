@@ -59,7 +59,7 @@ produces:
   data_category: tabular
   description: >
     One row per unit and indicator: the value, its margin of error or the
-    reason it has none, its authority and its vintage. Values, never
+    reason it has none, its publisher and its vintage. Values, never
     standings (MP-75 for towns).
 
 interpretation: >
@@ -82,10 +82,10 @@ recipe:
       indicators: $parameters.indicators
       spatial_unit: $choices.aggregation_unit_level
       time: $source.vintage
-      published_by: $source.authority
-      # whose codes name the units (D-131), named by the preparation as it
-      # names its indicators; there is no default
-      unit_authority: $parameters.unit_authority
+      published_by: $source.published_by
+      # whose codes name the units (D-131), declared by the source itself
+      # (D-189); a run that writes its own is held to it (D-192)
+      unit_authority: $source.unit_authority
       unit_column: $source.unit_column
       unit_pad: $source.unit_pad
       name_column: $source.name_column

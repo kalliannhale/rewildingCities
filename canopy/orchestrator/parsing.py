@@ -22,6 +22,32 @@ from .models import (
 )
 
 
+# words a dataset's declaration may no longer use, each with the word that
+# replaced it and why. a retired word makes only that dataset unusable, never
+# the whole plot, so a community plot written against older docs still opens
+# and says what to change (NAME-4).
+RETIRED_DECLARATIONS = {
+    ("provenance", "authority"): (
+        "provenance.published_by",
+        "a source's publisher is provenance.published_by; `authority` means "
+        "only who assigns a place's code (D-186, D-187, NAME-4)"),
+}
+
+
+def declaration_problems(spec: dict | None) -> list[str]:
+    """what a dataset's declaration says in words this system has retired.
+
+    one rule for every reader of a manifest: parse_manifest records these as
+    underspecified, and compose refuses a source that has them, so no reader
+    reads a retired word as if it still meant something. ~"""
+    problems = []
+    for (block, word), (now, why) in RETIRED_DECLARATIONS.items():
+        held = (spec or {}).get(block)
+        if isinstance(held, dict) and word in held:
+            problems.append(f"{block}.{word} ~ write {now}: {why}")
+    return problems
+
+
 def parse_manifest(path: str | Path) -> Manifest:
     """
     Parse a plot's manifest. Loads ALL datasets, including incomplete ones.
@@ -58,6 +84,7 @@ def parse_manifest(path: str | Path) -> Manifest:
             missing.append("format ~ never assumed; a raster is not a geojson")
         if not cache_path:
             missing.append("cache.path ~ where the data rests once acquired")
+        missing.extend(declaration_problems(ds_data))
 
         datasets[name] = ManifestDataset(
             name=name, path=cache_path,

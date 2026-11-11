@@ -297,6 +297,7 @@ class Orchestrator:
         for step in self.experiment.steps:
             self._validate_param_references(step, errors)
 
+        self._validate_source_facts(errors)
         self._validate_loam_references(errors)
 
         self._validate_method_choices(warnings)
@@ -421,6 +422,61 @@ class Orchestrator:
                     return None, f"its params could not be resolved today: {e}"
         return None, (f"no run with id {run} is declared in this plot's "
                       f"preparations/ or experiments/")
+
+    def _validate_source_facts(self, errors: list[str]) -> None:
+        """a run may write what its source says about itself, and must agree
+        with it (D-192, amending D-189).
+
+        a primitive's registry entry names the params that repeat a fact its
+        input's manifest declaration states (`source_facts:`). for a step
+        reading that input as $manifest.<dataset>, each such param the step
+        writes is resolved as a run resolves it and held to the declaration.
+        the source's word is the fact; the run's is a record of it, so a
+        disagreement is refused rather than one of them chosen. a step reading
+        through $steps or $loam is not checked here: those facts arrive in
+        receipts, not declarations. ~"""
+        for step in self.experiment.steps:
+            try:
+                _, spec = self.registry.resolve_primitive(step.primitive, validate_exists=False)
+            except (ValueError, FileNotFoundError):
+                continue
+            facts = getattr(spec, "source_facts", None) or {}
+            if not facts:
+                continue
+            ref = step.inputs.get(facts["input"])
+            if not (isinstance(ref, str) and ref.startswith("$manifest.")):
+                continue
+            name = ref[len("$manifest."):]
+            dataset = self.manifest.datasets.get(name)
+            if dataset is None:
+                continue
+            if not dataset.is_usable:
+                errors.append(
+                    f"Step '{step.id}' reads $manifest.{name}, whose declaration "
+                    f"cannot be used: {'; '.join(dataset.underspecified)}")
+                continue
+            for param, at in facts["params"].items():
+                if param not in step.params:
+                    continue
+                try:
+                    written = self.reference_resolver.resolve_param_value(
+                        step.params[param], f"step '{step.id}' params.{param}")
+                except ValueError:
+                    continue
+                block, _, key = at.partition(".")
+                declared = (getattr(dataset, block, None) or {}).get(key)
+                if declared is None:
+                    errors.append(
+                        f"Step '{step.id}' writes {param}: {written!r}, but its "
+                        f"source {name} declares no {at}. the source says what it "
+                        f"is (D-189): declare {at} in the manifest, and the run's "
+                        f"copy is held to it (D-192)")
+                elif written != declared:
+                    errors.append(
+                        f"Step '{step.id}' writes {param}: {written!r}, but its "
+                        f"source {name} declares {at}: {declared!r}. two "
+                        f"declarations of one fact disagree, and the source's is "
+                        f"the fact: correct the run (D-192)")
 
     def _validate_loam_references(self, errors: list[str]) -> None:
         """a run may not reach for a type it makes itself (D-164).

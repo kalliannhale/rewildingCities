@@ -32,10 +32,12 @@ def ind(iid, dataset=None, by="x"):
 
 REG = Reg({"a_acs": ind("a_acs"), "a_pub": ind("a_pub", dataset="pub")})
 DATASETS = {
-    "acs": {"semantic_type": "indicator_source", "source": {"indicators": ["a_acs"]},
-            "provenance": {"authority": "us_census_acs"}},
-    "pub": {"semantic_type": "indicator_source", "source": {"unit_column": "FIPS", "unit_pad": 5},
-            "temporal": {"label": "2026 edition"}, "provenance": {"authority": "publisher"}},
+    "acs": {"semantic_type": "indicator_source",
+            "source": {"indicators": ["a_acs"], "unit_authority": "us_census_geoid"},
+            "provenance": {"published_by": "us_census_acs"}},
+    "pub": {"semantic_type": "indicator_source",
+            "source": {"unit_column": "FIPS", "unit_pad": 5, "unit_authority": "us_census_geoid"},
+            "temporal": {"label": "2026 edition"}, "provenance": {"published_by": "publisher"}},
     "pts": {"semantic_type": "unit_locations"},
 }
 METHOD = {"id": "m",
@@ -122,12 +124,14 @@ def garden(tmp_path):
         shutil.copytree(ROOT / d, tmp_path / d)
     (tmp_path / "plots" / "maine").mkdir(parents=True)
     (tmp_path / "plots" / "maine" / "manifest.yml").write_text(yaml.safe_dump({"datasets": {
-        "acs_county_2024": {"semantic_type": "indicator_source", "provenance": {"authority": "us_census_acs"},
+        "acs_county_2024": {"semantic_type": "indicator_source", "provenance": {"published_by": "us_census_acs"},
                             "source": {"provider": "census_acs", "dataset": "acs/acs5", "year": 2024,
+                                       "unit_authority": "us_census_geoid",
                                        "indicators": ["cii_broadband"]}},
         "cii_2026_published": {"semantic_type": "indicator_source", "temporal": {"label": "CII 2026 edition"},
-                               "provenance": {"authority": "civic_information_index"},
-                               "source": {"type": "manual", "unit_column": "FIPS", "unit_pad": 5, "name_column": "Name"}},
+                               "provenance": {"published_by": "civic_information_index"},
+                               "source": {"type": "manual", "unit_authority": "us_census_geoid",
+                                          "unit_column": "FIPS", "unit_pad": 5, "name_column": "Name"}},
     }}))
     return tmp_path
 
@@ -148,8 +152,47 @@ def test_compose_writes_a_complete_experiment_for_each_authority(garden):
     assert acs.experiment["steps"][0]["params"]["indicators"] == ["$indicators.cii_broadband"]
     assert pub.experiment["steps"][0]["params"]["indicators"] == ["$indicators.cii_pub_broadband"]
     assert pub.experiment["steps"][0]["params"]["unit_column"] == "FIPS"
+    assert acs.experiment["steps"][0]["params"]["published_by"] == "us_census_acs"
+    assert pub.experiment["steps"][0]["params"]["published_by"] == "civic_information_index"
+    for e in (acs, pub):
+        assert e.experiment["steps"][0]["params"]["unit_authority"] == "us_census_geoid"
     assert acs.experiment["curiosity"]["ref"] == "$curiosity-space/information/broadband_access"
     assert any("cii_pub_broadband" in d for d in acs.guidance.decisions)
     text = yaml.safe_dump(acs.experiment) + yaml.safe_dump(pub.experiment)
     for ref in ("$requires.", "$curiosity.", "$source.", "$weighting."):
         assert ref not in text
+
+
+# ── where a source's facts live (NAME-4, D-189) ───────────────────────────
+FACTS = dict(METHOD, recipe=[{"id": "x", "params": {"p": "$source.published_by",
+                                                    "u": "$source.unit_authority"}}])
+
+
+def test_the_publisher_and_unit_authority_come_from_where_they_are_declared():
+    r = R.compose_recipe(FACTS, CUR, "q", DATASETS, REG, chosen_datasets={"source": "pub"})
+    assert r.steps[0]["params"] == {"p": "publisher", "u": "us_census_geoid"}
+
+
+@pytest.mark.parametrize("fact,where,strip", [
+    ("unit_authority", "source.unit_authority", ("source", "unit_authority")),
+    ("published_by", "provenance.published_by", ("provenance", "published_by")),
+])
+def test_a_required_fact_the_source_does_not_declare_is_refused_not_left_out(fact, where, strip):
+    ds = {k: {**v, **{b: dict(v.get(b) or {}) for b in ("source", "provenance")}}
+          for k, v in DATASETS.items()}
+    ds["pub"][strip[0]].pop(strip[1])
+    m = dict(METHOD, recipe=[{"id": "x", "params": {"f": f"$source.{fact}"}}])
+    with pytest.raises(R.ComposeRefusal, match=f"pub declares no {where}"):
+        R.compose_recipe(m, CUR, "q", ds, REG, chosen_datasets={"source": "pub"})
+
+
+def test_a_source_declared_in_the_retired_word_is_refused_by_name():
+    ds = dict(DATASETS, pub={**DATASETS["pub"], "provenance": {"authority": "publisher"}})
+    with pytest.raises(R.ComposeRefusal, match="provenance.published_by"):
+        R.compose_recipe(FACTS, CUR, "q", ds, REG, chosen_datasets={"source": "pub"})
+
+
+def test_source_authority_is_no_longer_a_source_fact():
+    m = dict(METHOD, recipe=[{"id": "x", "params": {"a": "$source.authority"}}])
+    with pytest.raises(R.ComposeRefusal, match="known source facts"):
+        R.compose_recipe(m, CUR, "q", DATASETS, REG, chosen_datasets={"source": "acs"})

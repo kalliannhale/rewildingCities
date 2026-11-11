@@ -87,7 +87,7 @@ produces:
     One row per unit and indicator: the value, its oriented z-score and CII
     percentile against the declared population, or the reason it has none.
     The intermediate indicator_values carry each value's margin of error,
-    empty reason, authority and vintage.
+    empty reason, publisher and vintage.
 
 interpretation: >
   A value is a measurement of one thing, defined one way, at one vintage. A
@@ -116,10 +116,10 @@ recipe:
       indicators: $curiosity.indicated_by
       spatial_unit: $choices.aggregation_unit_level
       time: $source.vintage
-      published_by: $source.authority
-      # whose codes name the units (D-131). every grain this method offers is
-      # a Census GEOID level; a district option would need this line to change
-      unit_authority: us_census_geoid
+      published_by: $source.published_by
+      # whose codes name the units (D-131), declared by the source itself
+      # (D-189), so a district grain needs no change here
+      unit_authority: $source.unit_authority
       unit_column: $source.unit_column
       unit_pad: $source.unit_pad
       name_column: $source.name_column

@@ -982,3 +982,32 @@ A map layer is a source like any table, so D-189's rule answers MAP-4: the layer
 ### Sprint 05 closed
 
 The done-when is met: wonder reads any Maine district through its edges (changes 10 to 12). Contract 3 is at 1.0, with CON3-1 applied and G-4 to G-11 recorded. Every grove key is decided (build 6, D-186 to D-191). The progress report is field-guide/docs/progress/information/sprint-05.md; state.md is rewritten for the hand-off (D-160), including the working agreement as it now stands. 531 tests pass. Next decision ID: D-192.
+
+## Between Sprints 05 and 06: NAME-4's sweep, change 1 (D-192 to D-196)
+
+D-189 could not be built as written. Preparations are hand-written with literal params and never pass through recipe.py, and compose writes plain values into every experiment by design, so "a run that also declares one is refused" would refuse every composed experiment and still never compare a hand-written step with its source. The rule became agreement, held by the orchestrator before any step runs.
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-192** | Amends D-189: a run may write unit_authority or published_by, and Orchestrator.validate() refuses any step whose written value, resolved as the run resolves it, differs from its input dataset's declaration, or whose source declares none. Steps reading $steps or $loam are not checked; their facts arrive in receipts. Claude's lean, chosen by Kalli's delegation | The source's word is the fact and the run's is a record of it; this catches change 10's Androscoggin trap in every kind of run, and no run file changes, so receipts stay fresh | A fact needs to differ between run and source on purpose; then it is not a source fact |
+| **D-193** | Which params repeat a source fact is declared per primitive, as source_facts in its layer registry (input, and param to source.<key> or provenance.<key>); registry.py refuses a malformed declaration. derive_indicator is the first. Claude's lean, chosen by Kalli's delegation | One check for every primitive that opts in; Sprint 06's carrier counting can use it without new orchestrator code | A fact lives somewhere other than source or provenance |
+| **D-194** | A retired word makes only its dataset underspecified, never the whole plot. parsing.declaration_problems holds the one rule: parse_manifest records it, compose and preview refuse a source that has it, and the agreement check refuses a step reading an underspecified source. First entry: provenance.authority, now provenance.published_by. Claude's lean, chosen by Kalli's delegation | A community plot written against older docs still opens and says what to change, which P-01's underspecified already allowed | Retired words multiply; then a reader of history, as Vocabulary has |
+| **D-195** | The manifest has one parser: preview.load_manifest and wondering._manifest_datasets read through parse_manifest and keep the raw document, signatures unchanged. Claude's lean, chosen by Kalli | Three readers could see two different files in one; the rule in D-194 lives once | Preview or wonder needs the dataset model rather than raw declarations |
+| **D-196** | unit_authority sits in a dataset's source block, beside unit_column, unit_pad and name_column; the publisher stays in provenance. Option A, Claude's lean, chosen by Kalli | All unit facts together, and provenance keeps its one meaning (D-186) | Never expected |
+
+Findings and wrong hypotheses:
+
+- NAME-2's rename stopped short of soil/_registry.yml: derive_indicator still declared its publisher param as `authority` and described rows as carrying authority. Fixed here.
+- Wrong hypothesis: manifest.schema.yml declares provenance.authority. It does not; every schema hit is the place key (authority, code), and source provenance is checked by no schema at all.
+- Wrong hypothesis: there was one manifest loader, then three readers counting loam's. loam delegates to parse_manifest. The readers were parse_manifest, preview.load_manifest and wondering._manifest_datasets, the last found only by reading compose's caller.
+- The ACS provider reads only the source keys it names, so source.unit_authority is ignored at acquisition.
+- 558 passed with -rs, no skips. Four Maine runs derive, and all four agree with their sources.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **NAME-4** | Closed: manifests name a source's publisher provenance.published_by, block and inline forms | change 1 |
+| **SRC-2** | Closed in D-192's form: unit_authority on all six Maine indicator sources, $source.unit_authority in the method recipes, a disagreeing run refused. Freshness predicted fresh, since no run's params changed; not yet checked | change 1 |
+| **LAYER-1** | Carried to Sprint 08 with map.py's join: Sprint 06's carriers are points counted over located_in edges, not layers joined by code | change 1 |
+| **SRC-3** | Some sources name no publisher: the two MEGIS layers and the two legislature rosters. Whether every source must declare published_by is undecided | change 1 |
+| **USE-1** | A run does not honor underspecified in general: _resolve_manifest_ref checks available and the file only. D-192 refuses it for source-fact steps; going wider needs its own look at older plots | change 1 |
+| **SPEC-1** | models.py defines a second PrimitiveSpec, without preconditions or source_facts; registry.py's is the one used | change 1 |

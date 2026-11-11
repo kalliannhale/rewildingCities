@@ -256,6 +256,8 @@ datasets:
       geography: county
       within:
         state: "23"
+      # whose codes name the units (D-189): the source says what it is
+      unit_authority: us_census_geoid
       indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
       notes: >
         Requires CENSUS_API_KEY in the environment (free, immediate:
@@ -267,7 +269,7 @@ datasets:
       fetched_at: '2026-11-11T01:30:07.136050+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
-      authority: us_census_acs
+      published_by: us_census_acs
   
   # ── the reference population ──────────────────────────────────────────────
   # a standing is relative to a population, and CII's population is the
@@ -298,6 +300,7 @@ datasets:
       geography: county
       within:
         state: "*"
+      unit_authority: us_census_geoid
       indicators: [cii_broadband, cii_rent_burden, cii_no_vehicle]
     cache:
       path: .data/acs_us_county_2024.parquet
@@ -305,9 +308,9 @@ datasets:
       fetched_at: '2026-11-11T01:30:08.507475+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
-      authority: us_census_acs
+      published_by: us_census_acs
   
-  # ── CII as an authority ───────────────────────────────────────────────────
+  # ── CII as a publisher ────────────────────────────────────────────────────
   # CII's published file, as a source in its own right. Its 27 raw columns
   # are declared as passthrough indicators in seeds/indicators/
   # cii_2026_published.yml, so CII's full method can run here before a
@@ -328,6 +331,7 @@ datasets:
       # the published file names units by a FIPS column that lost its
       # leading zeros (CII-6). derive_indicator reads these through
       # $source.unit_column and friends, so the repair is declared once, here.
+      unit_authority: us_census_geoid
       unit_column: FIPS
       unit_pad: 5
       name_column: Name
@@ -343,7 +347,7 @@ datasets:
       refresh_policy: manual
     provenance:
       source: Listening Post Collective and the Information Futures Lab, Civic Information Index 2026
-      authority: civic_information_index
+      published_by: civic_information_index
 
   # ── where each county is ──────────────────────────────────────────────────
   # the geographic stage of CII's imputation needs a point per county. the
@@ -368,7 +372,7 @@ datasets:
       refresh_policy: manual
     provenance:
       source: U.S. Census Bureau, Gazetteer Files 2024
-      authority: us_census_gazetteer
+      published_by: us_census_gazetteer
 
   # ── the town grain ────────────────────────────────────────────────────────
   # ACS publishes towns as Census county subdivisions: 529 in Maine, not
@@ -396,6 +400,7 @@ datasets:
       within:
         state: "23"
         county: "*"
+      unit_authority: us_census_geoid
       indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
       notes: >
         Requires CENSUS_API_KEY. Margins of error are wide at this grain and
@@ -407,7 +412,7 @@ datasets:
       fetched_at: '2026-11-11T01:30:09.629630+00:00'
     provenance:
       source: U.S. Census Bureau, American Community Survey
-      authority: us_census_acs
+      published_by: us_census_acs
 
   governance_unit_cousub:
     available: true
@@ -444,7 +449,7 @@ datasets:
       fetched_at: '2026-10-26T13:35:39.772061+00:00'
     provenance:
       source: U.S. Census Bureau, TIGERweb
-      authority: us_census_tiger
+      published_by: us_census_tiger
 
   # ── the legislative districts (Sprint 04) ─────────────────────────────────
   # ACS 2020-2024 is tabulated on the 2024 districts, so the boundaries are
@@ -464,9 +469,10 @@ datasets:
       year: 2024
       geography: state legislative district (lower chamber)
       within: {state: '23'}
+      unit_authority: us_census_sldl
       indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
     cache: {path: .data/acs_sldl_2024.parquet, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, American Community Survey, authority: us_census_acs}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
 
   acs_sldu_2024:
     available: true
@@ -482,9 +488,10 @@ datasets:
       year: 2024
       geography: state legislative district (upper chamber)
       within: {state: '23'}
+      unit_authority: us_census_sldu
       indicators: [cii_broadband, limited_english_households, cii_rent_burden, cii_no_vehicle]
     cache: {path: .data/acs_sldu_2024.parquet, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, American Community Survey, authority: us_census_acs}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
 
   governance_unit_sldl_2024:
     available: true
@@ -500,7 +507,7 @@ datasets:
       layer: 6
       query_params: {where: "STATE='23'", outFields: '*', outSR: 4326, limit: 200}
     cache: {path: .data/maine_sldl_2024.geojson, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGERweb, published_by: us_census_tiger}
 
   governance_unit_sldu_2024:
     available: true
@@ -516,7 +523,7 @@ datasets:
       layer: 5
       query_params: {where: "STATE='23'", outFields: '*', outSR: 4326, limit: 200}
     cache: {path: .data/maine_sldu_2024.geojson, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGERweb, published_by: us_census_tiger}
 
   # ── the block spine (Sprint 04, Part 1b) ──────────────────────────────────
   # every overlaps edge is built from 2020 blocks: their counts (weights,
@@ -541,7 +548,7 @@ datasets:
       within: {state: '23', county: '*', tract: '*'}
       variables: [P1_001N, H1_001N, H1_002N]
     cache: {path: .data/blocks_2020_counts.parquet, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, 2020 Census Redistricting Data, authority: us_census_decennial}
+    provenance: {source: U.S. Census Bureau, 2020 Census Redistricting Data, published_by: us_census_decennial}
 
   blocks_2020_points:
     available: true
@@ -557,7 +564,7 @@ datasets:
       layer: 12
       query_params: {where: "STATE='23'", outFields: "GEOID,INTPTLAT,INTPTLON,POP100,HU100,LWBLKTYP", outSR: 4326, limit: 2000, returnGeometry: "false"}
     cache: {path: .data/blocks_2020_points.geojson, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGERweb, published_by: us_census_tiger}
 
   baf_2020_me:
     available: true
@@ -568,7 +575,7 @@ datasets:
     format: zip
     source: {type: url, url: "https://www2.census.gov/geo/docs/maps-data/data/baf2020/BlockAssign_ST23_ME.zip"}
     cache: {path: .data/baf_2020_me.zip, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, Block Assignment Files, authority: us_census_decennial}
+    provenance: {source: U.S. Census Bureau, Block Assignment Files, published_by: us_census_decennial}
 
   bef_2024_sldl:
     available: true
@@ -579,7 +586,7 @@ datasets:
     format: zip
     source: {type: url, url: "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/2024-state-legislative-bef/sldl24.zip"}
     cache: {path: .data/bef_2024_sldl.zip, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, Redistricting Data Office, authority: us_census_decennial}
+    provenance: {source: U.S. Census Bureau, Redistricting Data Office, published_by: us_census_decennial}
 
   bef_2024_sldu:
     available: true
@@ -590,7 +597,7 @@ datasets:
     format: zip
     source: {type: url, url: "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/2024-state-legislative-bef/sldu24.zip"}
     cache: {path: .data/bef_2024_sldu.zip, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, Redistricting Data Office, authority: us_census_decennial}
+    provenance: {source: U.S. Census Bureau, Redistricting Data Office, published_by: us_census_decennial}
 
   tribal_reservations_2020:
     available: true
@@ -606,7 +613,7 @@ datasets:
       layer: 38
       query_params: {where: "1=1", outFields: "*", outSR: 4326, limit: 200, geometry: "-71.1,42.9,-66.9,47.5", geometryType: esriGeometryEnvelope, inSR: 4326, spatialRel: esriSpatialRelIntersects}
     cache: {path: .data/tribal_reservations_2020.geojson, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGERweb, published_by: us_census_tiger}
 
   tribal_trust_lands_2020:
     available: true
@@ -622,7 +629,7 @@ datasets:
       layer: 39
       query_params: {where: "1=1", outFields: "*", outSR: 4326, limit: 200, geometry: "-71.1,42.9,-66.9,47.5", geometryType: esriGeometryEnvelope, inSR: 4326, spatialRel: esriSpatialRelIntersects}
     cache: {path: .data/tribal_trust_lands_2020.geojson, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGERweb, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGERweb, published_by: us_census_tiger}
   faces_2024_me:
     available: true
     description: 2024 TIGER/Line topological faces for Maine's 16 counties, combined into one zip (D-126)
@@ -637,7 +644,7 @@ datasets:
         plots/maine/.data/. Then, from the repo root:
         zip -j plots/maine/.data/maine_faces_2024.zip plots/maine/.data/tl_2024_*_faces.zip
     cache: {path: .data/maine_faces_2024.zip, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGER/Line 2024, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGER/Line 2024, published_by: us_census_tiger}
   cousub_2024_me:
     available: true
     description: 2024 TIGER/Line county subdivisions for Maine; read for GEOID, NAMELSAD, LSAD and FUNCSTAT (D-128)
@@ -646,7 +653,7 @@ datasets:
     format: zip
     source: {type: url, url: "https://www2.census.gov/geo/tiger/TIGER2024/COUSUB/tl_2024_23_cousub.zip"}
     cache: {path: .data/tl_2024_23_cousub.zip, refresh_policy: manual}
-    provenance: {source: U.S. Census Bureau, TIGER/Line 2024, authority: us_census_tiger}
+    provenance: {source: U.S. Census Bureau, TIGER/Line 2024, published_by: us_census_tiger}
 
   legislature_133_house:
     available: false

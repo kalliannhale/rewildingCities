@@ -47,11 +47,12 @@ def manifest(sources: dict) -> str:
               geography: county
               within:
                 state: "23"
+              unit_authority: us_census_geoid
               indicators: [{", ".join(inds)}]
             cache:
               path: {cache}
             provenance:
-              authority: us_census_acs
+              published_by: us_census_acs
         """))
     body = "".join(textwrap.indent(b, "  ") for b in blocks)
     return f"city:\n  name: Test\n  id: test\ndatasets:\n{body}"
@@ -203,6 +204,31 @@ def test_two_sources_is_a_choice_not_a_lookup(repo):
     assert e.value.kind == "ambiguous"
     p = ip.preview("test", "cii_broadband", dataset="acs_county_2024", unit_authority=GEOID)
     assert p["source"]["dataset"] == "acs_county_2024"
+
+
+# ── where a source's facts live (NAME-4, D-189, D-192) ────────────────────
+def test_a_source_names_its_publisher_and_unit_authority(repo):
+    p = ip.preview("test", "cii_broadband", unit_authority=GEOID)
+    assert p["source"]["published_by"] == "us_census_acs"
+    assert p["source"]["unit_authority"] == GEOID
+    assert "authority" not in p["source"]
+
+
+def test_a_source_in_the_retired_word_is_refused_by_name(repo):
+    text = (repo / "manifest.yml").read_text()
+    (repo / "manifest.yml").write_text(
+        text.replace("published_by: us_census_acs", "authority: us_census_acs"))
+    with pytest.raises(ip.PreviewError) as e:
+        ip.preview("test", "cii_broadband", unit_authority=GEOID)
+    assert e.value.kind == "malformed"
+    assert "provenance.published_by" in e.value.message
+
+
+def test_a_unit_authority_that_disagrees_with_the_source_is_refused(repo):
+    with pytest.raises(ip.PreviewError) as e:
+        ip.preview("test", "cii_broadband", unit_authority="us_census_sldl")
+    assert e.value.kind == "malformed"
+    assert "declares 'us_census_geoid'" in e.value.message
 
 
 # ── plot summary ──────────────────────────────────────────────────────────

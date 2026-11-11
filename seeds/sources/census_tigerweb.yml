@@ -55,7 +55,7 @@
 
 id: census_tigerweb
 name: US Census Bureau TIGERweb
-authority: United States Census Bureau, Geography Division
+published_by: United States Census Bureau, Geography Division
 national: true
 
 provider:

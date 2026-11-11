@@ -883,7 +883,7 @@ primitives:
       from seeds/indicators/, so the primitive does only the arithmetic it is
       told: a ratio of summed numerators over a denominator at a declared
       scale, or a published column passed through. Long-form output, one row
-      per unit and indicator, carrying (unit, indicator, value, authority,
+      per unit and indicator, carrying (unit, indicator, value, published_by,
       method, time). A unit is an (authority, code) pair: the caller declares
       whose codes name the units, and the declaration is on every row and in
       every measurement_id, indicator:authority:code (D-131, D-132). Ratio
@@ -908,10 +908,10 @@ primitives:
         type: string
         default: null
         description: "The source's vintage window"
-      authority:
+      published_by:
         type: string
         default: null
-        description: "Who published the source"
+        description: "Who published the source (D-186)"
       unit_authority:
         type: string
         # no default: a Census GEOID is unique only within its level
@@ -940,6 +940,13 @@ primitives:
         type: string
         default: null
         description: "Semantic type of the units the table joins to, for mapping"
+    # the two params a run writes that its source already declares. a run may
+    # write them, and the orchestrator refuses one that disagrees (D-192)
+    source_facts:
+      input: source
+      params:
+        unit_authority: source.unit_authority
+        published_by: provenance.published_by
     preconditions:
       - no_unresolved_critical: true
 
