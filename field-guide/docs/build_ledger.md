@@ -870,3 +870,11 @@ Change 7: seeds/vintages/boundaries.yml (new); canopy/loam/graph.py, indicator_v
 | **D-175** | There is no parent key. A sub-plot, when one exists, relates to its parent through contains edges between their places | No sub-plot relationship exists in the code (a grep of parsing, models, the manifest schema and Delton's manifest finds none), so the plan's "sub-plot inheritance becomes contains edges" is a future, not a migration | Never expected |
 
 Change 9: canopy/orchestrator/models.py and parsing.py (Manifest.places, carried as written); canopy/wonder/session.py (the manifest parsed once and handed to planting and the graph, P-01); canopy/loam/graph.py (the plot_places view, resolved with a recursive walk of contains edges and both directions of overlaps); seeds/schemas/manifest.schema.yml (places documented); tests/test_plot_places.py (10 tests, among them the rebuild test for plot places).
+
+### D-173, and the mid-sprint hand-off (2026-11-11)
+
+| ID | Decision | Why | Reverse if |
+| --- | --- | --- | --- |
+| **D-173** | The four reservation subdivisions' values attach in loam, carrying their census_tribal_area note (rule 9), and are held for Person 3 and the client-led consultation (MP-72) before any is exposed. D-171 covers Census tribal areas, the aiannh level, only. Claude's judgment, delegated by Kalli | They are county subdivisions, legal areas on 2024 boundaries like any town, so D-171's reason, boundaries that do not match, does not apply; withholding sound numbers from the nations and those working with them would be a silent paternalism. Computing is not exposing: what leaves is the gate's and the consultation's to govern | Person 3 or the consultation says these values should not be computed, or not shown |
+
+On real Maine data after change 9: plot_places holds all 1,663 places (Maine declares none); place_values attaches 1,996 values, 168 attached unchecked (the 42 unorganized territories, all census_funcstat S, confirming D-170's seed), 9,618 with no place (other states' counties), and 3,222 agreeing rows collapsed (LIN-3's ghost). No sldl or sldu value exists yet: district values are to be derived in builds 4 and 5. state.md rewritten for the hand-off (D-160).
