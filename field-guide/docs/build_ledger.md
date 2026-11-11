@@ -554,3 +554,20 @@ Built: canopy/providers/maine_legislature.py (House CSV, Senate listing, phones 
 | --- | --- |
 | **PREP-1** | Resolved by D-141. Preparations run through the orchestrator; a step's output is `plots/<plot>/.data/<step>_<output>.<ext>` with its receipt at `.envelopes/<step>_<output>.envelope.json` (places: `.data/graph_places_places.parquet`). Steps reach each other only inside one run; no CLI command runs a preparation |
 | **LOAM-1** | Sprint 05: loam must let a preparation read another preparation's output by semantic type, with staleness. First consumer: build_seats reading places |
+
+## SPRINT 04, STEP 4e ~ the seats preparation waits for loam, 2026-11-11
+
+| ID | decision | implication | reverse if |
+| --- | --- | --- | --- |
+| **D-141** | No seats preparation until loam (Sprint 05) lets one preparation read another's output. Not a step in maine_geography_graph (unavailable rosters would block the graph), not a local copy of places (it would go stale silently) | Step 4 is built and tested but not run; it runs when loam reads places and the 133rd's rosters exist (after 2026-12-02) | Seats are needed before loam lands |
+
+| ID | item |
+| --- | --- |
+| **PREP-1** | Resolved by D-141. Preparations run through the orchestrator; a step's output is `plots/<plot>/.data/<step>_<output>.<ext>` with its receipt at `.envelopes/<step>_<output>.envelope.json` (places: `.data/graph_places_places.parquet`). Steps reach each other only inside one run; no CLI command runs a preparation |
+| **LOAM-1** | Sprint 05: loam must let a preparation read another preparation's output by semantic type, with staleness. First consumer: build_seats reading places |
+
+| ID | item |
+| --- | --- |
+| **TIME-2** | Corrects D-135's framing and the step 4 close. The build is timeless: build_seats takes `legislature` and `sworn_in` and builds any Legislature on any day. Acquiring one Legislature's rosters is a run, not a build step. D-135 governs which Legislature a published artifact carries; it never gated the build. Withdrawn: "step 4 closes after 2026-12-02". Step 4 closes on a dependency: loam reads places into build_seats (LOAM-1, Sprint 05) |
+
+**WRONG** ~ I turned a data-freshness concern into a build date. The plan is ordered by dependency, never by the calendar.
