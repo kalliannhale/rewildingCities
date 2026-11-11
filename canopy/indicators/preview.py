@@ -533,6 +533,10 @@ def _average_ranks(values: list[float]) -> list[float]:
     return ranks
 
 
+STANDINGS_CARRY = ("empty_reason", "bound", "households", "households_counts",
+                   "households_reason", "reliability_note")
+
+
 def standings(rows: list[dict], ind: Indicator, *, sd: str,
               exclude_state_fips: tuple[str, ...] = (),
               restrict_to: set[str] | None = None) -> tuple[list[dict], dict]:
@@ -569,6 +573,10 @@ def standings(rows: list[dict], ind: Indicator, *, sd: str,
         row = {"unit": r["unit"], "name": r["name"], "indicator": ind.id,
                "value": r["value"], "direction": ind.direction,
                "z": None, "percentile": None, "outside_reason": why_out(r)}
+        # what the value rests on travels with its standing (Sprint 02),
+        # exactly as standardize_indicator.R carries it
+        for col in STANDINGS_CARRY:
+            row[col] = r.get(col)
         if k is not None:
             row["z"] = (oriented[k] - mean) / sdv if sdv > 0 else None
             row["percentile"] = ranks[k] / top * 100

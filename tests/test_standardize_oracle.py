@@ -107,3 +107,45 @@ def test_every_indicator_in_the_table_needs_a_direction(tmp_path, values_file):
     params = {"indicators": [REG.declaration("cii_broadband")], "sd": "sample"}
     resp, _, _ = _run(tmp_path, values_file, params)
     assert resp["status"] == "failure" and "cii_no_vehicle" in resp["message"]
+
+def test_what_a_value_rests_on_travels_with_its_standing(tmp_path):
+    """Sprint 02: a standing never drops the count its value rests on, the
+    reason it has none, or its reliability note. R and Python carry the same
+    columns unchanged."""
+    pd = pytest.importorskip("pandas")
+    pytest.importorskip("pyarrow")
+    carried = {"23001": (28500.0, None, None, None),
+               "23003": (40.0, None, "read with care: rests on 40 households, fewer than the 50 the small-sample rule asks for.", None),
+               "23005": (None, "source count empty: B25070_001E", None, None),
+               "23007": (100.0, None, None, "50.0 or more"),
+               "72001": (900.0, None, None, None)}
+    codes = list(carried)
+    values = [29.4, 31.0, 28.0, None, 30.0]
+    recs, rows = [], []
+    for c, v in zip(codes, values):
+        hh, why, note, bound = carried[c]
+        empty = f"open-ended median: {bound}" if bound else None
+        extra = {"empty_reason": empty, "bound": bound, "households": hh,
+                 "households_counts": "renter households with rent burden computed",
+                 "households_reason": why, "reliability_note": note}
+        recs.append({"measurement_id": f"cii_rent_burden:{c}", "unit_authority": "us_census_geoid",
+                     "unit_code": c, "name": c, "indicator": "cii_rent_burden", "value": v,
+                     "time": "2020-2024", **extra})
+        rows.append({"unit": {"code": c}, "name": c, "value": v, **extra})
+    df = pd.DataFrame(recs)
+    df["value"] = df["value"].astype("Float64")
+    path = tmp_path / "values.parquet"
+    df.to_parquet(path, index=False)
+
+    params = {"indicators": [REG.declaration("cii_rent_burden")], "sd": "sample",
+              "exclude_state_fips": ["72"]}
+    resp, out, proc = _run(tmp_path, path, params)
+    assert resp["status"] == "success", (resp, proc.stderr)
+    got = pd.read_parquet(out).set_index("unit_code")
+    py, _ = ip.standings(rows, REG.get("cii_rent_burden"), sd="sample", exclude_state_fips=("72",))
+    for p in py:
+        r = got.loc[p["unit"]["code"]]
+        for col in ip.STANDINGS_CARRY:
+            rv = None if pd.isna(r[col]) else (r[col].item() if hasattr(r[col], "item") else r[col])
+            assert rv == p[col], (p["unit"]["code"], col, rv, p[col])
+    assert got.loc["23007", "bound"] == "50.0 or more" and pd.isna(got.loc["23007", "percentile"])

@@ -190,3 +190,19 @@ def test_an_open_ended_median_stands_outside_the_ranking():
     assert by["13141"]["percentile"] is None and by["13141"]["outside_reason"]
     # ranked among the two counties with a measurement, not three
     assert population["n"] == 2
+
+
+def test_a_standing_keeps_what_its_value_rests_on():
+    ind = registry().get("cii_rent_burden")
+    frame = pd.DataFrame({
+        "GEOID": ["23001", "23002", "23003"], "NAME": ["a", "b", "small"],
+        "B25071_001E": [30.0, 28.0, 33.0], "B25071_001M": [1.0, 1.0, 2.0],
+        "B25070_001E": [5000.0, 4000.0, 30.0], "B25070_011E": [0.0, 0.0, 0.0],
+        "B25071_001M_annotation": [None, None, None],
+    })
+    rows, _ = ip.derive(frame, ind, authority=None, time=None, reliability=RULE)
+    out, _ = ip.standings(rows, ind, sd="sample")
+    by = {r["unit"]["code"]: r for r in out}
+    assert by["23003"]["households"] == 30.0 and by["23003"]["percentile"] is not None
+    assert "30 renter households" in by["23003"]["reliability_note"]
+    assert by["23001"]["households_counts"] == "renter households with rent burden computed"

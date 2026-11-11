@@ -104,6 +104,8 @@ with_primitive_error_handling({
 
   pieces <- list()
   populations <- list()
+  CARRIED <- c("empty_reason", "bound", "households", "households_counts",
+               "households_reason", "reliability_note")
 
   for (id in in_table) {
     rows <- df[df$indicator == id, , drop = FALSE]
@@ -161,6 +163,14 @@ with_primitive_error_handling({
       time           = if ("time" %in% names(rows)) rows$time else NA_character_,
       stringsAsFactors = FALSE
     )
+    # what each value rests on travels with its standing (Sprint 02): a
+    # ranked value never loses its count, its reason, or its caveat. carried
+    # unchanged from derive_indicator, NA where an older input lacks them.
+    for (col in CARRIED) {
+      piece <- pieces[[length(pieces)]]
+      piece[[col]] <- if (col %in% names(rows)) rows[[col]] else NA
+      pieces[[length(pieces)]] <- piece
+    }
     populations[[id]] <- list(n = n, mean_oriented = m, sd = s)
   }
 
