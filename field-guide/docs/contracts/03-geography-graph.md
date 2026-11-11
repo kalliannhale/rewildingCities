@@ -1,6 +1,6 @@
 # Contract 3 ~ The geography graph
 
-**Status:** draft 0.8, 2026-11-11 (seats, D-134, D-136 to D-138; G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
+**Status:** draft 0.9, 2026-11-11 (invariants, D-161, D-162; seats, D-134, D-136 to D-138; G-3, D-103; G-1, D-121; G-2, D-122; authorities by level, GRAPH-1; tribal keys, D-125; 923 divisions, MEGIS-2; towns from 2024 faces, D-126; county follows town, D-127, BOUND-1; kind and Census status, D-128, FUNC-2; reservation parts, D-129, PEN-1; LURC, D-130). **Owner:**
 Kalli. **Built in:** Sprint 04 (the tables, by preparations), Sprint 05 (loam
 learns them). **Read by:** the place profile (Contract 4), the grove's
 cross-plot catalog, every district product. **Rests on:** MP-75 (towns get
@@ -112,11 +112,16 @@ These are tested where the tables are built (Sprint 04):
 - A town's `overlaps` weights across one chamber's districts sum to 1, for each
   basis separately; a null household share is excluded from the sum and the
   town carries the `zero_households` flag.
-- Every district touches at least one town.
+- Every district touches at least one town. True by construction: district places
+  come from the spine, which refuses a block without a district; a test guards
+  the construction (D-161).
 - Both ends of every `contains` and `overlaps` edge, and the `to` end of every
   `located_in` edge, exist in `places`; the `from` end of every `located_in`
   edge exists in its declared layer.
-- Boundary and estimate vintages match, place by place.
+- Boundary and estimate vintages match, place by place. Within the graph, every
+  edge's vintage is the vintage the places table declares for its family, refused
+  in build_places (D-162). The match to estimates is checked where values join
+  places, which is not yet built (LOAM-1).
 - Every reservation subdivision and tribal area carries its context note, and every reservation subdivision names its tribal area (D-129).
 - The towns in the places table and the 2024 county subdivision layer are the same set (D-126).
 

@@ -62,8 +62,10 @@ Params:
 Output: the places table, parquet or csv by the output's extension.
 Refuses: towns in the spine and the 2024 layer that differ; an LSAD with no
 kind; a reservation subdivision by LSAD that geometry does not confirm, or the
-reverse; a key used twice; an edge end with no place; a tribal place without
-its note; the tribal note on a place that is not a tribal boundary.
+reverse; a key used twice; an edge end with no place; an edge family whose
+vintage differs from the vintage these params declare for it (D-162); a
+tribal place without its note; the tribal note on a place that is not a
+tribal boundary.
 """
 
 from __future__ import annotations
@@ -315,6 +317,26 @@ def build(spine, edges, subdivisions, counties, house, senate, reservations, tru
     if missing:
         primitive_failure("Edge end without a place",
                           f"{len(missing)} edge end(s) name no place, e.g. {sorted(missing)[0]}")
+    # an edge's vintage is its places' (D-162). the edges step and this step
+    # declare their vintages apart, so a change to one that misses the other
+    # is refused here. a family with no edges is skipped; located_in is not
+    # checked, since no step writes it yet (Sprint 06)
+    is_overlap = edges["kind"] == "overlaps"
+    families = (
+        ("contains", edges["kind"] == "contains", "town"),
+        ("overlaps to House districts", is_overlap & (edges["to_authority"] == SLDL), "sldl"),
+        ("overlaps to Senate districts", is_overlap & (edges["to_authority"] == SLDU), "sldu"),
+        ("overlaps to Census tribal areas", is_overlap & (edges["to_authority"] == AIANNH),
+         "aiannh"),
+        ("overlaps from civil divisions", is_overlap & (edges["from_authority"] == MEGIS),
+         "division"),
+    )
+    for label, mask, key in families:
+        found = sorted(set(edges.loc[mask, "vintage"].astype(str)))
+        if found and found != [str(vintages[key])]:
+            primitive_failure("Edge vintage differs from its places'",
+                              f"{label}: the edges carry {found}, the places declare "
+                              f"vintages.{key} {str(vintages[key])!r} (D-162)")
     tribal = places[(places["level"] == "aiannh")
                     | (places["kind"] == "reservation_subdivision")]
     unnoted = tribal[tribal["context_note"] != TRIBAL_NOTE]

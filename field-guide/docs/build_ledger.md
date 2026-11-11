@@ -750,3 +750,14 @@ Files: `soil/transform/build_place_outlines.R` (new), `soil/_registry.yml` (buil
 
 ### Lessons
 - An R refusal test asserts on the detail, never the title: `message` in the protocol response is the detail.
+
+## Sprint 04 step 7: the remaining graph invariants (D-161, D-162)
+
+Contract 3's eight invariants, checked against build_place_edges and build_places. Six were already refused there or in build_block_spine. Two were not.
+
+- D-161: every district touches at least one town holds by construction. District places come from the spine, and the spine refuses a counted block without a 2024 House or Senate assignment, so the spine's districts are the equivalency files' districts. No reverse check against the ACS tables: an ACS row the spine lacks is either a vintage mismatch or a not-defined row, and a refusal would trip on the second. build_seats refuses a holder whose district has no place, so only a missing district that is also vacant could pass all three. tests/test_places.py guards the construction.
+- D-162: build_places refuses an edge family whose vintage differs from the vintage its own params declare: contains against town, overlaps to sldl, sldu and aiannh against those, overlaps from megis against division. The two steps in maine_geography_graph.yml declare vintages apart and agree today. The test_places fixture disagreed (division "M") and now uses one mapping. located_in is not checked until Sprint 06 writes it.
+- Not changed, by the step's scope: refusals with no test that triggers them (town in more than one county, county or district without a name, key used twice, reservation subdivision in two reservations, missing vintage).
+- Carried to LOAM-1: places hold the 2020 tribal legal areas (D-123); if ACS 2024 tribal estimates are on 2024 boundaries, invariant 6 cannot hold for aiannh places once values join. Not decided here.
+- Found, not fixed: Contract 3's context_note field still says a note's text lives in seeds/schemas; since D-157 it lives in seeds/notes/notes.yml.
+- Contract 3 to 0.9. pytest: 417 passed.

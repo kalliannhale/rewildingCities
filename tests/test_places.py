@@ -6,7 +6,9 @@ synthetic state: a town split by a district and partly in trust land, a city
 (FUNCSTAT F, as Maine's 23 are), and one reservation in two Census
 subdivisions in two counties, the shape of Penobscot Indian Island (PEN-1).
 Step 6 (D-156, D-158): which places carry which note, and what the table tells
-the gate. Runs without pyarrow or shapely: everything is built in memory.
+the gate. Step 7 (D-161, D-162): every district touches a town, and an edge's
+vintage is its places'. Runs without pyarrow or shapely: everything is built
+in memory.
 """
 
 import importlib.util
@@ -64,11 +66,11 @@ def subdivisions(**change):
                         columns=["GEOID", "NAMELSAD", "LSAD", "FUNCSTAT"])
 
 
-def inputs(sp=None, sub=None):
+def inputs(sp=None, sub=None, edge_vintages=None):
     sp = spine() if sp is None else sp
     blocks = pd.DataFrame({"GEOID": sp["GEOID"], "division": sp["GEOID"].map(DIVISION)})
-    edges = edges_mod.build(sp, blocks, "23", {"town": "2024", "sldl": "2024", "sldu": "2024",
-                                               "aiannh": "2020", "division": "M"}, "megis", W())
+    edges = edges_mod.build(sp, blocks, "23", VINTAGES if edge_vintages is None else edge_vintages,
+                            "megis", W())
     return dict(
         spine=sp, edges=edges, subdivisions=subdivisions() if sub is None else sub,
         counties=pd.DataFrame({"GEOID": ["23001", "23015", "23019"],
@@ -229,3 +231,24 @@ def test_the_notes_the_primitive_names_are_the_notes_file_s():
     assert places_mod.CONTAINS_NOTE in notes and places_mod.TABLE_NOTE in notes
     types = yaml.safe_load((REPO / "seeds" / "schemas" / "semantic_types.yml").read_text())["types"]
     assert [n["id"] for n in types["places"]["required_context"]] == [places_mod.TABLE_NOTE]
+
+
+# ── step 7: invariants the primitives do not already refuse ───────────────
+def test_every_district_touches_a_town():
+    # D-161: true by construction, since district places come from the spine
+    # and the spine refuses a block without a district. this fails if district
+    # places are ever taken from another list
+    i, p = inputs(), build()
+    e = i["edges"]
+    towns = e[(e["kind"] == "overlaps") & (e["from_authority"] == "us_census_geoid")]
+    touched = set(zip(towns["to_authority"], towns["to_code"]))
+    districts = p[p["level"].isin(["sldl", "sldu"])]
+    assert len(districts) == 3
+    assert set(zip(districts["authority"], districts["code"])) <= touched
+
+
+def test_edges_whose_vintage_differs_from_the_places_are_refused():
+    # D-162: the edges step and the places step declare vintages apart; a
+    # change to one that misses the other is refused, never written
+    with pytest.raises(SystemExit):
+        build(edge_vintages={**VINTAGES, "division": "M"})
