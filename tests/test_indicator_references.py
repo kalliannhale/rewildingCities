@@ -2,7 +2,8 @@
 tests/test_indicator_references.py
 
 $indicators.<id> resolves an indicator's declaration into a step's params, so a
-primitive receives parsed derivations and never reads YAML (D-33).
+primitive receives parsed derivations and never reads YAML (D-33). what the
+declaration's hash covers is held in tests/test_declaration_hash.py (D-227).
 """
 
 from pathlib import Path
@@ -42,15 +43,6 @@ def test_a_list_of_indicators_resolves_element_by_element():
     # the declaration resolves whole, edges included (REF-1)
     assert out[1]["derivation"] == {"kind": "passthrough", "column": "B25071_001E",
                                     "open_ended": {"lower": 10.0, "upper": 50.0}}
-
-
-def test_the_hash_changes_when_the_declaring_file_changes(tmp_path):
-    f = tmp_path / "x.yml"
-    f.write_text((SEEDS / "cii_2026.yml").read_text())
-    a = IndicatorRegistry.load(tmp_path).declaration("cii_broadband")["declaration_sha256"]
-    f.write_text(f.read_text() + "\n# an edit\n")
-    b = IndicatorRegistry.load(tmp_path).declaration("cii_broadband")["declaration_sha256"]
-    assert a != b
 
 
 def test_an_unknown_indicator_is_refused_with_a_suggestion():

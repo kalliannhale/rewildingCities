@@ -27,11 +27,19 @@ every derivation a plausible answer to a question nobody asked:
   ~ the indicators directory empty     -> refuse
 
 vintage is deliberately absent. one definition spans many releases; the
-year belongs to the manifest's acquisition. ♡
+year belongs to the manifest's acquisition.
+
+an indicator's declaration_sha256 is taken over its own mapping, canonical,
+without its rationale (D-227). a receipt hashes what its run read: one
+declaration, never the file around it, so a sibling, a comment, a key order
+or a prose edit never makes a receipt stale, while a change to what the
+numbers mean (a source, a weight, a scale) always does. ♡
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -58,6 +66,23 @@ OPTIONAL = ("weight_by", "replicates", "rationale")
 KNOWN = REQUIRED + OPTIONAL
 
 REPLICATES_REQUIRED = ("publisher", "edition", "column")
+
+# what a declaration's hash leaves out (D-227): prose that says why, never
+# what. an indicator's rationale points to its method (D-212), where the
+# meaning lives, so editing it changes no number and stales no receipt.
+UNHASHED = ("rationale",)
+
+
+def spec_sha256(spec: dict) -> str:
+    """the sha256 of one indicator's mapping as declared, without UNHASHED
+    fields, serialized canonically: keys sorted at every depth, separators
+    fixed, so a key order or a file's whitespace and comments never move it.
+    lists keep their order, since a numerator's order is part of its meaning
+    (D-227)."""
+    meaning = {k: v for k, v in spec.items() if k not in UNHASHED}
+    text = json.dumps(meaning, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, default=str)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -132,6 +157,7 @@ class Indicator:
     replicates: dict | None = None
     rationale: str = ""
     declared_in: str = ""
+    spec_sha256: str = ""                       # D-227: see spec_sha256()
 
     def estimate_variables(self) -> list[str]:
         """every source column this indicator reads, in a stable order. a
@@ -165,14 +191,16 @@ class Indicator:
         """what an acquisition must fetch for this indicator to be derived."""
         return self.estimate_variables() + self.moe_variables()
 
-    def as_declaration(self, declaration_sha256: str | None = None) -> dict:
+    def as_declaration(self) -> dict:
         """this indicator as a primitive receives it: plain JSON, nothing parsed later.
 
         the orchestrator hands this to a primitive through `$indicators.<id>`,
         so R never reads YAML and the registry stays the one place a variable
         code is written. it is recorded in the step's provenance params, so an
-        envelope says exactly which definition produced its numbers, and the
-        hash says which version of the file that definition came from.
+        envelope says exactly which definition produced its numbers. freshness
+        compares those params whole; the hash is what lets it see the fields
+        not handed over here (source, weight_by, replicates), and it is taken
+        over this indicator alone, never its file (D-227).
         """
         derivation = self.derivation.as_dict()
         return {
@@ -189,7 +217,7 @@ class Indicator:
             "rests_on": self.rests_on.as_dict(),
             "moe_variables": self.moe_variables(),
             "declared_in": self.declared_in,
-            "declaration_sha256": declaration_sha256,
+            "declaration_sha256": self.spec_sha256,
         }
 
 
@@ -292,6 +320,7 @@ class IndicatorRegistry:
             replicates=dict(replicates) if replicates else None,
             rationale=(spec.get("rationale") or "").strip(),
             declared_in=label,
+            spec_sha256=spec_sha256(spec),
         )
 
         if uncertainty == "acs_moe":
@@ -447,12 +476,7 @@ class IndicatorRegistry:
         return sorted(i for i, ind in self._indicators.items() if ind.measures == measures)
 
     def declaration(self, ind_id: str) -> dict:
-        """`as_declaration`, with the sha256 of the file the indicator lives in."""
-        import hashlib
-        ind = self.get(ind_id)
-        digest = None
-        if self._root is not None:
-            f = self._root / ind.declared_in.split("/", 1)[-1]
-            if f.is_file():
-                digest = hashlib.sha256(f.read_bytes()).hexdigest()
-        return ind.as_declaration(digest)
+        """`as_declaration`: the indicator's own hash, taken when it was
+        parsed, so the file is never reopened and every declaration has one,
+        a registry built in memory included (D-227)."""
+        return self.get(ind_id).as_declaration()
