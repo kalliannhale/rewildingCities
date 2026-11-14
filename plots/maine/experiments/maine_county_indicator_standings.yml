@@ -1,11 +1,17 @@
 # ============================================================================
 # plots/maine/experiments/maine_county_indicator_standings.yml
 # ============================================================================
-# the county standings for the three CII indicators the national acquisition
-# already holds, in one run, so the "Counties, Ranked" panels share one
-# receipt. the same declarations the broadband experiment used, widened from
-# one indicator to three; the demo's agreement matrix already checks all
-# three against CII 2026 for Maine's sixteen counties.
+# the county standings for two CII indicators of basic needs: rent burden and
+# households without a vehicle, the curiosity's rent_burden and
+# vehicle_access sub-questions, answered in one run because both read the
+# same national acquisition and the same reference population.
+#
+# broadband is not here. its standing answers a different question
+# (broadband_access), and the composed experiment
+# maine_broadband_access_subscription__cii_indicator_values_91b5c0 already
+# answers it, with the same method and the same choices. one experiment per
+# question, so no receipt borrows a question it does not answer and no
+# standing is computed twice.
 #
 # the reference population is the nation's 3,144 counties (50 states and DC);
 # Puerto Rico's 78 municipios keep their rows with no standing, by
@@ -14,14 +20,14 @@
 # ============================================================================
 
 id: maine_county_indicator_standings
-name: "Maine's counties among the nation's, on three CII indicators"
+name: "Maine's counties among the nation's, on rent burden and vehicle access"
 description: >
-  Derives broadband subscription, rent burden and households without a
-  vehicle for every U.S. county from ACS 2020-2024, then places each county
-  among the nation's 3,144 by CII's percentile rule.
+  Derives rent burden and households without a vehicle for every U.S.
+  county from ACS 2020-2024, then places each county among the nation's
+  3,144 by CII's percentile rule.
 
 curiosity:
-  ref: ""
+  ref: $curiosity-space/information/basic_needs_and_opportunity
 
 method:
   ref: $methods/information/cii_indicator_values
@@ -46,7 +52,6 @@ steps:
       values: indicator_values
     params:
       indicators:
-        - $indicators.cii_broadband
         - $indicators.cii_rent_burden
         - $indicators.cii_no_vehicle
       spatial_unit: $choices.aggregation_unit_level
@@ -67,7 +72,6 @@ steps:
       standings: indicator_standings
     params:
       indicators:
-        - $indicators.cii_broadband
         - $indicators.cii_rent_burden
         - $indicators.cii_no_vehicle
       sd: $choices.sd_convention

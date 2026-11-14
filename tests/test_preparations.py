@@ -167,6 +167,24 @@ def test_an_experiment_with_no_curiosity_is_still_flagged(tmp_path):
     assert any("names no curiosity" in w and "D-64" in w for w in warnings)
 
 
+@pytest.mark.parametrize("primitive", ["soil/repair_geometry",
+                                       "roots/standardize_indicator"],
+                         ids=["soil_only", "with_a_roots_step"])
+def test_an_experiment_with_no_curiosity_is_never_told_to_become_a_preparation(
+        tmp_path, primitive):
+    # an analysis method can never be a preparation's, so the advice would
+    # trade a warning for an error; a run with a roots/ step, twice over.
+    # the no-curiosity warning names the gap and nothing it could not pass
+    plot = a_plot(tmp_path)
+    path = a_run(plot, "no_question", method={"ref": ANALYSIS_METHOD},
+                 curiosity={"ref": ""},
+                 steps=[step("one_step", primitive,
+                             {"features": "$manifest.governance_unit_county"})])
+    errors, warnings = orchestrator(path, tmp_path).validate()
+    assert any("names no curiosity" in w and "D-64" in w for w in warnings)
+    assert not any("kind: preparation" in m for m in errors + warnings)
+
+
 def test_the_gate_stops_a_preparation_whose_input_carries_a_blocking_warning(
         tmp_path, monkeypatch):
     # assign_geoid declares no_unresolved_critical in soil/_registry.yml.

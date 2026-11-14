@@ -335,7 +335,13 @@ class Orchestrator:
         warning, not an error: older Maine experiments predate the curiosity
         space (D-48, D-64) and still run, but every run says what they lack.
         the experiment schema requires the curiosity; nothing else enforced
-        it before this, so an empty one ran in silence. ~"""
+        it before this, so an empty one ran in silence.
+
+        that warning names only the gap, never a kind to become: a run with
+        an analysis method could not pass as a preparation, which may use
+        only a preparation method, so the advice would trade a warning for
+        an error; a run with a preparation method is told to become one by
+        its own error, below. ~"""
         lineage = self.experiment.lineage
         try:
             method_kind = (self._load_method_data() or {}).get("kind", "experiment")
@@ -369,8 +375,8 @@ class Orchestrator:
                 warnings.append(
                     f"experiment '{self.experiment.id}' names no curiosity, so its "
                     "receipts cannot say what question they answer (D-64). write "
-                    "or choose the curiosity and recompose it, or, if it answers "
-                    "no question, declare it `kind: preparation`")
+                    "or choose the curiosity it answers and name it in the run's "
+                    "curiosity block")
             if method_kind == "preparation":
                 errors.append(
                     f"{lineage.method_ref} is a preparation method, which answers "
