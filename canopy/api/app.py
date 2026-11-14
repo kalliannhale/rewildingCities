@@ -34,6 +34,11 @@ from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 
+import threading
+from contextlib import contextmanager
+
+from matplotlib.pyplot import plot
+
 from ..paths import project_root
 from ..wonder.reading import read_plot
 from ..wonder.session import PlotNotFound, open_plot, plot_display_name, plot_names
@@ -57,6 +62,18 @@ app.add_middleware(
 # a single-process local server. a real deployment needs them durable, and
 # the run log on disk (compost/logs) is already the durable half.
 _RUNS: dict[str, dict[str, Any]] = {}
+
+_plot_locks: dict[str, threading.Lock] = {}
+_plot_locks_guard = threading.Lock()
+
+@contextmanager
+def plot_lock(plot: str):
+    with _plot_locks_guard:
+        if plot not in _plot_locks:
+            _plot_locks[plot] = threading.Lock()
+        lock = _plot_locks[plot]
+    with lock:
+        yield
 
 
 def _reading(plot: str):
@@ -95,17 +112,20 @@ def plot_reading(plot: str) -> dict:
     the whole account: what this ground holds, and every question it could
     ask of that. the single measurement the CLI also renders.
     """
-    reading, _loam, report = _reading(plot)
-    return {"reading": reading.to_dict(), "opened": report}
+    with plot_lock(plot):
+        reading, _loam, report = _reading(plot)
+        return {"reading": reading.to_dict(), "opened": report}
 
 
 @app.get("/plots/{plot}/holdings", tags=["read"])
 def plot_holdings(plot: str) -> dict:
     """what this ground holds, by canonical type, with coverage ranges."""
-    reading, _loam, _report = _reading(plot)
-    d = reading.to_dict()
-    return {"plot": plot, "tiers": d["tiers"], "holdings": d["holdings"],
-            "declared_unconformed": d["declared_unconformed"]}
+    
+    with plot_lock(plot):
+        reading, _loam, _report = _reading(plot)
+        d = reading.to_dict()
+        return {"plot": plot, "tiers": d["tiers"], "holdings": d["holdings"],
+                "declared_unconformed": d["declared_unconformed"]}
 
 
 @app.get("/plots/{plot}/curiosities", tags=["read"])
@@ -114,12 +134,14 @@ def plot_curiosities(plot: str,
                          None, description="runnable | runnable_with_uncertainty | blocked")
                      ) -> dict:
     """what this plot could ask, readiest first."""
-    reading, _loam, _report = _reading(plot)
-    curiosities = reading.to_dict()["curiosities"]
-    if verdict:
-        curiosities = [c for c in curiosities if c["best_verdict"] == verdict]
-    return {"plot": plot, "answerable_now": reading.answerable_now,
-            "curiosities": curiosities}
+    
+    with plot_lock(plot):
+        reading, _loam, _report = _reading(plot)
+        curiosities = reading.to_dict()["curiosities"]
+        if verdict:
+            curiosities = [c for c in curiosities if c["best_verdict"] == verdict]
+        return {"plot": plot, "answerable_now": reading.answerable_now,
+                "curiosities": curiosities}
 
 
 @app.get("/curiosities", tags=["read"])
@@ -176,26 +198,28 @@ def sense_acquisition(plot: str,
     the ring, read forward: readiness names what is missing, the resolution
     engine says what it would take to get each one on this machine.
     """
-    reading, loam, _report = _reading(plot)
-    from ..loam.readiness import acquisition_gap
-    from ..orchestrator.parsing import parse_manifest
-    from ..orchestrator.resolution import ResolutionEngine
-    from ..providers import create_default_registry
+    
+    with plot_lock(plot):
+        reading, loam, _report = _reading(plot)
+        from ..loam.readiness import acquisition_gap
+        from ..orchestrator.parsing import parse_manifest
+        from ..orchestrator.resolution import ResolutionEngine
+        from ..providers import create_default_registry
 
-    method_path = project_root() / method
-    if not method_path.is_file():
-        raise HTTPException(status_code=404, detail=f"no method at {method}")
+        method_path = project_root() / method
+        if not method_path.is_file():
+            raise HTTPException(status_code=404, detail=f"no method at {method}")
 
-    gap = acquisition_gap(loam, plot, str(method_path), include_enriching=enriching)
-    if not gap:
-        return {"plot": plot, "method": method, "gap": [],
-                "message": "nothing missing ~ this ground can answer as it stands."}
+        gap = acquisition_gap(loam, plot, str(method_path), include_enriching=enriching)
+        if not gap:
+            return {"plot": plot, "method": method, "gap": [],
+                    "message": "nothing missing ~ this ground can answer as it stands."}
 
-    manifest = parse_manifest(project_root() / "plots" / plot / "manifest.yml")
-    engine = ResolutionEngine(manifest=manifest,
-                              provider_registry=create_default_registry())
-    return {"plot": plot, "method": method, "gap": gap,
-            "report": engine.acquire_types(gap, dry=True, loam=loam, plot=plot)}
+        manifest = parse_manifest(project_root() / "plots" / plot / "manifest.yml")
+        engine = ResolutionEngine(manifest=manifest,
+                                provider_registry=create_default_registry())
+        return {"plot": plot, "method": method, "gap": gap,
+                "report": engine.acquire_types(gap, dry=True, loam=loam, plot=plot)}
 
 
 @app.get("/plots/{plot}/receipts", tags=["read"])
@@ -213,68 +237,69 @@ def plot_receipts(plot: str) -> dict:
     """
     import json
 
-    base = project_root() / "plots" / plot / ".envelopes"
-    if not base.is_dir():
-        raise HTTPException(status_code=404, detail=f"no receipts for {plot}")
+    with plot_lock(plot):
+        base = project_root() / "plots" / plot / ".envelopes"
+        if not base.is_dir():
+            raise HTTPException(status_code=404, detail=f"no receipts for {plot}")
 
-    out = []
-    totals = {"info": 0, "warning": 0, "critical": 0}
+        out = []
+        totals = {"info": 0, "warning": 0, "critical": 0}
 
-    for path in sorted(base.glob("*.envelope.json")):
-        try:
-            doc = json.loads(path.read_text())
-        except Exception as e:
-            out.append({"receipt": path.name, "unreadable": str(e)})
-            continue
+        for path in sorted(base.glob("*.envelope.json")):
+            try:
+                doc = json.loads(path.read_text())
+            except Exception as e:
+                out.append({"receipt": path.name, "unreadable": str(e)})
+                continue
 
-        meta = doc.get("metadata") or {}
-        warns = doc.get("warnings") or []
-        prov = doc.get("provenance") or []
+            meta = doc.get("metadata") or {}
+            warns = doc.get("warnings") or []
+            prov = doc.get("provenance") or []
 
-        by_level = {"info": 0, "warning": 0, "critical": 0}
-        for w in warns:
-            lvl = w.get("level")
-            if lvl in by_level:
-                by_level[lvl] += 1
-                totals[lvl] += 1
+            by_level = {"info": 0, "warning": 0, "critical": 0}
+            for w in warns:
+                lvl = w.get("level")
+                if lvl in by_level:
+                    by_level[lvl] += 1
+                    totals[lvl] += 1
 
-        before = meta.get("feature_count_before")
-        after = meta.get("feature_count_after")
-        reduction = None
-        if before and after:
-            reduction = {
-                "before": before,
-                "after": after,
-                "after_filters": meta.get("features_after_filters"),
-                "factor": round(before / after, 1) if after else None,
-                "dissolved_by": meta.get("dissolved_by"),
-                "merge_method": meta.get("merge_method"),
-                "carried": meta.get("attributes_carried") or [],
-                "dropped": meta.get("attributes_dropped") or [],
-                "refused_varying": meta.get("attributes_refused_varying") or [],
-            }
+            before = meta.get("feature_count_before")
+            after = meta.get("feature_count_after")
+            reduction = None
+            if before and after:
+                reduction = {
+                    "before": before,
+                    "after": after,
+                    "after_filters": meta.get("features_after_filters"),
+                    "factor": round(before / after, 1) if after else None,
+                    "dissolved_by": meta.get("dissolved_by"),
+                    "merge_method": meta.get("merge_method"),
+                    "carried": meta.get("attributes_carried") or [],
+                    "dropped": meta.get("attributes_dropped") or [],
+                    "refused_varying": meta.get("attributes_refused_varying") or [],
+                }
 
-        out.append({
-            "receipt": path.name,
-            "semantic_type": meta.get("semantic_type"),
-            "data_category": meta.get("data_category"),
-            "crs": meta.get("crs"),
-            "feature_count": meta.get("feature_count"),
-            "coverage_source": meta.get("value_range_source"),
-            "dtype_native": meta.get("dtype_native"),
-            "geometry_type_native": meta.get("geometry_type_native"),
-            "area_unavailable": meta.get("total_area_unavailable"),
-            "provenance_steps": [s.get("primitive") for s in prov if s.get("primitive")],
-            "warnings": by_level,
-            "messages": [
-                {"level": w.get("level"), "primitive": w.get("primitive"),
-                 "message": w.get("message")}
-                for w in warns
-            ],
-            "reduction": reduction,
-        })
+            out.append({
+                "receipt": path.name,
+                "semantic_type": meta.get("semantic_type"),
+                "data_category": meta.get("data_category"),
+                "crs": meta.get("crs"),
+                "feature_count": meta.get("feature_count"),
+                "coverage_source": meta.get("value_range_source"),
+                "dtype_native": meta.get("dtype_native"),
+                "geometry_type_native": meta.get("geometry_type_native"),
+                "area_unavailable": meta.get("total_area_unavailable"),
+                "provenance_steps": [s.get("primitive") for s in prov if s.get("primitive")],
+                "warnings": by_level,
+                "messages": [
+                    {"level": w.get("level"), "primitive": w.get("primitive"),
+                    "message": w.get("message")}
+                    for w in warns
+                ],
+                "reduction": reduction,
+            })
 
-    return {"plot": plot, "totals": totals, "receipts": out}
+        return {"plot": plot, "totals": totals, "receipts": out}
 
 
 @app.get("/plots/{plot}/trace", tags=["read"])
@@ -288,45 +313,47 @@ def plot_trace(plot: str,
     with it a number is an account. Omit `clump` to see what this ground
     holds and which of those can be traced.
     """
-    try:
-        _vocab, loam, _report = open_plot(plot)
-    except PlotNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    
+    with plot_lock(plot):
+        try:
+            _vocab, loam, _report = open_plot(plot)
+        except PlotNotFound as e:
+            raise HTTPException(status_code=404, detail=str(e))
 
-    rows = loam.find(plot=plot)
-    index = {r["name"]: r for r in rows}
+        rows = loam.find(plot=plot)
+        index = {r["name"]: r for r in rows}
 
-    if clump is None:
-        return {"plot": plot, "clumps": [
-            {"name": r["name"], "tier": r["tier"],
-             "semantic_type": r["semantic_type"],
-             "declared": r["semantic_type_declared"],
-             "has_parent": bool(r.get("parent_ref"))}
-            for r in sorted(rows, key=lambda x: (x["tier"], x["name"]))]}
+        if clump is None:
+            return {"plot": plot, "clumps": [
+                {"name": r["name"], "tier": r["tier"],
+                "semantic_type": r["semantic_type"],
+                "declared": r["semantic_type_declared"],
+                "has_parent": bool(r.get("parent_ref"))}
+                for r in sorted(rows, key=lambda x: (x["tier"], x["name"]))]}
 
-    if clump not in index:
-        raise HTTPException(status_code=404, detail=f"no clump '{clump}' in {plot}")
+        if clump not in index:
+            raise HTTPException(status_code=404, detail=f"no clump '{clump}' in {plot}")
 
-    chain = loam.trace(clump)
-    return {"plot": plot, "clump": clump, "depth": len(chain), "chain": [
-        {
-            "name": name,
-            "present": name in index,
-            "tier": index.get(name, {}).get("tier"),
-            "semantic_type": index.get(name, {}).get("semantic_type"),
-            "declared": index.get(name, {}).get("semantic_type_declared"),
-            "crs": index.get(name, {}).get("crs"),
-            "coverage": index.get(name, {}).get("coverage"),
-            "warnings_count": index.get(name, {}).get("warnings_count"),
-            "has_critical": index.get(name, {}).get("has_critical"),
-            "data_path": index.get(name, {}).get("data_path"),
-            # a parent referenced but absent is honest: the lineage root is a
-            # manifest declaration that has not been planted, and saying so
-            # beats a chain that stops without explanation.
-            "note": None if name in index else
-                    "referenced as a parent but not present in this bed",
-        }
-        for name in chain]}
+        chain = loam.trace(clump)
+        return {"plot": plot, "clump": clump, "depth": len(chain), "chain": [
+            {
+                "name": name,
+                "present": name in index,
+                "tier": index.get(name, {}).get("tier"),
+                "semantic_type": index.get(name, {}).get("semantic_type"),
+                "declared": index.get(name, {}).get("semantic_type_declared"),
+                "crs": index.get(name, {}).get("crs"),
+                "coverage": index.get(name, {}).get("coverage"),
+                "warnings_count": index.get(name, {}).get("warnings_count"),
+                "has_critical": index.get(name, {}).get("has_critical"),
+                "data_path": index.get(name, {}).get("data_path"),
+                # a parent referenced but absent is honest: the lineage root is a
+                # manifest declaration that has not been planted, and saying so
+                # beats a chain that stops without explanation.
+                "note": None if name in index else
+                        "referenced as a parent but not present in this bed",
+            }
+            for name in chain]}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -342,25 +369,26 @@ def compose_experiment(plot: str, curiosity: str, method: str,
     the door does not lock: this composes whatever was chosen and lets
     provenance teach through honest limitation.
     """
-    _reading_obj, loam, _report = _reading(plot)
-    from ..wonder.wondering import compose
+    with plot_lock(plot):
+        _reading_obj, loam, _report = _reading(plot)
+        from ..wonder.wondering import compose
 
-    try:
-        composed = compose(loam, plot, curiosity, method,
-                           sub_question=sub_question, write=True)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        try:
+            composed = compose(loam, plot, curiosity, method,
+                            sub_question=sub_question, write=True)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
-    return {"plot": plot, "curiosity": curiosity, "method": method,
-            "path": str(composed.path) if composed.path else None,
-            "verdict": composed.guidance.verdict,
-            "guidance": {
-                "question": composed.guidance.question,
-                "what_youll_learn": composed.guidance.what_youll_learn,
-                "cannot_yet": composed.guidance.cannot_yet,
-                "whats_uncertain": composed.guidance.whats_uncertain,
-                "the_wide_door": composed.guidance.the_wide_door,
-            }}
+        return {"plot": plot, "curiosity": curiosity, "method": method,
+                "path": str(composed.path) if composed.path else None,
+                "verdict": composed.guidance.verdict,
+                "guidance": {
+                    "question": composed.guidance.question,
+                    "what_youll_learn": composed.guidance.what_youll_learn,
+                    "cannot_yet": composed.guidance.cannot_yet,
+                    "whats_uncertain": composed.guidance.whats_uncertain,
+                    "the_wide_door": composed.guidance.the_wide_door,
+                }}
 
 
 def _execute_run(run_id: str, experiment: str, profile: str) -> None:
@@ -396,16 +424,17 @@ def start_run(plot: str, experiment: str, background: BackgroundTasks,
     returns a run id to poll. the durable record is the run log the
     orchestrator already writes to compost/logs.
     """
-    path = project_root() / experiment
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail=f"no experiment at {experiment}")
+    with plot_lock(plot):
+        path = project_root() / experiment
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail=f"no experiment at {experiment}")
 
-    run_id = uuid.uuid4().hex[:12]
-    _RUNS[run_id] = {"run_id": run_id, "plot": plot, "experiment": experiment,
-                     "profile": profile, "status": "queued",
-                     "started": datetime.now(timezone.utc).isoformat()}
-    background.add_task(_execute_run, run_id, experiment, profile)
-    return _RUNS[run_id]
+        run_id = uuid.uuid4().hex[:12]
+        _RUNS[run_id] = {"run_id": run_id, "plot": plot, "experiment": experiment,
+                        "profile": profile, "status": "queued",
+                        "started": datetime.now(timezone.utc).isoformat()}
+        background.add_task(_execute_run, run_id, experiment, profile)
+        return _RUNS[run_id]
 
 
 @app.get("/plots/{plot}/runs/{run_id}", tags=["read"])

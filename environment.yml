@@ -19,6 +19,8 @@ dependencies:
   # --- geospatial (conda-forge pulls the shared GDAL / GEOS / PROJ) ---
   - rasterio
   - shapely
+  - geopandas
+  - matplotlib
 
   # --- computer vision ---
   - opencv               # cv2 is load-bearing in 5 calibration / IPM files
@@ -33,6 +35,10 @@ dependencies:
   # --- acquisition ---
   - requests
   - earthengine-api
+
+  # --- api ---
+  - fastapi
+  - uvicorn
 
   # --- R runtime + spatial stack (shares the same GDAL/GEOS/PROJ as rasterio) ---
   - r-base
