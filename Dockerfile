@@ -1,27 +1,24 @@
 # rewildingCities Dockerfile
-# Force AMD64 for AWS compatibility
-FROM --platform=linux/amd64 rocker/geospatial:4.3
+# Built from environment.yml, the project's one declared environment, so the
+# image matches every laptop that runs `mamba env create -f environment.yml`.
+# AMD64 because the AWS Batch and Fargate job definitions target it.
+FROM --platform=linux/amd64 docker.io/condaforge/miniforge3:26.9.4-2
 
 LABEL maintainer="rewildingCities"
 LABEL description="Polyglot container for climate resilience research"
 
 # ============================================
-# System dependencies + Python
+# Python + R environment (conda-forge, one GDAL/GEOS/PROJ for both)
 # ============================================
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
+COPY environment.yml /tmp/environment.yml
+RUN mamba env create --yes --name rewilding --file /tmp/environment.yml \
+    && mamba clean --all --yes \
+    && rm /tmp/environment.yml
 
-# Symlink python -> python3 for convenience
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-# ============================================
-# Python dependencies
-# ============================================
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+# Primitives call `Rscript` and `python` from PATH, so the env must come first.
+ENV PATH=/opt/conda/envs/rewilding/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    REWILDING_ROOT=/app
 
 # ============================================
 # Install {rewildr} R package from local source
@@ -30,10 +27,12 @@ COPY seeds/packages/rewildr /tmp/rewildr
 RUN R CMD INSTALL /tmp/rewildr && rm -rf /tmp/rewildr
 
 # ============================================
-# Copy the full codebase
+# Copy the codebase (.dockerignore keeps data, state and secrets out)
 # ============================================
+RUN useradd --create-home --uid 1000 rewilding
 WORKDIR /app
-COPY . /app
+COPY --chown=rewilding:rewilding . /app
+USER rewilding
 
 # ============================================
 # Default: drop into bash (override with command)

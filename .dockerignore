@@ -1,0 +1,60 @@
+# Keeps the image to the tracked source: nothing regenerable, private or secret.
+
+# --- version control and local tooling ---
+.git
+.gitignore
+.vscode
+CLAUDE.md
+
+# --- data, envelopes and derived beds (regenerable, sometimes sensitive) ---
+**/.data
+**/.envelope
+**/.envelopes
+**/.loam
+plots/*/harvest
+harvest/reports
+harvest/maps
+harvest/exports
+harvest/dashboards
+compost/logs
+compost/archive
+garden/reference
+
+# --- Terraform state, plans and variables ---
+**/.terraform
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfvars
+!**/*.example.tfvars
+**/*.plan
+
+# --- secrets and credentials ---
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.keystore
+**/*.p12
+**/.aws
+**/credentials
+**/*_credentials.json
+**/*service-account*.json
+**/.secrets
+
+# --- caches and build artifacts ---
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.ipynb_checkpoints
+**/.Rproj.user
+**/.Rhistory
+**/.RData
+
+# --- large binaries kept out of git ---
+**/*.joblib
+**/*.pt
+**/*.DNG
