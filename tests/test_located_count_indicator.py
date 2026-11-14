@@ -1,5 +1,6 @@
-"""the registry knows located_count (D-209): it parses, reads no source
-variable, describes itself, and preview refuses it by name."""
+"""the registry knows located_count (D-209): it parses, names the type it
+counts (D-224), reads no source variable, describes itself, and preview
+refuses it by name. carriers are found by role (D-223)."""
 
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def test_the_library_indicator_parses_as_a_carrier():
     ind = _registry().get("library_outlets_per_1000")
     assert ind.role == "carrier"
     assert ind.derivation.kind == "located_count"
-    assert ind.derivation.layer == "imls_pls_fy2024_outlets"
+    assert ind.derivation.counts == "library_outlet"
     assert ind.declared_in.endswith("carriers.yml")
 
 
@@ -28,28 +29,59 @@ def test_a_located_count_asks_an_acquisition_for_nothing():
     assert ind.estimate_variables() == [] and ind.acquisition_variables() == []
 
 
-def test_its_declaration_names_its_layer():
+def test_its_declaration_names_the_type_it_counts():
     d = _registry().declaration("library_outlets_per_1000")["derivation"]
-    assert d == {"kind": "located_count", "layer": "imls_pls_fy2024_outlets",
+    assert d == {"kind": "located_count", "counts": "library_outlet",
                  "denominator": "persons", "scale": 1000.0}
+
+
+def test_preview_and_the_declaration_show_one_derivation():
+    reg = _registry()
+    for ind_id in reg.all():
+        assert describe(reg.get(ind_id))["derivation"] == reg.declaration(ind_id)["derivation"]
+
+
+def test_the_seed_names_no_release_and_no_plot():
+    ind = _registry().get("library_outlets_per_1000")
+    assert "2024" not in str(ind.derivation.as_dict())
+    assert "maine" not in str(ind.source).lower()
+
+
+def test_carriers_are_found_by_role():
+    reg = _registry()
+    assert "library_outlets_per_1000" in reg.with_role("carrier")
+    assert all(reg.get(i).role == "carrier" for i in reg.with_role("carrier"))
+    with pytest.raises(ValueError, match="not one of"):
+        reg.with_role("carriers")
 
 
 def test_preview_describes_it_and_refuses_to_derive_it():
     ind = _registry().get("library_outlets_per_1000")
-    assert describe(ind)["derivation"]["layer"] == "imls_pls_fy2024_outlets"
+    assert describe(ind)["derivation"]["counts"] == "library_outlet"
     with pytest.raises(PreviewError) as e:
         derive(None, ind, unit_authority="us_census_geoid", published_by=None, time=None)
     assert e.value.kind == "unavailable"
 
 
-def test_a_located_count_without_a_layer_is_refused(tmp_path):
+def _one_located_count(tmp_path, derivation: str):
     (tmp_path / "x.yml").write_text(
         "indicators:\n  bad:\n    name: n\n    defined_by: d\n    measures: m\n"
         "    role: carrier\n    rests_on: {add: [P1_001N], counts: persons}\n"
-        "    unit: u\n    derivation: {kind: located_count, denominator: persons, scale: 1000}\n"
+        f"    unit: u\n    derivation: {derivation}\n"
         "    direction: higher_is_better\n    aggregation: none\n    uncertainty: none\n"
         "    source: {provider: rewildingcities}\n")
-    with pytest.raises(ValueError, match="needs the layer"):
+
+
+def test_a_located_count_without_counts_is_refused(tmp_path):
+    _one_located_count(tmp_path, "{kind: located_count, denominator: persons, scale: 1000}")
+    with pytest.raises(ValueError, match="needs counts"):
+        IndicatorRegistry.load(tmp_path)
+
+
+def test_a_layer_label_in_the_seed_is_refused_by_name(tmp_path):
+    _one_located_count(tmp_path, "{kind: located_count, layer: libs, counts: library_outlet, "
+                                 "denominator: persons, scale: 1000}")
+    with pytest.raises(ValueError, match="D-224"):
         IndicatorRegistry.load(tmp_path)
 
 

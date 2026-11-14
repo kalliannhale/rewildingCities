@@ -153,6 +153,22 @@ def _is_parametric_choice(method: Method, choice_name: str) -> bool:
     return len(choice.options) == 0
 
 
+def _indicator_refs(value: Any) -> list[str]:
+    """every indicator id a step's params name through $indicators.<id>, at
+    any depth, in the order written."""
+    found: list[str] = []
+    if isinstance(value, str):
+        if value.startswith("$indicators."):
+            found.append(value[len("$indicators."):])
+    elif isinstance(value, list):
+        for item in value:
+            found.extend(_indicator_refs(item))
+    elif isinstance(value, dict):
+        for item in value.values():
+            found.extend(_indicator_refs(item))
+    return found
+
+
 class Orchestrator:
     """Executes experiments against city manifests.
 
@@ -299,6 +315,7 @@ class Orchestrator:
 
         self._validate_source_facts(errors)
         self._validate_loam_references(errors)
+        self._validate_located_counts(errors)
 
         self._validate_method_choices(errors, warnings)
         self._validate_kind(errors, warnings)
@@ -509,6 +526,87 @@ class Orchestrator:
                             f"this run makes itself (step '{maker}'). read it as "
                             f"$steps.{maker}.{output_name}, or move the step into "
                             f"another run (D-164)")
+
+    def _validate_located_counts(self, errors: list[str]) -> None:
+        """a located_count counts the type its indicator names (D-224).
+
+        the indicator says what is counted (counts: library_outlet); the run
+        says whose points and which release, in the label its edges carry.
+        so a step handed a located_count must read exactly one
+        located_in_edges input, made by a step of this run, and that step
+        must read exactly one input of the counted type. checked from the
+        declarations alone, before anything runs: a count of schools under
+        a libraries indicator is refused, never published. edges reached
+        through $loam or $manifest are refused too, because what they were
+        made from is not declared here to check. ~"""
+        asked = [(step, ind_id) for step in self.experiment.steps
+                 for ind_id in _indicator_refs(step.params)]
+        if not asked:
+            return
+        from canopy.indicators import IndicatorRegistry
+        try:
+            registry = IndicatorRegistry.load(self.project_root / "seeds" / "indicators")
+        except (FileNotFoundError, ValueError) as e:
+            errors.append(f"the indicator registry could not be read: {e}")
+            return
+
+        def meaning(name: str) -> str:
+            res = self.semantic_types.resolve(name)
+            return getattr(res, "canonical", None) or name
+
+        steps = {s.id: s for s in self.experiment.steps}
+
+        def type_of(ref: Any) -> str | None:
+            if not isinstance(ref, str):
+                return None
+            if ref.startswith("$steps."):
+                producer, _, output = ref[len("$steps."):].partition(".")
+                maker = steps.get(producer)
+                named = maker.outputs.get(output) if maker else None
+            elif ref.startswith("$manifest."):
+                dataset = self.manifest.datasets.get(ref[len("$manifest."):])
+                named = dataset.semantic_type if dataset else None
+            elif ref.startswith("$loam."):
+                named = ref[len("$loam."):]
+            else:
+                return None
+            return meaning(named) if named else None
+
+        edges_type = meaning("located_in_edges")
+        for step, ind_id in asked:
+            try:
+                ind = registry.get(ind_id)
+            except KeyError:
+                errors.append(f"Step '{step.id}' names $indicators.{ind_id}, which "
+                              f"no file in seeds/indicators/ declares")
+                continue
+            if ind.derivation.kind != "located_count":
+                continue
+            counted = meaning(ind.derivation.counts)
+            edges = [(n, r) for n, r in step.inputs.items() if type_of(r) == edges_type]
+            if len(edges) != 1:
+                errors.append(
+                    f"Step '{step.id}' counts {ind_id}, a located_count, and so reads "
+                    f"exactly one located_in_edges input; it reads {len(edges)}")
+                continue
+            input_name, ref = edges[0]
+            maker = (steps.get(ref[len("$steps."):].split(".", 1)[0])
+                     if ref.startswith("$steps.") else None)
+            if maker is None:
+                errors.append(
+                    f"Step '{step.id}' counts {ind_id} from {ref}, edges this run "
+                    f"does not make, so the type of the points behind them cannot "
+                    f"be checked against {counted}. make the edges in this run and "
+                    f"read them as $steps.<id>.<output> (D-224)")
+                continue
+            read = {n: type_of(r) for n, r in maker.inputs.items()}
+            if sum(1 for t in read.values() if t == counted) != 1:
+                held = ", ".join(f"{n} ({t})" for n, t in read.items())
+                errors.append(
+                    f"Step '{step.id}' counts {ind_id}, which counts {counted}, but "
+                    f"its edges come from step '{maker.id}', which reads {held}. "
+                    f"the points behind a count are the type its indicator names, "
+                    f"read once (D-224)")
 
     def _validate_param_references(self, step: StepDefinition, errors: list[str]) -> None:
         def check_value(value: Any, path: str) -> None:

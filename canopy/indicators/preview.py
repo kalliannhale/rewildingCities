@@ -112,15 +112,7 @@ def get_indicator(registry: IndicatorRegistry, indicator_id: str) -> Indicator:
 
 def describe(ind: Indicator) -> dict:
     """an indicator as the API shows it: every declared field, nothing added."""
-    d = ind.derivation
-    derivation = {"kind": d.kind}
-    if d.kind == "ratio":
-        derivation.update(numerator=list(d.numerator), denominator=d.denominator,
-                          scale=d.scale)
-    elif d.kind == "located_count":
-        derivation.update(layer=d.layer, denominator=d.denominator, scale=d.scale)
-    else:
-        derivation.update(column=d.column)
+    derivation = ind.derivation.as_dict()
     return {
         "id": ind.id,
         "name": ind.name,
@@ -432,8 +424,8 @@ def _refuse_located(ind: Indicator) -> None:
     if ind.derivation.kind == "located_count":
         raise PreviewError(
             "unavailable",
-            f"'{ind.id}' is a count of {ind.derivation.layer}'s located_in edges per "
-            f"place, made by soil/count_located in a preparation; it is not derived "
+            f"'{ind.id}' is a count of {ind.derivation.counts} points' located_in "
+            f"edges per place, made by soil/count_located in a preparation; it is not derived "
             f"from an acquisition, so there is nothing to preview. read its values "
             f"through loam's place_values.")
 

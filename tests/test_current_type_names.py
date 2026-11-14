@@ -9,8 +9,9 @@ today. Validating, repairing or reprojecting changes a dataset's state, never
 what it is: state is provenance, kept in the receipt.
 
 These walk every registry entry, method, manifest, preparation and
-experiment, every plot, not only Maine's, and the composer that drafts new
-experiments (D-222). An empty walk is a failure, never a pass.
+experiment, every plot, not only Maine's, the composer that drafts new
+experiments (D-222), and the type every located_count indicator counts
+(D-224). An empty walk is a failure, never a pass.
 """
 
 from pathlib import Path
@@ -18,6 +19,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from canopy.indicators import IndicatorRegistry
 from canopy.orchestrator.parsing import load_method_data
 from canopy.paths import project_root
 from canopy.vocabulary import Vocabulary
@@ -166,6 +168,15 @@ def test_every_type_an_experiment_step_makes_is_current(vocab, path):
     doc = yaml.safe_load(path.read_text()) or {}
     problems = not_current(vocab, step_outputs(doc) + named_types(doc))
     assert not problems, _say(_rel(path), problems)
+
+
+def test_every_type_a_located_count_counts_is_current(vocab):
+    reg = IndicatorRegistry.load(ROOT / "seeds" / "indicators")
+    counted = {i: reg.get(i).derivation.counts for i in reg.all()
+               if reg.get(i).derivation.kind == "located_count"}
+    assert counted, "no located_count indicator to walk"
+    problems = not_current(vocab, list(counted.values()))
+    assert not problems, _say("seeds/indicators (counts)", problems)
 
 
 # ── D-222: the composer drafts current names ────────────────────────────────

@@ -14,7 +14,10 @@ district (Contract 3, section 2).
   ~ the count travels with the rate, in `count`, and the persons in
     `households` with households_counts naming what is counted, as every
     value row says what it rests on
-  ~ the layer the edges come from must be the indicator's declared layer
+  ~ the edges come from one layer, named in the receipt: which points, by
+    whom and of which release, is the preparation's to say (D-224). that
+    they are the type the indicator counts is checked before the run, by
+    the orchestrator
   ~ a Census tribal area is never a declared level here (TRIBE-7)
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
@@ -65,11 +68,11 @@ def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
     if "aiannh" in levels:
         raise CountRefused("a Census tribal area is never counted here: the survey does "
                            "not see reservation libraries, so a zero would be false (TRIBE-7)")
-    layer, basis, scale = d["layer"], d["denominator"], float(d["scale"])
+    basis, scale = d["denominator"], float(d["scale"])
     layers = set(edges["from_authority"].astype(str))
-    if layers != {layer}:
-        raise CountRefused(f"the edges come from {sorted(layers)}; {indicator['id']} "
-                           f"counts {layer} only")
+    if len(layers) != 1:
+        raise CountRefused(f"the edges come from {sorted(layers) or 'no layer'}; a "
+                           f"count reads one layer's edges")
     if (edges["kind"] != "located_in").any():
         raise CountRefused("a count reads located_in edges only")
 
@@ -103,9 +106,17 @@ def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
     return out
 
 
-def output_metadata(out: pd.DataFrame) -> dict:
-    return {"data_category": "tabular", "crs": None, "row_count": len(out),
+def counted_layer(edges: pd.DataFrame) -> str:
+    """the one layer the edges come from; count() has refused any other."""
+    return str(edges["from_authority"].astype(str).iloc[0])
+
+
+def output_metadata(out: pd.DataFrame, layer: str | None = None) -> dict:
+    meta = {"data_category": "tabular", "crs": None, "row_count": len(out),
             "variables": COLUMNS, "id_fields": KEY, "spatial_unit": "place_value"}
+    if layer is not None:
+        meta["counted_layer"] = layer
+    return meta
 
 
 def main():
@@ -125,8 +136,9 @@ def main():
     w = WarningsCollector("count_located")
     with primitive_error_handling(w):
         i, p = args["inputs"], args["params"]
+        edges = read(get_input(i, "edges"))
         try:
-            out = count(read(get_input(i, "edges")), read(get_input(i, "spine")),
+            out = count(edges, read(get_input(i, "spine")),
                         read(get_input(i, "places")), require_param(p, "indicator"),
                         require_param(p, "levels"), str(require_param(p, "time")),
                         require_param(p, "published_by"))
@@ -139,7 +151,7 @@ def main():
             out.to_parquet(args["output"], index=False)
         else:
             out.to_csv(args["output"], index=False)
-        primitive_success(output_metadata(out), w)
+        primitive_success(output_metadata(out, counted_layer(edges)), w)
 
 
 if __name__ == "__main__":

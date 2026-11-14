@@ -40,9 +40,11 @@ import yaml
 DIRECTIONS = ("higher_is_better", "higher_is_worse")
 AGGREGATIONS = ("sum", "population_weighted_mean", "none", "profile", "recompute")
 UNCERTAINTIES = ("acs_moe", "published_interval", "none")
-# located_count (D-209): a count of one point layer's located_in edges per
-# place, over the place's own persons. it reads no published table, so it
-# adds nothing to an acquisition and never reaches derive_indicator.R
+# located_count (D-209): a count of located_in edges per place, over the
+# place's own persons. it reads no published table, so it adds nothing to an
+# acquisition and never reaches derive_indicator.R. it names the type of the
+# points it counts (D-224): whose points, and which release, are the run's to
+# say, in the label its edges carry, and so the receipt's, never a seed's
 DERIVATION_KINDS = ("ratio", "passthrough", "located_count")
 LOCATED_DENOMINATORS = ("persons", "households")
 # what a value is for, read by the place profile to put it in its part
@@ -69,7 +71,23 @@ class Derivation:
     # two end categories. a median the Census marks open-ended (-333333333 on
     # its margin) is reported as a bound past one of them, never as a number.
     open_ended: tuple[float, float] | None = None
-    layer: str | None = None                    # located_count only
+    counts: str | None = None                   # located_count only: the points' type
+
+    def as_dict(self) -> dict:
+        """the derivation as plain JSON, the one shape every reader shows
+        (the registry's declaration and preview's describe alike)."""
+        out: dict = {"kind": self.kind}
+        if self.kind == "ratio":
+            out.update(numerator=list(self.numerator), denominator=self.denominator,
+                       scale=self.scale)
+        elif self.kind == "located_count":
+            out.update(counts=self.counts, denominator=self.denominator, scale=self.scale)
+        else:
+            out.update(column=self.column)
+            if self.open_ended is not None:
+                out["open_ended"] = {"lower": self.open_ended[0],
+                                     "upper": self.open_ended[1]}
+        return out
 
 
 @dataclass(frozen=True)
@@ -156,18 +174,7 @@ class Indicator:
         envelope says exactly which definition produced its numbers, and the
         hash says which version of the file that definition came from.
         """
-        d = self.derivation
-        derivation = {"kind": d.kind}
-        if d.kind == "ratio":
-            derivation.update(numerator=list(d.numerator),
-                              denominator=d.denominator, scale=d.scale)
-        elif d.kind == "located_count":
-            derivation.update(layer=d.layer, denominator=d.denominator, scale=d.scale)
-        else:
-            derivation.update(column=d.column)
-            if d.open_ended is not None:
-                derivation["open_ended"] = {"lower": d.open_ended[0],
-                                            "upper": d.open_ended[1]}
+        derivation = self.derivation.as_dict()
         return {
             "id": self.id,
             "name": self.name,
@@ -365,10 +372,16 @@ class IndicatorRegistry:
                               denominator=denominator, scale=float(scale))
 
         if kind == "located_count":
-            layer, denominator = d.get("layer"), d.get("denominator")
-            if not layer or not isinstance(layer, str):
-                raise ValueError(f"{where}: a located_count needs the layer whose "
-                                 f"located_in edges it counts")
+            if "layer" in d:
+                raise ValueError(
+                    f"{where}: a located_count names the type of the points it "
+                    f"counts, counts: <type>, never a layer label (D-224). whose "
+                    f"points and which release are the preparation's to say, in "
+                    f"the layer its located_in edges carry")
+            counts, denominator = d.get("counts"), d.get("denominator")
+            if not counts or not isinstance(counts, str):
+                raise ValueError(f"{where}: a located_count needs counts, the semantic "
+                                 f"type of the points whose located_in edges it counts")
             if denominator not in LOCATED_DENOMINATORS:
                 raise ValueError(f"{where}: a located_count's denominator must be one of "
                                  f"{', '.join(LOCATED_DENOMINATORS)}, a count the spine holds")
@@ -376,10 +389,10 @@ class IndicatorRegistry:
             if not isinstance(scale, (int, float)) or isinstance(scale, bool) or scale <= 0:
                 raise ValueError(f"{where}: a located_count needs a positive numeric scale "
                                  f"(1000 for per 1,000). no default")
-            extra = [k for k in d if k not in ("kind", "layer", "denominator", "scale")]
+            extra = [k for k in d if k not in ("kind", "counts", "denominator", "scale")]
             if extra:
                 raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
-            return Derivation(kind="located_count", layer=layer, denominator=denominator,
+            return Derivation(kind="located_count", counts=counts, denominator=denominator,
                               scale=float(scale))
 
         column = d.get("column")
@@ -420,6 +433,14 @@ class IndicatorRegistry:
 
     def defined_by(self, who: str) -> list[str]:
         return sorted(i for i, ind in self._indicators.items() if ind.defined_by == who)
+
+    def with_role(self, role: str) -> list[str]:
+        """every indicator in this role, whoever defined it. carrier-hood
+        lives here, as each indicator's role (D-223), never on a type: a
+        thing is a carrier for one claim and something else for another."""
+        if role not in ROLES:
+            raise ValueError(f"role '{role}' is not one of: {', '.join(ROLES)}")
+        return sorted(i for i, ind in self._indicators.items() if ind.role == role)
 
     def measuring(self, measures: str) -> list[str]:
         """every indicator that measures this thing, whoever defined it."""

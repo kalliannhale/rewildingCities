@@ -41,8 +41,12 @@ Inputs:
   places     the places table (build_places)
   divisions  optional: blocks assigned to civil divisions (GEOID, division)
 Params:
-  layer        required: the layer's dataset id, the `from_authority` of
-               every edge (Contract 3, section 2)
+  layer        required: the label every edge carries as its
+               `from_authority` (Contract 3, section 2): whose points and
+               which release (imls_pls_fy2024_outlets). a name the run
+               gives its edges, never a dataset id or a type; the points'
+               type is their own, and a carrier indicator names that
+               (D-224)
   id_field     required: the column naming each feature
   lat_field, lon_field   required for a table; ignored for geojson
   points_crs   default EPSG:4326

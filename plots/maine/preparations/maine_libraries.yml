@@ -80,6 +80,9 @@ steps:
     outputs:
       edges: located_in_edges
     params:
+      # the edges' label: whose points and which release. the indicator
+      # counts library_outlet, the points' type; the orchestrator checks the
+      # two agree before the run (D-224)
       layer: imls_pls_fy2024_outlets
       id_field: feature_id
       check_block_field: cenblock

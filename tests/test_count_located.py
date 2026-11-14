@@ -1,4 +1,5 @@
-"""tests for soil/transform/count_located.py (Sprint 06, step 3, D-209)."""
+"""tests for soil/transform/count_located.py (Sprint 06, step 3, D-209;
+one layer, named in the receipt, D-224)."""
 
 import importlib.util
 import sys
@@ -15,8 +16,8 @@ sys.modules["count_located"] = cl
 _spec.loader.exec_module(cl)
 
 IND = {"id": "library_outlets_per_1000",
-       "derivation": {"kind": "located_count", "layer": "libs", "denominator": "persons",
-                      "scale": 1000.0}}
+       "derivation": {"kind": "located_count", "counts": "library_outlet",
+                      "denominator": "persons", "scale": 1000.0}}
 SPINE = pd.DataFrame([
     {"GEOID": "b1", "county": "23001", "cousub": "2300100001", "sldl": "23001", "sldu": "23001", "persons": 1500, "households": 600},
     {"GEOID": "b2", "county": "23001", "cousub": "2300100002", "sldl": "23001", "sldu": "23002", "persons": 500, "households": 200},
@@ -84,10 +85,21 @@ def test_a_tribal_area_is_never_counted():
         _count(levels=LEVELS + ["aiannh"])
 
 
-def test_edges_from_another_layer_are_refused():
-    bad = EDGES.assign(from_authority="schools")
-    with pytest.raises(cl.CountRefused, match="counts libs only"):
-        _count(edges=bad)
+def test_edges_from_two_layers_are_refused():
+    mixed = pd.concat([EDGES, EDGES.assign(from_authority="schools")], ignore_index=True)
+    with pytest.raises(cl.CountRefused, match="one layer"):
+        _count(edges=mixed)
+
+
+def test_no_edges_at_all_are_refused():
+    with pytest.raises(cl.CountRefused, match="no layer"):
+        _count(edges=EDGES.iloc[0:0])
+
+
+def test_the_receipt_names_the_layer_counted():
+    out = _count().reset_index()
+    assert cl.output_metadata(out, cl.counted_layer(EDGES))["counted_layer"] == "libs"
+    assert "counted_layer" not in cl.output_metadata(out)
 
 
 def test_only_a_located_count_is_counted():

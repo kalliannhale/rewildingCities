@@ -17,7 +17,7 @@ indicators:
     unit: per_1000_persons
     derivation:
       kind: located_count
-      layer: imls_pls_fy2024_outlets
+      counts: library_outlet
       denominator: persons
       scale: 1000
     direction: higher_is_better
@@ -25,10 +25,12 @@ indicators:
     uncertainty: none
     source:
       provider: rewildingcities
-      dataset: maine_libraries
     rationale: >
       Counts the library buildings placed in a place: which outlets are
-      placed, and why, is the library_carriers method's to say (D-212). A
+      placed, and why, is the library_carriers method's to say (D-212).
+      It names the type it counts, library_outlet; whose points and which
+      release are the preparation's to say, in its edges' layer, and so
+      its receipt's, never this file's (D-224). A
       building standing in a place is not whom it serves (SERVES-1). The
       denominator is the place's 2020 persons (P.L. 94-171 P1), the vintage
       of the edges, never the ACS's 2024 estimate. A small place's rate is
