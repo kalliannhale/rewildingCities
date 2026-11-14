@@ -51,6 +51,23 @@ and the plot's own places (plan build 3, D-174):
                   a key that is not a place, or an entry of any other shape,
                   means no view, naming it: a plot never claims a place the
                   graph does not hold
+
+and where carriers stand (CMAP-1, D-225):
+
+  ~ located_in    every located_in_edges receipt whose file carries the edge
+                  key, unioned, every row naming its receipt (LOC-VIEW-1).
+                  one receipt per layer is expected; a layer label two
+                  receipts both give means no view, naming them, since which
+                  one is a choice, not a lookup (D-163)
+  ~ carriers      one row per placed point of every carrier indicator whose
+                  derivation is located_count (D-223): the indicator, the
+                  type it counts, the layer, the point's id, name and
+                  coordinates. the points are found the way the orchestrator
+                  checks them before a run (D-224): the edges receipt's own
+                  record reads exactly one input of the counted type, and its
+                  path is the points file. a point's places are its rows in
+                  located_in. an indicator whose points cannot be found this
+                  way is left out by name, and the view is made from the rest
 """
 
 from __future__ import annotations
@@ -63,6 +80,10 @@ CONFORMED_TIERS = ("tended", "gathered")
 
 # the view's name in the bed, and the semantic type that fills it
 GRAPH_VIEWS = {"places": "places", "edges": "place_edges"}
+
+EDGE_KEY = ["from_authority", "from_code", "to_authority", "to_code"]
+LOCATED_TYPE = "located_in_edges"
+INDICATORS = Path("seeds") / "indicators"
 
 VALUE_TYPE = "indicator_values"
 VALUE_KEY = ["unit_authority", "unit_code", "indicator", "time"]
@@ -357,6 +378,194 @@ def _plant_plot_places(loam, declared, report: dict) -> None:
                                               "reach only the declared places themselves"})}
 
 
+def _on_disk(root: Path, path: str | None) -> Path:
+    p = Path(path or "")
+    return p if p.is_absolute() else root / p
+
+
+def _same_file(a: Path, b: Path) -> bool:
+    try:
+        return a.resolve() == b.resolve()
+    except OSError:
+        return False
+
+
+def _own_record(receipt: Path) -> dict | None:
+    """a receipt's own provenance record: the newest one that is not
+    inherited from an input (inherited records carry lineage_branch)."""
+    import json
+    try:
+        chain = json.loads(receipt.read_text()).get("provenance") or []
+    except (OSError, ValueError):
+        return None
+    own = [r for r in chain if isinstance(r, dict) and not r.get("lineage_branch")]
+    return own[-1] if own else None
+
+
+def _plant_located_in(loam, plot: str, root: Path, report: dict) -> list[dict]:
+    """the located_in view; returns the receipts it was made from, each with
+    its file, its layer labels and its own provenance record."""
+    loam.con.execute("DROP VIEW IF EXISTS located_in")
+    rows = [r for tier in CONFORMED_TIERS
+            for r in loam.find(semantic_type=LOCATED_TYPE, plot=plot, tier=tier)]
+    if not rows:
+        report["located_in"] = {"made": False,
+                                "why": f"no run in plot '{plot}' has made {LOCATED_TYPE}"}
+        return []
+
+    included, left_out = [], []
+    for row in sorted(rows, key=lambda r: r["receipt_path"] or ""):
+        receipt = Path(row["receipt_path"] or "?").name
+        path = _on_disk(root, row["data_path"])
+        if not path.is_file():
+            left_out.append(f"{receipt}: {row['data_path']} is not on disk")
+            continue
+        columns = [d[0] for d in loam.con.execute(
+            f"SELECT * FROM {_reader(path)} LIMIT 0").description]
+        missing = [k for k in EDGE_KEY if k not in columns]
+        if missing:
+            left_out.append(f"{receipt}: its file has no {', '.join(missing)}")
+            continue
+        layers = sorted(str(x[0]) for x in loam.con.execute(
+            f"SELECT DISTINCT from_authority FROM {_reader(path)}").fetchall())
+        included.append({"receipt": receipt, "path": path, "layers": layers,
+                         "record": _own_record(_on_disk(root, row["receipt_path"]))})
+
+    if not included:
+        report["located_in"] = {"made": False, "left_out": left_out,
+                                "why": "no located_in_edges receipt carries the edge key"}
+        return []
+
+    by_layer: dict[str, list[str]] = {}
+    for item in included:
+        for layer in item["layers"]:
+            by_layer.setdefault(layer, []).append(item["receipt"])
+    twice = {layer: names for layer, names in by_layer.items() if len(names) > 1}
+    if twice:
+        said = "; ".join(f"{layer} in {', '.join(names)}" for layer, names in sorted(twice.items()))
+        report["located_in"] = {"made": False, "left_out": left_out,
+                                "why": f"one layer's edges in two receipts ({said}); which "
+                                       f"one is a choice, not a lookup (D-163)"}
+        return []
+
+    union = " UNION ALL BY NAME ".join(
+        f"SELECT * REPLACE (CAST(from_code AS VARCHAR) AS from_code, "
+        f"CAST(to_code AS VARCHAR) AS to_code), {_sql_text(item['receipt'])} AS edges_receipt "
+        f"FROM {_reader(item['path'])}" for item in included)
+    loam.con.execute(f"CREATE VIEW located_in AS {union}")
+    count = loam.con.execute("SELECT COUNT(*) FROM located_in").fetchone()[0]
+    report["located_in"] = {"made": True, "rows": count, "layers": sorted(by_layer),
+                            "receipts": [i["receipt"] for i in included],
+                            **({"left_out": left_out} if left_out else {})}
+    return included
+
+
+def _points_sql(path: Path, id_field: str) -> str:
+    return (f"SELECT CAST(f.properties.\"{id_field}\" AS VARCHAR) AS feature_id, "
+            f"CAST(f.properties.\"name\" AS VARCHAR) AS name, "
+            f"f.geometry.coordinates[1] AS longitude, f.geometry.coordinates[2] AS latitude "
+            f"FROM (SELECT unnest(features) AS f FROM read_json_auto({_quoted(path)}, "
+            f"maximum_object_size = 536870912))")
+
+
+def _plant_carriers(loam, plot: str, root: Path, edges: list[dict], report: dict) -> None:
+    """the carriers view: every placed point of every located_count carrier,
+    found through its edges receipt's own record (D-224, D-225)."""
+    loam.con.execute("DROP VIEW IF EXISTS carriers")
+    from canopy.indicators import IndicatorRegistry
+    try:
+        registry = IndicatorRegistry.load(root / INDICATORS)
+    except (FileNotFoundError, ValueError) as e:
+        report["carriers"] = {"made": False, "why": f"the indicator registry did not load: {e}"}
+        return
+    carriers = [registry.get(i) for i in registry.with_role("carrier")
+                if registry.get(i).derivation.kind == "located_count"]
+    if not carriers:
+        report["carriers"] = {"made": False, "why": "no carrier indicator is a located_count, "
+                                                    "so there are no points to draw (D-223)"}
+        return
+    if not edges:
+        report["carriers"] = {"made": False, "why": "there is no located_in view to place "
+                                                    "points through"}
+        return
+
+    from canopy.vocabulary import Vocabulary
+    vocab = Vocabulary.load(root / "seeds" / "schemas")
+
+    def meaning(name: str) -> str:
+        # a receipt may predate a rename, so its types are read forward
+        return getattr(vocab.resolve(name), "canonical", None) or name
+
+    selects, made, left_out = [], {}, {}
+    for ind in carriers:
+        counted = meaning(ind.derivation.counts)
+        found = []
+        for item in edges:
+            inputs = (item["record"] or {}).get("inputs") or []
+            of_type = [i for i in inputs if meaning(str(i.get("semantic_type"))) == counted]
+            if len(of_type) > 1:
+                found.append((item, None, f"{item['receipt']} reads {len(of_type)} inputs of "
+                                          f"type {counted}, so which are the points is a choice"))
+            elif of_type:
+                found.append((item, of_type[0], None))
+        if not found:
+            left_out[ind.id] = f"no located_in_edges receipt was made from {counted} points"
+            continue
+        if len(found) > 1:
+            left_out[ind.id] = (f"{len(found)} edges receipts were made from {counted} points ("
+                                f"{', '.join(f[0]['receipt'] for f in found)}); which this "
+                                f"count drew on is a choice, not a lookup (D-163)")
+            continue
+        item, points_input, problem = found[0]
+        if problem:
+            left_out[ind.id] = problem
+            continue
+        path = _on_disk(root, points_input.get("path"))
+        if not path.is_file():
+            left_out[ind.id] = f"{item['receipt']} read its points from {path}, not on disk"
+            continue
+        points = [r for tier in CONFORMED_TIERS
+                  for r in loam.find(semantic_type=counted, plot=plot, tier=tier)
+                  if _same_file(_on_disk(root, r["data_path"]), path)]
+        if len(points) != 1:
+            left_out[ind.id] = (f"{len(points)} receipts of type {counted} point at {path}; "
+                                f"the view needs exactly one to read its id field")
+            continue
+        id_field = points[0].get("id_field")
+        receipt = Path(points[0]["receipt_path"] or "?").name
+        if not id_field:
+            left_out[ind.id] = f"{receipt} declares no id_field, so a point cannot be named"
+            continue
+        try:
+            loam.con.execute(f"SELECT * FROM ({_points_sql(path, id_field)}) LIMIT 0")
+        except Exception as e:
+            left_out[ind.id] = (f"{receipt}'s points carry no {id_field!r} or 'name' property "
+                                f"a carrier point must have: {str(e).splitlines()[0]}")
+            continue
+        layer = item["layers"][0] if len(item["layers"]) == 1 else None
+        if layer is None:
+            left_out[ind.id] = f"{item['receipt']} holds {len(item['layers'])} layers, not one"
+            continue
+        selects.append(
+            f"SELECT {_sql_text(ind.id)} AS indicator, {_sql_text(counted)} AS counts, "
+            f"{_sql_text(layer)} AS layer, p.feature_id, p.name, p.longitude, p.latitude, "
+            f"{_sql_text(receipt)} AS points_receipt, {_sql_text(item['receipt'])} AS edges_receipt "
+            f"FROM ({_points_sql(path, id_field)}) p "
+            f"WHERE p.feature_id IN (SELECT from_code FROM located_in "
+            f"WHERE from_authority = {_sql_text(layer)})")
+        made[ind.id] = {"counts": counted, "layer": layer, "points_receipt": receipt,
+                        "edges_receipt": item["receipt"]}
+
+    if not selects:
+        report["carriers"] = {"made": False, "left_out": left_out,
+                              "why": "no carrier's points could be found through its edges"}
+        return
+    loam.con.execute(f"CREATE VIEW carriers AS {' UNION ALL BY NAME '.join(selects)}")
+    count = loam.con.execute("SELECT COUNT(*) FROM carriers").fetchone()[0]
+    report["carriers"] = {"made": True, "rows": count, "indicators": made,
+                          **({"left_out": left_out} if left_out else {})}
+
+
 def plant_graph(loam, plot: str, root: str | Path, declared_places=None) -> dict:
     """make the plot's graph views in its bed; returns, per view, whether it
     was made and from what, or why not. `declared_places` is the manifest's
@@ -407,4 +616,6 @@ def plant_graph(loam, plot: str, root: str | Path, declared_places=None) -> dict
 
     _plant_values(loam, plot, root, report)
     _plant_plot_places(loam, declared_places, report)
+    edges = _plant_located_in(loam, plot, root, report)
+    _plant_carriers(loam, plot, root, edges, report)
     return report
