@@ -1225,3 +1225,24 @@ Built since D-209: place.py reads a carrier apart (count first, its persons, its
 | ID | One line | Defined |
 | --- | --- | --- |
 | **CMAP-1** | Still open. Types (D-218, D-219), carrier-hood (D-223) and the bridge (D-224) done. To go: the IMLS catalogue in seeds/sources/ (reference only: no code reads the folder) and the view itself | session 2 |
+
+## Sprint 06, session 5 (continued): the carrier views and the IMLS catalogue (D-225, D-226); CMAP-1 closed
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-225** | loam plants two more views over receipts' files, never copies: located_in, every located_in_edges receipt carrying the edge key, unioned, each row naming its receipt; and carriers, one row per placed point of every carrier indicator whose derivation is located_count, giving the indicator, the type it counts, the layer, and the point's id, name and coordinates. The points are found through the edges receipt's own provenance record (the newest without lineage_branch): exactly one input of the counted type, whose path is the points file, whose receipt declares its id_field. A layer in two receipts means no located_in view; a carrier whose points cannot be found this way is left out by name. place.py reads an exact count apart by its method (located, never ranged), labels every value by its role from the registry, and reads indicators through IndicatorRegistry | The map is a query, never a file (CMAP-1), and loam's views are how queries are made here (D-168). The runtime path mirrors D-224's check before a run. place.py's word carrier named the role while it meant the derivation, wrong both ways under D-223, and its raw YAML walk skipped every refusal the registry makes | Reading LIB-2's second authority, when two edges receipts of one type must both be drawn |
+| **D-226** | IMLS's outlet types (C_OUT_TY: fixed or mobile) and structure statuses (STATSTRU: meaning and group) are one shared crosswalk, seeds/crosswalks/libraries/imls_pls_outlets.yml, passed whole to prepare_library_points as reading through $crosswalks; no plot declares them. A release's outlet member and encoding are declared in its manifest entry (source.outlet_member, source.outlet_encoding), and prepare_library_points' registry entry holds the run's copies to them as source_facts. seeds/sources/imls_pls.yml is reference only: publisher, identifiers, files, what Maine measured, and a pointer to each fact's home, restating none; a test holds that its pointers exist. prepare_library_points 1.2.0; maine_libraries rerun, unchanged (261 placed, 3 mobile and 1 temporarily closed listed) | The codes are IMLS's, the same in every state, and lived in Maine's plot file; outlet_sources.yml is the precedent for how a source is read living in seeds/crosswalks. The encoding was written in the manifest's prose and the run's params, held together by nothing (D-192's case). The map became a query over the registry and loam (D-223 to D-225), so a catalogue's job is reference, not reading | A second release reads differently, or code comes to need the catalogue |
+
+- Found (D-225's real read): 1,566 located_in rows, exactly 261 placed outlets times six places each; 261 carriers. House District 42 names North Haven and Rockland, and its count row holds 2: the view and the count agree.
+- Found: receipts repeat inherited provenance records; the libraries edges receipt's chain holds 19, graph_repair_towns five times (CHAIN-1).
+- Drift fixed: place.py's carrier, CARRIER_METHOD, _is_carrier and _say_carrier renamed to the exact count they meant; its unused yaml import removed.
+- Drift fixed: the IMLS catalogue's first draft repeated the manifest's url, member and encoding; trimmed to a pointer before it shipped.
+- People: Kalli delivers the whole product, every sprint included; the teammates once named in state.md work on other things. Their items are Kalli's. P-8 and TRIBE-7's wording wait on the Wabanaki nations' terms.
+- Tests: 841 to 856. New: tests/test_loam_carriers.py; cases in tests/test_place_carrier.py, tests/test_library_points.py, tests/test_library_preparation.py. Commits 2f389f4, 42dc694.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **CMAP-1** | Closed by D-218, D-219, D-223 to D-226 | session 2 |
+| **LOC-VIEW-1** | Closed by D-225 | hand-off |
+| **CHAIN-1** | Receipts repeat inherited provenance records; find where inheritance appends without deduplicating | session 5 |
+| **Person 3** | Retired: the items are Kalli's; P-8 and TRIBE-7's wording wait on the nations' terms | session 5 |

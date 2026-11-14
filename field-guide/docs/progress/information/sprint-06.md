@@ -81,3 +81,41 @@ CMAP-1 (next), CHOICE-1 (sharper now), SCHEMA-3, INTERP-1, OWN-1, STUB-1, and ev
 - A validator that passes everything proves nothing: the new schema was run against the old files first, and refused every retired shape.
 - A test that resolves every declared reference finds drift no run reaches: within minutes it found a primitive nobody could run.
 - Where options are compared with each other, the comparison is the meaning; it stays in the choice's description, once, and an option may add nothing.
+
+## Session 5: CMAP-1, closed
+
+Tests: 856 passed, no skips (27 new). Decisions: D-223 to D-226. Commits: 9b7716a, the D-223/D-224 ledger commit, 2f389f4, 42dc694.
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| 9b7716a | carriers found by role, IndicatorRegistry.with_role (D-223); a located_count names the type it counts, `counts: library_outlet`, and a layer label in a seed is refused; count_located reads one layer and names it in its receipt; the orchestrator checks, before a run, that the counted points are that type, read once, from edges the run makes (D-224); describe and the declaration share Derivation.as_dict |
+| 2f389f4 | loam's located_in view (LOC-VIEW-1) and carriers view, found through each edges receipt's own provenance record; place.py reads an exact count apart by derivation, carries each value's role, and reads indicators through the registry (D-225) |
+| 42dc694 | IMLS's outlet types and structure statuses as one shared crosswalk; the release's outlet member and encoding declared in the manifest and held to the run as source_facts; prepare_library_points 1.2.0; seeds/sources/imls_pls.yml as reference (D-226) |
+
+### Found
+
+- The layer label `imls_pls_fy2024_outlets` held three facts in one string: what is counted, whose points, and which release. Only the first belongs in a shared seed; the year would have changed carriers.yml's hash every fiscal year.
+- The label did real work: count_located refused edges from any other layer. The guard was kept, narrowed to one layer, and the type check moved to the orchestrator.
+- No code reads seeds/sources/. Session 2 wanted catalogues so the map could be a query over them; the map became a query over the registry and loam, so a catalogue's job is reference.
+- preview.describe built a derivation apart from the declaration and dropped a passthrough's open_ended.
+- place.py called an exact count a carrier, and read indicator YAML raw, skipping every refusal the registry makes.
+- The encoding was written in the manifest's prose and the run's params, held together by nothing.
+- carriers.yml named a Maine preparation in a shared seed; IMLS's national codes lived in Maine's preparation.
+- Receipts repeat inherited provenance records: 19 records in the libraries edges receipt, graph_repair_towns five times (CHAIN-1).
+- Read on Maine's real bed: 1,566 located_in rows, exactly 261 placed outlets times six places each; 261 carriers; House District 42 names North Haven and Rockland, and its count row holds 2.
+- Kalli delivers the whole product; the teammates once named in state.md work on other things.
+
+### Carried forward
+
+CHAIN-1 (new), TIERREAD-1, QUADRAT-1, FSCS-1, CHOICE-1, SCHEMA-3, INTERP-1, OWN-1, GEO-1, WHERE-1, OBS-1, SRC-4, TOWN-OFF-1, LIB-2, SERVES-1, TRIBE-7, INDFILE-1, SCALE-1, SURVEY-1, LOAM-2, OUT-REG-1, CON3-2, SCHEMA-1, RECEIPT-1, and the items now Kalli's. Each is in state.md's open items and the ledger.
+
+### Lessons
+
+- Read the code before calling a thing decorative: the label looked like a name and was a guard.
+- A fork lists only options that could win; restating refused ones is padding.
+- Before writing a reference file, say what no other home holds. The first draft of the catalogue copied the manifest's url, member and encoding, the drift it was written to prevent.
+- A whole-file move is checked by diffing the parsed result against the original, not by reading: one dropped param (temporarily_closed) was caught that way.
+- A view that agrees with its count on one real place (House District 42: two names, a count of 2) is checked; one that only passes fixtures is not.
+- A built file is not delivered until it is presented.
