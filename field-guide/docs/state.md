@@ -5,14 +5,14 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-13, at the hand-off closing Sprint 06's second build session.
+**Updated:** 2026-11-13, at the hand-off closing Sprint 06's third build session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 2's commits, oldest first: c1601e6 (library closures declared, D-210 to D-212), f7e39f2 (ledger D-210 to D-212; STAT-1 closed; FSCS-1, CHOICE-1, SCHEMA-2, CMAP-1), and this hand-off. Session 1's ended at the carrier-reading commit (place.py) and its hand-off.
-- Tests: `python -m pytest -q -rs | tail -3`. 653 passed, no skips, at this hand-off. The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 3's commits: df74b0d (the method schema, D-213 to D-217, its ledger block, SCHEMA-2 closed) and this hand-off. Session 2's ended at fae592b, its hand-off.
+- Tests: `python -m pytest -q -rs | tail -3`. 710 passed, no skips, at this hand-off (57 new in tests/test_method_schema.py, most parametrized per method). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-213. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-218. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 
@@ -22,7 +22,7 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217, below.
 
 **Order of work, and where each step stands:**
 
@@ -32,8 +32,8 @@ is fixed.
  3  carriers, counted per 1,000               1 of 5    libraries done end to end
       libraries (IMLS PLS FY 2024)            done      D-208 to D-212: placed, counted, closures declared
       first, by Kalli's order (session 2):
-        SCHEMA-2: the method schema           next      the schema follows the methods, then a test
-        CMAP-1: the carrier map as a view     then      read seeds/schemas/domains/information.yml
+        SCHEMA-2: the method schema           done      D-213 to D-217
+        CMAP-1: the carrier map as a view     next      see Starting the next session
       schools                                 after     three candidate sources (below); INDFILE-1 first
       town offices                            blocked   no point source (see Traps); needs a geocoder
       health centers (HRSA)                   not yet
@@ -96,6 +96,16 @@ The remark from session 2, to check rather than assume: as with libraries, the a
 | D-211 | A temporary closure is a method choice, temporarily_closed (listed or placed); Maine chooses listed, following IMLS's own tables, so Atkins Memorial, Corinth, is listed and 261 fixed outlets are placed; the primitive refuses any other value |
 | D-212 | A carrier's meaning lives once, in its method; docstring, run header, registry and indicator rationale point to it. A rule (the other way is simply wrong) is a test; a choice (reasonable people differ) is declared. Bookmobiles are a rule |
 
+## Decided in session 3
+
+| ID | One line |
+| --- | --- |
+| D-213 | seeds/schemas/method.schema.yml (v2.0) is the one home of a method's shape, additionalProperties false throughout. Every reader loads a method through parsing.load_method_data: an undescribed shape, a key written twice or a default outside its options is refused, every problem named. A run on a refused method is a validate() error. Options are a mapping keyed by option id; an empty value means the choice's description says it; no option carries an id of its own |
+| D-214 | requires_primitives is a list of layer/name references, each resolving in its registry; a recipe uses only primitives its method declares; per-method purposes are YAML comments |
+| D-215 | produces is a list, even for one output |
+| D-216 | garden/methods/index.yml routes only (domain, id, path); a method's name and answers_question_types live in the method; MethodIndexEntry carries neither |
+| D-217 | roots/count_by_unit deleted, never registered: count_located (D-209) is the one count of points in places |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -125,15 +135,21 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | A mobile or permanently closed library outlet is never placed | prepare_library_points; tests/test_library_points.py (D-208, D-210) |
 | A fixed outlet's structure status is declared, or the run refuses | prepare_library_points; tests/test_library_points.py (D-210) |
 | A temporary closure follows a choice its method declares | prepare_library_points; tests/test_library_points.py, tests/test_library_preparation.py (D-211) |
+| Every method matches the method schema; a run on one that does not is an error | parsing.load_method_data, Orchestrator._validate_method_choices; tests/test_method_schema.py (D-213) |
+| Every primitive a method names resolves in its registry; a recipe uses only declared primitives | tests/test_method_schema.py (D-214) |
+| The index routes every method file once, by the method's own id and domain | tests/test_method_schema.py (D-216) |
 
 ## Open items
 
 | ID | One line |
 | --- | --- |
-| SCHEMA-2 | The information methods share a house shape (options as a list, primitives as a list, produces as an object) that seeds/schemas/method.schema.yml does not describe, interpretation is not in it, and nothing validates a method against it. Lean: the schema follows the methods, then a test validates every method. The ledger says ten: that count is garden/methods/information/ only; the three thermal methods and the one perception method are unread |
 | CMAP-1 | The carrier map as a view, never a file: carrier kinds as semantic types in the domain vocabulary, sources as national catalogues in seeds/sources/ (census_tigerweb.yml is the model), the map a query over them. No seeds/carriers/ |
 | FSCS-1 | Outlets of systems the survey does not count as public libraries (C_FSCS N; Cliff Island placed, Corinth listed) count under "Public library outlets"; IMLS keeps them in its files but out of aggregate figures. Place, list, or rename the indicator |
-| CHOICE-1 | The orchestrator only warns when a run's choice is not among its method's options, or a declared choice is missing (orchestrator.py, _validate_method_choices). Lean: an error |
+| CHOICE-1 | The orchestrator only warns when a run's choice is not among its method's options, or a declared choice is missing (orchestrator.py, _validate_method_choices). Lean: an error. Sharper since D-213: the method's shape is now strict while a run's choice against it still only warns |
+| SCHEMA-3 | canopy/wonder (wondering.py, possibility.py) reads method YAML raw, not through load_method_data, and still accepts the retired produces and requires_primitives shapes; route it through the one loader and drop them |
+| INTERP-1 | The thermal, perception and county_units_for_mapping methods have no top-level interpretation; required once each has one |
+| OWN-1 | ownership_concentration_analysis is pre-graph: geocode_to_unit places an outlet by matching place-name strings (a silent WHERE-1 choice, against D-203, D-204), concentration_index keys by feature_id. Redesign over located_in and count_located at step 8, after WHERE-1 and GEO-1 |
+| STUB-1 | The Maine ownership_concentration experiment (…_4a8f59.yml) is a thermal template naming roots/analysis, no primitive; it fails validate() if run. Retire or rewrite with OWN-1 |
 | GEO-1 | No geocoder exists. Fork with a lean: the Census Geocoder first (free, batch 10,000, returns match type and 2020 block), ArcGIS or Maine NG911 address points beside it later as second authorities. Unblocks town offices, outlets, WHERE-1 |
 | WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage) |
 | OBS-1 | Language of publication and paywall status need our own observation of each outlet, a receipt per observation |
@@ -154,7 +170,7 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | SRC-3, USE-1, SPEC-1, LAYER-1, COUNT-1, TENURE-1, KIT-1, TRIBE-6, NOTE-3, LEDGER-1 to LEDGER-3 | as before; look each up in the ledger |
 | Person 3 | D-118's tiers, ROLE-1, the draft notes, NOTE-3, D-173's review, P-8, TRIBE-7's wording, tiers for the outlet and located_in types |
 
-Closed in session 2: STAT-1 (STATSTRU 25 is survey nonrespondent, IMLS PLS FY 2024 Documentation, Appendix B).
+Closed in session 2: STAT-1 (STATSTRU 25 is survey nonrespondent, IMLS PLS FY 2024 Documentation, Appendix B). Closed in session 3: SCHEMA-2 (D-213 to D-216).
 
 Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, COMP-1, REG-1, LOOP-1, ACQ-6, SCH-5, TAG-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1, LIN-2, VER-1, NOTE-2, TRIBE-5, PENOB-1, GJSON-1, RESOLVE-1, DEPS-1, SEAM-2, DAS-1, HIST-1.
 
@@ -185,7 +201,10 @@ Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, T
 - `$indicators.<id>` resolves to the whole declaration and carries the sha256 of the whole file it lives in. Never add an indicator to an existing indicators file whose receipts exist: a new file (as carriers.yml) leaves every hash alone.
 - The indicator registry globs every seeds/indicators/*.yml as indicator declarations, names flat and global across files (registry.py, line 199). Put nothing else in that folder.
 - A run's `$choices.<name>` reaches a step as the raw value. A choice outside its method's options only warns (CHOICE-1), so a primitive that depends on one refuses a bad value itself.
-- Methods are never validated against seeds/schemas/method.schema.yml, and the information methods do not match it (SCHEMA-2).
+- A method is read only through parsing.load_method_data (D-213). Options are a mapping keyed by option id (an empty value allowed), requires_primitives a list of layer/name, produces a list; a field the schema does not describe is refused. canopy/wonder still reads methods raw (SCHEMA-3). A method's name lives in the method, never the index (D-216).
+- `git rm` stages a deletion; a later `git add` naming that path fails the whole add and stages nothing. Name an already-deleted path in `git commit -- ...` only.
+- `| tail -3` prints nothing until pytest ends, about two minutes for the full suite; the terminal is not frozen.
+- Claude's sandbox shell is dash: no brace expansion, so `mkdir a/{b,c}` makes one literal folder and once shipped it in a zip. Claude uses `bash -c` or one path per argument.
 - loam's `edges` view is made from exactly one `place_edges` artifact (D-163); never write a second. Point edges are `located_in_edges` (D-207).
 - loam's place_values attaches a value only when seeds/vintages/boundaries.yml holds a rule for its `published_by`; it reads the ACS's `levels` for every publisher (LOAM-2).
 - The 2024 faces are a zip of county zips (plots/maine/.data/maine_faces_2024.zip); build_block_spine reads their .dbf only, build_located_in their geometry.
@@ -209,4 +228,6 @@ Kalli: Maine data and geography, profile, explorer, review of everything; acting
 
 ## Starting the next session
 
-Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs. The next step, by Kalli's order, is SCHEMA-2: read seeds/schemas/method.schema.yml whole, every method under garden/methods/ (information, thermal, perception), and parse_method in canopy/orchestrator/parsing.py, then bring the fork (the schema follows the methods, or the methods follow the schema) with its lean. CMAP-1 follows, then schools: Kalli opens the Maine DOE Schools & SAU page first, and INDFILE-1 is decided before the schools indicator is declared.
+Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs. The next step, by Kalli's order, is CMAP-1: the carrier map as a view, never a file. Read first: canopy/vocabulary.py (how the base and domain files merge, and what it refuses), seeds/sources/census_tigerweb.yml (the model for a national catalogue), seeds/schemas/domains/information.yml and seeds/indicators/carriers.yml. Then bring the fork with its lean.
+
+A remark from session 3, to check rather than assume: information.yml already holds `institutional_node` ("Libraries, town halls, schools, government websites") as one vector type, `formal_outlet` for outlets and `relational_hub` for hubs, while the libraries layer is typed `library_survey_release` and its placed points have no carrier type of their own. So CMAP-1's first question is whether carrier kinds split `institutional_node` (one type per kind, each with its own tier and note) or stay one type with a kind field, and what becomes of `institutional_node` either way. Schools follow CMAP-1: Kalli opens the Maine DOE Schools & SAU page first, and INDFILE-1 is decided before the schools indicator is declared.

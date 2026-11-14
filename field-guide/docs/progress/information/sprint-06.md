@@ -52,3 +52,32 @@ GEO-1 (a geocoder, lean the Census Geocoder first), INDFILE-1, WHERE-1, OBS-1, S
 - A probe that guesses a field's name misses the field: the first regex caught "Subjects" for "sub" and missed Biz Model, Print and Digital. Read the values.
 - A receipt is read after every real run. Two problems this session (the Cook county, the hidden carrier count) passed every test and showed only in real output.
 - An indicator file's hash lands in every receipt that read from it, so a new kind of indicator goes in a new file.
+
+## Session 3: SCHEMA-2, the method schema
+
+Tests: 710 passed, no skips (57 new). Decisions: D-213 to D-217. Commit: df74b0d.
+
+### Found
+
+- 14 methods (10 information, 3 thermal, 1 perception) in three shapes; parse_method read only id, name, kind and each choice's options and description, so the schema described a shape nothing held.
+- A method that failed to parse became a skipped warning, and _load_method_data returned {}, so the resolution engine saw a method needing nothing.
+- hot_cold_spot_analysis gave three options a second name in an id field, and the NYC heat-island run chose by it (raster, not classified_raster).
+- The index had drifted: land_cover_cooling_differential unrouted, the perception method under thermal, a name differing, a missing comma making two answers one string.
+- D-214's test found roots/count_by_unit unregistered: the pre-graph twin of count_located, keyed by geocode_to_unit's place-name matching (OWN-1).
+- The Maine ownership_concentration experiment is a thermal template naming roots/analysis (STUB-1).
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| df74b0d | method.schema.yml v2.0 as the one home of a method's shape (D-213); load_method_data, through which every method is read and refused; invalid methods an error in validate(); requires_primitives as layer references (D-214); produces as a list (D-215); the index as a router only (D-216); count_by_unit deleted (D-217); tests/test_method_schema.py |
+
+### Carried forward
+
+CMAP-1 (next), CHOICE-1 (sharper now), SCHEMA-3, INTERP-1, OWN-1, STUB-1, and every item session 2 carried. Each is in state.md's open items and the ledger.
+
+### Lessons
+
+- A validator that passes everything proves nothing: the new schema was run against the old files first, and refused every retired shape.
+- A test that resolves every declared reference finds drift no run reaches: within minutes it found a primitive nobody could run.
+- Where options are compared with each other, the comparison is the meaning; it stays in the choice's description, once, and an option may add nothing.
