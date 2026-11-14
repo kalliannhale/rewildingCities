@@ -5,14 +5,14 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-14, at the hand-off closing Sprint 06's fifth build session.
+**Updated:** 2026-11-14, at the hand-off closing Sprint 06's sixth build session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 5's commits: 9b7716a (carriers found by role; a located_count names the type it counts, D-223, D-224), the D-223/D-224 ledger commit, 2f389f4 (located_in and carriers views, D-225), 42dc694 (the IMLS crosswalk and catalogue, D-226; CMAP-1 closed), and this hand-off.
-- Tests: `python -m pytest -q -rs | tail -3`. 856 passed, no skips, at this hand-off (new in session 5: tests/test_located_count_validation.py, tests/test_loam_carriers.py, and cases in five existing files). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 6's commits: 718dcc1 (the per-declaration indicator hash, D-227; rebased onto origin), a95aa8d (county standings answers basic_needs_and_opportunity; the no-curiosity warning names only the gap, D-228, D-229), the session 6 ledger commit, and this hand-off. Origin also gained four commits between sessions 5 and 6 (bash-win, Jessica Pham: staging Terraform, API load tests and plot locks, the Docker image and environment.yml, NYC fetch dates); see People.
+- Tests: `python -m pytest -q -rs | tail -3`. 867 passed, no skips, at this hand-off (new in session 6: tests/test_declaration_hash.py, two cases in tests/test_preparations.py; one case removed from tests/test_indicator_references.py). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-227. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-230. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 
@@ -22,7 +22,7 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229, below.
 
 **Order of work, and where each step stands:**
 
@@ -35,7 +35,8 @@ is fixed.
         SCHEMA-2: the method schema           done      D-213 to D-217
         CMAP-1: the carrier map as a view     done      D-218, D-219, D-223 to D-226
         the drift CMAP-1's walk found         done      D-220 to D-222
-      schools                                 after     three candidate sources (below); INDFILE-1 first
+      the drift session 6 found               done      D-227 to D-229; INDFILE-1 closed
+      schools                                 next      DOE's metadata read (below); its CSVs' fields next
       town offices                            blocked   no point source (see Traps); needs a geocoder
       health centers (HRSA)                   not yet
       outlets                                 not yet   waits on WHERE-1 and a geocoder
@@ -51,15 +52,15 @@ is fixed.
 11  profiles for every place                  not yet
 ```
 
-**Schools, read so far (session 2).** Nothing chosen; the source is a fork.
+**Schools, read so far (sessions 2 and 6).** Nothing chosen; the source is a fork. INDFILE-1 no longer blocks (D-227): a schools indicator can go in any file without moving a receipt, and its own file per family stays the tidy choice.
 
 | Source | What was read | Not yet read |
 | --- | --- | --- |
-| Maine DOE, Data Warehouse, Schools & SAU Data | the page body loads dynamically and came back empty | everything: Kalli to open it in a browser (a file? coordinates or addresses? a state school ID?) |
+| Maine DOE, Data Warehouse, Schools & SAU Data | an AWS QuickSight dashboard on the P20W+ SLDS (why it fetched empty): tabs by location, SAUs/Orgs by type, schools by type, grade ranges, metadata; school years 2021-22 to 2025-26; CSV exports (Kalli made eleven). Metadata: public use; a state school ID exists (ID 2117 is excluded, no reason given); opened, closed, renamed and repurposed are inferred from a change in name or ID between years, not reported; non-Maine schools excluded, yet the map shows points near Albany and Boston; tables LEA, SCHOOL, October enrollment, SPED, and CEDS Organizations; nothing says where coordinates come from | which tab and year each CSV is; the schools CSV's header and rows (coordinates or addresses? the ID's name? status? grade span? public and private?) |
 | NCES EDGE, Public School Locations 2024-25 | points from the 2024-25 CCD collection; public domain; REST, CSV, GeoJSON; geocoded from the reported street address, so a point is an address match; private schools are a separate file, 2023-24 its latest | its field list, its Maine count |
 | MEGIS, Maine_Schools_GeoLibrary (FeatureServer 8) | a point layer in NAD83 / UTM 19N; fields Name, Address, City, Zipcode, Source_Originator, Source_FeatureID, PointLocationType, FType/FCode, GNIS_ID, fmupddat; no state school ID, grade span, public/private flag or status; data last edited 2021-04-28 | its feature count |
 
-The remark from session 2, to check rather than assume: as with libraries, the address may be the state's (CCD addresses are reported by state education agencies, as far as known) and the point the federal publisher's, so a receipt would name both, with MEGIS read beside it as a second authority (LIB-2's shape). Also to check: whether the Maine Indian Education schools appear in CCD at all (a TRIBE-7 cousin: unseen is never zero), and that a school's location is not whom it serves (SAUs; a SERVES-1 cousin).
+The remarks from session 6, to check rather than assume: DOE's state school ID may be the key to CCD (as far as known, CCD carries the state's school ID beside its own: confirm in its documentation); with no stated coordinate origin, NCES EDGE (address-matched, documented) may be the point authority and DOE the ID authority; DOE's inferred status would be declared with that caveat, never read as reported (D-210's shape is weaker here); out-of-state points are refused by located_in, and the receipt counts and names them; ID 2117's exclusion is named. The remark from session 2, to check rather than assume: as with libraries, the address may be the state's (CCD addresses are reported by state education agencies, as far as known) and the point the federal publisher's, so a receipt would name both, with MEGIS read beside it as a second authority (LIB-2's shape). Also to check: whether the Maine Indian Education schools appear in CCD at all (a TRIBE-7 cousin: unseen is never zero), and that a school's location is not whom it serves (SAUs; a SERVES-1 cousin).
 
 **The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 has changed three rows' status):
 
@@ -127,6 +128,14 @@ The remark from session 2, to check rather than assume: as with libraries, the a
 | D-225 | loam's located_in view unions every located_in_edges receipt (LOC-VIEW-1); its carriers view gives every placed point of every located_count carrier, found through the edges receipt's own provenance record. place.py reads an exact count apart by derivation and labels every value by role, reading indicators through the registry |
 | D-226 | IMLS's codes (outlet types, structure statuses) are one shared crosswalk, seeds/crosswalks/libraries/imls_pls_outlets.yml, passed whole as `reading`; a release's outlet member and encoding are declared in its manifest entry and held to the run as source_facts; seeds/sources/imls_pls.yml is reference only, pointing to each fact's home |
 
+## Decided in session 6
+
+| ID | One line |
+| --- | --- |
+| D-227 | An indicator's declaration_sha256 is taken over its own mapping, canonical, without its rationale; computed when parsed, never by reopening the file. A sibling, a comment or a prose edit never stales a receipt. Weights and reliability unchanged (one declaration per file) |
+| D-228 | One experiment per question: county standings answers basic_needs_and_opportunity (rent burden, vehicle access); broadband's county standing lives only in maine_broadband_access_subscription__cii_indicator_values_91b5c0, same method and choices |
+| D-229 | The no-curiosity warning names only the gap; advice to become a preparation comes only from the error for a run with a preparation method (a rule, tested) |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -171,12 +180,16 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | Every type a registry entry, method, manifest, preparation or experiment names is current: declared, never an alias or a state spelling | tests/test_current_type_names.py (D-220, D-221) |
 | A draft wonder composes names current types | wondering._compose_steps; tests/test_current_type_names.py (D-222) |
 | A registry entry points at a file that exists and holds code | tests/test_registry_paths.py (REG-6) |
+| An indicator's hash covers its own mapping without its rationale: siblings, comments, key order and prose never move it; source, weight_by and scale do | IndicatorRegistry, spec_sha256; tests/test_declaration_hash.py (D-227) |
+| A run with no curiosity is told it names none (D-64), and never told to become a preparation it could not be | Orchestrator._validate_kind; tests/test_preparations.py (D-229) |
 
 ## Open items
 
 | ID | One line |
 | --- | --- |
-| CHAIN-1 | Receipts repeat inherited provenance records: libraries_located_in_edges' chain holds 19 records, graph_repair_towns five times. Harmless to readers, but a receipt grows with every hop; find where inheritance appends without deduplicating |
+| CHAIN-1 | Receipts repeat inherited provenance records: libraries_located_in_edges' chain holds 19 records, graph_repair_towns five times; libraries_counts_values holds 34 (session 6). Harmless to readers, but a receipt grows with every hop; find where inheritance appends without deduplicating |
+| STAND-1 | Two runs in the Maine plot write indicator_standings (county standings and 91b5c0), so $loam.indicator_standings would have to choose; nothing reads it today |
+| DEPS-1 | As in the ledger; noted in session 6: canopy/api/locustfile.py imports locust, which environment.yml does not install |
 | TIERREAD-1 | Vocabulary.get_tier reads extra["tier"], while every domain file declares resolution_tier, so get_tier is None for every information type. Find who reads resolution_tier before new carrier types lean on it |
 | QUADRAT-1 | Whether a measured quadrat becomes a bird's-eye mask, to share falsification_test's one currency (label masks): a modeling choice for the day field data exists |
 | FSCS-1 | Outlets of systems the survey does not count as public libraries (C_FSCS N; Cliff Island placed, Corinth listed) count under "Public library outlets"; IMLS keeps them in its files but out of aggregate figures. Place, list, or rename the indicator |
@@ -192,7 +205,6 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | LIB-2 | MEGIS publishes its own Libraries layer (390 points) against IMLS's 261 placed outlets: a second authority, to be read side by side. Both would be library_outlet (D-224): today the carriers view refuses two edges receipts of one type by name (D-225), so reading both needs a decision on how the view and the count choose |
 | SERVES-1 | A carrier's location is not whom it serves; visits per person waits on a serves relation (library systems' legal service areas) |
 | TRIBE-7 | The PLS does not see reservation libraries; a tribal area's carrier reads as unseen, never zero. Kalli drafts the wording, on the nations' terms; seeds/notes/notes.yml holds none yet |
-| INDFILE-1 | An indicator file's sha256 lands in every receipt that read any indicator from it; decide one file per carrier family (lean) or rerun on every addition. D-224 keeps release years out of seeds, so a new fiscal year no longer touches carriers.yml; a new carrier indicator still would. carriers.yml changed in session 5 and maine_libraries was rerun, so libraries_counts is current |
 | SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration; carry the scale in each value row |
 | SURVEY-1 | Loam's only boundary rule is the final year of `time`; a later survey on the 2024 places must still name 2024 |
 | LOAM-2 | place_values reads the ACS's levels for every publisher |
@@ -204,7 +216,7 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | Kalli's (formerly Person 3's) | D-118's tiers, ROLE-1, the draft notes, NOTE-3, D-173's review, tiers for the outlet and located_in types, and the proposed tiers for session 4's types (library_outlet, water_boundaries, forest_boundaries, neighborhood_boundaries, roads, nighttime_lights, population_density; measured_composition has none) |
 | P-8, TRIBE-7's wording | Kalli drafts and reaches out; whether and how a Wabanaki place is represented is the nations' to decide, under CARE and OCAP (census_tigerweb.yml). They wait on that, never on a teammate |
 
-Closed in session 2: STAT-1 (STATSTRU 25 is survey nonrespondent, IMLS PLS FY 2024 Documentation, Appendix B). Closed in session 3: SCHEMA-2 (D-213 to D-216). Closed in session 4: STUB-1 (D-222, retired). Closed in session 5: CMAP-1 (D-223 to D-226), LOC-VIEW-1 (D-225).
+Closed in session 2: STAT-1 (STATSTRU 25 is survey nonrespondent, IMLS PLS FY 2024 Documentation, Appendix B). Closed in session 3: SCHEMA-2 (D-213 to D-216). Closed in session 4: STUB-1 (D-222, retired). Closed in session 5: CMAP-1 (D-223 to D-226), LOC-VIEW-1 (D-225). Closed in session 6: INDFILE-1 (D-227; moving an indicator between files still changes declared_in, which is provenance).
 
 Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, COMP-1, REG-1, LOOP-1, ACQ-6, SCH-5, TAG-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1, LIN-2, VER-1, NOTE-2, TRIBE-5, PENOB-1, GJSON-1, RESOLVE-1, DEPS-1, SEAM-2, DAS-1, HIST-1.
 
@@ -234,7 +246,10 @@ Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, T
 - Run a preparation with `python -m canopy.cli sows <run.yml>`; `--dry-run` only validates. `sows` prints nothing until the run ends. Never `--resolve-only` casually (RESOLVE-1).
 - Do not run maine_seats on real data before 2026-12-02.
 - `authority` means only who assigns a place's code; a publisher is `published_by` everywhere, manifests included.
-- `$indicators.<id>` resolves to the whole declaration and carries the sha256 of the whole file it lives in. Never add an indicator to an existing indicators file whose receipts exist: a new file (as carriers.yml) leaves every hash alone.
+- `$indicators.<id>` resolves to the declaration as a primitive receives it (as_declaration), with declaration_sha256 taken over the indicator's own mapping without its rationale (D-227). Adding or editing a sibling, a comment or a rationale moves no receipt; editing source, weight_by, replicates or the derivation does, and so does moving the indicator to another file (declared_in). as_declaration omits source, weight_by, replicates and rationale: the hash is what lets freshness see the first three.
+- A preparation uses soil/ primitives only and a preparation method; a run with a roots/ step or an analysis method is an experiment and names its curiosity (D-98, D-228). `curiosity: ref: ""` is a warning, never a pass.
+- Two functions are named read_envelope: canopy.envelope.read_envelope returns an Envelope object (what freshness's judge reads); canopy/loam/envelope_reader.read_envelope returns a dict and needs a vocabulary.
+- Origin can move between sessions (session 6: four commits by other authors). Before pushing, `git fetch` and read `git --no-pager log --format='%h %an %ad %s' --date=short main..origin/main` and `git --no-pager diff --stat main...origin/main`; rebase only after reading them. Never `git add .`: in session 6 it committed a stray environment.yml edit under another commit's message.
 - The indicator registry globs every seeds/indicators/*.yml as indicator declarations, names flat and global across files (registry.py, line 199). Put nothing else in that folder.
 - A run's `$choices.<name>` reaches a step as the raw value. A choice outside its method's options only warns (CHOICE-1), so a primitive that depends on one refuses a bad value itself.
 - A step's outputs are `name: type`; the type is a current semantic type, never `<thing>_validated` or `_checked` (D-220). Validating or reprojecting keeps the input's type. The experiment schema's example now says so.
@@ -268,15 +283,15 @@ Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, T
 
 ## People
 
-Kalli delivers the whole product: every sprint, the publish route (Sprint 08) and the infrastructure (Sprints 07 and 10) included. The people once named here work on other things (Kalli, session 5). Items that were theirs are hers now: LAYER-1, GJSON-1 and D-157's required notes argument for the publish door; DEPS-1, KIT-1 and OUT-REG-1 for the Docker build; the tier declarations, note wording, NOTE-3 and D-173's review. P-8 and TRIBE-7's wording wait on the Wabanaki nations' terms (open items).
+Kalli delivers the whole product: every sprint, the publish route (Sprint 08) and the infrastructure (Sprints 07 and 10) included. The people once named here work on other things (Kalli, session 5). Open at session 6's close: origin gained commits on 2026-11-14 by bash-win and Jessica Pham (staging Terraform, API load tests and plot locks, the Docker image, NYC fetch dates). Who they are, and whether DEPS-1, KIT-1 or OUT-REG-1 are now theirs, is Kalli's to say; until then this paragraph's first sentence stands. Items that were theirs are hers now: LAYER-1, GJSON-1 and D-157's required notes argument for the publish door; DEPS-1, KIT-1 and OUT-REG-1 for the Docker build; the tier declarations, note wording, NOTE-3 and D-173's review. P-8 and TRIBE-7's wording wait on the Wabanaki nations' terms (open items).
 
 ## Starting the next session
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs.
 
-CMAP-1 is closed, so step 3 continues with its next carrier, or the sprint turns to the barriers. Kalli chooses at the start of the session:
+The drift under the carrier layer is cleared (D-227 to D-229), so step 3 continues with schools, or the sprint turns to the barriers. Kalli chooses at the start of the session:
 
-- **Schools** (the plan's order): Kalli opens the Maine DOE Schools & SAU page in a browser first (a file? coordinates or addresses? a state school ID?), and INDFILE-1 is decided before the schools indicator is declared. A schools preparation follows libraries' shape: a points primitive writing feature_id and name, a crosswalk for the source's codes if it has any, the release's facts in its manifest entry, an indicator naming `counts: <type>` in its own file. The orchestrator and the views need nothing new.
+- **Schools** (the plan's order): Kalli pastes the DOE schools CSV's header and a few rows, and says which tab and year each of her eleven exports is. Then the source fork: DOE, NCES EDGE, MEGIS, or one as the point authority and another as the ID authority (the remarks above). A schools preparation follows libraries' shape: a points primitive writing feature_id and name, a crosswalk for the source's codes if it has any, the release's facts in its manifest entry, an indicator naming `counts: <type>` in its own file. The orchestrator and the views need nothing new.
 - **Step 5, language** (unblocked, acquirable): ACS language-by-ability tables, safe-harbor languages, section 203 coverage. A profile without barriers is a list of buildings; this is the first barrier with no outside blocker. Before any threshold, Claude researches and cites what each source says, in the vintage the build uses.
 
-What session 5 found, to build on: the map is a query over the registry and loam, so it needed no catalogue; a catalogue's job is reference. Inherited provenance is repeated in receipts (CHAIN-1). Every invariant session 5 added has a test (see "Where invariants are held").
+What session 6 found, to build on: a receipt hashes what its run read, so a hash covers one declaration, never the file around it; freshness compares params whole, and a hash earns its place only for what the params leave out. One experiment per question keeps a receipt from borrowing a question. A warning that advises a fix the code would refuse is drift too. Every invariant session 6 added has a test (see "Where invariants are held").

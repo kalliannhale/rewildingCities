@@ -119,3 +119,40 @@ CHAIN-1 (new), TIERREAD-1, QUADRAT-1, FSCS-1, CHOICE-1, SCHEMA-3, INTERP-1, OWN-
 - A whole-file move is checked by diffing the parsed result against the original, not by reading: one dropped param (temporarily_closed) was caught that way.
 - A view that agrees with its count on one real place (House District 42: two names, a count of 2) is checked; one that only passes fixtures is not.
 - A built file is not delivered until it is presented.
+
+## Session 6: the drift under the carrier layer, cleared
+
+Tests: 867 passed, no skips (12 new, 1 removed). Decisions: D-227 to D-229. INDFILE-1 closed, STAND-1 opened. Commits: 718dcc1, a95aa8d, the session 6 ledger commit, and this hand-off.
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| 718dcc1 | an indicator's declaration_sha256 taken over its own mapping, canonical, without its rationale, computed when parsed; declaration() never reopens the file; a registry built in memory hashes too; tests/test_declaration_hash.py replaces the whole-file test (D-227) |
+| a95aa8d | county standings answers basic_needs_and_opportunity on rent burden and vehicle access, broadband's standing left to its own composed experiment (D-228); the no-curiosity warning names only the gap and never advises a kind the run could not pass (D-229) |
+
+### Found
+
+- Maine DOE's Schools & SAU page is a QuickSight dashboard: school years 2021-22 to 2025-26, a state school ID, status inferred from changes in name or ID, ID 2117 and non-Maine schools excluded (yet points near Albany and Boston), no word on where coordinates come from.
+- Weights and reliability hash whole files too, but hold one declaration per file, so only indicators were wrong.
+- as_declaration hands a primitive everything but source, weight_by, replicates and rationale. Freshness compares params whole, so the hash's only job is those three.
+- The eight receipts that recorded the old hash went stale once; walked path by path, every difference was a declaration_sha256. Five reruns made all eight fresh. libraries_points still holds 261 placed outlets.
+- maine_broadband_access_subscription__cii_indicator_values_91b5c0 is a live composed experiment, not a D-222 leftover.
+- The D-64 warning told county standings to become a preparation; the code would have refused it twice (a roots/ step, an analysis method).
+- County standings and the broadband experiment both computed broadband's county standing; the panels cited as the reason for one receipt have no reader in the repo.
+- Origin gained four commits by bash-win and Jessica Pham between sessions; nothing overlapped. A local environment.yml edit, committed by `git add .` under another message, was dropped in the rebase.
+- canopy/api/locustfile.py imports locust, which environment.yml does not install.
+
+### Carried forward
+
+STAND-1 (new), CHAIN-1 (34 records in libraries_counts_values), TIERREAD-1, QUADRAT-1, FSCS-1, CHOICE-1, SCHEMA-3, INTERP-1, OWN-1, GEO-1, WHERE-1, OBS-1, SRC-4, TOWN-OFF-1, LIB-2, SERVES-1, TRIBE-7, SCALE-1, SURVEY-1, LOAM-2, OUT-REG-1, CON3-2, SCHEMA-1, RECEIPT-1, DEPS-1 (locust noted), and the items now Kalli's. Who bash-win and Jessica Pham are waits on Kalli. Each is in state.md's open items and the ledger.
+
+### Lessons
+
+- A receipt hashes what its run read. Hashing the file looked safe and tied every indicator to its siblings.
+- Before deciding what a hash covers, list what the params already carry: the hash is for what they leave out.
+- Read every loader before claiming a problem's scope. Claude first said three registries were wrong; reading load() showed one.
+- A verdict says stale; a path-by-path diff says why. Without the diff, "only the hash moved" would have been a guess.
+- A warning's advice is code too: check it against the rules it names.
+- Read origin before pushing, and commit through guarded blocks only: `git add .` put one commit's file under another commit's message.
+- One experiment per question: a receipt that borrows a bigger question says something its numbers do not.
