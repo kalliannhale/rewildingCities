@@ -1,5 +1,5 @@
-"""the maine_libraries preparation agrees with its registry, manifest and
-vocabulary (Sprint 06, step 3)."""
+"""the maine_libraries preparation agrees with its method, registry, manifest
+and vocabulary (Sprint 06, step 3; D-210, D-211, D-212)."""
 
 from pathlib import Path
 
@@ -9,6 +9,7 @@ from canopy.orchestrator.parsing import parse_experiment, parse_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 PREP = ROOT / "plots" / "maine" / "preparations" / "maine_libraries.yml"
+METHOD = ROOT / "garden" / "methods" / "information" / "library_carriers.yml"
 
 
 def _steps():
@@ -26,6 +27,22 @@ def test_bookmobiles_are_declared_mobile():
     p = _steps()["libraries_points"].params
     assert p["fixed_types"] == ["CE", "BR"] and "BS" in p["mobile_types"]
     assert p["encoding"] == "windows-1252"
+
+
+def test_every_status_code_has_a_meaning_and_a_group():
+    codes = _steps()["libraries_points"].params["status_codes"]
+    assert all(e["meaning"] and e["group"] in ("open", "temporary", "permanent")
+               for e in codes.values())
+    assert codes["23"]["group"] == "temporary"
+    assert codes["25"]["group"] == "open"
+    assert codes["03"]["group"] == "permanent"
+
+
+def test_temporary_closures_follow_a_choice_the_method_declares():
+    run = parse_experiment(PREP)
+    assert _steps()["libraries_points"].params["temporarily_closed"] == "$choices.temporarily_closed"
+    options = yaml.safe_load(METHOD.read_text())["choices"]["temporarily_closed"]["options"]
+    assert run.choices["temporarily_closed"] in options
 
 
 def test_the_graph_is_read_through_loam_and_checked_against_imls():

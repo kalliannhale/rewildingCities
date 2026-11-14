@@ -27,13 +27,13 @@ indicators:
       provider: rewildingcities
       dataset: maine_libraries
     rationale: >
-      Counts fixed library buildings (central libraries and branches) standing
-      in a place, never whom they serve: a library system serves a legal
-      jurisdiction, and a town with no building may be served by contract
-      (SERVES-1). Bookmobiles are not counted (D-208). The denominator is the
-      place's 2020 persons (P.L. 94-171 P1), the vintage of the edges, never
-      the ACS's 2024 estimate. A small place's rate is unstable (one library
-      among 60 people is 16.7 per 1,000), so the count and the persons always
-      travel with the rate. A Census tribal area has no value: the survey does
-      not see reservation libraries (TRIBE-7). Aggregation none: every place
-      has its own count, and a rate never moves along an edge (D-179).
+      Counts the library buildings placed in a place: which outlets are
+      placed, and why, is the library_carriers method's to say (D-212). A
+      building standing in a place is not whom it serves (SERVES-1). The
+      denominator is the place's 2020 persons (P.L. 94-171 P1), the vintage
+      of the edges, never the ACS's 2024 estimate. A small place's rate is
+      unstable (one library among 60 people is 16.7 per 1,000), so the count
+      and the persons always travel with the rate. A Census tribal area has
+      no value: the survey does not see reservation libraries (TRIBE-7).
+      Aggregation none: every place has its own count, and a rate never
+      moves along an edge (D-179).

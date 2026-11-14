@@ -2,9 +2,9 @@
 # garden/methods/information/library_carriers.yml
 # ============================================================================
 # a preparation method (D-98): public library outlets as carriers, placed in
-# every area they fall in (Sprint 06, step 3). a library's location is not
-# whom it serves (SERVES-1): this places buildings, and a bookmobile, which
-# serves places and sits in none, is listed, never placed. ~
+# every area they fall in (Sprint 06, step 3). this file is the one home for
+# what is placed and why (D-212); the primitive, the run and the indicator
+# point here rather than restate it. ~
 # ============================================================================
 
 id: library_carriers
@@ -13,21 +13,47 @@ kind: preparation
 name: "Library Outlets, Placed"
 
 description: >
-  Reads one state's fixed library outlets (central libraries and branches)
-  from the IMLS Public Libraries Survey as points, then places each in its
-  state, county, town, House and Senate districts, Census tribal area and
-  civil division through located_in edges: towns from the 2024 face a point
-  falls in, districts from that face's 2020 block (D-207).
+  Reads one state's library outlets from the IMLS Public Libraries Survey and
+  places each one a person could walk into in its state, county, town, House
+  and Senate districts, Census tribal area and civil division through
+  located_in edges: towns from the 2024 face a point falls in, districts from
+  that face's 2020 block (D-207).
+
+  Only a building is placed. A central library or branch stands somewhere; a
+  bookmobile or a books-by-mail service serves places and stands in none. The
+  survey gives a bookmobile its home library's coordinates, so placed it
+  would count a second library in the town where it is garaged and none in
+  the towns it visits. Mobile outlets are listed by name in the receipt and
+  never placed: a rule, since the other way is simply wrong (D-208).
+
+  A building that has closed for good carries nothing, so an outlet whose
+  structure status says closed permanently is listed, never placed: a rule
+  (D-210). Older survey files carry such records; from FY 2024 the survey
+  lists permanent closures outside its data files. A temporary closure is a
+  choice, below (D-211). Every status code a run may meet is declared with
+  its meaning and group, and a code not declared stops the run.
 
 requires_data:
   - {name: survey, type: tabular, semantic_types: [library_survey_release], critical: true, as_acquired: true,
-     role: "The IMLS outlet file, with coordinates and outlet types.",
+     role: "The IMLS outlet file, with coordinates, outlet types and structure statuses.",
      uncertainty_without: "No library can be placed."}
   - {name: faces, type: vector, semantic_types: [census_faces], critical: true, as_acquired: true,
      role: "The 2024 faces, to place each point in its town and block.",
      uncertainty_without: "No point can be placed."}
 
-choices: {}
+choices:
+  temporarily_closed:
+    options: [listed, placed]
+    default: listed
+    description: >
+      Whether an outlet the survey reports as temporarily closed (STATSTRU 23)
+      is placed as a carrier. listed: it is named in the receipt and counted
+      nowhere, since it was not open to walk into for some part of the year;
+      this follows the publisher, which leaves temporarily closed outlets out
+      of its own tables and frame (IMLS, PLS FY 2024 Data File Documentation
+      and User's Guide, June 2026). placed: it is counted with its flag, since
+      it remains a building its system serves from, and the closure may have
+      ended within the fiscal year. Neither is a finding about the library.
 
 requires_primitives:
   - soil/prepare_library_points
@@ -36,7 +62,7 @@ requires_primitives:
 produces:
   semantic_type: located_in_edges
   data_category: tabular
-  description: Each fixed library outlet to every place it falls in.
+  description: Each placed library outlet to every place it falls in.
 
 interpretation: >
   A located_in edge says a library building stands in a place, never that

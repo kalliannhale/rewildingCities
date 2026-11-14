@@ -2,27 +2,33 @@
 # plots/maine/preparations/maine_libraries.yml
 # ============================================================================
 # a preparation (D-98): Maine's public library outlets as carriers (Sprint 06,
-# step 3, the first carrier).
-#   the IMLS outlet file -> fixed outlets as points; bookmobiles listed
+# step 3, the first carrier). what is placed and why: the library_carriers
+# method (D-212).
+#   the IMLS outlet file -> outlets as points; mobile and closed outlets listed
 #   the points          -> located_in edges, checked against IMLS's own block
 #   the edges           -> library outlets per 1,000 people, every place (D-209)
 # the spine, places and divisions are read through loam ($loam., LOAM-1), so
 # they are judged fresh before any step runs (D-166).
-# STATSTRU meanings from the IMLS PLS training on status structure changes;
-# a code it does not name is flagged unknown, never guessed.
+# status codes: every code the FY 2024 outlet file can hold, with IMLS's
+# meaning, from its record layout (PLS FY 2024 Data File Documentation and
+# User's Guide, June 2026, Appendix B, STATSTRU). 22 (a future FSCS ID
+# request) is left undeclared: what it means for a point is not settled, so
+# a fixed outlet carrying it stops the run. 03 does not occur in the FY 2024
+# file, which lists permanent closures outside it; it is declared so an older
+# file is read by the same rule (D-210).
 # the outlet file is Windows-1252, by its own text: its one byte in 0x80 to
 # 0x9F, 0x96, appears twice, each a dash between words in a branch's name
 # (Tazewell County, Virginia; Bremerton, Washington), Windows-1252's en dash.
 # declared Latin-1, the step refused the file rather than read a control
-# character into a name.
+# character into a name (D-208).
 # ============================================================================
 
 id: maine_libraries
 name: "Maine's public library outlets, placed"
 kind: preparation
 description: >
-  Places every fixed public library outlet in Maine in each area it falls
-  in, and lists the bookmobiles, which serve places and sit in none.
+  Places every open fixed public library outlet in Maine in each area it
+  falls in, and lists the bookmobiles and closed outlets, which stand in none.
 
 method:
   ref: $methods/information/library_carriers
@@ -30,7 +36,8 @@ method:
 city: maine
 manifest: ../manifest.yml
 
-choices: {}
+choices:
+  temporarily_closed: listed
 parameters: {}
 
 steps:
@@ -46,12 +53,21 @@ steps:
       encoding: windows-1252
       fixed_types: [CE, BR]
       mobile_types: [BS, BM]
+      temporarily_closed: $choices.temporarily_closed
       status_codes:
-        "01": adopted another outlet
-        "02": new outlet
-        "03": closed permanently
-        "23": closed temporarily
-        "24": reopened after a temporary closure
+        "00": {meaning: no change from last year, group: open}
+        "01": {meaning: absorbs another administrative entity or outlet, group: open}
+        "02": {meaning: newly created, group: open}
+        "03": {meaning: closed, group: permanent}
+        "04": {meaning: moved to a newly created administrative entity, group: open}
+        "05": {meaning: merged to form a new administrative entity or outlet, group: open}
+        "08": {meaning: restored a closed record, group: open}
+        "09": {meaning: restored an incorrectly deleted record, group: open}
+        "11": {meaning: moved to a different existing administrative entity, group: open}
+        "13": {meaning: existing outlet not previously reported, group: open}
+        "23": {meaning: temporary closure, group: temporary}
+        "24": {meaning: reopened after a temporary closure, group: open}
+        "25": {meaning: survey nonrespondent, group: open}
 
   - id: libraries_located_in
     primitive: soil/build_located_in
