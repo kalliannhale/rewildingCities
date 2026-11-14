@@ -218,10 +218,10 @@ def print_result(result):
 
 
 def main():
-    """CLI entry point. Parses args, constructs the orchestrator, dispatches
-    to one of three modes: dry run (validation only), resolve-only (data
-    check), or full run (execute the experiment).
-    """
+    """CLI entry point. Thin wrapper over the shared run path in _run.py,
+    which `rewilding sows` also calls."""
+    from canopy.cli._run import PROFILES, run_experiment
+
     parser = argparse.ArgumentParser(
         description="Run a rewildingCities experiment",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -233,13 +233,9 @@ Examples:
   python -m canopy.cli.experiment plots/nyc/experiments/nyc_park_cooling_pedestrian.yml --dry-run
         """
     )
-
     parser.add_argument("experiment", help="Path to experiment YAML file")
-    parser.add_argument(
-        "--profile", default="full",
-        choices=["full", "dev", "test", "neighborhood"],
-        help="Active profile (defined in seeds/profiles/profiles.yml)"
-    )
+    parser.add_argument("--profile", default="full", choices=PROFILES,
+                        help="Active profile (defined in seeds/profiles/profiles.yml)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Validate without executing or acquiring")
     parser.add_argument("--resolve-only", action="store_true",
@@ -247,91 +243,13 @@ Examples:
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--project-root", default=None,
                         help="Override project root (defaults to current working directory)")
-
     args = parser.parse_args()
-    setup_logging(args.verbose)
 
-    experiment_path = Path(args.experiment)
-    if not experiment_path.exists():
-        print(f"✗ Experiment file not found: {experiment_path}")
-        sys.exit(1)
-
-    # Import deferred until after arg parsing so --help works even if
-    # the orchestrator can't be imported (e.g. wrong working directory).
-    try:
-        from canopy.orchestrator.orchestrator import Orchestrator
-    except ImportError as e:
-        print(f"✗ Could not import orchestrator: {e}")
-        print("  Make sure you're running from the project root.")
-        sys.exit(1)
-
-    # ── Header (printed before orchestrator construction so the user
-    # sees what's being attempted even if construction fails) ──
-    print(f"🌳 rewildingCities experiment runner")
-    print(f"   Experiment: {experiment_path.name}")
-    print(f"   Profile: {args.profile}")
-
-    # ── Orchestrator construction. This is where Sprint 6's step
-    # injection happens — if the active profile enables feature_sampling,
-    # sampling steps are appended to the experiment and downstream
-    # references are rewired before __init__ returns. ──
-    try:
-        orchestrator = Orchestrator(
-            experiment_path=args.experiment,
-            profile=args.profile,
-            project_root=args.project_root,
-        )
-    except Exception as e:
-        print(f"\n✗ Failed to initialize: {e}")
-        sys.exit(1)
-
-    # Surface what the profile actually did, then the rest of the banner.
-    # Ordering matters: profile details belong with the Profile line above,
-    # not with the Time/City/Steps deployment info below.
-    print_profile_details(orchestrator)
-
-    print(f"   Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
-    print(f"   City: {orchestrator.manifest.city_name}")
-    print(f"   Steps: {len(orchestrator.experiment.steps)}")
-    print(f"   Providers: {', '.join(orchestrator.provider_registry.registered_providers)}")
-
-    # ── Dry run: validate but do not execute or acquire data ──
-    if args.dry_run:
-        print("\n─── Validation (dry run) ───")
-        errors, warnings = orchestrator.validate()
-        for w in warnings:
-            print(f"  ⚠ {w}")
-        if errors:
-            for e in errors:
-                print(f"  ✗ {e}")
-            print(f"\n✗ Validation failed with {len(errors)} error(s).")
-            sys.exit(1)
-        else:
-            print(f"  ✓ Validation passed.")
-
-            # Manifest consistency: detects available-but-missing files
-            # and unavailable-but-present files. Surfaced here because
-            # dry-run is the natural "before you run anything" moment.
-            issues = orchestrator.manifest.check_consistency()
-            if issues:
-                print(f"\n  Manifest consistency ({len(issues)} issue(s)):")
-                for issue in issues:
-                    print(f"    {issue.issue}: {issue.dataset_name}")
-            sys.exit(0)
-
-    # ── Resolve only: run Phases 1-2 (validate + data resolution) but
-    # not Phase 3 (execute). Used to check what's runnable before
-    # committing to a long execution. ──
-    if args.resolve_only:
-        report = orchestrator.resolve_data()
-        print_resolution_report(report)
-        sys.exit(0 if report.full_experiment_possible else 1)
-
-    # ── Full run: all three phases ──
-    print("\n─── Running experiment ───")
-    result = orchestrator.run()
-    print_result(result)
-    sys.exit(0 if result.success else 1)
+    sys.exit(run_experiment(
+        args.experiment, args.profile, dry_run=args.dry_run,
+        resolve_only=args.resolve_only, project_root=args.project_root,
+        verbose=args.verbose,
+    ))
 
 
 if __name__ == "__main__":

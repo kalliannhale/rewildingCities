@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import json
+import re
 import sys
 
 from ._common import find_root
+
+# a plot's name becomes a directory name and a manifest id, so it must be a
+# plain slug: lowercase letters, digits, underscores, starting with a letter.
+# no path separators, no dots, no spaces. ~
+_PLOT_NAME = re.compile(r"[a-z][a-z0-9_]{0,63}")
 
 
 def register(subparsers) -> None:
@@ -15,8 +22,14 @@ def register(subparsers) -> None:
 
 
 def run(args) -> int:
-    root = find_root()
     plot = args.plot
+    if not _PLOT_NAME.fullmatch(plot):
+        print(f"'{plot}' is not a plot name. use lowercase letters, digits, and "
+              f"underscores, starting with a letter (e.g. maine, nyc_2026).",
+              file=sys.stderr)
+        return 2
+
+    root = find_root()
     plot_dir = root / "plots" / plot
     if plot_dir.exists():
         print(f"a plot already lives at plots/{plot} ~ nothing changed.", file=sys.stderr)
@@ -25,16 +38,18 @@ def run(args) -> int:
     for sub in (".envelopes", ".data", ".loam"):
         (plot_dir / sub).mkdir(parents=True, exist_ok=True)
 
-    display = args.name or plot.replace("_", " ").title()
+    # written as a JSON string, which is also a valid YAML double-quoted scalar,
+    # so a colon or quote in the display name cannot break the manifest.
+    display = args.name.strip() or plot.replace("_", " ").title()
     (plot_dir / "manifest.yml").write_text(
         "# " + "=" * 68 + "\n"
-        f"# plots/{plot}/manifest.yml ~ {display}'s bronze registry\n"
+        f"# plots/{plot}/manifest.yml ~ {plot}'s bronze registry\n"
         "# declare each dataset this community holds or seeks. a declared-but-\n"
         f"# absent dataset is honest: `wonder {plot}` names it and what its\n"
         "# absence costs. nothing here is acquired until you ask.\n"
         "# " + "=" * 68 + "\n\n"
         "city:\n"
-        f"  name: {display}\n"
+        f"  name: {json.dumps(display)}\n"
         f"  id: {plot}\n\n"
         "crs:\n"
         '  working: "EPSG:4326"   # interchange frame; reproject to a local projected CRS for metric work\n\n'
