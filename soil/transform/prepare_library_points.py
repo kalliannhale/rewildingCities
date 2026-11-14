@@ -7,8 +7,13 @@ library_carriers method's to say (D-212); this file says only how.
 
   ~ a feature is one outlet, named FSCSKEY-FSCS_SEQ: FSCSKEY names a library
     system and repeats across its outlets, so it never names a point alone
-  ~ an outlet's type is declared fixed or mobile. fixed outlets may be
-    points; mobile outlets are listed in the receipt and never placed
+  ~ how IMLS's codes are read is a crosswalk, seeds/crosswalks/libraries/
+    imls_pls_outlets.yml, passed whole as `reading` (D-226): every outlet
+    type IMLS defines, fixed or mobile, and every structure status, with its
+    meaning and our group. it is the same in every state, so no plot
+    declares it
+  ~ an outlet's type is read fixed or mobile. fixed outlets may be points;
+    mobile outlets are listed in the receipt and never placed
   ~ a fixed outlet's structure status (STATSTRU) is declared once, with its
     meaning and one group (D-210):
         open        placed
@@ -17,7 +22,8 @@ library_carriers method's to say (D-212); this file says only how.
                     says (D-211)
     a blank status, or a code not declared, is refused, never guessed
   ~ an outlet type in neither list is refused, never guessed
-  ~ the encoding is declared, never sniffed. Latin-1 and Windows-1252 agree
+  ~ the encoding is declared, never sniffed: the release's own fact, in its
+    manifest declaration, which the run's copy must agree with (D-192). Latin-1 and Windows-1252 agree
     on every byte but 0x80 to 0x9F: declared Latin-1, a file holding one of
     those is refused, since which encoding it is would be a guess; declared
     Windows-1252, a byte it does not define is refused
@@ -28,12 +34,15 @@ library_carriers method's to say (D-212); this file says only how.
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
 Inputs:  survey   the PLS release zip
 Params:
-  member              required: the outlet file's path inside the zip
+  member              required: the outlet file's path inside the zip, as
+                      the release declares it (source.outlet_member)
   state               required: two-letter postal code, matched to STABR
-  encoding            required: the declared encoding
-  fixed_types         required: outlet types that may be points, e.g. [CE, BR]
-  mobile_types        required: outlet types listed and never placed
-  status_codes        required: STATSTRU code -> {meaning, group}
+  encoding            required: the outlet file's encoding, as the release
+                      declares it (source.outlet_encoding)
+  reading             required: the imls_pls_outlets crosswalk, via
+                      $crosswalks.imls_pls_outlets: outlet_types (code ->
+                      {meaning, kind: fixed or mobile}) and structure_status
+                      (STATSTRU code -> {meaning, group})
   temporarily_closed  required: placed or listed
 Output: geojson points in EPSG:4326, one feature per placed outlet. ~
 """
@@ -50,6 +59,7 @@ KEEP = ["FSCSKEY", "FSCS_SEQ", "LIBNAME", "CITY", "CNTY", "C_OUT_TY", "C_FSCS",
         "STATSTRU", "GEOMTYPE", "GEOSCORE", "CENBLOCK", "LATITUDE", "LONGITUD"]
 AMBIGUOUS = range(0x80, 0xA0)
 GROUPS = ("open", "temporary", "permanent")
+KINDS = ("fixed", "mobile")
 CLOSURE_CHOICES = ("placed", "listed")
 
 
@@ -86,6 +96,26 @@ def check_status_codes(status_codes) -> dict:
                 f"status code {code} has group {entry.get('group')!r}; "
                 f"a group is one of {', '.join(GROUPS)}")
     return status_codes
+
+
+def read_crosswalk(reading) -> tuple[list[str], list[str], dict]:
+    """the crosswalk's two tables as points_from takes them: fixed types,
+    mobile types, and the structure status codes (D-226)."""
+    if not isinstance(reading, dict):
+        raise LibraryPointsRefused("reading must be the imls_pls_outlets crosswalk, a mapping")
+    types = reading.get("outlet_types")
+    if not isinstance(types, dict) or not types:
+        raise LibraryPointsRefused("the crosswalk declares no outlet_types")
+    for code, entry in types.items():
+        if not isinstance(entry, dict) or not entry.get("meaning"):
+            raise LibraryPointsRefused(f"outlet type {code} declares no meaning")
+        if entry.get("kind") not in KINDS:
+            raise LibraryPointsRefused(
+                f"outlet type {code} has kind {entry.get('kind')!r}; a kind is one of "
+                f"{', '.join(KINDS)}")
+    fixed = [c for c, e in types.items() if e["kind"] == "fixed"]
+    mobile = [c for c, e in types.items() if e["kind"] == "mobile"]
+    return fixed, mobile, check_status_codes(reading.get("structure_status"))
 
 
 def _listed(r, reason: str) -> dict:
@@ -187,11 +217,9 @@ def main():
                                   f"it holds {z.namelist()}")
             raw = z.read(member)
         try:
+            fixed, mobile, codes = read_crosswalk(require_param(p, "reading"))
             collection, meta = points_from(read_outlets(raw, require_param(p, "encoding")),
-                                           require_param(p, "state"),
-                                           require_param(p, "fixed_types"),
-                                           require_param(p, "mobile_types"),
-                                           require_param(p, "status_codes"),
+                                           require_param(p, "state"), fixed, mobile, codes,
                                            require_param(p, "temporarily_closed"))
         except LibraryPointsRefused as e:
             primitive_failure("Library points refused", str(e))

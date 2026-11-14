@@ -1,5 +1,5 @@
 """tests for soil/transform/prepare_library_points.py (Sprint 06, step 3;
-D-208, D-210, D-211)."""
+D-208, D-210, D-211; IMLS's codes read from one crosswalk, D-226)."""
 
 import importlib.util
 import sys
@@ -151,6 +151,42 @@ def test_a_byte_windows_1252_does_not_define_is_refused():
     raw = (HEAD + ROWS[0]).encode("cp1252") + b"\x81\n"
     with pytest.raises(lp.LibraryPointsRefused, match="not windows-1252"):
         lp.read_outlets(raw, "windows-1252")
+
+
+CROSSWALK = {"outlet_types": {"CE": {"meaning": "central library", "kind": "fixed"},
+                              "BR": {"meaning": "branch library", "kind": "fixed"},
+                              "BS": {"meaning": "bookmobile", "kind": "mobile"},
+                              "BM": {"meaning": "books-by-mail only", "kind": "mobile"}},
+             "structure_status": CODES}
+
+
+def test_the_crosswalk_reads_as_the_types_and_codes_it_declares():
+    fixed, mobile, codes = lp.read_crosswalk(CROSSWALK)
+    assert fixed == ["CE", "BR"] and mobile == ["BS", "BM"] and codes == CODES
+    fc, _ = lp.points_from(_table(), "ME", fixed, mobile, codes, "listed")
+    assert _ids(fc) == ["ME0033-002", "ME0200-001"]
+
+
+def test_the_shared_crosswalk_reads():
+    import yaml
+    doc = yaml.safe_load((ROOT / "seeds" / "crosswalks" / "libraries" /
+                          "imls_pls_outlets.yml").read_text())
+    fixed, mobile, codes = lp.read_crosswalk(doc)
+    assert fixed == ["CE", "BR"] and mobile == ["BS", "BM"]
+    assert codes["23"]["group"] == "temporary" and codes["03"]["group"] == "permanent"
+    assert "22" not in codes
+
+
+def test_an_outlet_type_without_a_kind_is_refused():
+    bad = {**CROSSWALK, "outlet_types": {**CROSSWALK["outlet_types"],
+                                         "BS": {"meaning": "bookmobile", "kind": "roving"}}}
+    with pytest.raises(lp.LibraryPointsRefused, match="kind 'roving'"):
+        lp.read_crosswalk(bad)
+
+
+def test_a_crosswalk_with_no_statuses_is_refused():
+    with pytest.raises(lp.LibraryPointsRefused, match="at least one code"):
+        lp.read_crosswalk({"outlet_types": CROSSWALK["outlet_types"]})
 
 
 def test_an_accented_name_reads_as_written():

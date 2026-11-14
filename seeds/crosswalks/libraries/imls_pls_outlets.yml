@@ -1,0 +1,52 @@
+# ============================================================================
+# seeds/crosswalks/libraries/imls_pls_outlets.yml
+# ============================================================================
+# how the IMLS Public Libraries Survey's outlet file is read (D-226): its
+# codes, in its own words, crossed to ours. the same in every state, so no
+# plot declares it; a run passes it whole as `reading` through
+# $crosswalks.imls_pls_outlets (D-206), and freshness sees an edit.
+#
+# what is placed, and why, is not here: that is the library_carriers
+# method's (D-212). this file says only what IMLS's codes mean and which of
+# our groups each falls in.
+#
+# outlet types: IMLS's C_OUT_TY. fixed outlets stand somewhere and may be
+# placed; mobile outlets serve places and stand in none (D-208).
+#
+# structure status: every code the FY 2024 outlet file can hold, with IMLS's
+# meaning, from its record layout (PLS FY 2024 Data File Documentation and
+# User's Guide, June 2026, Appendix B, STATSTRU). 22 (a future FSCS ID
+# request) is left undeclared: what it means for a point is not settled, so
+# a fixed outlet carrying it stops the run. 03 does not occur in the FY 2024
+# file, which lists permanent closures outside it (Appendix C); it is
+# declared so an older file is read by the same rule (D-210).
+# ============================================================================
+
+from: "IMLS Public Libraries Survey, public-use outlet file (C_OUT_TY, STATSTRU)"
+to: "rewildingCities: outlet kind (fixed, mobile); structure group (open, temporary, permanent)"
+
+source_scheme:
+  name: IMLS Public Libraries Survey, public-use outlet file
+  provider: Institute of Museum and Library Services
+  documentation: PLS FY 2024 Data File Documentation and User's Guide, June 2026, Appendix B
+
+outlet_types:
+  CE: {meaning: central library, kind: fixed}
+  BR: {meaning: branch library, kind: fixed}
+  BS: {meaning: bookmobile, kind: mobile}
+  BM: {meaning: books-by-mail only, kind: mobile}
+
+structure_status:
+  "00": {meaning: no change from last year, group: open}
+  "01": {meaning: absorbs another administrative entity or outlet, group: open}
+  "02": {meaning: newly created, group: open}
+  "03": {meaning: closed, group: permanent}
+  "04": {meaning: moved to a newly created administrative entity, group: open}
+  "05": {meaning: merged to form a new administrative entity or outlet, group: open}
+  "08": {meaning: restored a closed record, group: open}
+  "09": {meaning: restored an incorrectly deleted record, group: open}
+  "11": {meaning: moved to a different existing administrative entity, group: open}
+  "13": {meaning: existing outlet not previously reported, group: open}
+  "23": {meaning: temporary closure, group: temporary}
+  "24": {meaning: reopened after a temporary closure, group: open}
+  "25": {meaning: survey nonrespondent, group: open}

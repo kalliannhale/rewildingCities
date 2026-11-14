@@ -1196,7 +1196,7 @@ primitives:
 
   prepare_library_points:
     path: transform/prepare_library_points.py
-    version: 1.1.0
+    version: 1.2.0
     description: >
       One state's IMLS library outlets as points, each named
       FSCSKEY-FSCS_SEQ; what is placed and why is the library_carriers
@@ -1204,7 +1204,9 @@ primitives:
       listed in the receipt and never placed; a temporary closure is placed
       or listed as temporarily_closed says (D-210, D-211). Every structure
       status is declared with its meaning and group, and a blank or
-      undeclared one is refused. The encoding is declared, never sniffed,
+      undeclared one is refused. How IMLS's codes are read is one crosswalk,
+      imls_pls_outlets, passed whole as reading (D-226). The encoding is
+      the release's declared fact, never sniffed,
       and a byte where Latin-1 and Windows-1252 disagree is refused. Flags a
       hand-placed geocode, a status other than 00 with its meaning, and a
       system the survey does not count as a public library. Refuses an
@@ -1216,10 +1218,15 @@ primitives:
       member: {type: string, required: true}
       state: {type: string, required: true}
       encoding: {type: string, required: true}
-      fixed_types: {type: array, required: true}
-      mobile_types: {type: array, required: true}
-      status_codes: {type: object, required: true}
+      reading: {type: object, required: true}
       temporarily_closed: {type: string, required: true}
+    # the two params a run writes that its release already declares. a run
+    # may write them, and the orchestrator refuses one that disagrees (D-192)
+    source_facts:
+      input: survey
+      params:
+        member: source.outlet_member
+        encoding: source.outlet_encoding
 
   count_located:
     path: transform/count_located.py

@@ -1,5 +1,7 @@
 """the maine_libraries preparation agrees with its method, registry, manifest
-and vocabulary (Sprint 06, step 3; D-210, D-211, D-212)."""
+and vocabulary (Sprint 06, step 3; D-210, D-211, D-212). IMLS's codes are a
+shared crosswalk, and the release's own facts are declared once, in the
+manifest, which the run is held to (D-192, D-226)."""
 
 from pathlib import Path
 
@@ -23,19 +25,47 @@ def test_the_survey_is_a_usable_public_release():
     assert ds.provenance["published_by"] == "imls"
 
 
-def test_bookmobiles_are_declared_mobile():
+CROSSWALK = ROOT / "seeds" / "crosswalks" / "libraries" / "imls_pls_outlets.yml"
+
+
+def test_imls_codes_come_from_the_shared_crosswalk_never_the_plot():
     p = _steps()["libraries_points"].params
-    assert p["fixed_types"] == ["CE", "BR"] and "BS" in p["mobile_types"]
-    assert p["encoding"] == "windows-1252"
+    assert p["reading"] == "$crosswalks.imls_pls_outlets"
+    assert not {"fixed_types", "mobile_types", "status_codes"} & set(p)
+
+
+def test_bookmobiles_are_read_mobile():
+    types = yaml.safe_load(CROSSWALK.read_text())["outlet_types"]
+    assert {c for c, e in types.items() if e["kind"] == "fixed"} == {"CE", "BR"}
+    assert types["BS"]["kind"] == "mobile" and types["BM"]["kind"] == "mobile"
 
 
 def test_every_status_code_has_a_meaning_and_a_group():
-    codes = _steps()["libraries_points"].params["status_codes"]
+    codes = yaml.safe_load(CROSSWALK.read_text())["structure_status"]
     assert all(e["meaning"] and e["group"] in ("open", "temporary", "permanent")
                for e in codes.values())
     assert codes["23"]["group"] == "temporary"
     assert codes["25"]["group"] == "open"
     assert codes["03"]["group"] == "permanent"
+
+
+def test_the_release_declares_what_the_run_writes_of_it():
+    ds = parse_manifest(ROOT / "plots" / "maine" / "manifest.yml").datasets["pls_fy2024"]
+    p = _steps()["libraries_points"].params
+    assert p["member"] == ds.source["outlet_member"]
+    assert p["encoding"] == ds.source["outlet_encoding"] == "windows-1252"
+    reg = yaml.safe_load((ROOT / "soil" / "_registry.yml").read_text())["primitives"]
+    facts = reg["prepare_library_points"]["source_facts"]
+    assert facts == {"input": "survey", "params": {"member": "source.outlet_member",
+                                                   "encoding": "source.outlet_encoding"}}
+
+
+def test_the_catalogue_points_at_homes_that_exist():
+    text = (ROOT / "seeds" / "sources" / "imls_pls.yml").read_text()
+    for home in ("seeds/crosswalks/libraries/imls_pls_outlets.yml",
+                 "garden/methods/information/library_carriers.yml",
+                 "seeds/indicators/carriers.yml", "plots/maine/manifest.yml"):
+        assert home in text and (ROOT / home).is_file(), home
 
 
 def test_temporary_closures_follow_a_choice_the_method_declares():

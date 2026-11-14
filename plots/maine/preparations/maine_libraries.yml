@@ -9,18 +9,14 @@
 #   the edges           -> library outlets per 1,000 people, every place (D-209)
 # the spine, places and divisions are read through loam ($loam., LOAM-1), so
 # they are judged fresh before any step runs (D-166).
-# status codes: every code the FY 2024 outlet file can hold, with IMLS's
-# meaning, from its record layout (PLS FY 2024 Data File Documentation and
-# User's Guide, June 2026, Appendix B, STATSTRU). 22 (a future FSCS ID
-# request) is left undeclared: what it means for a point is not settled, so
-# a fixed outlet carrying it stops the run. 03 does not occur in the FY 2024
-# file, which lists permanent closures outside it; it is declared so an older
-# file is read by the same rule (D-210).
-# the outlet file is Windows-1252, by its own text: its one byte in 0x80 to
-# 0x9F, 0x96, appears twice, each a dash between words in a branch's name
-# (Tazewell County, Virginia; Bremerton, Washington), Windows-1252's en dash.
-# declared Latin-1, the step refused the file rather than read a control
-# character into a name (D-208).
+# how IMLS's codes are read (outlet types, structure statuses) is national,
+# so it is a crosswalk every plot shares, seeds/crosswalks/libraries/
+# imls_pls_outlets.yml, never written here (D-226).
+# the outlet file's member and encoding are the release's own facts,
+# declared with pls_fy2024 in the manifest (source.outlet_member,
+# source.outlet_encoding); this run writes them, and the orchestrator
+# refuses a copy that disagrees (D-192). the encoding is Windows-1252, by
+# the file's own text (D-208): declared Latin-1, the step refused it.
 # ============================================================================
 
 id: maine_libraries
@@ -51,23 +47,8 @@ steps:
       member: CSV/pls_fy24_outlet_pud24i.csv
       state: ME
       encoding: windows-1252
-      fixed_types: [CE, BR]
-      mobile_types: [BS, BM]
+      reading: $crosswalks.imls_pls_outlets
       temporarily_closed: $choices.temporarily_closed
-      status_codes:
-        "00": {meaning: no change from last year, group: open}
-        "01": {meaning: absorbs another administrative entity or outlet, group: open}
-        "02": {meaning: newly created, group: open}
-        "03": {meaning: closed, group: permanent}
-        "04": {meaning: moved to a newly created administrative entity, group: open}
-        "05": {meaning: merged to form a new administrative entity or outlet, group: open}
-        "08": {meaning: restored a closed record, group: open}
-        "09": {meaning: restored an incorrectly deleted record, group: open}
-        "11": {meaning: moved to a different existing administrative entity, group: open}
-        "13": {meaning: existing outlet not previously reported, group: open}
-        "23": {meaning: temporary closure, group: temporary}
-        "24": {meaning: reopened after a temporary closure, group: open}
-        "25": {meaning: survey nonrespondent, group: open}
 
   - id: libraries_located_in
     primitive: soil/build_located_in

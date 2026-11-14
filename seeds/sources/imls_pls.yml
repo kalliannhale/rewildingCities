@@ -1,0 +1,63 @@
+# ============================================================================
+# seeds/sources/imls_pls.yml
+# ============================================================================
+# A national source catalogue (D-226), reference only, like census_tigerweb:
+# no code reads this folder. It says what the IMLS Public Libraries Survey
+# is and where each part of reading it lives, so a plot in any state can
+# find it without knowing it exists. It restates nothing that has another
+# home:
+#
+#   how the outlet file's codes are read   seeds/crosswalks/libraries/imls_pls_outlets.yml
+#   what is placed, and why                garden/methods/information/library_carriers.yml
+#   what a placed outlet counts toward     seeds/indicators/carriers.yml
+#   a release's member file and encoding   its plot's manifest, source.outlet_*
+#
+# Every fact below was read from a release or its documentation; what has
+# not been read says so.
+# ============================================================================
+
+id: imls_pls
+name: IMLS Public Libraries Survey
+published_by: Institute of Museum and Library Services
+national: true
+
+releases:
+  note: >
+    One release per fiscal year, published as public-use files. A plot
+    declares the release it reads as a manifest dataset of type
+    library_survey_release, with its url, the outlet file's member path and
+    its encoding; the year belongs to the release, never to this file or to
+    an indicator.
+  read:
+    "FY 2024":
+      documentation: PLS FY 2024 Data File Documentation and User's Guide, June 2026
+      declared_in: plots/maine/manifest.yml (pls_fy2024)
+
+identifiers:
+  outlet: >
+    FSCSKEY-FSCS_SEQ. FSCSKEY names a library system (an administrative
+    entity) and repeats across its outlets, so it never names an outlet
+    alone; FSCS_SEQ numbers the outlets within it.
+
+files:
+  outlet: >
+    One row per outlet: central libraries, branches, bookmobiles and
+    books-by-mail services, with coordinates, outlet type (C_OUT_TY),
+    structure status (STATSTRU), and the publisher's own block (CENBLOCK).
+  administrative_entity: >
+    One row per library system: visits and legal service area population.
+    Visits are reported for the system, never the outlet. Not yet read.
+
+measured:
+  maine_fy2024: >
+    265 Maine outlets: 262 fixed (central and branch), 3 mobile. Of the
+    fixed, 261 open and placed, 1 temporarily closed (Atkins Memorial,
+    Corinth) and listed. 261 of 262 fixed outlets' CENBLOCK agrees with the
+    2020 face block they fall in; the one that does not lands in the same
+    town and districts. None stands in a Census tribal area.
+
+cautions:
+  - A tribal area's count reads unseen, never zero, since the survey does not see reservation libraries (TRIBE-7; wording in the method).
+  - Outlets of systems the survey does not count as public libraries (C_FSCS N) are in its files and out of its aggregate figures (FSCS-1, open).
+  - A state may publish its own library layer counting differently; MEGIS's holds 390 points in Maine (LIB-2, open).
+  - An outlet's location is not whom it serves (SERVES-1).

@@ -777,12 +777,18 @@ datasets:
     license: us_government_work
     license_note: public-use files, publicly available without restriction, requiring no license (IMLS)
     format: zip
-    source: {type: url, url: "https://www.imls.gov/sites/default/files/2026-06/pls_fy2024_csv.zip"}
+    # the outlet file's member and encoding are the release's own facts: a
+    # run may write them, and is held to these (D-192, D-226)
+    source:
+      type: url
+      url: "https://www.imls.gov/sites/default/files/2026-06/pls_fy2024_csv.zip"
+      outlet_member: CSV/pls_fy24_outlet_pud24i.csv
+      outlet_encoding: windows-1252
     cache: {path: .data/pls_fy2024_csv.zip, refresh_policy: manual}
     provenance: {source: Institute of Museum and Library Services, Public Libraries Survey FY 2024, published_by: imls}
     quality:
       known_issues:
-        - The outlet file is Windows-1252, not UTF-8. Its only byte where Latin-1 and Windows-1252 disagree, 0x96, is an en dash between words in two branch names (Virginia, Washington).
+        - The outlet file is Windows-1252 (source.outlet_encoding), not UTF-8. Its only byte where Latin-1 and Windows-1252 disagree, 0x96, is an en dash between words in two branch names (Virginia, Washington).
         - FSCSKEY names a library system and repeats across its outlets; an outlet is FSCSKEY with FSCS_SEQ.
         - Each Maine bookmobile carries its home library's coordinates (SERVES-1).
         - Visits are reported for the library system, never the outlet.
