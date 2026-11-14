@@ -10,6 +10,7 @@
 id: cii_full_method
 domain: information
 name: "The Civic Information Index Method, End to End"
+answers_question_types: [civic_information, civic_infrastructure, composite_index, imputation, replication, pillar_index, weighting]
 
 description: >
   CII's published method as a chain of recorded steps: each indicator
@@ -54,20 +55,24 @@ requires_data:
 
 choices:
   sd_convention:
-    options: [sample, population]
+    options:
+      sample:
+      population:
     default: sample
     description: >
       Whether the z-score's standard deviation divides by n - 1 or n. CII does
       not publish z-scores, so its convention cannot be recovered.
 
   reference_population:
-    options: [nation_50_states_dc]
+    options:
+      nation_50_states_dc:
     default: nation_50_states_dc
     description: >
       CII standardises every county against the nation's.
 
   aggregation_unit_level:
-    options: [county]
+    options:
+      county:
     default: county
     description: >
       CII's unit. Its pillar memberships and imputation are defined for
@@ -80,11 +85,11 @@ requires_primitives:
   - roots/weighted_index
 
 produces:
-  semantic_type: indicator_index
-  data_category: tabular
-  description: >
-    Five pillar indices and an overall index per county, each a percentile,
-    with the number of components that were imputed and the weighting used.
+  - semantic_type: indicator_index
+    data_category: tabular
+    description: >
+      Five pillar indices and an overall index per county, each a percentile,
+      with the number of components that were imputed and the weighting used.
 
 interpretation: >
   An index is relative. It says how a county compares with the nation's, and

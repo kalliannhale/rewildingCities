@@ -47,7 +47,9 @@ from .models import (
     MethodChoice,
     MethodIndexEntry,
 )
-from .parsing import parse_manifest, parse_experiment, parse_method
+from .parsing import (
+    MethodShapeError, load_method_data, parse_manifest, parse_experiment, parse_method,
+)
 
 from ..envelope import (
     EnvelopeBuilder,
@@ -122,8 +124,6 @@ def load_methods_index(project_root: Path) -> dict[str, MethodIndexEntry]:
                 id=method_id,
                 domain=domain,
                 path=entry.get("path", ""),
-                name=entry.get("name", method_id),
-                answers=entry.get("answers", []),
                 raw=entry,
             )
     return flat
@@ -300,7 +300,7 @@ class Orchestrator:
         self._validate_source_facts(errors)
         self._validate_loam_references(errors)
 
-        self._validate_method_choices(warnings)
+        self._validate_method_choices(errors, warnings)
         self._validate_kind(errors, warnings)
 
         return errors, warnings
@@ -320,7 +320,12 @@ class Orchestrator:
         the experiment schema requires the curiosity; nothing else enforced
         it before this, so an empty one ran in silence. ~"""
         lineage = self.experiment.lineage
-        method_kind = (self._load_method_data() or {}).get("kind", "experiment")
+        try:
+            method_kind = (self._load_method_data() or {}).get("kind", "experiment")
+        except MethodShapeError:
+            # _validate_method_choices has already recorded this method as an
+            # error; validate() returns it rather than raising here.
+            return
 
         if lineage.kind == "preparation":
             if lineage.curiosity_ref is not None:
@@ -526,7 +531,7 @@ class Orchestrator:
         for param_name, param_value in step.params.items():
             check_value(param_value, param_name)
 
-    def _validate_method_choices(self, warnings: list[str]) -> None:
+    def _validate_method_choices(self, errors: list[str], warnings: list[str]) -> None:
         """Validate experiment.choices against the method's declared choices.
 
         Sprint 8: distinguishes enumerated choices (must match a named option)
@@ -544,10 +549,12 @@ class Orchestrator:
             warnings.append(f"Method file not found: {method_path}. Choice validation skipped.")
             return
 
+        # a method this system cannot read is an error, never a skipped check:
+        # a run on it would record choices nobody could hold it to (D-213).
         try:
             method = parse_method(method_path)
-        except Exception as e:
-            warnings.append(f"Could not parse method file {method_path}: {e}. Choice validation skipped.")
+        except (MethodShapeError, ValueError, yaml.YAMLError) as e:
+            errors.append(f"method {method_ref}: {e}")
             return
 
         for choice_name, choice_value in self.experiment.choices.items():
@@ -640,11 +647,10 @@ class Orchestrator:
         method_path = self._resolve_method_path(method_ref)
         if not method_path.exists():
             return {}
-        try:
-            with open(method_path, 'r') as f:
-                return yaml.safe_load(f)
-        except Exception:
-            return {}
+        # read through the one loader, which refuses a method the schema does
+        # not describe. an unreadable method used to become {} here, so the
+        # resolution engine saw a method that needs nothing (D-213).
+        return load_method_data(method_path)
 
     # ═══════════════════════════════════════════════════════════════════════
     # PHASE 1.5: STEP INJECTION (Sprint 6)

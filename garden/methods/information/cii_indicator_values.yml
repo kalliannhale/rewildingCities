@@ -10,6 +10,7 @@
 id: cii_indicator_values
 domain: information
 name: "Civic Information Indicators from Published Sources"
+answers_question_types: [civic_information, civic_infrastructure, information_access, indicator_values, replication, broadband, rent_burden, vehicle_access]
 
 description: >
   Derives civic information indicators from the raw counts their publishers
@@ -47,7 +48,9 @@ requires_data:
 
 choices:
   sd_convention:
-    options: [sample, population]
+    options:
+      sample:
+      population:
     default: sample
     description: >
       Whether the z-score's standard deviation divides by n - 1 or by n. CII
@@ -56,7 +59,9 @@ choices:
       three thousand counties the two differ by under 0.02 percent.
 
   reference_population:
-    options: [nation_50_states_dc, plot_only]
+    options:
+      nation_50_states_dc:
+      plot_only:
     default: nation_50_states_dc
     description: >
       Who a unit is ranked against. CII ranks every county against the
@@ -65,7 +70,10 @@ choices:
       and in the top quarter nationally.
 
   aggregation_unit_level:
-    options: [county, county subdivision, tract]
+    options:
+      county:
+      county subdivision:
+      tract:
     default: county
     description: >
       The grain the source was acquired at, which is the grain every value
@@ -81,13 +89,13 @@ requires_primitives:
   - roots/standardize_indicator
 
 produces:
-  semantic_type: indicator_standings
-  data_category: tabular
-  description: >
-    One row per unit and indicator: the value, its oriented z-score and CII
-    percentile against the declared population, or the reason it has none.
-    The intermediate indicator_values carry each value's margin of error,
-    empty reason, publisher and vintage.
+  - semantic_type: indicator_standings
+    data_category: tabular
+    description: >
+      One row per unit and indicator: the value, its oriented z-score and CII
+      percentile against the declared population, or the reason it has none.
+      The intermediate indicator_values carry each value's margin of error,
+      empty reason, publisher and vintage.
 
 interpretation: >
   A value is a measurement of one thing, defined one way, at one vintage. A

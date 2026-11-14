@@ -125,25 +125,11 @@ choices:
         interpretation: Preferred; same result spatially, far cheaper.
 
 requires_primitives:
-  resolve_scribble_labels:
-    from: soil/classify
-    purpose: Decode painted scribbles into the canonical class-id mask (hand-label path).
-  recover_ground_pose:
-    from: soil/calibrate
-    purpose: Recover the ground-plane pose from the board in the scene frame.
-  segment_rf:
-    from: soil/classify
-    purpose: Produce the image-plane land-cover prediction (classifier path).
-  rectify_to_ground:
-    from: soil/transform
-    purpose: Warp the label mask to the ground plane over the bounded extent.
-  score_composition:
-    from: roots/metrics
-    purpose: >
-      Count raw/rectified/truth fractions over one region, apply the coverage
-      guard, and return the verdict. NOTE: not yet a registered primitive; the
-      logic currently lives in garden/experiments/falsification_test.py and must
-      be factored into a roots metric to become an orchestrated step.
+  - soil/resolve_scribble_labels   # decode painted scribbles into the canonical class-id mask (hand-label path)
+  - soil/recover_ground_pose       # recover the ground-plane pose from the board in the scene frame
+  - soil/segment_rf                # the image-plane land-cover prediction (classifier path)
+  - soil/rectify_to_ground         # warp the label mask to the ground plane over the bounded extent
+  - roots/score_composition        # raw, rectified and truth fractions over one region, the coverage guard, the verdict
 
 requires_data:
   - name: scene_frame

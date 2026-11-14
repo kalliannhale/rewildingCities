@@ -10,6 +10,7 @@
 id: ownership_concentration_analysis
 domain: information
 name: "Ownership Concentration of Local Information Outlets"
+answers_question_types: [media_ownership, consolidation, information_access, civic_infrastructure, concentration_index, ownership, outlets, local_news, accountability]
 
 description: >
   Attributes each formal outlet to the entity that owns it, then computes a
@@ -75,7 +76,10 @@ requires_data:
 
 choices:
   concentration_measure:
-    options: [hhi, top_owner_share, top_three_share]
+    options:
+      hhi:
+      top_owner_share:
+      top_three_share:
     default: hhi
     description: >
       HHI sums the squared market shares of every owner, so it responds to
@@ -86,7 +90,10 @@ choices:
       each.
 
   aggregation_unit_level:
-    options: [county, town, tract]
+    options:
+      county:
+      town:
+      tract:
     default: county
     description: >
       Which governance unit to compute per. Media markets often operate
@@ -95,7 +102,10 @@ choices:
       towns. Finer is not more truthful here.
 
   outlet_weighting:
-    options: [count, circulation, staffing]
+    options:
+      count:
+      circulation:
+      staffing:
     default: count
     description: >
       Counting outlets treats a weekly with two reporters the same as a daily
@@ -108,15 +118,14 @@ requires_primitives:
   # outlets (who owns each, which unit it is in) and answer nothing (Sprint 02)
   - soil/resolve_ownership
   - soil/geocode_to_unit
-  - roots/count_by_unit
   - roots/concentration_index
 
 produces:
-  semantic_type: ownership_concentration
-  data_category: tabular
-  description: >
-    Concentration score per governance unit, with outlet counts, owner
-    counts, and the coverage and small-n flags the index primitive emits.
+  - semantic_type: ownership_concentration
+    data_category: tabular
+    description: >
+      Concentration score per governance unit, with outlet counts, owner
+      counts, and the coverage and small-n flags the index primitive emits.
 
 interpretation: >
   A high score is a statement about ownership structure, not about how

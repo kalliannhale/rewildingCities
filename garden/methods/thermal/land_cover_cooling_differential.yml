@@ -92,9 +92,7 @@ choices:
           - "repeats each LST value ~9x, biasing pixel-count statistics"
 
 requires_primitives:
-  cooling_differential:
-    from: roots/metrics
-    purpose: Mask LST by land-cover class and compute the group differential.
+  - roots/cooling_differential   # mask LST by land-cover class and compute the group differential
 
 requires_data:
   - name: lst

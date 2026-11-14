@@ -11,6 +11,7 @@ id: library_carriers
 domain: information
 kind: preparation
 name: "Library Outlets, Placed"
+answers_question_types: [libraries, carriers, located_in, preparation]
 
 description: >
   Reads one state's library outlets from the IMLS Public Libraries Survey and
@@ -43,7 +44,9 @@ requires_data:
 
 choices:
   temporarily_closed:
-    options: [listed, placed]
+    options:
+      listed:
+      placed:
     default: listed
     description: >
       Whether an outlet the survey reports as temporarily closed (STATSTRU 23)
@@ -60,9 +63,9 @@ requires_primitives:
   - soil/build_located_in
 
 produces:
-  semantic_type: located_in_edges
-  data_category: tabular
-  description: Each placed library outlet to every place it falls in.
+  - semantic_type: located_in_edges
+    data_category: tabular
+    description: Each placed library outlet to every place it falls in.
 
 interpretation: >
   A located_in edge says a library building stands in a place, never that

@@ -10,6 +10,7 @@ id: geography_graph
 domain: information
 kind: preparation
 name: "The Geography Graph"
+answers_question_types: [geography, districts, preparation]
 
 description: >
   Builds the edges of the geography graph from whole 2020 Census blocks. A
@@ -42,9 +43,9 @@ requires_primitives:
   - soil/build_place_edges
 
 produces:
-  semantic_type: place_edges
-  data_category: tabular
-  description: The graph's edges, with both weights, sources and vintages.
+  - semantic_type: place_edges
+    data_category: tabular
+    description: The graph's edges, with both weights, sources and vintages.
 
 interpretation: >
   A share is of a place's people or households, never of its land. A

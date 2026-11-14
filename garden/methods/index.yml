@@ -1,114 +1,55 @@
-# Methods Index
-# Registry of analytical approaches available across the commons.
+# ═══════════════════════════════════════════════════════════════════════════════
+# garden/methods/index.yml ~ the methods router
 #
-# This index is the authoritative router from a method id to its file.
-# The orchestrator's _resolve_method_path() reads this at experiment time
-# to find a method by id. The future catalog/discover layer (Sprint 10's
-# GET /methods endpoint) reads this to enumerate what the system can do.
+# The authoritative router from a method id to its file, and nothing else
+# (D-216). Orchestrator._resolve_method_path reads it at run time; a run whose
+# method id is not here is refused.
 #
-# Schema:
+# A method's name, what it answers and everything else live once, in the
+# method file, shaped by seeds/schemas/method.schema.yml (D-213). This file
+# repeats none of it, so it cannot drift from the methods.
+#
+# tests/test_method_schema.py holds this file to garden/methods/: every method
+# file is routed exactly once, every route reaches a file, the id here is the
+# method's own id, and the domain here is the method's own domain.
+#
 #   methods:
 #     <domain>:
-#       - id:     machine-readable identifier (matches the id field in the
-#                 method file itself; this is what experiments reference)
-#         path:   path relative to garden/methods/, including .yml extension
-#         name:   human-readable name (also in the method file; duplicated
-#                 here so the index can be enumerated without opening every
-#                 file)
-#         answers: optional, list of question-type tags this method handles
-#                  (mirrors `answers_question_types` in the method file;
-#                  duplicated here for catalog-time filtering)
+#       - id: <the method's id>
+#         path: <file, relative to garden/methods/>
+# ═══════════════════════════════════════════════════════════════════════════════
 
 methods:
+  information:
+    - id: cii_full_method
+      path: information/cii_full_method.yml
+    - id: cii_indicator_values
+      path: information/cii_indicator_values.yml
+    - id: county_units_for_mapping
+      path: information/county_units_for_mapping.yml
+    - id: geography_graph
+      path: information/geography_graph.yml
+    - id: governance_units_conformed
+      path: information/governance_units_conformed.yml
+    - id: indicator_values
+      path: information/indicator_values.yml
+    - id: legislative_seats
+      path: information/legislative_seats.yml
+    - id: library_carriers
+      path: information/library_carriers.yml
+    - id: outlet_reconciliation
+      path: information/outlet_reconciliation.yml
+    - id: ownership_concentration_analysis
+      path: information/ownership_concentration_analysis.yml
+
+  perception:
+    - id: inverse_perspective_composition
+      path: perception/inverse_perspective_composition.yml
 
   thermal:
     - id: buffer_gradient_analysis
       path: thermal/thermal_gradient_analysis.yml
-      name: "Buffer-Based Thermal Gradient Analysis"
-      answers: [spatial_gradient, influence_extent, intensity_measurement, feature_comparison]
-
     - id: hot_cold_spot_analysis
       path: thermal/hot_cold_spot_analysis.yml
-      name: "Getis-Ord Hot/Cold Spot Analysis"
-      answers: [spatial_clustering, spatial, clustering, heat, thermal, analysis, thermal_analysis, hot_cold_spot_analysis, temperature, hotspot_identification, hot_spot_identification, cold_spot_identification, thermal_landscape_classification thermal_equity
-      ]
-
-    - id: inverse_perspective_composition
-      path: perception/inverse_perspective_composition.yml
-      name: "Inverse Perspective Composition (IPM Falsification)"
-      answers: [
-        measurement_validity, perspective_bias_correction, classifier_agreement
-      ]
-
-  information:
-    - id: ownership_concentration_analysis
-      path: information/ownership_concentration_analysis.yml
-      name: "Ownership Concentration of Local Information Outlets"
-      answers: [
-        media_ownership, consolidation, information_access, civic_infrastructure,
-        concentration_index, ownership, outlets, local_news, accountability
-      ]
-
-    - id: cii_full_method
-      path: information/cii_full_method.yml
-      name: "The Civic Information Index Method, End to End"
-      answers: [
-        civic_information, civic_infrastructure, composite_index, imputation,
-        replication, pillar_index, weighting
-      ]
-
-    - id: county_units_for_mapping
-      path: information/county_units_for_mapping.yml
-      name: "County Units, Keyed for Mapping"
-      answers: [boundaries, mapping, preparation]
-
-    - id: indicator_values
-      path: information/indicator_values.yml
-      name: "Indicator Values from Published Sources"
-      answers: [indicator values, preparation]
-
-    - id: governance_units_conformed
-      path: information/governance_units_conformed.yml
-      name: "Governance Units, Conformed"
-      answers: [boundaries, denominators, preparation]
-
-    - id: geography_graph
-      path: information/geography_graph.yml
-      name: "The Geography Graph"
-      answers: [geography, districts, preparation]
-
-    - id: legislative_seats
-      path: information/legislative_seats.yml
-      name: "Legislative Seats, One Legislature at a Time"
-      answers: [legislators, representation, districts, preparation]
-
-    - id: outlet_reconciliation
-      path: information/outlet_reconciliation.yml
-      name: "Outlet Records, Side by Side"
-      answers: [outlets, ownership, preparation]
-
-    - id: library_carriers
-      path: information/library_carriers.yml
-      name: "Library Outlets, Placed"
-      answers: [libraries, carriers, located_in, preparation]
-
-    - id: cii_indicator_values
-      path: information/cii_indicator_values.yml
-      name: "Civic Information Indicators from Published Sources"
-      answers: [
-        civic_information, civic_infrastructure, information_access,
-        indicator_values, replication, broadband, rent_burden, vehicle_access
-      ]
-
-  # Future domains slot in alongside `thermal:` — no structural change to
-  # the orchestrator or the resolution engine when adding them.
-  #
-  # landscape:
-  #   - id: fragstats_metrics
-  #     path: landscape/fragstats_metrics.yml
-  #     name: "Landscape Pattern Metrics (FRAGSTATS)"
-  #
-  # statistical:
-  #   - id: correlation_analysis
-  #     path: statistical/correlation_analysis.yml
-  #     name: "Correlation Analysis with Controls"
+    - id: land_cover_cooling_differential
+      path: thermal/land_cover_cooling_differential.yml

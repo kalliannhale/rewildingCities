@@ -10,6 +10,7 @@ id: legislative_seats
 domain: information
 kind: preparation
 name: "Legislative Seats, One Legislature at a Time"
+answers_question_types: [legislators, representation, districts, preparation]
 
 description: >
   Builds the seats table for one Legislature. Every House and Senate district
@@ -34,9 +35,9 @@ requires_primitives:
   - soil/build_seats
 
 produces:
-  semantic_type: seats
-  data_category: tabular
-  description: One row per seat per Legislature, with its holder from the record or marked vacant.
+  - semantic_type: seats
+    data_category: tabular
+    description: One row per seat per Legislature, with its holder from the record or marked vacant.
 
 interpretation: >
   A seat is an office, not a place. A vacant seat is one the record names no

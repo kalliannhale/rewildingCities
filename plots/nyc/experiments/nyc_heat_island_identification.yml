@@ -25,7 +25,7 @@ method:
 choices:
   confidence_thresholds: standard_three_tier
   spatial_weights: distance_band
-  output_format: raster
+  output_format: classified_raster
 
 # === Place ===
 

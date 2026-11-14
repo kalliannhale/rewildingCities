@@ -52,15 +52,15 @@ choices:
     
       standard_three_tier:
         name: "90%, 95%, 99% confidence"
-        id: standard_three_tier
         description: >
           Three-level classification following Xiao et al. (2023). 
           Produces six categories: hot spot at 99/95/90% and cold 
           spot at 99/95/90%.
-        z_thresholds:
-          confidence_90: 1.645
-          confidence_95: 1.960
-          confidence_99: 2.576
+        params:
+          z_thresholds:
+            confidence_90: 1.645
+            confidence_95: 1.960
+            confidence_99: 2.576
         when_to_use:
           - "Standard academic reporting"
           - "Policy documents requiring established methodology"
@@ -73,12 +73,12 @@ choices:
       
       binary:
         name: "95% confidence only"
-        id: binary
         description: >
           Simple hot/cold/not-significant classification at p=0.05. 
           Fewer categories, clearer communication.
-        z_thresholds:
-          confidence_95: 1.960
+        params:
+          z_thresholds:
+            confidence_95: 1.960
         when_to_use:
           - "Community presentations"
           - "When simplicity aids understanding"
@@ -98,7 +98,6 @@ choices:
     
       queen_contiguity:
         name: "Queen contiguity"
-        id: queen
         description: >
           A pixel's neighbors are the 8 cells touching it 
           (including diagonals). Detects fine-grained clustering.
@@ -108,7 +107,6 @@ choices:
       
       distance_band:
         name: "Distance band"
-        id: distance_band
         description: >
           All pixels within a specified distance are neighbors. 
           The distance should be chosen based on the expected 
@@ -136,29 +134,25 @@ choices:
     
       classified_raster:
         name: "Classified raster"
-        id: raster
         description: >
           Each pixel gets a Gi* z-score and a cluster classification. 
           Best for visualization and further raster analysis.
       
       cluster_polygons:
         name: "Cluster polygons"
-        id: polygons
         description: >
           Contiguous hot/cold spot pixels are dissolved into polygons. 
           Best for spatial joins with census or infrastructure data.
       
       summary_table:
         name: "Summary statistics"
-        id: summary
         description: >
           Area and percentage of study region in each cluster category. 
           Best for reporting and city-to-city comparison.
 
 requires_primitives:
-  - hotspot_analysis:
-      from: roots/statistics
-      purpose: "Compute Getis-Ord Gi* and classify clusters"
+  - roots/local_gi_star        # compute Getis-Ord Gi* for each cell
+  - roots/classify_clusters    # classify cells into hot and cold spots by confidence
 
 requires_data:
 

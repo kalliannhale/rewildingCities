@@ -11,6 +11,7 @@ id: governance_units_conformed
 domain: information
 kind: preparation
 name: "Governance Units, Conformed"
+answers_question_types: [boundaries, denominators, preparation]
 
 description: >
   Maine's county and town boundaries arrive as arc-derived polygons, one per
@@ -44,11 +45,11 @@ requires_primitives:
   - soil/dissolve_by_field
 
 produces:
-  semantic_type: governance_unit
-  data_category: vector
-  description: >
-    One feature per administrative unit, with its authority codes and, for
-    civil divisions, the LURC governance flag.
+  - semantic_type: governance_unit
+    data_category: vector
+    description: >
+      One feature per administrative unit, with its authority codes and, for
+      civil divisions, the LURC governance flag.
 
 interpretation: >
   Four sources disagree about how many towns Maine has, because they count

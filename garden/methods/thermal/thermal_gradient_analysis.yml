@@ -55,7 +55,6 @@ choices:
     
       TPM-M:
         name: "Turning Point Maximum"
-        id: TPM-M
         description: >
           Intensity = LST at first local maximum - LST inside feature.
           Captures the peak temperature difference at the point where 
@@ -78,7 +77,6 @@ choices:
           
       TPM-A:
         name: "Turning Point Average"
-        id: TPM-A
         description: >
           Intensity = Average LST across all buffers up to turning point - LST inside feature.
           Captures cumulative cooling efficiency across the entire influence zone.
@@ -109,7 +107,6 @@ choices:
     
       median:
         name: "Median LST"
-        id: median
         description: >
           The middle value when all pixel temperatures are sorted. 
           Robust to outliers like parking lots, rooftops, or sensor artifacts.
@@ -126,7 +123,6 @@ choices:
           
       mean:
         name: "Mean LST"
-        id: mean
         description: >
           The arithmetic average of all pixel temperatures. 
           Captures total thermal energy including outliers.
@@ -172,15 +168,9 @@ choices:
 
 # What primitives this method requires
 requires_primitives:
-  - generate_buffers:
-      from: roots/geometry
-      purpose: "Create concentric ring geometries around features"
-  - zonal_statistics:
-      from: roots/metrics
-      purpose: "Extract temperature statistics within each ring"
-  - calculate_pci:
-      from: roots/metrics
-      purpose: "Identify turning point and compute intensity"
+  - roots/generate_buffers   # concentric ring geometries around features
+  - roots/zonal_statistics   # temperature statistics within each ring
+  - roots/calculate_pci      # turning point and cooling intensity
 
 # What data this method need?
 requires_data:

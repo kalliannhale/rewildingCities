@@ -1,11 +1,21 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# METHOD SCHEMA v1.1
+# METHOD SCHEMA v2.0
 # seeds/schemas/method.schema.yml
-# v1.1 (Sprint 01, D-98): a method has a kind. A preparation method readies
-# data and answers no question; only a preparation run may use one, and a
-# preparation run may use no other.
+#
 # A method declares HOW to answer certain types of questions, with explicit
 # choice points that change meaning. Abstract approach, not instantiated.
+#
+# This file is the one home of a method's shape (D-213). Every reader loads a
+# method through canopy.orchestrator.parsing.load_method_data, which refuses a
+# method this schema does not describe, and tests/test_method_schema.py holds
+# every method in garden/methods/ to it. A field written here and in no method
+# is allowed; a field written in a method and not here is refused, so a typo
+# is never silently ignored.
+#
+# v1.1 (Sprint 01, D-98): a method has a kind.
+# v2.0 (Sprint 06, D-213 to D-216): options are a mapping keyed by option id;
+#   requires_primitives a list of layer references; produces a list;
+#   interpretation, recipe and as_acquired described; nothing else allowed.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
@@ -14,10 +24,11 @@ title: "Method"
 description: >
   Abstract analytical approaches with explicit choices. Methods describe how
   to answer certain types of questions, with decision points that carry
-  epistemological weight. The experiment resolves these choices.
+  epistemological weight. The run resolves these choices.
 
 type: object
 required: [id, name, description, choices, requires_primitives, requires_data, produces]
+additionalProperties: false
 
 properties:
 
@@ -27,13 +38,13 @@ properties:
   id:
     type: string
     pattern: "^[a-z0-9_]+$"
-    description: Machine-readable identifier
-    examples: ["buffer_gradient_analysis", "hot_cold_spot_analysis"]
+    description: >
+      Machine-readable identifier, unique across garden/methods/. A run names
+      its method by this id, and garden/methods/index.yml routes it to a file.
 
   name:
     type: string
     description: Human-readable name
-    examples: ["Buffer-Based Thermal Gradient Analysis"]
 
   domain:
     type: string
@@ -50,142 +61,50 @@ properties:
       require and what they produce like any method, so a reading can find
       the preparation that would supply a missing holding, but they answer
       no question and are never offered as an answer to one. Omitted means
-      experiment.
+      experiment (D-98).
 
+  version:
+    type: string
+  created:
+    type: string
+    format: date
+  contributors:
+    type: array
+    items:
+      type: string
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # WHAT IT IS AND WHAT IT CAN SAY
+  # ───────────────────────────────────────────────────────────────────────────
   description:
     type: string
-    description: >
-      What this method does, when to use it, and how it works conceptually.
+    description: What this method does, when to use it, and how it works conceptually.
 
   diagram:
     type: string
-    description: >
-      ASCII or text diagram illustrating the method visually.
-      Helps users understand the concept at a glance.
+    description: ASCII or text diagram illustrating the method.
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # WHAT THIS METHOD ANSWERS
-  # ───────────────────────────────────────────────────────────────────────────
+  interpretation:
+    type: string
+    description: >
+      How to read what the method produces, and what it cannot say. A
+      method's meaning lives here once (D-212); docstrings, run headers,
+      registry entries and indicator rationales point to it. Optional while
+      the older methods have none (INTERP-1).
+
   answers_question_types:
     type: array
     items:
       type: string
     description: >
-      Types of questions this method can address.
-    examples:
-      - "spatial_gradient"
-      - "influence_extent"
-      - "intensity_measurement"
-      - "feature_comparison"
+      Types of questions this method can address. Its one home is the method;
+      the index only routes (D-216).
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # CHOICES (the key concept)
-  # ───────────────────────────────────────────────────────────────────────────
-  choices:
-    type: object
-    description: >
-      Decision points that change meaning. Each choice represents an
-      epistemological commitment — not just a parameter, but a decision
-      about what you're measuring and why.
-    additionalProperties:
-      $ref: "#/$defs/choice"
-
-  # ───────────────────────────────────────────────────────────────────────────
-  # REQUIREMENTS
-  # ───────────────────────────────────────────────────────────────────────────
-  requires_primitives:
-    type: object
-    description: >
-      Primitives this method uses, with their purpose.
-    additionalProperties:
-      type: object
-      properties:
-        from:
-          type: string
-          description: Which layer the primitive comes from
-          examples: ["roots/geometry", "roots/metrics", "soil/validate"]
-        purpose:
-          type: string
-          description: What role this primitive plays in the method
-
-  requires_data:
-    type: array
-    description: Data this method needs to execute
-    items:
-      type: object
-      required: [name, type, semantic_types]
-      properties:
-        name:
-          type: string
-          description: Role this data plays
-        type:
-          type: string
-          enum: [vector, raster, tabular]
-        semantic_types:
-          type: array
-          items:
-            type: string
-          description: Acceptable semantic types for this role
-        description:
-          type: string
-        guidance:
-          type: string
-          description: Advice on selecting appropriate data
-        critical:
-          type: boolean
-          default: true
-          description: >
-            Whether the method can produce meaningful results without
-            this data. If true (default), absence blocks the method; if
-            false, the method can run in a degraded mode and should
-            document what that means in `uncertainty_without`.
-        role:
-          type: string
-          description: >
-            What this data contributes to the analysis. Written for a
-            community researcher deciding whether they have the data
-            to ask this question. Surfaced in (a) the resolution
-            engine's missing-data advisory, (b) the future catalog
-            application's method browser, and (c) embedded in envelope
-            provenance.
-        uncertainty_without:
-          type: string
-          description: >
-            What is lost when this data is missing. For critical: true
-            data, this is informational ("this is what we couldn't
-            tell you"). For critical: false data, this is what the
-            degraded run actually means. Same audience and venues as
-            `role`.
-
-  # ───────────────────────────────────────────────────────────────────────────
-  # OUTPUTS
-  # ───────────────────────────────────────────────────────────────────────────
-  produces:
-    type: array
-    items:
-      type: object
-      required: [name, semantic_type, data_category]
-      properties:
-        name:
-          type: string
-          description: Output identifier
-        semantic_type:
-          type: string
-          description: Semantic type of this output
-        data_category:
-          type: string
-          enum: [vector, raster, tabular]
-        description:
-          type: string
-    description: What this method produces
-
-  # ───────────────────────────────────────────────────────────────────────────
-  # REFERENCES
-  # ───────────────────────────────────────────────────────────────────────────
   references:
     type: array
     items:
       type: object
+      additionalProperties: false
       properties:
         citation:
           type: string
@@ -195,87 +114,132 @@ properties:
     description: Papers describing or validating this method
 
   # ───────────────────────────────────────────────────────────────────────────
-  # METADATA
+  # CHOICES
   # ───────────────────────────────────────────────────────────────────────────
-  version:
-    type: string
-    default: "1.0.0"
+  choices:
+    type: object
+    description: >
+      Decision points that change meaning. Each choice is an epistemological
+      commitment, not just a parameter. Keyed by choice id, which a run's
+      choices: block and $choices.<id> use.
+    additionalProperties:
+      $ref: "#/$defs/choice"
 
-  created:
-    type: string
-    format: date
-
-  contributors:
+  # ───────────────────────────────────────────────────────────────────────────
+  # WHAT IT NEEDS
+  # ───────────────────────────────────────────────────────────────────────────
+  requires_primitives:
     type: array
+    description: >
+      Every primitive this method uses, as the reference a step names it by:
+      layer/name, resolved through that layer's _registry.yml. What a
+      primitive does has its one home in its registry entry (D-214).
     items:
       type: string
+      pattern: "^(roots|soil)/[a-z0-9_]+$"
+
+  requires_data:
+    type: array
+    description: Data this method needs to execute
+    items:
+      $ref: "#/$defs/required_data"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # WHAT IT MAKES
+  # ───────────────────────────────────────────────────────────────────────────
+  produces:
+    type: array
+    minItems: 1
+    description: >
+      What this method produces, one entry per kind of output. A list even
+      for one output, since a method can make several (D-215).
+    items:
+      $ref: "#/$defs/product"
+
+  recipe:
+    type: array
+    minItems: 1
+    description: >
+      The method's own steps, filled at compose time from the question and
+      the ground (canopy/wonder/recipe.py). Each step has the shape a run's
+      step has; its values may hold compose-time references the recipe
+      language knows ($requires, $source, $choices, $weighting, $steps).
+    items:
+      $ref: "#/$defs/recipe_step"
 
 $defs:
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # CHOICE DEFINITION
-  # ───────────────────────────────────────────────────────────────────────────
   choice:
     type: object
-    required: [name, description]
+    required: [description]
+    additionalProperties: false
+    description: >
+      An enumerated choice declares options; a parametric choice declares a
+      type instead. The key of the choice is its id; name is a label.
     properties:
       name:
         type: string
-        description: Human-readable name for this choice
+        description: Human-readable label for this choice
       description:
         type: string
-        description: What this choice means and why it matters
-      
-      # For enumerated choices (pick from options)
+        description: >
+          What this choice means and why it matters. Where options are
+          compared with each other, the comparison lives here, once, and an
+          option need add nothing (D-213).
       options:
         type: object
+        minProperties: 1
         description: >
-          Named options for this choice. Keys are option IDs,
-          values describe the option in detail.
+          Keyed by option id, the value a run chooses. An option's value is
+          empty when the choice's description already says what it means,
+          or an option object when the option has more to say.
         additionalProperties:
-          $ref: "#/$defs/choice_option"
-      
-      # For numeric/parametric choices
+          oneOf:
+            - type: "null"
+            - $ref: "#/$defs/choice_option"
       type:
         type: string
         enum: [integer, number, string, boolean]
-        description: Data type for parametric choices
+        description: Data type for a parametric choice
       units:
         type: string
-        description: Units for numeric choices
       default:
-        description: Default value if not specified
+        description: >
+          The value used when a run does not choose. For an enumerated choice
+          it must be one of the option ids (held by the test).
       range:
         type: object
+        additionalProperties: false
         properties:
           min:
             type: number
           max:
             type: number
-        description: Valid range for numeric choices
       guidance:
         type: string
         description: How to select an appropriate value
+    oneOf:
+      - required: [options]
+        not:
+          required: [type]
+      - required: [type]
+        not:
+          required: [options]
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # CHOICE OPTION (for enumerated choices)
-  # ───────────────────────────────────────────────────────────────────────────
   choice_option:
     type: object
-    required: [name, description]
+    additionalProperties: false
+    description: >
+      What one option adds beyond its choice's description. Its id is its
+      key in options; it carries no id of its own, so one option never has
+      two names (D-213).
     properties:
       name:
         type: string
-        description: Human-readable option name
-      id:
-        type: string
-        description: Machine-readable identifier (used in experiments)
       description:
         type: string
-        description: What this option means
       formula:
         type: string
-        description: Mathematical formula if applicable
       answers:
         type: string
         description: What question this option helps answer
@@ -283,12 +247,95 @@ $defs:
         type: array
         items:
           type: string
-        description: Situations where this option is appropriate
       limitations:
         type: array
         items:
           type: string
-        description: Known limitations or caveats
       interpretation:
         type: string
         description: How to interpret results when using this option
+      params:
+        type: object
+        description: Values this option sets, recorded for the reader
+
+  required_data:
+    type: object
+    required: [name, type, semantic_types]
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        description: Role this data plays, and the name a recipe binds as $requires.<name>
+      type:
+        type: string
+        enum: [vector, raster, tabular]
+      semantic_types:
+        type: array
+        minItems: 1
+        items:
+          type: string
+        description: Acceptable semantic types for this role
+      description:
+        type: string
+      guidance:
+        type: string
+        description: Advice on selecting appropriate data
+      critical:
+        type: boolean
+        default: true
+        description: >
+          Whether the method can produce meaningful results without this
+          data. If true (default), absence blocks the method; if false, the
+          method can run in a degraded mode, described in uncertainty_without.
+      as_acquired:
+        type: boolean
+        default: false
+        description: >
+          The requirement may be met by a source as the manifest declares it
+          acquired, before any conformance (WON-9). A reading that meets it
+          this way says so (canopy/wonder/reading.py).
+      role:
+        type: string
+        description: >
+          What this data contributes, written for a community researcher
+          deciding whether they have the data to ask this question.
+      uncertainty_without:
+        type: string
+        description: What is lost when this data is missing.
+
+  product:
+    type: object
+    required: [semantic_type, data_category]
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+        description: Output identifier, where a method makes more than one
+      semantic_type:
+        type: string
+      data_category:
+        type: string
+        enum: [vector, raster, tabular]
+      description:
+        type: string
+
+  recipe_step:
+    type: object
+    required: [id, primitive]
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+      primitive:
+        type: string
+        pattern: "^(roots|soil)/[a-z0-9_]+$"
+      description:
+        type: string
+      version:
+        type: string
+      inputs:
+        type: object
+      outputs:
+        type: object
+      params:
+        type: object

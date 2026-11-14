@@ -11,6 +11,7 @@ id: indicator_values
 domain: information
 kind: preparation
 name: "Indicator Values from Published Sources"
+answers_question_types: [indicator values, preparation]
 
 description: >
   Derives indicator values from the raw counts their publishers release, one
@@ -38,7 +39,11 @@ requires_data:
 
 choices:
   aggregation_unit_level:
-    options: [county, county subdivision, tract, state legislative district]
+    options:
+      county:
+      county subdivision:
+      tract:
+      state legislative district:
     default: county
     description: >
       The grain the source was acquired at, which is the grain every value
@@ -55,12 +60,12 @@ requires_primitives:
   - soil/derive_indicator
 
 produces:
-  semantic_type: indicator_values
-  data_category: tabular
-  description: >
-    One row per unit and indicator: the value, its margin of error or the
-    reason it has none, its publisher and its vintage. Values, never
-    standings (MP-75 for towns).
+  - semantic_type: indicator_values
+    data_category: tabular
+    description: >
+      One row per unit and indicator: the value, its margin of error or the
+      reason it has none, its publisher and its vintage. Values, never
+      standings (MP-75 for towns).
 
 interpretation: >
   A value is a measurement of one thing, defined one way, at one vintage. A

@@ -12,6 +12,7 @@ domain: information
 # never offers it as an answer to a question.
 kind: preparation
 name: "County Units, Keyed for Mapping"
+answers_question_types: [boundaries, mapping, preparation]
 
 description: >
   Maine's county boundaries arrive as 7 196 arc-derived polygons, 7 156 of
@@ -40,9 +41,9 @@ requires_primitives:
   - soil/assign_geoid
 
 produces:
-  semantic_type: governance_unit
-  data_category: vector
-  description: One feature per county with COUNTY, CNTYCODE and GEOID
+  - semantic_type: governance_unit
+    data_category: vector
+    description: One feature per county with COUNTY, CNTYCODE and GEOID
 
 recipe:
   - id: units_repair

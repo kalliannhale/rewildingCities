@@ -6,6 +6,7 @@ read a path, return a dataclass.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 import yaml
@@ -178,23 +179,90 @@ def parse_experiment(path: str | Path) -> Experiment:
     )
 
 
-def parse_method(path: str | Path) -> Method:
-    """Parse a method YAML file."""
+# ── methods ──────────────────────────────────────────────────────────────────
+# seeds/schemas/method.schema.yml is the one home of a method's shape (D-213).
+# every reader of a method file comes through load_method_data, so no reader
+# reads a shape the schema does not describe, and none reads a typo as absent.
+
+METHOD_SCHEMA = Path("seeds") / "schemas" / "method.schema.yml"
+
+
+class MethodShapeError(ValueError):
+    """a method file the method schema does not describe. ~"""
+
+
+@lru_cache(maxsize=None)
+def _method_validator(project_root: str):
+    import jsonschema
+    with open(Path(project_root) / METHOD_SCHEMA, "r") as f:
+        schema = yaml.safe_load(f)
+    jsonschema.Draft202012Validator.check_schema(schema)
+    return jsonschema.Draft202012Validator(schema)
+
+
+def method_shape_problems(data, project_root: str | Path | None = None) -> list[str]:
+    """every way a method's data departs from the method schema, one line
+    each, ordered by where in the file it is. empty means the shape holds.
+
+    the schema says what may be written; it cannot say that a default is one
+    of its own options, so that rule is checked here too. ~"""
+    if project_root is None:
+        from canopy.paths import project_root as _resolve_root
+        project_root = _resolve_root()
+    if not isinstance(data, dict):
+        return [f"a method is a mapping; this file holds {type(data).__name__}"]
+    validator = _method_validator(str(project_root))
+    problems = []
+    for err in sorted(validator.iter_errors(data), key=lambda e: list(map(str, e.absolute_path))):
+        where = ".".join(str(p) for p in err.absolute_path) or "(top level)"
+        problems.append(f"{where}: {err.message}")
+    for name, choice in (data.get("choices") or {}).items():
+        if not isinstance(choice, dict):
+            continue
+        options = choice.get("options")
+        if isinstance(options, dict) and "default" in choice and choice["default"] not in options:
+            problems.append(
+                f"choices.{name}.default: {choice['default']!r} is not one of its "
+                f"options ({', '.join(map(str, options))})")
+    return problems
+
+
+def load_method_data(path: str | Path, project_root: str | Path | None = None) -> dict:
+    """read a method file and return it as written, or refuse it.
+
+    a key written twice is refused (REG-5), and so is any shape the method
+    schema does not describe, with every problem named at once. ~"""
+    from .registry import UniqueKeyLoader
     path = Path(path)
-    with open(path, 'r') as f:
-        data = yaml.safe_load(f)
+    with open(path, "r") as f:
+        data = yaml.load(f, Loader=UniqueKeyLoader)
+    problems = method_shape_problems(data, project_root)
+    if problems:
+        raise MethodShapeError(
+            f"{path} does not match {METHOD_SCHEMA} (D-213):\n  - "
+            + "\n  - ".join(problems))
+    return data
+
+
+def parse_method(path: str | Path, project_root: str | Path | None = None) -> Method:
+    """parse a method file into what a run is checked against.
+
+    a choice's options are the keys of its options mapping, in order; a
+    parametric choice has none. ~"""
+    path = Path(path)
+    data = load_method_data(path, project_root)
 
     choices = {}
-    for name, choice_data in data.get("choices", {}).items():
+    for name, choice_data in (data.get("choices") or {}).items():
         choices[name] = MethodChoice(
             name=name,
-            options=choice_data.get("options", []),
-            description=choice_data.get("description", "")
+            options=list(choice_data.get("options") or {}),
+            description=choice_data.get("description", ""),
         )
 
     return Method(
-        id=data.get("id", path.stem),
-        name=data.get("name", path.stem),
+        id=data["id"],
+        name=data["name"],
         choices=choices,
         kind=_run_kind(data.get("kind"), path),
     )

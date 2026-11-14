@@ -234,7 +234,11 @@ class OrchestrationResult:
 
 @dataclass
 class MethodChoice:
-    """A choice declared in a method file."""
+    """A choice declared in a method file.
+
+    options holds the option ids, in the method's order: the keys of the
+    method's options mapping (D-213), which are the values a run may choose.
+    A parametric choice declares a type instead, and its options are []."""
     name: str
     options: list[Any]
     description: str = ""
@@ -253,13 +257,11 @@ class Method:
 class MethodIndexEntry:
     """A method's entry in garden/methods/index.yml.
 
-    The index is the authoritative router from method id to file path.
-    Read at experiment-time by Orchestrator._resolve_method_path and at
-    catalog-time by the future discover/methods endpoint.
+    The index is the authoritative router from method id to file path, and
+    only that (D-216). A method's name and what it answers live once, in the
+    method file; a catalog reads them there, through load_method_data.
     """
     id: str
     domain: str
     path: str
-    name: str
-    answers: list[str]
     raw: dict
