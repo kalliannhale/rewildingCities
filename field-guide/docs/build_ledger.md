@@ -1139,3 +1139,24 @@ Built since D-209: place.py reads a carrier apart (count first, its persons, its
 | **INDFILE-1** | carriers.yml's hash is in libraries_counts' receipt; one file per carrier family (lean) or rerun on every addition | hand-off |
 | **SCALE-1** | place.py writes "per 1,000" while the scale lives in the declaration; carry it in each value row | hand-off |
 | **LOC-VIEW-1** | No loam view of located_in edges; needed to name the carriers in a place | hand-off |
+
+## Sprint 06 session 2: closures declared, meaning in one home (D-210 to D-212)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-210** | A library outlet's structure status is declared once, code to meaning and group: open (placed), permanent (listed, never placed: a rule) or temporary (the D-211 choice). A blank or undeclared status on a fixed outlet refuses the run; a mobile outlet's status is never judged. Maine declares every code the FY 2024 outlet layout holds except 22, whose meaning for a point is unsettled, and declares 03, which FY 2024 lists outside its files, so an older file is read by the same rule | An undeclared status was placed with the flag unknown, which assumed the outlet open, while an undeclared outlet type was refused; the two now agree. Codes and meanings from IMLS, PLS FY 2024 Data File Documentation and User's Guide (June 2026), Appendix B | A later layout adds a code, or 22 appears on a fixed outlet |
+| **D-211** | A temporary closure (STATSTRU 23) is a method choice, temporarily_closed: listed or placed. Maine chooses listed, so Atkins Memorial Library, Corinth (ME0054-002), is named in the receipt and counted nowhere, and 261 fixed outlets are placed. The primitive refuses a value outside the two, since the orchestrator only warns (CHOICE-1). Claude's lean, handed over by Kalli | IMLS leaves temporarily closed outlets out of its own tables and frame (76 outlet records in FY 2024), and a closed building is not where people look. Reasonable people could place it, so it is a choice, not a rule | A closure is known to have ended within the fiscal year, or a reader needs the building counted |
+| **D-212** | A carrier's meaning lives once, in its method's description and choices. The primitive's docstring says only how; the run header, the registry entry and the indicator rationale point to the method. A rule (the other way is simply wrong) is a test; a choice (reasonable people differ) is declared. Bookmobiles are a rule, D-208 unchanged | The bookmobile and SERVES-1 reasoning was written in five places, and choices: {} hid a meaning-changing decision in params | A method needs a reading its description cannot hold |
+
+- Wrong hypothesis: the fixed and mobile split lived in code. It was declared params all along; the drift was in the meaning, restated five times.
+- Wrong hypothesis: Maine's FY 2024 fixed outlets carried no status flags. A grep over .data returned nothing, for a reason unread; the points file holds two, Corinth (23) and Cliff Island (25).
+- Closed: STAT-1. STATSTRU 25 is survey nonrespondent (FY 2024 Documentation, Appendix B). Maine had 255 respondents among 256 libraries (its Table 1); Cliff Island Library, flagged 25, is likely that one, not checked against a list. It stays placed, flagged status_25:survey nonrespondent.
+- Code 03 does not occur in the FY 2024 outlet file: permanent closures are listed in its Appendix C, outside the data files. Older files kept such records (FY 2017: 96 outlet records closed or temporarily closed).
+- LIB-2 now reads 261 placed IMLS outlets against MEGIS's 390.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **FSCS-1** | Corinth and Cliff Island are outlets of systems the survey does not count as public libraries (C_FSCS N), and both counted under "Public library outlets" until D-211 listed Corinth. IMLS keeps such libraries in its files but out of aggregate figures and national totals, and warns of overcoverage. Place, list, or rename the indicator | session 2 |
+| **CHOICE-1** | The orchestrator only warns when a run's choice is not among its method's options, or a declared choice is missing; a meaning-changing choice can pass on a warning. Lean: an error | session 2 |
+| **SCHEMA-2** | Ten methods share a house shape (options as a list, primitives as a list, produces as an object) that seeds/schemas/method.schema.yml does not describe, interpretation is not in it, and nothing validates a method against it. Lean: the schema follows the ten, then a test validates every method | session 2 |
+| **CMAP-1** | The carrier map as a view, never a file: carrier kinds as semantic types in the domain vocabulary, sources as national catalogues in seeds/sources/, the map a query over them. Everything in seeds/ is shared by every plot, so no seeds/carriers/. Waits on reading seeds/schemas/domains/information.yml | session 2 |
