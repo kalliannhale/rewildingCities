@@ -1206,3 +1206,22 @@ Built since D-209: place.py reads a carrier apart (count first, its persons, its
 | **OWN-1** | Addition: the method's institutions input still describes libraries, town halls, schools and government sites while its type list holds library_outlet; widen it as each carrier type arrives | session 3 |
 | **SCHEMA-3** | Still open: D-222 changed what _compose_steps writes, not how wonder reads methods | session 3 |
 | **Person 3** | Addition: tiers for library_outlet, water_boundaries, forest_boundaries, neighborhood_boundaries, roads, nighttime_lights and population_density (each proposed public), and measured_composition (none yet) | session 4 |
+
+## Sprint 06, session 5: where carrier-hood lives, and the bridge to the points' type (D-223, D-224)
+
+| ID | Decision | Why | Revisit if |
+| --- | --- | --- | --- |
+| **D-223** | Carrier-hood lives in the indicator registry, as each indicator's role: carrier. IndicatorRegistry.with_role() finds them. Never on a type, in a method, or in seeds/carriers/. role carrier and derivation located_count are independent: the carrier map draws carriers whose derivation is located_count, and a carrier from a published table is read in the profile with nothing to draw | role is already required, one per indicator (D-107). A thing is a carrier for one claim and something else for another (a library in a heat or broadband analysis), so a flag on its type would be false elsewhere. The method says what is placed and why (D-212), not which barrier its count serves. seeds/carriers/ would hold a second copy of the role, and seeds gets no domain folder (session 2) | A carrier needs more than one role |
+| **D-224** | A located_count names the type it counts, derivation.counts (library_outlet), never a layer label; a layer key in a seed is refused by name. The label (imls_pls_fy2024_outlets) stays in the preparation as the edges' from_authority, and so in the receipt. count_located reads one layer's edges and names it as counted_layer. The orchestrator checks the chain before the run (_validate_located_counts): the count step reads one located_in_edges input made in this run, and the step that made it reads exactly one input of the counted type. Edges reached through $loam or $manifest are refused. carriers.yml no longer names maine_libraries as its source dataset | The label carried three facts: what is counted (the seed's), whose points (the method's and the receipt's), and which release (the receipt's only: registry.py keeps vintage out of an indicator). In the seed, each fiscal year would change carriers.yml's hash and stale every receipt that read it (INDFILE-1). Edges carry no type and primitives never see an input's type, so the check reads the declarations. Two sources of one type (LIB-2) become two receipts of one indicator, compared | Edges must be read from another run, whose points' type would have to come from receipts |
+
+- Wrong hypothesis (session 5): the layer label did no work. count_located refused edges from any other layer; the guard was kept, narrowed to one layer, and the type check moved to the orchestrator.
+- Drift fixed: preview.describe built a derivation apart from Indicator.as_declaration and dropped a passthrough's open_ended. Both now read Derivation.as_dict(), held by a test over every indicator.
+- Drift fixed: build_located_in's docstring called layer the layer's dataset id, the sentence behind session 4's wrong hypothesis.
+- Drift fixed: carriers.yml named a Maine preparation (source.dataset) in a shared seed. Nothing read it.
+- Found: no code reads seeds/sources/. census_tigerweb.yml is reference only, and an IMLS catalogue would be too unless a reader is built.
+- maine_libraries rerun; receipt read: counted_layer imls_pls_fy2024_outlets, counts library_outlet.
+- Tests: 829 to 841. New: tests/test_located_count_validation.py; cases in tests/test_located_count_indicator.py, tests/test_count_located.py, and tests/test_current_type_names.py (every located_count's counts is a current type). Commit 9b7716a.
+
+| ID | One line | Defined |
+| --- | --- | --- |
+| **CMAP-1** | Still open. Types (D-218, D-219), carrier-hood (D-223) and the bridge (D-224) done. To go: the IMLS catalogue in seeds/sources/ (reference only: no code reads the folder) and the view itself | session 2 |
