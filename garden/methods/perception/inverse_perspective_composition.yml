@@ -152,7 +152,7 @@ requires_data:
     uncertainty_without: No composition to compare; only a rectified image, unscored.
   - name: quadrat_truth
     type: tabular
-    semantic_types: [composition_falsification]
+    semantic_types: [measured_composition]
     role: An optional measured ground-truth composition.
     critical: false
     uncertainty_without: >
@@ -161,11 +161,11 @@ requires_data:
 
 produces:
   - name: falsification
-    semantic_type: composition_falsification
+    semantic_type: composition_validity
     data_category: tabular
     description: Raw/rectified/truth fractions, L1 errors, coverage, verdict. The headline.
   - name: comparison
-    semantic_type: segmenter_comparison
+    semantic_type: segmentation_metrics
     data_category: tabular
     description: RF vs deep per-class accuracy, mIoU, Kappa (secondary).
   - name: rectified

@@ -20,7 +20,6 @@ primitives:
           - forest_boundaries
           - study_area
           - neighborhood_boundaries
-          - census_tracts
           - governance_unit
           - sovereign_boundary
         required: true
@@ -301,7 +300,7 @@ primitives:
         semantic_types: [park_boundaries]
         required: true
     outputs:
-      semantic_type: park_boundaries_filtered
+      semantic_type: park_boundaries
       data_category: vector
     params:
       source_field:
@@ -363,61 +362,6 @@ primitives:
     idempotent: true  # Safe to re-run; uses cache
 
 
-  check_alignment:
-    path: validate/check_alignment.R
-    version: 1.0.0
-    description: >
-      Check spatial alignment between vector and raster data. 
-      Verifies CRS match, spatial overlap, and resolution appropriateness.
-    
-    inputs:
-      - name: vector
-        semantic_types:
-          - park_boundaries
-          - park_buffers
-          - study_area
-        required: true
-      - name: raster
-        semantic_types:
-          - land_surface_temperature
-          - ndvi
-          - land_cover
-        required: true
-    
-    outputs:
-      semantic_type: alignment_report
-      data_category: tabular
-      description: Report documenting alignment status and any issues
-    
-    params:
-      require_full_coverage:
-        type: boolean
-        default: false
-        description: Fail if vector extends beyond raster extent
-      min_overlap_percent:
-        type: number
-        default: 80
-        description: Minimum percentage of vector covered by raster
-    
-    validates:
-      - id: crs_match
-        description: Vector and raster share same CRS
-        severity_if_failed: critical
-      - id: spatial_overlap
-        description: Features fall within raster extent
-        severity_if_failed: critical
-      - id: coverage_sufficient
-        description: Overlap meets minimum threshold
-        severity_if_failed: warning
-        threshold_param: min_overlap_percent
-      - id: resolution_appropriate
-        description: Raster resolution suitable for feature sizes
-        severity_if_failed: info
-    
-    repairs: []
-    
-    may_exclude_features: false
-  
   # ────────────────────────────────────────────────────────────
   # Added Sprint 5: primitives needed by park cooling experiment
   # ────────────────────────────────────────────────────────────
@@ -633,10 +577,6 @@ primitives:
       - name: features
         semantic_types:
           - park_boundaries
-          - park_boundaries_filtered
-          - park_boundaries_reprojected
-          - park_boundaries_repaired
-          - park_boundaries_checked
           - water_boundaries
           - forest_boundaries
           - study_boundary
@@ -1236,7 +1176,7 @@ primitives:
       artifact, never place_edges (D-207). Refuses a feature id used twice,
       a placed point with no district, and an edge to a place not in places.
     inputs:
-      - {name: points, semantic_types: [institutional_node, formal_outlet], required: true}
+      - {name: points, semantic_types: [library_outlet, formal_outlet], required: true}
       - {name: faces, semantic_types: [census_faces], required: true}
       - {name: spine, semantic_types: [block_spine], required: true}
       - {name: places, semantic_types: [places], required: true}
@@ -1271,7 +1211,7 @@ primitives:
       outlet type in neither list and a feature id used twice.
     inputs:
       - {name: survey, semantic_types: [library_survey_release], required: true}
-    outputs: {semantic_type: institutional_node, data_category: vector}
+    outputs: {semantic_type: library_outlet, data_category: vector}
     params:
       member: {type: string, required: true}
       state: {type: string, required: true}

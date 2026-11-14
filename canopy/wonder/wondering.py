@@ -190,7 +190,10 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
             "id": last,
             "primitive": validate,
             "inputs": {"features": f"$manifest.{dataset}"},
-            "outputs": {"validated": f"{name}_validated"},
+            # a conformed output keeps its requirement's own type:
+            # validating or reprojecting changes a dataset's state,
+            # never what it is. state is provenance (D-220, D-222).
+            "outputs": {"validated": st},
             "params": {},
         })
         if category != "raster":
@@ -198,7 +201,7 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
                 "id": f"{last}_frame",
                 "primitive": "soil/reproject_vector",
                 "inputs": {"features": f"$steps.{last}.validated"},
-                "outputs": {"reprojected": f"{name}_reprojected"},
+                "outputs": {"reprojected": st},
                 "params": {"target_crs": target_crs},
             })
             last = f"{last}_frame"
@@ -229,14 +232,16 @@ def _compose_steps(method: dict, manifest_types: dict[str, str],
     if isinstance(produces, dict):
         # a single product: prefer its own name, else its semantic type
         name = produces.get("name") or produces.get("semantic_type") or "result"
-        outputs[name] = name
+        outputs[name] = produces.get("semantic_type") or name
     else:
         for prod in produces or []:
+            # an output's name is how a later step refers to it; its
+            # type is what the method says it is (D-222).
             if isinstance(prod, dict):
                 name = prod.get("name") or prod.get("semantic_type") or "result"
+                outputs[name] = prod.get("semantic_type") or name
             else:
-                name = str(prod)
-            outputs[name] = name
+                outputs[str(prod)] = str(prod)
     steps.append({
         "id": "analyze",
         "primitive": prim_ref,

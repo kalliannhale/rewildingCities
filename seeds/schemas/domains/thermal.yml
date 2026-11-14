@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # seeds/schemas/domains/thermal.yml
-# Module vocabulary: park / cooling analysis. Merged on top of the base file.
-# The loader stamps module = "thermal" on every type below.
+# Domain vocabulary: park / cooling analysis. Merged on top of the base file.
+# The loader stamps domain = "thermal" on every type below.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 types:
@@ -18,6 +18,22 @@ types:
       - park_boundaries_repaired
       - park_boundaries_reprojected
       - park_boundaries_filtered
+
+  water_boundaries:
+    category: vector
+    format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
+    description: >
+      Water body polygons: lakes, ponds, rivers, reservoirs. Features whose
+      cooling influence an analysis measures, beside parks and forests.
+
+  forest_boundaries:
+    category: vector
+    format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
+    description: >
+      Forest polygons. Features whose cooling influence an analysis measures,
+      beside parks and water.
 
   park_buffers:
     category: vector

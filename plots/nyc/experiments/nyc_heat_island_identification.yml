@@ -62,7 +62,7 @@ steps:
     inputs:
       raster: $manifest.land_surface_temperature
     outputs:
-      checked: lst_checked
+      checked: land_surface_temperature
     params:
       expected_crs: $parameters.target_crs
       max_nodata_percent: $parameters.max_nodata_percent
@@ -77,7 +77,7 @@ steps:
     inputs:
       features: $manifest.study_boundary
     outputs:
-      checked: boundary_checked
+      checked: study_boundary
     params: {}
 
   - id: reproject_lst
@@ -89,7 +89,7 @@ steps:
     inputs:
       raster: $steps.validate_lst.checked
     outputs:
-      transformed: lst_reprojected
+      transformed: land_surface_temperature
     params:
       target_crs: $parameters.target_crs
       method: "bilinear"
@@ -104,7 +104,7 @@ steps:
       raster: $steps.reproject_lst.transformed
       boundary: $steps.validate_boundary.checked
     outputs:
-      cropped: lst_cropped
+      cropped: land_surface_temperature
     params:
       buffer_m: 500
 

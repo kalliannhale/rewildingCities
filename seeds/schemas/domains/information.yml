@@ -76,11 +76,18 @@ types:
     # no resolution_tier yet: Person 3 declares it (Sprint 03). until then it
     # fails closed, which is right for a working file.
 
-  institutional_node:
+  library_outlet:
     category: vector
     format: geojson
-    description: Libraries, town halls, schools, government websites.
-    resolution_tier: public
+    description: >
+      One placed public library outlet as a point: a central library or a
+      branch from an IMLS Public Libraries Survey outlet file, keyed
+      FSCSKEY-FSCS_SEQ. Outlet is IMLS's word for a library building, never
+      a news outlet (formal_outlet). Which outlets are placed, and why, is
+      the library_carriers method's to say (D-212). Each carrier kind is its
+      own type (D-218); this one retires institutional_node, with no alias
+      (D-219).
+    resolution_tier: public   # IMLS public-use files, as library_survey_release
 
   relational_hub:
     category: vector

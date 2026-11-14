@@ -51,7 +51,7 @@ requires_data:
 
   - name: institutions
     type: vector
-    semantic_types: [institutional_node]
+    semantic_types: [library_outlet]
     critical: false
     role: >
       Libraries, town halls, schools and government sites ~ the channels that

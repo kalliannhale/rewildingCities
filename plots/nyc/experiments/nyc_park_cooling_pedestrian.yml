@@ -101,7 +101,7 @@ steps:
     inputs:
       features: $manifest.park_boundaries
     outputs:
-      checked: park_boundaries_checked
+      checked: park_boundaries
     params: {}
 
   - id: repair_parks
@@ -111,7 +111,7 @@ steps:
     inputs:
       features: $steps.validate_parks.checked
     outputs:
-      repaired: park_boundaries_repaired
+      repaired: park_boundaries
     params: {}
 
   - id: reproject_parks
@@ -121,7 +121,7 @@ steps:
     inputs:
       features: $steps.repair_parks.repaired
     outputs:
-      reprojected: park_boundaries_reprojected
+      reprojected: park_boundaries
     params:
       target_crs: $parameters.target_crs
 
@@ -132,7 +132,7 @@ steps:
     inputs:
       features: $steps.reproject_parks.reprojected
     outputs:
-      filtered: park_boundaries_filtered
+      filtered: park_boundaries
     params:
       min_area_ha: $parameters.min_park_area_ha
 
@@ -202,7 +202,7 @@ steps:
     inputs:
       features: $steps.filter_parks.filtered
     outputs:
-      identified: park_boundaries_filtered
+      identified: park_boundaries
     params:
       source_field: globalid
 

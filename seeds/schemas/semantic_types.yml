@@ -4,7 +4,7 @@
 #
 # Domain-specific types live in seeds/schemas/domains/<domain>.yml and are
 # merged on top of this file at load time. The loader stamps each type's
-# `module` from its source (base here; the filename stem for module files) and
+# `domain` from its source (base here; the filename stem for domain files) and
 # errors loudly on any cross-file name collision. Names stay flat.
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -33,6 +33,16 @@ types:
     description: >
       Administrative boundary of a city or municipality. Commonly used as the
       study boundary for city-wide analyses.
+
+  neighborhood_boundaries:
+    category: vector
+    format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
+    description: >
+      Neighborhood polygons within a city. Usually a statistical unit drawn
+      for tabulation (New York's Neighborhood Tabulation Areas), not a
+      government: nobody governs it, and it is no unit of accountability.
+      Where a neighborhood truly governs, it is a governance_unit.
 
   buffer_zones:
     category: vector
@@ -161,6 +171,14 @@ types:
       and other authority-bearing or contested jurisdictions.
     resolution_tier: custom
 
+  roads:
+    category: vector
+    format: geojson
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
+    description: >
+      Street centerlines as lines (New York's LION, for one): a network of
+      where streets run, not road surface. Pavement area is land cover.
+
   # ----- raster -----
 
   gi_star_z_scores:
@@ -189,6 +207,24 @@ types:
     resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
     description: Categorical land cover classification.
     measurement_type: categorical
+
+  nighttime_lights:
+    category: raster
+    format: tiff
+    resolution_tier: public   # PROPOSED (Sprint 03, D-118): environmental or analytical, no people's own information. For Person 3 to confirm
+    description: >
+      Night-time radiance, such as the VIIRS Day/Night Band annual composite:
+      a proxy for built activity and electrification, never a count of people.
+    typical_units: nW/cm2/sr
+
+  population_density:
+    category: raster
+    format: tiff
+    resolution_tier: public   # PROPOSED: a modeled aggregate surface, no person's own information. For Person 3 to confirm
+    description: >
+      People per pixel over a fixed pixel area, as a modeled surface: a source
+      such as WorldPop distributes census counts across pixels by covariates,
+      so each value is an estimate, never a count of anyone.
 
   # ----- tabular: spatial summaries -----
 

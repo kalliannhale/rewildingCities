@@ -46,7 +46,7 @@ steps:
     inputs:
       survey: $manifest.pls_fy2024
     outputs:
-      points: institutional_node
+      points: library_outlet
     params:
       member: CSV/pls_fy24_outlet_pud24i.csv
       state: ME

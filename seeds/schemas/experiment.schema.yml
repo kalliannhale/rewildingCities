@@ -279,7 +279,7 @@ $defs:
         additionalProperties:
           type: string
         examples:
-          validated: "park_boundaries_validated"
+          validated: "park_boundaries"
           buffers: "park_buffers"
       
       params:

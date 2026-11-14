@@ -1,9 +1,9 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # seeds/schemas/domains/perception.yml
-# Module vocabulary: land-cover segmentation + IPM falsification.
-# Merged on top of the base file. Loader stamps module = "perception".
+# Domain vocabulary: land-cover segmentation + IPM falsification.
+# Merged on top of the base file. Loader stamps domain = "perception".
 # The reusable CV primitives (camera_intrinsics, ground_pose, ground_photograph)
-# live in base, not here, because any imagery module reuses them.
+# live in base, not here, because any imagery domain reuses them.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 types:
@@ -58,3 +58,11 @@ types:
     description: >
       IPM falsification verdict: image-plane vs rectified land-cover fractions
       and whether the perspective view misrepresents composition.
+
+  measured_composition:
+    category: tabular
+    format: json
+    description: >
+      Land-cover fractions recorded by hand in a taped ground patch of known
+      size (a quadrat): the field truth a composition is scored against.
+      Measured, never predicted.

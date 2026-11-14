@@ -185,33 +185,11 @@ datasets:
         and a claim about ownership needs a receipt.
 
   # ── what keeps the finding honest ─────────────────────────────────────────
-  # these two are ENRICHING in the method, not critical. the analysis runs
-  # without them and says so: without institutions, a high concentration
-  # score reads as an information vacuum when libraries and town offices may
-  # be carrying the load; without access, outlet presence overstates reach.
-
-  institutional_node:
-    available: false
-    description: >
-      Libraries, town offices, schools and government sites ~ the channels
-      that carry information work no outlet census records
-    semantic_type: institutional_node
-    license: terms_unknown   # D-116
-    license_note: assembled from several state sources; terms not yet recorded
-    format: geojson
-    source:
-      type: manual
-      notes: >
-        Assemble from the Maine State Library's public library directory and
-        MEGIS town office locations. Schools via the Maine DOE facilities
-        list. Each node needs a location, a kind, and ideally whether it
-        publishes anything locally (posts minutes, runs a newsletter), since
-        a library that hosts information differs from one that originates it.
-    cache:
-      path: .data/maine_institutions.geojson
-      refresh_policy: manual
-    provenance:
-      source: Maine State Library; MEGIS; Maine Department of Education
+  # access_infrastructure is ENRICHING in the method, not critical. the
+  # analysis runs without it and says so: without access, outlet presence
+  # overstates reach. libraries, town offices and schools, which keep a
+  # concentration score from reading as a vacuum, are carriers now, each its
+  # own type and layer (D-218, D-219).
 
   access_infrastructure:
     available: false
