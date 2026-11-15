@@ -1381,3 +1381,39 @@ Closed: GEO-4 (D-240), WHERE-1 (D-241).
 Lessons:
 
 - A review keyed by what a source wrote lapses the day the source changes its words, so it never silently outlives its need.
+
+## Sprint 06, session 10, continued (2026-11-15): outlets placed by town (D-242 to D-246)
+
+| ID | Decided | Session |
+| --- | --- | --- |
+| **D-242** | Reopens D-241, whose premise moved before anything was built on it: only Local News Catalyst (30 records) and the Maine Media Ecosystem file (81) name a town, 111 of 924. A named town still places an outlet first and always wins. When no listing names one, the method's choice town_fallback says whether the publisher's office town may place it, by its town name only, never its street address, flagged office_town_not_named, with placed_by on every outlet. Default none; Maine chooses office_town. Kalli's choice | session 10 |
+| **D-243** | One outlet per exact-key group, its id made from its members: outlet:SOURCE:NAME_KEY of its first member by the declaration's source_order (the two town-naming listings first), never from row order, since group_outlet_records numbers groups by row. Two groups that would share an id add their first member's line, flagged id_by_line. A missed merge is a reviewed merge in seeds/crosswalks/outlets/outlet_reviews.yml, keyed by each record's source and name as written | session 10 |
+| **D-244** | A town is matched by name on both sides after the declared Census suffixes come off (seeds/crosswalks/places/census_name_suffixes.yml: city, town, plantation; County): lowercase, periods and apostrophes dropped, a hyphen read as a space, nothing else forgiven. A named county narrows the match; an office county never does. Two towns are towns_disagree, no match no_town_match, two matches with no county ambiguous_town, none no_town_given: each listed, never placed (a rule). A reviewed town, keyed like a merge, settles only an outlet the run would otherwise list, and refuses when the run no longer needs it | session 10 |
+| **D-245** | Operating status is read through operating_vocabulary in outlet_sources.yml: operating (yes), ceased (Ceased Operations), last_post (a value opening Last post, counted and kept with its words); a value in no list stays counted and says so. ceased_outlets is a choice, listed or counted; the default and Maine's is listed. Only Cision's 353-row file carries the column, hand-added, its author and day unrecorded | session 10 |
+| **D-246** | An outlet has no point, so build_town_located_in places it by its town code at town, county (its first five digits) and state (its first two) only, each edge carrying its place's own vintage from places; never a House or Senate district, tribal area or division. Outlets (prepare_news_outlets, type news_outlet) then edges keeps D-224's check as written. loam's carriers view leaves a table layer out by name: counted on its places, no point to draw | session 10 |
+
+- Found (run read): 460 outlets placed, 388 by office_town and 72 by named_town. Listed 65: 28 no_town_given, 21 ceased, 11 no_town_match, 3 towns_disagree, 2 ambiguous_town. Operating 312, not_given 141, last_post 7.
+- Found: the office fallback carries the map. Portland city counts 121 and Bangor city 67; Cumberland County holds 191 of Maine's 460. Mostly where publishers keep offices: chains, broadcasters, statewide outlets (OFFTOWN-1).
+- Found: Cision's outlet types run wider than local news: trade press (Fish Farming News, Commercial Fisheries News) and personal blogs sit beside newspapers, and nothing filters by medium (MEDIUM-1).
+- Found: the name rules listed rather than guessed. Blue Hil (a typo for Blue Hill, in both Cision pulls) and Hulls Cove (a village in Bar Harbor) are no_town_match; a ceased record is named only Maine (OUTREV-1).
+- Found: 454 of 546 places at state, county and town hold no placed outlet.
+- Found: none of the five listings says what day it describes; the count's time reads undated (UNDATED-1).
+- Wrong hypothesis (session 10): a reviewed seed could key on group ids. They follow row order.
+- Wrong hypothesis (session 10): an outlet placed by town would need the orchestrator's D-224 check changed. Two steps, outlets then edges, satisfy it as written.
+- Drift fixed: D-240's line omits the rule its seed and method hold: a review for an address the run places on its own, or that no row gives, refuses the run.
+- Tests: 1013 to 1065: tests/test_news_outlets.py 33, tests/test_outlet_carriers_preparation.py 11, the rest from walks over new files. Commit: the outlet carriers (D-242 to D-246).
+
+| ID | Opened | Defined |
+| --- | --- | --- |
+| **MEDIUM-1** | Which outlet types count as local news: Cision's types include trade press and personal blogs. A declared medium vocabulary and a method choice, decided before the outlet count is published | session 10 |
+| **OFFTOWN-1** | The office-town fallback places 388 of 460 outlets and concentrates them where publishers keep offices (Portland 121, Bangor 67). Whether town_fallback stays office_town, read beside MEDIUM-1 | session 10 |
+| **OUTREV-1** | The first outlet reviews: Blue Hil (Blue Hill), Hulls Cove (Bar Harbor), the 3 towns_disagree and 2 ambiguous_town outlets; and the ceased record named only Maine | session 10 |
+| **UNDATED-1** | No outlet listing declares the day it describes: record each export's day in its manifest entry, and give the count a time | session 10 |
+
+Closed: WHERE-1, reopened and settled (D-242 to D-246).
+
+Lessons:
+
+- Count before you lean: a decision about where things are rests on how many records carry a where at all.
+- A number row order hands out is never an identity: key a person's reading by what the source wrote.
+- A fallback that is honest and flagged can still carry the map: read the tallies as well as the rule.
