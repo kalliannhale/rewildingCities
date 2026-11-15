@@ -1322,3 +1322,44 @@ Lessons:
 - A snapshot with no release still states its own day; hold the copy to its own words.
 - Refusing a place hides it. A number with its note shows it in its context (Kalli).
 - A guard that refuses an empty level refuses exactly the unseen case; the empty level takes its places' own vintage, said aloud.
+
+## Sprint 06, session 9 (2026-11-15): GEO-1, clerks' offices placed through Maine's 911 points (D-234 to D-239)
+
+| ID | Decided | Session |
+| --- | --- | --- |
+| **D-234** | An address is placed first by Maine's 911 address points (site and structure points with their own placement code), the Census Geocoder second. The Census Geocoder interpolates along potential address ranges, often misses non-residential addresses, withholds some in sparse places (Title 13), and can match one batch differently twice (its FAQ, 2024-05-15). Kalli's choice B | session 9 |
+| **D-235** | The 911 points are read from the GeoLibrary's file geodatabase, a copy declared by its information cutoff and sha256 (e911_agol_20260827.gdb.zip), never paged from the live service. First decided as filtered live pulls; reopened before it was written, when matching by address made the haystack the whole state (801,786 points, past the provider's 500,000 stop). Kalli's choice B | session 9 |
+| **D-236** | Town offices come from the Secretary of State's municipal clerk list (CSV, 560 rows, with MEGIS GeoCode), and the carrier is the clerk's office: where a person registers, asks for a record, and puts a question to the town. The 911 file's classes cannot list them: the default is Residential, and Government - Municipal holds salt sheds, a landfill and a snowmobile club. Names and phones never read; Address Line 2 a note. Kalli's choice B | session 9 |
+| **D-237** | One point per distinct office, placed where the matched address point stands and named by its SITE_UID; the rows that name it are the municipalities it answers for (SERVES-1). The GeoCode is a check and a serves-key, never a placer: three townships carry their serving town's code. A rule, as D-230 | session 9 |
+| **D-238** | An exact match is house number, street and ZIP, the street spelled through USPS Publication 28 (October 2024) on both sides: directional words to abbreviations (233), a street's last word, if it follows a name, to C1's primary suffix name; the five forms C1 lists twice are resolved by name in seeds/crosswalks/addresses/usps_pub28.yml. No suffix is guessed. ZIP over town, because the GeoCode is blank on 17 rows and means two things on three. Kalli's choice A | session 9 |
+| **D-239** | A tie inside one building settles on its one candidate with no unit, building, floor or room (a rule: a suite is inside its address; placed_by building_point). A campus tie, several structures under one civic address, follows the method's choice campus_ties: Maine chooses municipal_class, its one Government - Municipal candidate placed and flagged tie_broken_by_class; otherwise listed. Every settled point carries its candidate count and spread in metres. The class never finds an office, only chooses among points one address named. Kalli's choice C | session 9 |
+
+- Found (run read): 390 offices placed for 458 of 560 rows, 42 shared: 352 exact, 6 building_point, 32 municipal_class (spreads 0.0 to 117.6 m). Listed: 74 no_match, 20 tie, 7 no_street_address, 1 number_not_read. 1,584 of 798,422 address points carry no readable key.
+- Found: of the 352 exact matches, 152 are Government - Municipal, 103 unclassed, 44 Residential, 21 Fire Station, 16 municipal police: matching by class would have lost about half.
+- Found: the clerk list names Indian Township, Penobscot Nation Voting District and Pleasant Point Voting District. Penobscot's office stands in 2760R and Pleasant Point's in 2850R; Indian Township is no_match, its list saying 8 Kennebasis Road where the 911 file holds 8 Kennebasis St (Government - Municipal, landmark Pasamaquoddy Tribal Office, the publisher's spelling). 1575R's zero is our miss.
+- Found: the misses read so far are suites on the street line, highway names (US Route One, State Hwy 193), a number letter set apart (165 B Main Street) and streets with no suffix (7 Minden, nine rows, one office): spelling on our side more than a second geocoder.
+- Found: pyproj 3.8.0 (PROJ 9.8.1) does not report the operation it chose for EPSG:26919 to EPSG:4326; the receipt says so, with the versions.
+- Found: the 911 file is not the service: 798,422 points against 801,786, older field names, blank placements and one Sturcture - Rooftop.
+- Wrong hypothesis (session 9): town offices could be read from the 911 file's classes. Its default is Residential, and Abbot's clerk's address is a Residential point beside a Municipal driveway point.
+- Wrong hypothesis (session 9): the clerk list would need a town-name crosswalk. It carries MEGIS GEOCODE.
+- Wrong hypothesis (session 9): the file and the live service held the same points. They do not.
+- Wrong hypothesis (session 9): most ties would be duplicates. Most are campuses: a town office and a fire station under one address.
+- Drift fixed: the manifest told readers soil/geocode_to_unit geocodes; build_located_in's registry listed two point types while four carriers pass through it.
+- Tests: 957 to 994 at the first run; the tie work adds 8 primitive cases and 1 preparation case. Commit: GEO-1's (D-234 to D-239).
+
+| ID | Opened | Defined |
+| --- | --- | --- |
+| **E911-1** | The GeoLibrary page reads No License Provided, Request permission to use. Ask the publisher's permission for a public, attributed, derived clerk office layer; both copies are terms_unknown, so the gate withholds until then | session 9 |
+| **GEO-2** | The Census Geocoder as second authority, decided from the listed rows; the first read leans against it | session 9 |
+| **GEO-3** | D-237's GeoCode check is not built: whether each office stands in the town its row names or its serving town needs a MEGIS GEOCODE to Census GEOID link | session 9 |
+| **GEO-4** | Person-reviewed matches: a declared row per municipality naming the SITE_UID a person read, with its evidence, placed_by reviewed. First: Indian Township (8 Kennebasis St) and 7 Minden (nine rows). Before publishing, since 1575R's zero is ours | session 9 |
+| **ARC-1** | canopy/providers/arcgis.py pages by offset with no orderByFields and no guard that the layer held still. Off this path since D-235 | session 9 |
+| **TRIBE-10** | The clerk list sees the nations' offices, so the note is carrier_seen_on_nations_land, Kalli's draft words. Two of the nations' offices are named by the state as voting districts, the state's frame; and the 911 file spells Passamaquoddy as Pasamaquoddy. Both shown only on the nations' terms | session 9 |
+
+Lessons:
+
+- A default value is a silent classifier: a class a record falls into when nobody chose one is never evidence of a use.
+- Match by address, never by class: an address does not care how its point was filed.
+- A read that cannot come back positive proves nothing: a grep on a misspelled path prints exactly what a clean grep prints.
+- When a decision's premise moves before the decision is written, reopen it then, not after.
+- A long paste can lose its middle and keep its ends: check what landed before trusting it.
