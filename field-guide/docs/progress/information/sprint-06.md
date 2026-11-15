@@ -238,3 +238,30 @@ GEO-4 (before publishing), E911-1, TRIBE-10, GEO-2, GEO-3, ARC-1, and state.md's
 - Match by address, never by class.
 - A read that cannot come back positive proves nothing.
 - A long paste can lose its middle or land twice: read its line count before trusting it.
+
+## Session 10: GEO-4, and outlets placed by town
+
+Tests: 1003 to 1065, no skips. Decisions: D-240 to D-246. Commits: 6fad8ca (GEO-4), the session 10 ledger (D-240, D-241), the outlet carriers, their ledger, the hand-off.
+
+### Built
+
+| Step | Commit | What |
+| --- | --- | --- |
+| 3 | 6fad8ca | GEO-4: reviewed clerk matches in seeds/crosswalks/clerks/maine_sos_reviewed.yml, keyed by the list's address as written; Indian Township and 7 Minden placed, placed_by reviewed (D-240) |
+| 3 | the outlet carriers commit | maine_outlet_carriers: prepare_news_outlets and build_town_located_in, the outlet_carriers method, the census_name_suffixes and outlet_reviews seeds, news_outlets_per_1000 and the news_outlet type; loam's carriers view leaves a table layer out by name (D-242 to D-246) |
+
+### Found
+
+- Clerks: 392 offices for 468 of 560 rows; 1575R reads 1, so the zero that was ours is gone. 7 Minden stands on the point labelled Greenville Police Department, so CARRY-1 keeps landmark and place_type off the map.
+- Outlets: only 111 of 924 records name a town, which reopened WHERE-1 the day it was decided.
+- Outlets: 460 placed (388 office_town, 72 named_town), 65 listed; Portland 121, Bangor 67, Cumberland County 191 of 460.
+- Cision's types include trade press and blogs; nothing filters by medium yet. None of the listings is dated.
+
+### Carried forward
+
+MEDIUM-1, OFFTOWN-1, OUTREV-1 and UNDATED-1 (the next tree), E911-1, TRIBE-10, CARRY-1, OWN-1, SRC-4, and every item session 9 carried. Each is in state.md's open items and the ledger.
+
+### Lessons
+
+- Read before the tree when a fork rests on data: one count reopened a decision written that morning.
+- Four forks, workshopped, then one holistic build: one zip, 44 new tests and a clean first run. It is the way of working from here (Kalli).
