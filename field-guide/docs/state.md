@@ -5,14 +5,14 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-15, at the hand-off closing Sprint 06's ninth build session.
+**Updated:** 2026-11-15, at the hand-off closing Sprint 06's eleventh build session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 9's commits: 8c6c645 (clerks' offices, D-234 to D-239), adfb469 (the session 9 ledger, amended once to remove a doubled paste), and this hand-off. Session 8's hand-off commit 177a7e6 was pushed with them.
-- Tests: `python -m pytest -q -rs | tail -3`. 1003 passed, no skips, at 8c6c645 (new in session 9: tests/test_clerk_office_points.py, 30; tests/test_clerk_office_preparation.py, 9; the rest from existing walks over new files). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 11's commits: the outlet tree (D-247 to D-252, with state.md brought back from the stray root file PATH that session 10's hand-off wrote it to), and this hand-off (ledger, progress report, state).
+- Tests: `python -m pytest -q -rs | tail -3`. 1091 passed, no skips, at the outlet tree commit (session 11: tests/test_news_outlets.py 33 to 58, tests/test_outlet_carriers_preparation.py 11 to 12). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-240. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-253. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
@@ -24,14 +24,14 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252, below.
 
 **Order of work, and where each step stands:**
 
 ```
  1  P-9: read the outlet files                done      answered
  2  located_in edges + end checks             done      D-207
- 3  carriers, counted per 1,000               4 of 5    libraries, schools, health centers, clerks' offices
+ 3  carriers, counted per 1,000               5 of 5    libraries, schools, health centers, clerks' offices, outlets
       libraries (IMLS PLS FY 2024)            done      D-208 to D-212: placed, counted, closures declared
       first, by Kalli's order (session 2):
         SCHEMA-2: the method schema           done      D-213 to D-217
@@ -42,9 +42,11 @@ is fixed.
       the year rule SURVEY-1 hid              done      D-231: boundary_vintage
       health centers (HRSA, 2026-11-14 copy)  done      D-232: 168 placed, 24 listed
       tribal areas counted beside a note      done      D-233; TRIBE-8, LOAM-2 closed
-      clerks' offices (GEO-1)                 done      D-234 to D-239: 390 offices, 458 of 560 rows;
-                                                        GEO-4 (reviewed matches) before publishing
-      outlets                                 not yet   waits on WHERE-1; the matcher exists (D-238)
+      clerks' offices (GEO-1)                 done      D-234 to D-239: 390 offices, 458 of 560 rows
+        GEO-4: reviewed matches               done      D-240: 392 offices, 468 rows; 1575R reads 1
+      outlets, placed by town (WHERE-1)       done      D-241 to D-246: 460 placed, 65 listed
+        closed, local news, where             done      D-247 to D-252: 90 placed, 435 listed;
+                                                        OUTREV-1 and EDITION-1 before publishing
  4  derive_margins (D-198)                    not yet
  5  language: ACS, safe harbor, section 203   not yet
  6  literacy: PIAAC county estimates (P-7)    not yet
@@ -61,7 +63,11 @@ is fixed.
 
 **Health centers, done (session 8).** Placed from HRSA's Health Center Service Delivery and Look-Alike Sites, the copy downloaded 2026-11-14 (D-232): a daily snapshot with no release, so the copy is the evidence, declared by its day and sha256, and every row's Data Warehouse Record Create Date is held to the day. Read through seeds/crosswalks/health_centers/hrsa_health_center_sites.yml (header names, codes; an undeclared code refuses). Maine: 192 rows, 168 placed (32 seasonal, 8 look-alikes, every setting), 24 listed (10 administrative, 9 mobile vans, 5 with no point). Maine counts 168, 0.123 per 1,000. No Wabanaki nation's clinic appears; HRSA's program does not see them.
 
-**Clerks' offices, done (session 9).** Town offices became the municipal clerk's office (D-236): where a person registers, asks for a record and puts a question to the town. The list is the Secretary of State's clerk CSV (560 rows, MEGIS GeoCode, five column names twice, read by position; names and phones never read). Each street address is matched exactly to Maine's 911 address points (the GeoLibrary FGDB, NG_ADDRESSES, 798,422 points, EPSG:26919) on house number, street and ZIP, the street spelled through USPS Publication 28 on both sides (D-234, D-235, D-238). One point per distinct office, named by the 911 point's SITE_UID; the rows naming it ride on it as the municipalities it answers for (D-237). Ties: one building settles on its bare point (a rule); a campus settles on its one Government - Municipal point when campus_ties says municipal_class, Kalli's choice (D-239). Maine: 390 offices for 458 rows (352 exact, 6 building_point, 32 municipal_class, spreads 0 to 117.6 m); listed 74 no_match, 20 tie, 7 no_street_address, 1 number_not_read. Penobscot Nation's office stands in 2760R and Pleasant Point's in 2850R; Indian Township is no_match (its row says 8 Kennebasis Road, the 911 file 8 Kennebasis St), so 1575R's zero is our miss until GEO-4. The note is carrier_seen_on_nations_land (TRIBE-10). pyproj 3.8.0 does not report its operation for 26919 to 4326; the receipt says so.
+**Clerks' offices, done (session 9).** Town offices became the municipal clerk's office (D-236): where a person registers, asks for a record and puts a question to the town. The list is the Secretary of State's clerk CSV (560 rows, MEGIS GeoCode, five column names twice, read by position; names and phones never read). Each street address is matched exactly to Maine's 911 address points (the GeoLibrary FGDB, NG_ADDRESSES, 798,422 points, EPSG:26919) on house number, street and ZIP, the street spelled through USPS Publication 28 on both sides (D-234, D-235, D-238). One point per distinct office, named by the 911 point's SITE_UID; the rows naming it ride on it as the municipalities it answers for (D-237). Ties: one building settles on its bare point (a rule); a campus settles on its one Government - Municipal point when campus_ties says municipal_class, Kalli's choice (D-239). A person's reading of an address no exact match places is a reviewed match (GEO-4, D-240): seeds/crosswalks/clerks/maine_sos_reviewed.yml, keyed by the list's address as written, naming one standing 911 point by SITE_UID with its evidence, day and reader; it applies only to a row the run would otherwise list and refuses the run when no longer needed. Maine: 392 offices for 468 rows (352 exact, 6 building_point, 32 municipal_class, 2 reviewed); listed 64 no_match, 20 tie, 7 no_street_address, 1 number_not_read. Penobscot Nation's office stands in 2760R, Pleasant Point's in 2850R, and Indian Township's, by review (8 Kennebasis Road written, 8 Kennebasis St in the file), in 1575R, which now reads 1. 7 Minden, nine rows, stands on the 911 point labelled Greenville Police Department; these sources do not say whether the clerk shares it, and CARRY-1 keeps landmark and place_type off the map. The note is carrier_seen_on_nations_land (TRIBE-10). pyproj 3.8.0 does not report its operation for 26919 to 4326; the receipt says so.
+
+**Outlets, placed by town (session 10, D-241 to D-246).** Only Local News Catalyst (30 records) and the Maine Media Ecosystem file (81) name a town, 111 of 926 records, which reopened WHERE-1 the day it was decided. maine_outlet_carriers restacks and regroups the five listings under its own step ids, then prepare_news_outlets writes one outlet per group (type news_outlet), its id made from its members in the declaration's source_order, never row order (D-243). A named town places it and always wins; when none is named, Maine's choice town_fallback: office_town places it by Cision's office town name, flagged (D-242). Towns are matched by name after the Census suffixes in seeds/crosswalks/places/census_name_suffixes.yml come off; two towns, no match, two matches or no town are listed (D-244). Operating status comes from operating_vocabulary in outlet_sources.yml; Maine's ceased_outlets: listed (D-245). build_town_located_in places each outlet at town, county and state only, never a district or tribal area (D-246); loam's carriers view leaves the table out by name. Reviews (merges, towns) go in seeds/crosswalks/outlets/outlet_reviews.yml, keyed by source and name as written; none yet. Maine: 460 placed (388 office_town, 72 named_town), listed 28 no_town_given, 21 ceased, 11 no_town_match, 3 towns_disagree, 2 ambiguous_town; operating 312, not_given 141, last_post 7. Portland city counts 121 and Bangor city 67, Cumberland County 191 of 460: the office fallback concentrates outlets where publishers keep offices (OFFTOWN-1), and Cision's types include trade press and blogs (MEDIUM-1). The listings are undated, so the count's time reads undated (UNDATED-1).
+
+**Outlets asked closed, local news, where (session 11, D-247 to D-252).** prepare_news_outlets now asks each outlet three things in order. Closed: operating_vocabulary, and a status written in another column through operating_elsewhere (the ecosystem file writes CLOSED in its Medium, D-251). Local news: source_kinds declares Local News Catalyst, the ecosystem file and Easton local_news_lists, whose membership is the evidence, and both Cision pulls media_databases (D-247); an outlet only a database holds is judged by media_database_types (all 20 Cision types declared, two axes, medium and audience; an undeclared type refuses; 0 declared unknown) under the choice database_alone, Maine: newspapers; a program never counts (D-248). The medium is judged before the town, so no review can place an outlet listed for its medium. Where: a named town wins; a name in statewide_names places an outlet in the state alone, scope state, one edge (D-249: Amjambo Africa); else town_fallback, Maine: office_town_unshared, where an office address two or more outlets give, compared as normalized street plus five-digit ZIP with leading zeros a spreadsheet dropped given back, is a publisher's office and the outlet is listed office_shared (D-250). Every listing declares source.collected "2026-08" in the manifest and the count's time reads "collected 2026-08", held there by a test (D-252, SRCFACT-2). Each outlet row carries scope, vouched_by, database_class and medium_as_written. Maine: 90 placed (70 named_town, 19 office_town, 1 named_state; 74 on a list's say, 16 Cision newspapers alone), 435 listed (327 medium_not_counted, 32 office_shared, 23 ceased, 23 medium_unknown, 19 no_town_given, 6 no_town_match, 3 towns_disagree, 2 ambiguous_town), 525 in all. Portland 18 (17 named), Cumberland County 29 of 90: what concentration remains is the lists' own. Turner's ten Fern Street weeklies and the Maine Trust for Local News' Portland address (20 outlets) are publishers' offices; the 32 office_shared hold publishers, one paper listed several times (Lincoln County News four times) and sections listed as outlets (The Maine Campus), which is OUTREV-1's queue and EDITION-1's question.
 
 **Tribal areas, counted beside a note (session 8, D-233).** All three carriers count the 8 Census tribal areas, each row carrying context_note: carrier_unseen_on_nations_land (libraries, health centers: all zeros) or carrier_seen_on_nations_land (schools: Indian Township, Pleasant Point and Penobscot each count 1). The notes' words are Kalli's DRAFT in seeds/notes/notes.yml, waiting on the nations' terms (P-8). Four trust lands hold 4 to 202 persons, so their rates are unstable; the count and persons travel with each rate.
 
@@ -75,7 +81,7 @@ is fixed.
 | Lacking cultural cues | languages spoken against languages carriers publish in | ACS and our own observation of outlets | town | needs our observation (OBS-1): no listing carries language |
 | Behind a paywall | share of local outlets free to read | our own observation (OBS-1), P-3 | town | needs our observation: no listing carries paywall status |
 | Outdated | outlet publishing frequency; observed last post | Cision, the ecosystem file, Easton (frequency); Cision's Still Operates? (last post) | town | acquirable from the stack |
-| Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA, the Secretary of State's clerk list through Maine's 911 points (done); outlets | every level | libraries, schools, health centers, clerks' offices counted (D-209, D-230, D-232, D-239), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
+| Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA, the Secretary of State's clerk list through Maine's 911 points, the outlet listings by town (done) | every level; outlets at town, county and state | libraries, schools, health centers, clerks' offices counted (D-209, D-230, D-232, D-239, D-240), outlets by town (D-246), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
 | Not from a trusted source | relational hubs, aggregate-only | consent-governed | as consented | needs_consent (Sprint 16) |
 
 **Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-7 (PIAAC 2023?), P-8 (section 203 on Wabanaki places; on the nations' terms). P-9 is closed.
@@ -164,6 +170,29 @@ is fixed.
 | D-238 | Exact match: house number, street, ZIP; the street spelled through USPS Pub 28 (C1 suffixes, 233 directionals) on both sides; no suffix guessed; ZIP over town |
 | D-239 | A tie in one building settles on its bare point (a rule); a campus tie follows campus_ties (Maine: municipal_class, flagged tie_broken_by_class); every settled point carries its candidate count and spread |
 
+## Decided in session 10
+
+| ID | One line |
+| --- | --- |
+| D-240 | A reviewed clerk match lives in a seed beside the clerk crosswalk, keyed by the list's address as written; it names a standing 911 point by SITE_UID with evidence, day and reader; placed_by reviewed. Kalli's choice C |
+| D-241 | An outlet is where a listing names its town; Cision's office address an attribute; Easton's coverage SERVES-1's; reopened the same session by D-242 |
+| D-242 | A named town places an outlet first and always wins; town_fallback (none, office_town) says whether the office town name may place one no listing names, flagged; Maine: office_town |
+| D-243 | One outlet per exact-key group, its id from its first member by source_order, never row order; reviewed merges keyed by source and name as written |
+| D-244 | Towns matched by name after declared Census suffixes come off; towns_disagree, no_town_match, ambiguous_town and no_town_given listed (a rule); a reviewed town settles only a listed outlet |
+| D-245 | Operating status through operating_vocabulary: operating, ceased, last_post (counted, words kept), unmapped (counted); ceased_outlets (listed, counted); Maine: listed |
+| D-246 | An outlet is placed by its town code at town, county and state only, each edge with its place's own vintage; never a district or tribal area. Outlets then edges keeps D-224's check; loam leaves a table layer out of the carriers view by name |
+
+## Decided in session 11
+
+| ID | One line |
+| --- | --- |
+| D-247 | source_kinds: a local news list's membership is the evidence an outlet is local news; a media database's declared type judges only an outlet no list holds; every type declared, an undeclared one refuses; 0 is unknown, never a class |
+| D-248 | database_alone (none, newspapers, print_and_web), default none, Maine newspapers (Kalli's go); a program never counts (a rule); the medium is judged before the town; one counted and one uncounted known type is medium_conflict |
+| D-249 | A name in statewide_names places an outlet in the state alone (scope state, one edge, build_town_located_in's scope_field); a named town wins, flagged statewide_also |
+| D-250 | An office address two or more outlets give is a publisher's office: flagged office_shared, listed under office_town_unshared (Maine's choice). Street normalized, ZIP five digits, a dropped leading zero given back (a rule) |
+| D-251 | A status a source writes outside its operating column is read through operating_elsewhere by declared words (the ecosystem file's CLOSED) |
+| D-252 | Each outlet listing declares source.collected in the manifest (2026-08, Kalli); the count's time is "collected 2026-08", held to the manifest by a test until SRCFACT-2 |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -223,19 +252,32 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | An office is placed only where a matched 911 point stands, once, by its SITE_UID; a row's code never places | prepare_clerk_office_points; tests/test_clerk_office_points.py (D-237) |
 | A match is exact on number, Pub 28 street and ZIP; a C1 form in two groups refuses unless the seed resolves it | prepare_clerk_office_points, seeds/crosswalks/addresses/usps_pub28.yml; tests/test_clerk_office_points.py (D-238) |
 | A tie settles only by the building rule or the declared campus choice, and says so on the point | prepare_clerk_office_points; tests/test_clerk_office_points.py, tests/test_clerk_office_preparation.py (D-239) |
+| A reviewed match names a standing point, only for a row the run would list, and refuses when no longer needed | prepare_clerk_office_points; tests/test_clerk_office_points.py (D-240) |
+| An outlet's id comes from its members, never row order; two that would share one add a line, flagged | prepare_news_outlets; tests/test_news_outlets.py (D-243) |
+| A named town always wins; an office town places only by the declared choice and says so | prepare_news_outlets; tests/test_news_outlets.py, tests/test_outlet_carriers_preparation.py (D-242) |
+| A town is matched only by declared names; two towns, none, two matches or no town are listed, never placed | prepare_news_outlets; tests/test_news_outlets.py (D-244) |
+| A review is keyed by source and name as written, and refuses when its words change or the run no longer needs it | prepare_news_outlets; tests/test_news_outlets.py (D-240, D-243, D-244) |
+| An outlet is counted at town, county and state only | build_town_located_in, maine_outlet_carriers; tests/test_news_outlets.py, tests/test_outlet_carriers_preparation.py (D-246) |
+| A layer placed by town is left out of the carriers view by name | canopy/loam/graph.py _drawable; tests/test_outlet_carriers_preparation.py (D-246) |
+| Every source has a kind; a database type is declared or the run refuses; a program and an unknown class count under nothing | prepare_news_outlets; tests/test_news_outlets.py (D-247, D-248) |
+| The medium is judged before the town; a review cannot place an outlet listed for its medium | prepare_news_outlets; tests/test_news_outlets.py (D-248) |
+| A statewide outlet is placed in the state alone; a state row naming a town refuses | prepare_news_outlets, build_town_located_in; tests/test_news_outlets.py (D-249) |
+| A shared office address lists or flags by the declared choice; ZIPs compared as five digits | prepare_news_outlets; tests/test_news_outlets.py (D-250) |
+| A missing value is judged one value at a time, across the csv the run writes between steps | prepare_news_outlets, build_town_located_in; tests/test_news_outlets.py (round-trip tests) |
+| The outlet count's time is the listings' declared collected month | tests/test_outlet_carriers_preparation.py (D-252) |
 
 ## Open items
 
-Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** the Maine product by 2026-12-01 to 12-11: every place's profile, all five carriers on the map with their toggles and notes (town offices and outlets included, so a geocoder is in scope), the barriers judged against the standard, the publish door, the Docker build. Claude's honest note at the hand-off: steps 4 to 11 and Sprints 07, 08 and 10 remain; at session 8's pace that does not all fit, so a cut may be needed later, and is a design choice when it comes, never a failure.
+Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** the Maine product by 2026-12-01 to 12-11: every place's profile, all five carriers on the map with their toggles and notes (town offices and outlets included, so a geocoder is in scope), the barriers judged against the standard, the publish door, the Docker build. Claude's honest note at session 11's hand-off: step 3 is done but for OUTREV-1 and EDITION-1, and steps 4 to 11 and Sprints 07, 08 and 10 remain, with 16 to 26 days to the window. At this pace a cut is likely: name it early, as a design choice, never a failure. The cut is Kalli's to make.
 
 ### Blocks delivery
 
 | ID | One line |
 | --- | --- |
-| GEO-4 | Person-reviewed matches: a declared row per municipality naming the SITE_UID a person read, with its evidence, placed_by reviewed. First Indian Township (8 Kennebasis St) and 7 Minden (nine rows). Before publishing: 1575R's zero is ours. Next session |
+| OUTREV-1 | Outlet reviews, a person's reading with evidence, day and reader, codes from read_towns: 11 town readings (The County, Lincoln News, Mount Desert Islander, Saco Bay News, Town Line, Lincoln County News, Peaks Islander, Rangeley Highlander, Sanford Springvale News, Star Herald, WEBB 98.5 FM) and 32 office_shared, several the same paper seen twice. Waits on EDITION-1 for merges. Codes read in session 11 for Augusta, Bar Harbor, China, Damariscotta, both Lincolns, Old Orchard Beach, Portland, Presque Isle, both Rangeleys, Saco, Sanford, Waterville |
+| EDITION-1 | Cision lists one paper twice (print and web, or a name variant), so a reviewed merge would hold one source twice and D-202 refuses it. A decision: whether a reviewed merge may join one source's records as editions of one outlet. Next session, with OUTREV-1 |
 | E911-1 | The 911 FGDB's page says No License Provided, Request permission to use: ask the publisher before anything derived is published; the clerk list's terms are unread too |
 | TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
-| WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage): decided before any outlet is matched. The matcher exists (D-238) |
 | OWN-1, SRC-4 | Ownership concentration redesigned over located_in; every outlet source's terms read before outlets are published |
 | P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
 | P-5, P-6, P-7 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
@@ -252,6 +294,8 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
+| BCAST-1 | A media database's radio and television stations count only where a local news list holds them; an FCC authority could say which air local news. Said in the method's interpretation |
+| SRCFACT-2 | D-192 holds a run to one input's source facts; the outlet count's time is held to its five listings by a test until a many-input step can be held the same way |
 | JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
 | GEO-2 | The Census Geocoder as second authority; the first read of the 74 misses leans against it (suites, highway names, suffix-less streets) |
 | GEO-3 | D-237's GeoCode check needs a MEGIS GEOCODE to Census GEOID link; not built |
@@ -274,9 +318,15 @@ Closed in session 8: SURVEY-1 (D-231), LOAM-2 and TRIBE-8 (D-233). Opened: CARRY
 
 Closed in session 9: GEO-1 (D-234 to D-239), TOWN-OFF-1 (D-236). Opened: E911-1, GEO-2, GEO-3, GEO-4, ARC-1, TRIBE-10.
 
+Closed in session 10: GEO-4 (D-240), WHERE-1 (D-241, reopened and settled by D-242 to D-246). Opened: MEDIUM-1, OFFTOWN-1, OUTREV-1, UNDATED-1.
+
+Closed in session 11: MEDIUM-1 (D-247, D-248), OFFTOWN-1 (D-250), UNDATED-1 (D-252). Opened: EDITION-1, BCAST-1, SRCFACT-2. OUTREV-1 carried with its queue.
+
 ## Working agreement, as it stands
 
-- Design before code, forks one at a time with a lean, nothing chosen silently. Small choices: Claude takes the lean and says so.
+- Design before code, nothing chosen silently. Small choices: Claude takes the lean and says so.
+- Four forks to a decision tree (Kalli, session 10): Claude reads what the forks rest on first, lays out the tree with a lean, the problems and how to make each better, workshops it with what the reads show, then drafts one holistic zip that fixes everything found, on Kalli's go. A fork that rests on data waits for its read. The guards stay: diff-stat counts, guarded helpers, a receipt read after every real run.
+- Questions only when the build needs the answer (Kalli, session 10).
 - Until the product is delivered (Kalli, session 7): Claude drafts all code, primitives included, as zips, once Kalli says go. Kalli drives the terminal herself to learn it: unzip, helpers, diffs, tests, dry runs, runs, receipt reads, guarded commits, push, each command explained in plain words. After delivery she returns to writing code.
 - Diagrams carry description and fun metaphors; responses stay readable, short sections (Kalli, session 7).
 - A fork lists only options that could win. An option already refused, or one nobody would choose, is not listed (Kalli, session 5).
@@ -294,7 +344,7 @@ Closed in session 9: GEO-1 (D-234 to D-239), TOWN-OFF-1 (D-236). Opened: E911-1,
 - Before changing a signature, search the keyword across every caller and test, then read each hit for meaning.
 - Read real output as its reader would before committing a telling. A receipt is read after every real run.
 - Usage: one step per chat; state.md is the only upload at the start; long output is filtered (`| tail -3`, `| grep`); Claude names exact files and asks for whole files rather than many line ranges.
-- When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name).
+- When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name). The zip is written to ~/Downloads, never the repo root: the repo is public, and session 10's two context zips sat untracked there until deleted.
 - A data check is a "read", never a "probe" (Kalli, session 8).
 - Every long paste runs alone, and after any heredoc append the expected line count is read in `git --no-pager diff --stat` before committing (session 9: one paste lost its middle, one landed twice).
 
@@ -316,7 +366,11 @@ Closed in session 9: GEO-1 (D-234 to D-239), TOWN-OFF-1 (D-236). Opened: E911-1,
 - `imls_pls_fy2024_outlets` is a located_in layer label set in maine_libraries, not a manifest dataset or a type. The indicator names `counts: library_outlet` (D-224); a `layer` key in an indicator seed is refused by name. The label reaches the receipt as count_located's counted_layer.
 - IMLS's outlet types and structure statuses live in seeds/crosswalks/libraries/imls_pls_outlets.yml (D-226). A plot never declares them; a release's member and encoding go in its manifest entry under `source:` (outlet_member, outlet_encoding), and the run's copy must agree (D-192).
 - seeds/sources/ is read by no code, by design (D-226): a catalogue there is reference only, and a test holds that imls_pls.yml's pointers exist.
-- The carriers view needs each carrier's points file to carry its receipt's id_field and a `name` property, and finds the points through the edges receipt's own provenance record (the newest without lineage_branch). A new carrier preparation writes both (D-225).
+- The carriers view needs each carrier's points file to carry its receipt's id_field and a `name` property, and finds the points through the edges receipt's own provenance record (the newest without lineage_branch). A new carrier preparation writes both (D-225). A carrier placed by town (outlets) is a table, and the view leaves it out by name (D-246).
+- pandas reserves `.flags` on a Series and a DataFrame: a column named flags is read by key, `row["flags"]`, never as an attribute.
+- group_outlet_records numbers groups by row order (g0001...): a group id is never an identity. Outlets are keyed by their members (D-243), reviews by source and name as written.
+- The outlet stack, groups and outlets are CSV in plots/maine/.data; the edges and counts are parquet. maine_outlets and maine_outlet_carriers each stack and group under their own step ids.
+- outlet_sources.yml changed in session 10 (source_order, operating_vocabulary), so maine_outlets' own receipts read stale until it is rerun; nothing reads them.
 - place.py reads indicators through IndicatorRegistry: a root with no seeds/indicators refuses, where the old raw-YAML walk returned nothing in silence.
 - `git grep` and `git diff` open a pager that can cut output at "...skipping...": use `git --no-pager grep` and `git --no-pager diff`.
 - A method is read only through parsing.load_method_data (D-213). Options are a mapping keyed by option id (an empty value allowed), requires_primitives a list of layer/name, produces a list; a field the schema does not describe is refused. canopy/wonder still reads methods raw (SCHEMA-3). A method's name lives in the method, never the index (D-216).
@@ -356,6 +410,11 @@ Closed in session 9: GEO-1 (D-234 to D-239), TOWN-OFF-1 (D-236). Opened: E911-1,
 - The Secretary of State's clerk CSV names five columns twice; pandas renames the second copies (.1). The primitive reads by position with the csv module.
 - pyogrio opens the .gdb.zip directly; leave the zip whole, it is the evidence.
 - The clerk list's GeoCode means the row's own town on most rows and its serving town on three; it is blank on 17.
+- pandas 3 reads a column of text and blanks as str, and Series.map over it turns a returned None back into NaN: never test a mapped Series value with `is None`. Judge each value with _text, one at a time. A test that hands a table from one step to the next in memory never sees this; round-trip it through the csv the run writes.
+- Cision's ZIPs lost their leading zero in a spreadsheet (Maine's 04282 reads 4282) on some rows; compare ZIPs as five digits, and never take the first five digits of a stripped ZIP+4.
+- The carriers' own stack and groups are carriers_stack_stack.csv and carriers_groups_groups.csv: a glob for *outlet* misses them and finds maine_outlets' stale copies (926 records either way; session 10's 924 was a miscount).
+- Session 10's hand-off wrote state.md to a root file named PATH: a heredoc's path is read in the diff-stat before it is trusted.
+- _sprint06/ holds read helpers only; delete it at the session's end, never commit it.
 
 ## People
 
@@ -365,17 +424,16 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs.
 
-**Next: GEO-4, person-reviewed matches, so the clerk carrier can be published honestly.** Then WHERE-1 and outlets, then step 4 (derive_margins). What exists today:
+**Next: OUTREV-1 with EDITION-1, so outlets can be published honestly.** Then step 4 (derive_margins). What exists today:
 
-- prepare_clerk_office_points places through exact matches and two tie rules, and lists every miss with its reason in the receipt (plots/maine/.envelopes/clerk_offices_points_points.envelope.json, listed_rows). Nothing a person matched by reading has a home yet.
-- The receipt's 74 no_match and 20 tie rows are the candidates. The ones that matter most: Indian Township (8 Kennebasis Road in the list, 8 Kennebasis St in the 911 file, a Government - Municipal point labelled Pasamaquoddy Tribal Office), whose miss makes 1575R read zero; and 7 Minden, Greenville (nine rows, one office, no suffix).
-- Pattern to follow: owner_crosswalk (every merge a row a person can read) and the IMLS manual-geocode flag (how a point was made travels with it).
+- maine_outlet_carriers places 90 outlets and lists 435, each with its reason, in plots/maine/.envelopes/carriers_outlets_outlets.envelope.json (placed_by, scope, vouched_by_a_list, database_alone_classes, listed_reasons, listed_outlets). Every outlet row says where, how, and on whose say it is local news (plots/maine/.data/carriers_outlets_outlets.csv).
+- seeds/crosswalks/outlets/outlet_reviews.yml is empty. A review is Kalli's reading, with evidence she checked (masthead, the outlet's own site, the FCC for a station), the day and the reader; Claude's guesses are never evidence.
 
-Questions the next session answers, one at a time with a lean:
+Questions the next session answers, as one tree, each read first:
 
-1. Where a reviewed match lives: a plot file (Maine's own reading of Maine's rows) or a seed. It names one municipality, one SITE_UID, the evidence read, the day and who read it.
-2. What a reviewed match may do: only name a point that already stands (never coordinates typed in), and only for a row the run listed. A reviewed row for a municipality the run now places exactly is refused, so a review never silently outlives its need.
-3. How it shows: placed_by reviewed, with the evidence on the point, beside exact, building_point and municipal_class.
-4. Whether the misses' spelling patterns (suites per Pub 28 C2, a detached number letter, highway names) deserve rules before reviews, or reviews first and rules from what reviews teach.
+1. EDITION-1: may a reviewed merge join one source's records as editions or sections of one outlet (Lincoln County News four times, The Maine Campus and its pages)? Read the 32 office_shared outlets' groups first.
+2. OUTREV-1, merges: the same paper seen twice (Rangeley Highlander, Star Herald, Lincoln County News, the Press Herald's Cision name).
+3. OUTREV-1, towns: the 11 named-town readings and the publishers' papers (the Franklin Journal, Rumford Falls Times, Turner's weeklies), with codes from _sprint06/read_towns.py extended to the towns needed.
+4. Whether the 19 office_town outlets each deserve a person's read before publishing, or the flag on the map says enough.
 
-What session 9 found, to build on: a default value is a silent classifier, so a class is never evidence of a use; match by address, never by class, because an address does not care how its point was filed; a read that cannot come back positive proves nothing; when a decision's premise moves before it is written, reopen it then; and a long paste can lose its middle or land twice, so its line count is read before it is trusted.
+What session 11 found, to build on: test the shapes the data holds, never the shapes imagined (a four-digit ZIP, a csv between steps); a list's membership is stronger evidence than a database's label; a shared address means a publisher, one paper twice, or a section, and only a person can tell which; and count before closing a fork, since Turner reopened one that looked done.

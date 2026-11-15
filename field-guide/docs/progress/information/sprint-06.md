@@ -265,3 +265,30 @@ MEDIUM-1, OFFTOWN-1, OUTREV-1 and UNDATED-1 (the next tree), E911-1, TRIBE-10, C
 
 - Read before the tree when a fork rests on data: one count reopened a decision written that morning.
 - Four forks, workshopped, then one holistic build: one zip, 44 new tests and a clean first run. It is the way of working from here (Kalli).
+
+## Session 11: closed, local news, where
+
+Tests: 1065 to 1091, no skips. Decisions: D-247 to D-252. Commits: the outlet tree, the hand-off.
+
+### Built
+
+| Step | Commit | What |
+| --- | --- | --- |
+| 3 | the outlet tree commit | prepare_news_outlets asks each outlet closed, local news, where: source_kinds, media_database_types and database_alone (Maine: newspapers), statewide outlets in the state alone, shared offices listed (office_town_unshared), statuses written elsewhere, listings collected 2026-08; build_town_located_in's scope_field; pandas 3 missing values judged one at a time; state.md back from PATH (D-247 to D-252) |
+
+### Found
+
+- Outlets: 460 placed became 90 (70 named, 19 office, 1 statewide); 435 listed, 525 in all. Portland 121 to 18, Turner 11 to 0, Cumberland County 29 of 90.
+- Cision lists programs beside stations, sections beside papers and editions as outlets; 23 of its rows read 0.
+- A shared office is a publisher (Maine Trust for Local News, 20; Turner Publications, 11), one paper twice, or a section.
+- The stack holds 926 records, not 924.
+
+### Carried forward
+
+OUTREV-1 with EDITION-1 (next), BCAST-1, SRCFACT-2, and every item in state.md's open items.
+
+### Lessons
+
+- Test the shapes the data holds, never the shapes imagined.
+- A test that never crosses the file the run crosses cannot fail the way the run fails.
+- A list's membership is stronger evidence than a database's label.

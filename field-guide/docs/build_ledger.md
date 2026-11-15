@@ -1417,3 +1417,47 @@ Lessons:
 - Count before you lean: a decision about where things are rests on how many records carry a where at all.
 - A number row order hands out is never an identity: key a person's reading by what the source wrote.
 - A fallback that is honest and flagged can still carry the map: read the tallies as well as the rule.
+
+## Sprint 06, session 11 (2026-11-15): the outlet carrier's last tree
+
+Commits: the outlet tree (D-247 to D-252, state.md back from PATH), and the hand-off. Tests 1065 to 1091.
+
+### Decisions
+
+- D-247: source_kinds. Local News Catalyst, the Maine Media Ecosystem file and Easton are local_news_lists, whose membership is the evidence an outlet is local news; both Cision pulls are media_databases. An outlet only a database holds is judged by media_database_types: all 20 Cision types declared, two axes (medium, audience); an undeclared type refuses the run; 0 is a placeholder, declared unknown, never a class.
+- D-248: the choice database_alone (none, newspapers, print_and_web), default none; Maine chooses newspapers (Kalli's go), since Cision's "Online, consumer" holds Trailspace.com, a gear-review site. A program never counts under any option (a rule: it airs on a station). The medium is judged before the town; one counted and one uncounted known type is medium_conflict; types that say nothing are medium_unknown.
+- D-249: a name in statewide_names (Statewide) places an outlet in the state alone, scope state, one edge; a named town wins, flagged statewide_also. build_town_located_in gains scope_field. Amjambo Africa, P-9's seven-language example, now counts for Maine.
+- D-250: an office address two or more outlets give is a publisher's office, flagged office_shared; listed under the new option office_town_unshared, Maine's choice. Street normalized as a name is, ZIP five digits, a leading zero a spreadsheet dropped given back (a rule; no US ZIP is shorter). Closes OFFTOWN-1.
+- D-251: operating_elsewhere reads a status a source writes outside its operating column, by declared words: the ecosystem file's CLOSED in Medium (2 records).
+- D-252: each outlet listing declares source.collected "2026-08" (Kalli: collected at the end of summer 2026); the count's time is "collected 2026-08", held to the manifest by a test. A compiled list describes a day before it. Closes UNDATED-1.
+
+### Found
+
+- Cision's Outlet Type mixes medium and audience, lists radio and TV programs beside their stations and sections beside their papers, and holds non-media values (Maine.gov, Industry research organization) and a placeholder 0 on 23 rows.
+- 382 of session 10's 460 placed outlets were held by Cision alone: MEDIUM-1 and OFFTOWN-1 were one question, what a database alone may do.
+- The ecosystem file writes CLOSED in its Medium column.
+- Maine: 90 placed (70 named_town, 19 office_town, 1 named_state; 74 on a list's say, 16 Cision newspapers alone), 435 listed (327 medium_not_counted, 32 office_shared, 23 ceased, 23 medium_unknown, 19 no_town_given, 6 no_town_match, 3 towns_disagree, 2 ambiguous_town); 525 in all, as in session 10. Portland 121 to 18 (17 named); Cumberland County 29 of 90; Turner 11 to 0.
+- Turner's 11 were Turner Publications' free weeklies, all at one Fern Street address with ZIP 4282. The Maine Trust for Local News' Portland address holds 20 outlets.
+- A shared address means a publisher, one paper listed several times (Lincoln County News four times), or sections listed as outlets (The Maine Campus).
+- The stack holds 926 records (353 + 412 + 50 + 30 + 81); session 10's 924 was a miscount.
+- Session 10's hand-off wrote state.md to a root file named PATH; field-guide/docs/state.md still held session 9's words.
+
+### Wrong hypotheses
+
+- That the first run's tests covered statewide outlets: they handed the table from one step to the next in memory. The run writes a csv between the steps; pandas 3 reads text and blanks as str, and Series.map turned a returned None back into NaN, so a missing town read as "nan". The same trap let a blank vintage through silently in build_town_located_in.
+- That Turner's publisher wrote its address several ways: it wrote it one way, and the ZIP had lost its leading zero, so _zip5 (five digits or nothing) never compared it. The test fixtures held "04106", a shape imagined, not read.
+- That about 125 outlets would place: 105, then 90 once ZIPs compared.
+- That D-202's "one source never lists one outlet twice" held for a media database: Cision lists editions and name variants separately (EDITION-1).
+
+### Opened and closed
+
+- Closed: MEDIUM-1 (D-247, D-248), OFFTOWN-1 (D-250), UNDATED-1 (D-252).
+- Opened: EDITION-1 (a reviewed merge of one source's editions collides with D-202; a decision, with OUTREV-1), BCAST-1 (stations no list holds are not counted; an FCC authority could say which air local news), SRCFACT-2 (D-192 holds one input's facts; the outlet time is held by a test until a many-input step can be held).
+- Carried: OUTREV-1, now 11 town readings and 32 office_shared outlets, codes read for the town readings.
+
+### Lessons
+
+- Test the shapes the data holds, never the shapes imagined: a four-digit ZIP, a blank beside text, a csv between steps.
+- A test that never crosses the file the run crosses cannot fail the way the run fails.
+- A list's membership is stronger evidence than a database's label.
+- Count before closing a fork: Turner reopened one that looked done.
