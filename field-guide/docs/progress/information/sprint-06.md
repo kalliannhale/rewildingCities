@@ -156,3 +156,30 @@ STAND-1 (new), CHAIN-1 (34 records in libraries_counts_values), TIERREAD-1, QUAD
 - A warning's advice is code too: check it against the rules it names.
 - Read origin before pushing, and commit through guarded blocks only: `git add .` put one commit's file under another commit's message.
 - One experiment per question: a receipt that borrows a bigger question says something its numbers do not.
+
+## Session 8: boundary_vintage, health centers, tribal areas beside their notes
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| 14f3100 | boundary_vintage on every count row, from its edges; loam reads it for our counts, so `time` says only when (D-231, SURVEY-1 closed); libraries and schools rerun |
+| f6eecef | health centers from HRSA's 2026-11-14 copy: 168 Maine sites placed, 24 listed with reasons; seasonal and look-alike as adjectives; seeds/sources/hrsa.yml (D-232) |
+| the D-233 commit | tribal areas counted beside a note on every row; loam refuses only the ACS there and judges each publisher on its own levels; all three carriers rerun (TRIBE-8, LOAM-2 closed) |
+
+### Found
+
+- No Wabanaki nation's clinic appears in HRSA's file, by name or by town; the PLS sees no reservation library; NCES sees the three BIE schools, each now counted on its reservation.
+- HRSA's 10 administrative Maine sites carry setting Unknown or All Other Clinic Types; Form 5B asks no setting of an administrative site.
+- The 5 Maine rows with site state XX are service sites with no address or point, not withheld shelters.
+- loam's carriers view drops every point property but id and name (CARRY-1).
+
+### Carried forward
+
+CARRY-1 (blocks the map), the tiers, the Contract 4 questions, and every item in state.md's open items, now sorted for delivery.
+
+### Lessons
+
+- A rule written for one source travels unless it names its reason without its source.
+- A column with two meanings hides behind a coincidence until a third source breaks it.
+- Refusing a place hides it; a number with its note shows it in context.
