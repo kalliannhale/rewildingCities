@@ -1,0 +1,24 @@
+# ============================================================================
+# seeds/crosswalks/places/census_name_suffixes.yml
+# ============================================================================
+# the words the Census puts after a place's name, which a person writing the
+# name leaves off: the places table names Maine's towns "Auburn city" and
+# "Durham town", and its counties "Androscoggin County", where a listing
+# writes Auburn, Durham, Androscoggin. shared by every plot that compares a
+# written name with a Census one; a run passes it whole through
+# $crosswalks.census_name_suffixes (D-206).
+#
+# one suffix comes off, and only as a last word after a space, on both
+# sides alike, so "Coplin Plantation" and "Coplin plantation" meet. a
+# suffix not listed is kept: Maine's unorganized territories end in UT, and
+# no listing names a town that way, so a written UT name matches nothing
+# and is listed rather than forced. add a state's own suffixes here when a
+# plot needs them, never in a primitive.
+# ============================================================================
+
+from: "Census county subdivision and county names, as the places table holds them"
+to: "the name as a person writes it"
+
+suffixes:
+  cousub: [city, town, plantation]
+  county: [County]

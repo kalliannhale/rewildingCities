@@ -1,0 +1,114 @@
+# ============================================================================
+# plots/maine/preparations/maine_outlet_carriers.yml
+# ============================================================================
+# a preparation (D-98): Maine's local news outlets as carriers (Sprint 06,
+# step 3, the fifth carrier; WHERE-1). what is placed and why: the
+# outlet_carriers method (D-212).
+#   five listings -> one stack, then groups by exact key (D-201, D-202)
+#   the groups    -> one outlet per group, placed by town; every outlet not
+#                    placed listed with why
+#   the outlets   -> located_in edges to town, county and state only (D-246)
+#   the edges     -> outlets per 1,000 people, every place at those levels
+# the stack and groups repeat maine_outlets' first two steps under their own
+# ids, so neither run writes over the other. the places and spine are read
+# through loam ($loam., LOAM-1), so they are judged fresh first (D-166).
+# how each listing is read, what a status means, whose record names an
+# outlet, the Census suffixes and the reviews are crosswalks every plot
+# shares, never written here (D-226).
+# ============================================================================
+
+id: maine_outlet_carriers
+name: "Maine's local news outlets, placed by town"
+kind: preparation
+description: >
+  Groups the records of five outlet listings, writes each group once as an
+  outlet in the town its listings give, places each outlet in its town,
+  county and state, counts outlets per 1,000 people, and lists every outlet
+  that is not placed, with its reason.
+
+method:
+  ref: $methods/information/outlet_carriers
+
+city: maine
+manifest: ../manifest.yml
+
+# an outlet no listing names a town for is placed by its publisher's office
+# town, flagged (D-242), and an outlet a listing marks ceased is listed,
+# never counted (D-245). Kalli's choices, session 10
+choices:
+  town_fallback: office_town
+  ceased_outlets: listed
+parameters: {}
+
+steps:
+  - id: carriers_stack
+    primitive: soil/stack_outlet_sources
+    inputs:
+      cision: $manifest.outlets_cision
+      cision_raw: $manifest.outlets_cision_raw
+      easton: $manifest.outlets_easton
+      local_news_catalyst: $manifest.outlets_lnc
+      maine_media_ecosystem: $manifest.outlets_mme
+    outputs:
+      stack: outlet_stack
+    params:
+      declaration: $crosswalks.outlet_sources
+
+  - id: carriers_groups
+    primitive: soil/group_outlet_records
+    inputs:
+      stack: $steps.carriers_stack.stack
+    outputs:
+      groups: outlet_groups
+    params: {}
+
+  - id: carriers_outlets
+    primitive: soil/prepare_news_outlets
+    inputs:
+      grouped: $steps.carriers_groups.groups
+      places: $loam.places
+    outputs:
+      outlets: news_outlet
+    params:
+      sources: $crosswalks.outlet_sources
+      names: $crosswalks.census_name_suffixes
+      reviews: $crosswalks.outlet_reviews
+      town_fallback: $choices.town_fallback
+      ceased_outlets: $choices.ceased_outlets
+      state_fips: "23"
+
+  - id: carriers_located_in
+    primitive: soil/build_town_located_in
+    inputs:
+      features: $steps.carriers_outlets.outlets
+      places: $loam.places
+    outputs:
+      edges: located_in_edges
+    params:
+      # the edges' label: whose listings. the indicator counts news_outlet,
+      # the outlets' type; the orchestrator checks the two agree (D-224)
+      layer: maine_outlet_listings_news_outlets
+      id_field: feature_id
+      town_field: town_code
+      state_fips: "23"
+
+  - id: carriers_counts
+    primitive: soil/count_located
+    inputs:
+      edges: $steps.carriers_located_in.edges
+      spine: $loam.block_spine
+      places: $loam.places
+    outputs:
+      values: indicator_values
+    params:
+      indicator: $indicators.news_outlets_per_1000
+      # town, county and state only: an outlet placed by town has no point,
+      # so no district or tribal area can be said of it (D-246). a level
+      # here that no edge reaches would read zero everywhere, so the levels
+      # are held to these three by tests/test_outlet_carriers_preparation.py
+      levels: [state, county, cousub]
+      # none of the five listings declares the day it describes (SRC-4), so
+      # time says so rather than invent one. which boundaries the count sits
+      # on travels in each row's boundary_vintage (D-231)
+      time: undated
+      published_by: rewildingcities

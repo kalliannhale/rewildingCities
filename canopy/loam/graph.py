@@ -77,7 +77,10 @@ and where carriers stand (CMAP-1, D-225):
                   record reads exactly one input of the counted type, and its
                   path is the points file. a point's places are its rows in
                   located_in. an indicator whose points cannot be found this
-                  way is left out by name, and the view is made from the rest
+                  way is left out by name, and the view is made from the rest.
+                  a layer placed by town (a table, never GeoJSON) is left out
+                  by name too: it has no point to draw, and its count stands
+                  on its places (D-246)
 """
 
 from __future__ import annotations
@@ -498,6 +501,17 @@ def _plant_located_in(loam, plot: str, root: Path, report: dict) -> list[dict]:
     return included
 
 
+# the files a carrier's points can be drawn from: _points_sql reads GeoJSON
+POINT_SUFFIXES = (".geojson", ".json")
+
+
+def _drawable(path: Path) -> bool:
+    """whether a carrier layer's file holds points to draw. a table (csv,
+    parquet) is a layer placed by town, counted on places, never drawn
+    (D-246)."""
+    return Path(path).suffix.lower() in POINT_SUFFIXES
+
+
 def _points_sql(path: Path, id_field: str) -> str:
     return (f"SELECT CAST(f.properties.\"{id_field}\" AS VARCHAR) AS feature_id, "
             f"CAST(f.properties.\"name\" AS VARCHAR) AS name, "
@@ -561,6 +575,11 @@ def _plant_carriers(loam, plot: str, root: Path, edges: list[dict], report: dict
         path = _on_disk(root, points_input.get("path"))
         if not path.is_file():
             left_out[ind.id] = f"{item['receipt']} read its points from {path}, not on disk"
+            continue
+        if not _drawable(path):
+            left_out[ind.id] = (f"{item['receipt']} placed {counted} from a table "
+                                f"({path.name}), by town, not by point: it is counted on "
+                                f"its places and has no point to draw (D-246)")
             continue
         points = [r for tier in CONFORMED_TIERS
                   for r in loam.find(semantic_type=counted, plot=plot, tier=tier)

@@ -41,6 +41,8 @@ methods:
       path: information/legislative_seats.yml
     - id: library_carriers
       path: information/library_carriers.yml
+    - id: outlet_carriers
+      path: information/outlet_carriers.yml
     - id: outlet_reconciliation
       path: information/outlet_reconciliation.yml
     - id: ownership_concentration_analysis

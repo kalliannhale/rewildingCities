@@ -1362,3 +1362,56 @@ primitives:
       time: {type: string, required: true}
       published_by: {type: string, required: true}
       tribal_note: {type: string, required: false}
+
+  # ── news outlets, placed by town (Sprint 06, step 3, the fifth carrier) ───
+
+  prepare_news_outlets:
+    path: transform/prepare_news_outlets.py
+    version: 1.0.0
+    description: >
+      One row per local news outlet: each group of outlet records written
+      once, with an id made from its members in the declaration's
+      source_order, never row order (D-243), in the town its listings give.
+      A named town places it (D-241); when none is named, the choice
+      town_fallback says whether its publisher's office town may (D-242).
+      Towns are matched by name after the declared Census suffixes come off,
+      a named county narrowing; two towns, no match, two matches or no town
+      are listed with their reasons (D-244). Operating status is read
+      through a declared vocabulary, and ceased_outlets says what a ceased
+      outlet becomes (D-245). A reviewed merge or town, keyed by a record's
+      source and name as written, applies only where the run would
+      otherwise list, and refuses when the run no longer needs it. What is
+      placed and why is the outlet_carriers method's (D-212).
+    inputs:
+      - {name: grouped, semantic_types: [outlet_groups], required: true}
+      - {name: places, semantic_types: [places], required: true}
+    outputs: {semantic_type: news_outlet, data_category: tabular}
+    params:
+      sources: {type: object, required: true}
+      names: {type: object, required: true}
+      reviews: {type: object, required: false}
+      town_fallback: {type: string, required: true}
+      ceased_outlets: {type: string, required: true}
+      state_fips: {type: string, required: true}
+
+  build_town_located_in:
+    path: transform/build_town_located_in.py
+    version: 1.0.0
+    description: >
+      located_in edges for a layer placed by town (Contract 3, D-246): every
+      feature to the town its row names, and through the town's code to its
+      county and state, weights 1 and 1, each edge carrying its place's own
+      vintage from the places table (D-231). Never a House or Senate
+      district, tribal area or civil division, since a town can lie across
+      several and the feature has no point. Its own artifact, beside
+      build_located_in's (D-207). Refuses a feature with no town, a town not
+      among the state's places, and a feature id used twice.
+    inputs:
+      - {name: features, semantic_types: [news_outlet], required: true}
+      - {name: places, semantic_types: [places], required: true}
+    outputs: {semantic_type: located_in_edges, data_category: tabular}
+    params:
+      layer: {type: string, required: true}
+      id_field: {type: string, required: true}
+      town_field: {type: string, required: true}
+      state_fips: {type: string, required: true}

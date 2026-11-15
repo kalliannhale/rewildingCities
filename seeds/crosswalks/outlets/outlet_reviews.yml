@@ -1,0 +1,51 @@
+# ============================================================================
+# seeds/crosswalks/outlets/outlet_reviews.yml
+# ============================================================================
+# reviewed outlet records (D-243, D-244): a person's reading of the outlet
+# listings where exact keys and declared names cannot decide. shared by
+# every plot that reads these listings; a run passes it whole as `reviews`
+# through $crosswalks.outlet_reviews (D-206), and freshness sees an edit.
+#
+# every review is keyed by a record's source and its name as written, never
+# by a group id or a line: group ids follow row order and lines follow a
+# copy, so a review keyed by either would follow the wrong outlet after a
+# fresh copy. keyed by the words, a review lapses when the words change.
+#
+# what a review may do, held by prepare_news_outlets:
+#   merges  join the groups of two or more records a person read as one
+#           outlet. refused when the records are already one group, when no
+#           record or two records give a name, or when the joined group
+#           would hold one source twice (D-202)
+#   towns   name the town (its ten-digit county subdivision code) a person
+#           read for one record's outlet, only when the run would otherwise
+#           list it as towns_disagree, no_town_match, ambiguous_town or
+#           no_town_given. refused when the run places it on its own, when
+#           it is listed as ceased, or when no record gives the name
+#
+# each review names its evidence, the day it was read and who read it:
+#
+#   merges:
+#     - records:
+#         - {source: cision, name: "..."}
+#         - {source: local_news_catalyst, name: "..."}
+#       evidence: >
+#         ...
+#       read_on: "YYYY-MM-DD"
+#       read_by: ...
+#   towns:
+#     - source: local_news_catalyst
+#       name: "..."
+#       town_code: "23........"
+#       evidence: >
+#         ...
+#       read_on: "YYYY-MM-DD"
+#       read_by: ...
+#
+# none yet: the first run's receipt lists the outlets worth a person's read.
+# ============================================================================
+
+from: "Maine outlet listing records that exact keys and declared names cannot decide"
+to: "rewildingCities: the merge or town a person read, with the evidence"
+
+merges: []
+towns: []

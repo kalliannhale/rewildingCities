@@ -57,6 +57,19 @@ types:
       records that share a key, not a judgment that they are one outlet.
     # no resolution_tier yet: Person 3 declares it, as outlet_stack.
 
+  news_outlet:
+    category: tabular
+    format: csv
+    description: >
+      One local news outlet per row, written once from a group of listing
+      records, with an id made from its members (D-243), placed by the code
+      of the town its listings give, never by a point (D-241, D-242): the
+      town, how it was placed (named_town, office_town, reviewed), the words
+      that placed it, its operating status and every record behind it.
+      Counted through located_in edges at town, county and state only
+      (D-246).
+    # no resolution_tier yet: Kalli declares it, as outlet_stack (Tiers).
+
   outlet_disagreements:
     category: tabular
     format: csv

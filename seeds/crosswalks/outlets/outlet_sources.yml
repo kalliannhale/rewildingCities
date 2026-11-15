@@ -34,10 +34,30 @@
 # frequency maps a raw value to a cycle only by exact match after trimming.
 # a value in no list stays unmapped and says so. a county not in `counties`
 # is flagged in location_note, with or without a trailing " County". ~
+#
+# read by prepare_news_outlets (D-243, D-245), not by the stack:
+#   ~ source_order: whose record names an outlet. an outlet's id is made
+#     from its first member in this order, never from row order, so a fresh
+#     copy of one listing renumbers no other outlet. the sources that name
+#     a town come first
+#   ~ operating_vocabulary: what a source's operating status means. only
+#     Cision's 353-row file carries one, a hand-added Still Operates?
+#     column whose author and day are not recorded (SRC-4), so it is weak
+#     evidence, and every outlet it marks ceased is listed by name. compared
+#     after lowercasing and collapsing spaces. a value opening with
+#     last_post_prefix is quiet, not closed: it is counted and keeps its
+#     words. a value in no list stays counted and says so
 
 counties: [Androscoggin, Aroostook, Cumberland, Franklin, Hancock, Kennebec,
            Knox, Lincoln, Oxford, Penobscot, Piscataquis, Sagadahoc, Somerset,
            Waldo, Washington, York]
+
+source_order: [local_news_catalyst, maine_media_ecosystem, cision, cision_raw, easton]
+
+operating_vocabulary:
+  operating: ["yes"]
+  ceased: ["Ceased Operations"]
+  last_post_prefix: "Last post"
 
 frequency_vocabulary:
   daily: ["Daily", "Daily (Mon-Fri)", "5 Days", "6 Days"]
