@@ -1363,3 +1363,21 @@ Lessons:
 - A read that cannot come back positive proves nothing: a grep on a misspelled path prints exactly what a clean grep prints.
 - When a decision's premise moves before the decision is written, reopen it then, not after.
 - A long paste can lose its middle and keep its ends: check what landed before trusting it.
+
+## Sprint 06, session 10 (2026-11-15): GEO-4, reviewed clerk matches; WHERE-1, where an outlet is (D-240, D-241)
+
+| ID | Decided | Session |
+| --- | --- | --- |
+| **D-240** | A person's reviewed match lives in a seed beside the clerk crosswalk (seeds/crosswalks/clerks/maine_sos_reviewed.yml), keyed by the list's address as written, so a review lapses when the list writes the address differently. A review names a 911 point that already stands, by SITE_UID, never typed coordinates, with the evidence read, the day and who read it. The point carries placed_by reviewed with review_evidence, review_read_on and review_read_by, beside exact, building_point and municipal_class. First two: Indian Township (the list's 8 Kennebasis Road, the 911 file's 8 Kennebasis St) and 7 Minden, Greenville (nine rows, one office). Kalli's choice C | session 10 |
+| **D-241** | An outlet is where a source names its town: named_town, from Local News Catalyst and the Maine Media Ecosystem file. Cision's office address rides on the outlet as an attribute and is never counted (Cision puts the Advertiser Democrat, a Norway paper, in South Portland); Jo Easton's served_raw waits for SERVES-1. A named town matches a town in the geography graph exactly after trimming and case, within the named county when one is given; a miss is listed with its reason. An outlet no source names a town for is listed no_named_town and never placed from its office. D-238's address matcher is not used for outlets. Kalli's choice (named town) | session 10 |
+
+- Found (run read): 392 offices placed for 468 of 560 rows: 352 exact, 6 building_point, 32 municipal_class, 2 reviewed. Listed 92: 64 no_match, 20 tie, 7 no_street_address, 1 number_not_read. All ten reviewed rows came from no_match.
+- Found: 1575R reads 1, 1.316 per 1,000 of 760 persons, beside carrier_seen_on_nations_land. The zero that was ours is gone.
+- Found: 7 Minden's one point is classed Law Enforcement -Municipal, landmark Greenville Police Department; these sources do not say whether the clerk shares the building. When CARRY-1 passes point properties to the map, landmark and place_type stay off: they would put a police department's name on a clerk's office and the publisher's spelling of a nation's name in public.
+- Tests: 1003 to 1013; the two clerk test files hold 49. Commit: GEO-4's (6fad8ca).
+
+Closed: GEO-4 (D-240), WHERE-1 (D-241).
+
+Lessons:
+
+- A review keyed by what a source wrote lapses the day the source changes its words, so it never silently outlives its need.
