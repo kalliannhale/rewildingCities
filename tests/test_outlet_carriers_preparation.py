@@ -1,7 +1,8 @@
 """the maine_outlet_carriers preparation agrees with its method, registry,
-crosswalks and indicator (Sprint 06, step 3, the fifth carrier; D-241 to
-D-246). an outlet is placed by town, so it is counted at town, county and
-state only, and loam's carriers view leaves its table out by name."""
+crosswalks, indicator and manifest (Sprint 06, step 3, the fifth carrier;
+D-241 to D-252). an outlet is placed by town, or in the state alone, so it
+is counted at town, county and state only, and loam's carriers view leaves
+its table out by name. the count's time is the listings' collected month."""
 
 from pathlib import Path
 
@@ -33,16 +34,19 @@ def test_the_steps_run_in_order_under_their_own_ids():
     assert not {s["id"] for s in other} & set(_steps())
 
 
-def test_both_choices_are_declared_in_the_method_and_made_in_the_run():
+def test_every_choice_is_declared_in_the_method_and_made_in_the_run():
     method = yaml.safe_load(METHOD.read_text())
-    assert set(method["choices"]["town_fallback"]["options"]) == {"none", "office_town"}
-    assert method["choices"]["town_fallback"]["default"] == "none"
-    assert set(method["choices"]["ceased_outlets"]["options"]) == {"listed", "counted"}
+    c = method["choices"]
+    assert set(c["town_fallback"]["options"]) == {"none", "office_town", "office_town_unshared"}
+    assert set(c["ceased_outlets"]["options"]) == {"listed", "counted"}
+    assert set(c["database_alone"]["options"]) == {"none", "newspapers", "print_and_web"}
+    assert c["town_fallback"]["default"] == "none" and c["database_alone"]["default"] == "none"
     assert yaml.safe_load(PREP.read_text())["choices"] == {
-        "town_fallback": "office_town", "ceased_outlets": "listed"}
+        "town_fallback": "office_town_unshared", "ceased_outlets": "listed",
+        "database_alone": "newspapers"}
     p = _steps()["carriers_outlets"].params
-    assert p["town_fallback"] == "$choices.town_fallback"
-    assert p["ceased_outlets"] == "$choices.ceased_outlets"
+    for name in ("town_fallback", "ceased_outlets", "database_alone"):
+        assert p[name] == f"$choices.{name}"
 
 
 def test_every_reading_comes_from_a_shared_crosswalk():
@@ -62,6 +66,10 @@ def test_the_declaration_orders_every_source_and_says_what_a_status_means():
     v = doc["operating_vocabulary"]
     assert v["operating"] == ["yes"] and v["ceased"] == ["Ceased Operations"]
     assert v["last_post_prefix"] == "Last post"
+    assert set(doc["source_kinds"]) == set(doc["sources"])
+    assert {s for s, k in doc["source_kinds"].items() if k == "local_news_list"} == {
+        "local_news_catalyst", "maine_media_ecosystem", "easton"}
+    assert doc["statewide_names"] == ["Statewide"]
 
 
 def test_reviews_start_empty_and_keyed_by_the_words():
@@ -74,6 +82,22 @@ def test_an_outlet_is_counted_at_town_county_and_state_only():
     assert p["levels"] == ["state", "county", "cousub"]
     assert "tribal_note" not in p
     assert p["indicator"] == "$indicators.news_outlets_per_1000"
+    assert _steps()["carriers_located_in"].params["scope_field"] == "scope"
+
+
+def test_the_count_says_when_its_listings_were_collected():
+    # one home for the day, each listing's manifest entry (D-252); the run's
+    # time is held to it here until a run can hold a many-input step to its
+    # sources. listings collected on different days make the time a decision
+    manifest = yaml.safe_load((ROOT / "plots" / "maine" / "manifest.yml").read_text())
+    listings = {n: d for n, d in manifest["datasets"].items()
+                if d.get("semantic_type") == "outlet_listing"}
+    inputs = set(_steps()["carriers_stack"].inputs.values())
+    assert {f"$manifest.{n}" for n in listings} == inputs
+    collected = {(d.get("source") or {}).get("collected") for d in listings.values()}
+    assert None not in collected, "every outlet listing declares source.collected"
+    assert len(collected) == 1, f"listings collected on different days: {sorted(collected)}"
+    assert _steps()["carriers_counts"].params["time"] == f"collected {collected.pop()}"
 
 
 def test_the_indicator_counts_the_outlets_type():

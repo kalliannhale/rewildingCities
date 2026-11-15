@@ -5,9 +5,10 @@
 # step 3, the fifth carrier; WHERE-1). what is placed and why: the
 # outlet_carriers method (D-212).
 #   five listings -> one stack, then groups by exact key (D-201, D-202)
-#   the groups    -> one outlet per group, placed by town; every outlet not
-#                    placed listed with why
-#   the outlets   -> located_in edges to town, county and state only (D-246)
+#   the groups    -> one outlet per group: closed? local news? where? every
+#                    outlet not placed listed with why (D-247 to D-251)
+#   the outlets   -> located_in edges to town, county and state, or to the
+#                    state alone for a statewide outlet (D-246, D-249)
 #   the edges     -> outlets per 1,000 people, every place at those levels
 # the stack and groups repeat maine_outlets' first two steps under their own
 # ids, so neither run writes over the other. the places and spine are read
@@ -32,12 +33,16 @@ method:
 city: maine
 manifest: ../manifest.yml
 
-# an outlet no listing names a town for is placed by its publisher's office
-# town, flagged (D-242), and an outlet a listing marks ceased is listed,
-# never counted (D-245). Kalli's choices, session 10
+# an outlet a listing marks ceased is listed, never counted (D-245; Kalli,
+# session 10). an outlet no local news list holds counts only as one of
+# Cision's newspapers (D-248), and one no listing names a town for is placed
+# by its publisher's office town, flagged, unless other outlets give that
+# office address too, which makes it a publisher's office (D-250). Kalli's
+# choices, session 11
 choices:
-  town_fallback: office_town
+  town_fallback: office_town_unshared
   ceased_outlets: listed
+  database_alone: newspapers
 parameters: {}
 
 steps:
@@ -75,6 +80,7 @@ steps:
       reviews: $crosswalks.outlet_reviews
       town_fallback: $choices.town_fallback
       ceased_outlets: $choices.ceased_outlets
+      database_alone: $choices.database_alone
       state_fips: "23"
 
   - id: carriers_located_in
@@ -90,6 +96,8 @@ steps:
       layer: maine_outlet_listings_news_outlets
       id_field: feature_id
       town_field: town_code
+      # a statewide outlet's row says state and names no town (D-249)
+      scope_field: scope
       state_fips: "23"
 
   - id: carriers_counts
@@ -107,8 +115,11 @@ steps:
       # here that no edge reaches would read zero everywhere, so the levels
       # are held to these three by tests/test_outlet_carriers_preparation.py
       levels: [state, county, cousub]
-      # none of the five listings declares the day it describes (SRC-4), so
-      # time says so rather than invent one. which boundaries the count sits
-      # on travels in each row's boundary_vintage (D-231)
-      time: undated
+      # when the listings were collected, as each listing's manifest entry
+      # declares it (source.collected, D-252): the end of summer 2026, said
+      # as a month since no export recorded its day. a compiled list
+      # describes a day before it. a test holds this to the manifest until
+      # a run can hold a many-input step to its sources. which boundaries
+      # the count sits on travels in each row's boundary_vintage (D-231)
+      time: collected 2026-08
       published_by: rewildingcities

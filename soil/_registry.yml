@@ -1371,9 +1371,15 @@ primitives:
     description: >
       One row per local news outlet: each group of outlet records written
       once, with an id made from its members in the declaration's
-      source_order, never row order (D-243), in the town its listings give.
-      A named town places it (D-241); when none is named, the choice
-      town_fallback says whether its publisher's office town may (D-242).
+      source_order, never row order (D-243). Each outlet is asked, in order:
+      closed (an operating vocabulary, and statuses written in other
+      columns, D-245, D-251), local news (a local news list's say, or a
+      media database's declared type under the choice database_alone; an
+      undeclared type refuses; a program never counts, D-247, D-248), and
+      where. A named town places it (D-241), a statewide name the state
+      alone (D-249); when none is named, the choice town_fallback says
+      whether its publisher's office town may (D-242), an office address
+      two or more outlets give being a publisher's (D-250).
       Towns are matched by name after the declared Census suffixes come off,
       a named county narrowing; two towns, no match, two matches or no town
       are listed with their reasons (D-244). Operating status is read
@@ -1392,6 +1398,7 @@ primitives:
       reviews: {type: object, required: false}
       town_fallback: {type: string, required: true}
       ceased_outlets: {type: string, required: true}
+      database_alone: {type: string, required: true}
       state_fips: {type: string, required: true}
 
   build_town_located_in:
@@ -1403,9 +1410,11 @@ primitives:
       county and state, weights 1 and 1, each edge carrying its place's own
       vintage from the places table (D-231). Never a House or Senate
       district, tribal area or civil division, since a town can lie across
-      several and the feature has no point. Its own artifact, beside
-      build_located_in's (D-207). Refuses a feature with no town, a town not
-      among the state's places, and a feature id used twice.
+      several and the feature has no point. With scope_field, a row whose
+      scope is state is placed in the state alone (D-249). Its own artifact,
+      beside build_located_in's (D-207). Refuses a feature with no town, a
+      town not among the state's places, a state row naming a town, any
+      other scope, and a feature id used twice.
     inputs:
       - {name: features, semantic_types: [news_outlet], required: true}
       - {name: places, semantic_types: [places], required: true}
@@ -1414,4 +1423,5 @@ primitives:
       layer: {type: string, required: true}
       id_field: {type: string, required: true}
       town_field: {type: string, required: true}
+      scope_field: {type: string, required: false}
       state_fips: {type: string, required: true}

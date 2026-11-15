@@ -1,8 +1,10 @@
 """outlets placed by town (Sprint 06, step 3, the fifth carrier; D-241 to
-D-246): one outlet per group with an id from its members, a named town
-first and an office town only by choice, towns matched by declared names,
-operating status by a declared vocabulary, reviews keyed by the words, and
-located_in edges at town, county and state only."""
+D-252): one outlet per group with an id from its members; closed, local
+news and where, asked in that order; a list's say or a database's declared
+type; a named town first, a statewide name the state alone, an office town
+only by choice and never a shared office under office_town_unshared; towns
+matched by declared names, reviews keyed by the words, and located_in edges
+at town, county and state, or the state alone."""
 
 import importlib.util
 import sys
@@ -30,7 +32,25 @@ cl = _load("count_located")
 ORDER = ["local_news_catalyst", "maine_media_ecosystem", "cision", "cision_raw", "easton"]
 SOURCES = {"sources": {k: {} for k in ORDER}, "source_order": ORDER,
            "operating_vocabulary": {"operating": ["yes"], "ceased": ["Ceased Operations"],
-                                    "last_post_prefix": "Last post"}}
+                                    "last_post_prefix": "Last post"},
+           "operating_elsewhere": {"maine_media_ecosystem": {"medium_raw": {"ceased": ["CLOSED"]}}},
+           "source_kinds": {"local_news_catalyst": "local_news_list",
+                            "maine_media_ecosystem": "local_news_list",
+                            "easton": "local_news_list",
+                            "cision": "media_database", "cision_raw": "media_database"},
+           "statewide_names": ["Statewide"],
+           "media_database_types": {
+               "read_for": ["cision", "cision_raw"],
+               "classes": {"newspaper": {"counted_under": ["newspapers", "print_and_web"]},
+                           "online_consumer": {"counted_under": ["print_and_web"]},
+                           "blog_consumer": {},
+                           "radio_station": {},
+                           "radio_program": {"program": True},
+                           "unknown": {"unknown": True}},
+               "values": {"Newspaper": "newspaper", "Online, consumer": "online_consumer",
+                          "Blog, consumer": "blog_consumer", "Radio station": "radio_station",
+                          "Radio program": "radio_program", "0": "unknown"}}}
+NP = "Newspaper"
 NAMES = {"suffixes": {"cousub": ["city", "town", "plantation"], "county": ["County"]}}
 G = "us_census_geoid"
 
@@ -51,23 +71,30 @@ PLACES = pd.DataFrame([
 ], columns=["authority", "code", "level", "name", "vintage"])
 
 COLS = ["source", "source_line", "name", "name_key", "group_id", "named_town",
-        "named_county", "office_town", "office_county", "operating_raw"]
+        "named_county", "office_town", "office_county", "operating_raw", "medium_raw",
+        "address_raw", "zip_raw"]
 
 
 def grouped(*records):
     """records: (group, source, line, name, named_town, named_county,
-    office_town, operating)"""
+    office_town, operating[, medium[, address, zip]])"""
     rows = []
-    for g, src, line, name, nt, nc, ot, op in records:
+    for rec in records:
+        g, src, line, name, nt, nc, ot, op = rec[:8]
+        medium = rec[8] if len(rec) > 8 else None
+        address, zip_ = (rec[9], rec[10]) if len(rec) > 10 else (None, None)
         rows.append({"source": src, "source_line": str(line), "name": name,
                      "name_key": name.lower(), "group_id": g, "named_town": nt,
                      "named_county": nc, "office_town": ot, "office_county": None,
-                     "operating_raw": op})
+                     "operating_raw": op, "medium_raw": medium, "address_raw": address,
+                     "zip_raw": zip_})
     return pd.DataFrame(rows, columns=COLS)
 
 
-def run(df, fallback="office_town", ceased="listed", reviews=None):
-    return pno.prepare(df, PLACES, SOURCES, NAMES, fallback, ceased, "23", reviews)
+def run(df, fallback="office_town", ceased="listed", reviews=None, alone="newspapers",
+        sources=None):
+    return pno.prepare(df, PLACES, sources or SOURCES, NAMES, fallback, ceased, alone, "23",
+                       reviews)
 
 
 def listed(p):
@@ -86,20 +113,20 @@ def test_a_named_town_places_the_outlet():
 def test_a_named_town_wins_over_an_office_town():
     # the Advertiser Democrat: a Norway paper Cision puts in South Portland
     p = run(grouped(("g1", "local_news_catalyst", 2, "Advertiser Democrat", "Norway", None, None, None),
-                    ("g1", "cision", 5, "Advertiser Democrat", None, None, "South Portland", "yes")))
+                    ("g1", "cision", 5, "Advertiser Democrat", None, None, "South Portland", "yes", NP)))
     r = p.outlets.iloc[0]
     assert r.town_code == "2301754420" and r.placed_by == "named_town"
     assert "office_town_not_named" not in (r["flags"] or "")
 
 
 def test_with_no_fallback_an_unnamed_outlet_is_listed():
-    p = run(grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes")),
+    p = run(grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes", NP)),
             fallback="none")
     assert p.outlets.empty and listed(p) == {"Office Only": "no_town_given"}
 
 
 def test_by_choice_an_office_town_places_and_says_so():
-    p = run(grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes")))
+    p = run(grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes", NP)))
     r = p.outlets.iloc[0]
     assert r.placed_by == "office_town" and r.town_code == "2300560545"
     assert "office_town_not_named" in r["flags"]
@@ -153,25 +180,25 @@ def test_a_matched_and_an_unmatched_named_town_place_with_a_flag():
 # ── operating status ───────────────────────────────────────────────────────
 
 def test_a_ceased_outlet_is_listed_by_choice():
-    p = run(grouped(("g1", "cision", 5, "Gone", None, None, "Portland", "Ceased Operations")))
+    p = run(grouped(("g1", "cision", 5, "Gone", None, None, "Portland", "Ceased Operations", NP)))
     assert listed(p) == {"Gone": "ceased"}
 
 
 def test_a_ceased_outlet_can_be_counted_and_flagged():
-    p = run(grouped(("g1", "cision", 5, "Gone", None, None, "Portland", "Ceased Operations")),
+    p = run(grouped(("g1", "cision", 5, "Gone", None, None, "Portland", "Ceased Operations", NP)),
             ceased="counted")
     r = p.outlets.iloc[0]
     assert r.operating == "ceased" and "operating:ceased" in r["flags"]
 
 
 def test_a_last_post_is_quiet_counted_and_keeps_its_words():
-    p = run(grouped(("g1", "cision", 5, "Quiet", None, None, "Portland", "Last Post August 2025")))
+    p = run(grouped(("g1", "cision", 5, "Quiet", None, None, "Portland", "Last Post August 2025", NP)))
     r = p.outlets.iloc[0]
     assert (r.operating, r.operating_note) == ("last_post", "Last Post August 2025")
 
 
 def test_a_value_in_no_list_stays_counted_and_says_so():
-    p = run(grouped(("g1", "cision", 5, "Odd", None, None, "Portland", "maybe")))
+    p = run(grouped(("g1", "cision", 5, "Odd", None, None, "Portland", "maybe", NP)))
     assert p.outlets.iloc[0].operating == "unmapped"
 
 
@@ -183,7 +210,7 @@ def test_no_status_is_not_given():
 # ── ids ────────────────────────────────────────────────────────────────────
 
 def test_an_id_comes_from_the_first_member_by_source_order():
-    p = run(grouped(("g1", "cision", 5, "Sun Journal", None, None, "Portland", "yes"),
+    p = run(grouped(("g1", "cision", 5, "Sun Journal", None, None, "Portland", "yes", NP),
                     ("g1", "local_news_catalyst", 9, "Sun Journal", "Portland", None, None, None)))
     assert p.outlets.iloc[0].feature_id == "outlet:local_news_catalyst:sun_journal"
 
@@ -191,7 +218,7 @@ def test_an_id_comes_from_the_first_member_by_source_order():
 def test_ids_do_not_follow_row_order():
     a = grouped(("g1", "local_news_catalyst", 2, "Alpha", "Norway", None, None, None),
                 ("g2", "local_news_catalyst", 3, "Beta", "Portland", None, None, None))
-    b = grouped(("g1", "cision", 1, "New One", None, None, "Portland", "yes"),
+    b = grouped(("g1", "cision", 1, "New One", None, None, "Portland", "yes", NP),
                 ("g2", "local_news_catalyst", 3, "Alpha", "Norway", None, None, None),
                 ("g3", "local_news_catalyst", 4, "Beta", "Portland", None, None, None))
     ids_a = set(run(a).outlets.feature_id)
@@ -200,8 +227,8 @@ def test_ids_do_not_follow_row_order():
 
 
 def test_two_outlets_one_name_take_their_lines():
-    p = run(grouped(("g1", "cision", 5, "Twin", None, None, "Portland", "yes"),
-                    ("g2", "cision", 8, "Twin", None, None, "Norway", "yes")))
+    p = run(grouped(("g1", "cision", 5, "Twin", None, None, "Portland", "yes", NP),
+                    ("g2", "cision", 8, "Twin", None, None, "Norway", "yes", NP)))
     assert set(p.outlets.feature_id) == {"outlet:cision:twin:5", "outlet:cision:twin:8"}
     assert all("id_by_line" in f for f in p.outlets["flags"])
 
@@ -213,7 +240,7 @@ REVIEW = {"evidence": "read on both mastheads", "read_on": "2026-11-15", "read_b
 
 def test_a_reviewed_merge_joins_two_groups():
     df = grouped(("g1", "local_news_catalyst", 2, "The Ellsworth American", "Norway", None, None, None),
-                 ("g2", "cision", 5, "Ellsworth American Inc", None, None, "Portland", "yes"))
+                 ("g2", "cision", 5, "Ellsworth American Inc", None, None, "Portland", "yes", NP))
     merge = {"records": [{"source": "local_news_catalyst", "name": "The Ellsworth American"},
                          {"source": "cision", "name": "Ellsworth American Inc"}], **REVIEW}
     p = run(df, reviews={"merges": [merge]})
@@ -225,7 +252,7 @@ def test_a_reviewed_merge_joins_two_groups():
 
 def test_a_merge_the_run_no_longer_needs_refuses():
     df = grouped(("g1", "local_news_catalyst", 2, "Same", "Norway", None, None, None),
-                 ("g1", "cision", 5, "Same", None, None, "Portland", "yes"))
+                 ("g1", "cision", 5, "Same", None, None, "Portland", "yes", NP))
     merge = {"records": [{"source": "local_news_catalyst", "name": "Same"},
                          {"source": "cision", "name": "Same"}], **REVIEW}
     with pytest.raises(pno.OutletsRefused, match="already one group"):
@@ -233,8 +260,8 @@ def test_a_merge_the_run_no_longer_needs_refuses():
 
 
 def test_a_merge_that_would_hold_one_source_twice_refuses():
-    df = grouped(("g1", "cision", 2, "A", None, None, "Portland", "yes"),
-                 ("g2", "cision", 5, "B", None, None, "Portland", "yes"))
+    df = grouped(("g1", "cision", 2, "A", None, None, "Portland", "yes", NP),
+                 ("g2", "cision", 5, "B", None, None, "Portland", "yes", NP))
     merge = {"records": [{"source": "cision", "name": "A"}, {"source": "cision", "name": "B"}], **REVIEW}
     with pytest.raises(pno.OutletsRefused, match="twice"):
         run(df, reviews={"merges": [merge]})
@@ -281,18 +308,18 @@ def test_a_town_review_must_name_a_town_and_its_evidence():
 def test_source_order_must_name_every_declared_source():
     bad = {**SOURCES, "source_order": ORDER[:-1]}
     with pytest.raises(pno.OutletsRefused, match="same set"):
-        pno.prepare(grouped(), PLACES, bad, NAMES, "none", "listed", "23")
+        pno.prepare(grouped(), PLACES, bad, NAMES, "none", "listed", "none", "23")
 
 
 def test_a_missing_vocabulary_refuses():
     bad = {k: v for k, v in SOURCES.items() if k != "operating_vocabulary"}
     with pytest.raises(pno.OutletsRefused, match="operating_vocabulary"):
-        pno.prepare(grouped(), PLACES, bad, NAMES, "none", "listed", "23")
+        pno.prepare(grouped(), PLACES, bad, NAMES, "none", "listed", "none", "23")
 
 
 def test_a_choice_outside_its_options_refuses():
     with pytest.raises(pno.OutletsRefused, match="town_fallback"):
-        pno.prepare(grouped(), PLACES, SOURCES, NAMES, "address", "listed", "23")
+        pno.prepare(grouped(), PLACES, SOURCES, NAMES, "address", "listed", "none", "23")
 
 
 def test_the_receipt_lists_every_outlet_not_placed():
@@ -309,7 +336,7 @@ def test_the_receipt_lists_every_outlet_not_placed():
 def _outlets():
     return run(grouped(("g1", "local_news_catalyst", 2, "Norway Paper", "Norway", None, None, None),
                        ("g2", "local_news_catalyst", 3, "Portland Paper", "Portland", None, None, None),
-                       ("g3", "cision", 5, "Portland Weekly", None, None, "Portland", "yes"))).outlets
+                       ("g3", "cision", 5, "Portland Weekly", None, None, "Portland", "yes", NP))).outlets
 
 
 def test_edges_reach_town_county_and_state_only():
@@ -350,3 +377,266 @@ def test_count_located_counts_town_placed_outlets_unchanged():
     assert by["23005"] == 2 and by["23"] == 3
     assert out.loc[out["unit_code"] == "2300560545", "value"].iloc[0] == pytest.approx(2 / 68000 * 1000)
     assert set(out["boundary_vintage"]) == {"2024"}
+
+
+# ── is it local news (D-247, D-248) ────────────────────────────────────────
+
+def test_an_outlet_on_a_local_news_list_counts_whatever_its_medium():
+    p = run(grouped(("g1", "maine_media_ecosystem", 4, "Valley Radio", "Norway", None, None, None,
+                     "Radio"),
+                    ("g1", "cision", 5, "Valley Radio", None, None, "Portland", "yes",
+                     "Radio station")))
+    r = p.outlets.iloc[0]
+    assert r.vouched_by == "maine_media_ecosystem" and r.database_class == "radio_station"
+    assert "maine_media_ecosystem: Radio" in r.medium_as_written
+
+
+def test_a_database_alone_outlet_counts_only_as_its_choice_says():
+    df = grouped(("g1", "cision", 5, "Weekly", None, None, "Portland", "yes", NP),
+                 ("g2", "cision", 6, "Site", None, None, "Portland", "yes", "Online, consumer"),
+                 ("g3", "cision", 7, "Station", None, None, "Portland", "yes", "Radio station"))
+    news = run(df, alone="newspapers")
+    assert list(news.outlets.name) == ["Weekly"] and news.outlets.iloc[0].vouched_by is None
+    assert listed(news) == {"Site": "medium_not_counted", "Station": "medium_not_counted"}
+    web = run(df, alone="print_and_web")
+    assert set(web.outlets.name) == {"Weekly", "Site"}
+    none = run(df, alone="none")
+    assert none.outlets.empty and set(listed(none).values()) == {"medium_not_counted"}
+
+
+def test_a_placeholder_type_is_unknown_and_never_a_class():
+    alone = run(grouped(("g1", "cision_raw", 5, "Zero", None, None, "Portland", None, "0")))
+    assert listed(alone) == {"Zero": "medium_unknown"}
+    beside = run(grouped(("g1", "cision", 5, "Paper", None, None, "Portland", "yes", NP),
+                         ("g1", "cision_raw", 9, "Paper", None, None, "Portland", None, "0")))
+    assert beside.outlets.iloc[0].database_class == "newspaper; unknown"
+
+
+def test_two_database_types_one_counted_one_not_is_a_conflict():
+    p = run(grouped(("g1", "cision", 5, "Both", None, None, "Portland", "yes", NP),
+                    ("g1", "cision_raw", 9, "Both", None, None, "Portland", None, "Online, consumer")))
+    assert listed(p) == {"Both": "medium_conflict"}
+
+
+def test_an_undeclared_database_type_refuses_the_run():
+    with pytest.raises(pno.OutletsRefused, match="does not declare"):
+        run(grouped(("g1", "cision", 5, "New", None, None, "Portland", "yes", "Hologram")))
+
+
+def test_a_program_never_counts_under_any_choice():
+    bad = dict(SOURCES["media_database_types"])
+    bad["classes"] = {**bad["classes"], "radio_program": {"program": True,
+                                                         "counted_under": ["print_and_web"]}}
+    with pytest.raises(pno.OutletsRefused, match="transmitter twice"):
+        run(grouped(), sources={**SOURCES, "media_database_types": bad})
+    p = run(grouped(("g1", "cision", 5, "Morning Show", None, None, "Portland", "yes",
+                     "Radio program")), alone="print_and_web")
+    assert listed(p) == {"Morning Show": "medium_not_counted"}
+
+
+def test_an_unknown_class_counts_under_nothing():
+    bad = dict(SOURCES["media_database_types"])
+    bad["classes"] = {**bad["classes"], "unknown": {"unknown": True,
+                                                   "counted_under": ["newspapers"]}}
+    with pytest.raises(pno.OutletsRefused, match="never evidence"):
+        run(grouped(), sources={**SOURCES, "media_database_types": bad})
+
+
+def test_the_medium_is_judged_before_the_town():
+    df = grouped(("g1", "cision", 5, "A Blog", None, None, "Nowhere", "yes", "Blog, consumer"))
+    assert listed(run(df)) == {"A Blog": "medium_not_counted"}
+    town = {"source": "cision", "name": "A Blog", "town_code": "2300560545", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="for its medium"):
+        run(df, reviews={"towns": [town]})
+
+
+def test_every_source_has_a_declared_kind():
+    bad = {**SOURCES, "source_kinds": {k: v for k, v in SOURCES["source_kinds"].items()
+                                       if k != "easton"}}
+    with pytest.raises(pno.OutletsRefused, match="same set"):
+        run(grouped(), sources=bad)
+    worse = {**SOURCES, "source_kinds": {**SOURCES["source_kinds"], "easton": "rumour"}}
+    with pytest.raises(pno.OutletsRefused, match="kind is one of"):
+        run(grouped(), sources=worse)
+
+
+def test_a_database_choice_outside_its_options_refuses():
+    with pytest.raises(pno.OutletsRefused, match="database_alone"):
+        run(grouped(), alone="everything")
+
+
+# ── a status written elsewhere (D-251) ─────────────────────────────────────
+
+def test_a_status_written_in_the_medium_column_is_read():
+    p = run(grouped(("g1", "maine_media_ecosystem", 4, "Shut", "Norway", None, None, None,
+                     "CLOSED")))
+    assert listed(p) == {"Shut": "ceased"}
+    assert "CLOSED (maine_media_ecosystem medium_raw)" in p.listed[0]["detail"]
+
+
+# ── statewide (D-249) ──────────────────────────────────────────────────────
+
+def test_a_statewide_outlet_is_placed_in_the_state_alone():
+    p = run(grouped(("g1", "maine_media_ecosystem", 4, "Amjambo Africa", "Statewide", "Maine",
+                     None, None, "Newspaper")))
+    r = p.outlets.iloc[0]
+    assert (r.scope, r.placed_by, r.town_as_written) == ("state", "named_state", "Statewide")
+    assert pd.isna(r.town_code) and pd.isna(r.county_code)
+    assert "placed_in_state_only" in r["flags"]
+    e = btl.locate_by_town(p.outlets, PLACES, "lyr", "feature_id", "town_code", "23", "scope")
+    assert list(e["to_code"]) == ["23"] and btl.output_metadata(e)["state_only"] == 1
+
+
+def test_a_named_town_wins_over_a_statewide_name():
+    p = run(grouped(("g1", "local_news_catalyst", 2, "Paper", "Portland", None, None, None),
+                    ("g1", "maine_media_ecosystem", 4, "Paper", "Statewide", None, None, None)))
+    r = p.outlets.iloc[0]
+    assert r.scope == "town" and r.town_code == "2300560545"
+    assert "statewide_also:maine_media_ecosystem" in r["flags"]
+
+
+def test_a_town_review_for_a_statewide_outlet_refuses():
+    df = grouped(("g1", "maine_media_ecosystem", 4, "Everywhere", "Statewide", None, None, None))
+    town = {"source": "maine_media_ecosystem", "name": "Everywhere",
+            "town_code": "2300560545", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="no longer needs"):
+        run(df, reviews={"towns": [town]})
+
+
+def test_statewide_names_must_be_declared():
+    bad = {k: v for k, v in SOURCES.items() if k != "statewide_names"}
+    with pytest.raises(pno.OutletsRefused, match="statewide_names"):
+        run(grouped(), sources=bad)
+
+
+def test_edges_refuse_a_scope_that_says_two_things():
+    f = pd.DataFrame({"feature_id": ["a"], "town_code": ["2301754420"], "scope": ["state"]})
+    with pytest.raises(btl.TownLocatedRefused, match="one thing"):
+        btl.locate_by_town(f, PLACES, "lyr", "feature_id", "town_code", "23", "scope")
+    f = pd.DataFrame({"feature_id": ["a"], "town_code": ["2301754420"], "scope": ["region"]})
+    with pytest.raises(btl.TownLocatedRefused, match="scope is one of"):
+        btl.locate_by_town(f, PLACES, "lyr", "feature_id", "town_code", "23", "scope")
+
+
+# ── a shared office (D-250) ────────────────────────────────────────────────
+
+ADDR = ("1 Main St.", "04106-1234")
+
+
+def _chain():
+    return grouped(("g1", "cision", 5, "North Weekly", None, None, "Portland", "yes", NP, *ADDR),
+                   ("g2", "cision", 6, "South Weekly", None, None, "Portland", "yes", NP,
+                    "1 main st", "04106"))
+
+
+def test_a_shared_office_is_flagged_under_office_town():
+    p = run(_chain(), fallback="office_town")
+    assert len(p.outlets) == 2
+    assert all("office_shared:2" in f for f in p.outlets["flags"])
+
+
+def test_a_shared_office_is_listed_under_office_town_unshared():
+    p = run(_chain(), fallback="office_town_unshared")
+    assert p.outlets.empty
+    assert listed(p) == {"North Weekly": "office_shared", "South Weekly": "office_shared"}
+    assert "South Weekly" in p.listed[0]["detail"]
+
+
+def test_a_named_sibling_shows_the_office_is_a_publishers():
+    df = grouped(("g1", "local_news_catalyst", 2, "Advertiser Democrat", "Norway", None, None, None),
+                 ("g1", "cision", 5, "Advertiser Democrat", None, None, "South Portland", "yes",
+                  NP, "5 Elm St", "04106"),
+                 ("g2", "cision", 6, "Office Only", None, None, "South Portland", "yes", NP,
+                  "5 Elm St", "04106"))
+    p = run(df, fallback="office_town_unshared")
+    assert list(p.outlets.name) == ["Advertiser Democrat"]
+    assert p.outlets.iloc[0].placed_by == "named_town"
+    assert listed(p) == {"Office Only": "office_shared"}
+
+
+def test_an_office_is_shared_only_on_street_and_zip_alike():
+    df = grouped(("g1", "cision", 5, "One", None, None, "Portland", "yes", NP, "1 Main St", "04106"),
+                 ("g2", "cision", 6, "Two", None, None, "Norway", "yes", NP, "1 Main St", "04268"),
+                 ("g3", "cision", 7, "Three", None, None, "Portland", "yes", NP, "1 Main St", None))
+    p = run(df, fallback="office_town_unshared")
+    assert len(p.outlets) == 3 and not p.listed
+
+
+def test_a_town_review_settles_a_shared_office():
+    town = {"source": "cision", "name": "North Weekly", "town_code": "2301754420", **REVIEW}
+    p = run(_chain(), fallback="office_town_unshared", reviews={"towns": [town]})
+    r = p.outlets[p.outlets.name == "North Weekly"].iloc[0]
+    assert r.placed_by == "reviewed" and "review_settled:office_shared" in r["flags"]
+
+
+# ── the real declaration ───────────────────────────────────────────────────
+
+def test_the_real_declaration_reads_and_its_rules_hold():
+    import yaml
+    doc = yaml.safe_load((ROOT / "seeds" / "crosswalks" / "outlets" / "outlet_sources.yml")
+                         .read_text())
+    order = pno.read_source_order(doc, doc["source_order"])
+    kinds = pno.read_kinds(doc, order)
+    types = pno.read_database_types(doc, kinds)
+    assert {s for s, k in kinds.items() if k == "media_database"} == {"cision", "cision_raw"}
+    assert types.values["0"] == "unknown" and types.values["Newspaper"] == "newspaper"
+    for cid, c in types.classes.items():
+        if (c or {}).get("program"):
+            assert not (c or {}).get("counted_under"), cid
+    news = {c for c, d in types.classes.items() if "newspapers" in ((d or {}).get("counted_under") or [])}
+    assert news == {"newspaper"}
+    assert pno.read_statewide(doc) == frozenset({"statewide"})
+    assert pno.read_operating_elsewhere(doc, order, ["medium_raw"]) == [
+        ("maine_media_ecosystem", "medium_raw", "ceased", "closed")]
+
+
+# ── across the file the run writes (session 11's failed first run) ─────────
+
+def test_a_statewide_outlet_survives_the_csv_between_steps(tmp_path=None):
+    # the run writes the outlets to csv and the next step reads them back
+    # with dtype=str. in pandas 3 a column holding text and blanks reads as
+    # str, and Series.map turns a None back into NaN, so a missing town read
+    # through a map was text-like nan, not None. tested here across the file
+    import tempfile
+    p = run(grouped(("g1", "maine_media_ecosystem", 4, "Amjambo Africa", "Statewide", None,
+                     None, None, NP),
+                    ("g2", "local_news_catalyst", 2, "Norway Paper", "Norway", None, None, None)))
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "outlets.csv"
+        p.outlets.to_csv(path, index=False)
+        back = pd.read_csv(path, dtype=str)
+    e = btl.locate_by_town(back, PLACES, "lyr", "feature_id", "town_code", "23", "scope")
+    by = e.groupby("from_code")["to_code"].apply(set).to_dict()
+    assert by["outlet:maine_media_ecosystem:amjambo_africa"] == {"23"}
+    assert by["outlet:local_news_catalyst:norway_paper"] == {"23", "23017", "2301754420"}
+
+
+def test_a_place_with_a_blank_vintage_refuses_across_the_file():
+    # the same pandas 3 trap on the places side: a blank vintage beside
+    # filled ones must still read as missing (D-231)
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "places.csv"
+        blank = PLACES.copy()
+        blank.loc[blank["code"] == "2301754420", "vintage"] = None
+        blank.to_csv(path, index=False)
+        places = pd.read_csv(path, dtype=str)
+    f = pd.DataFrame({"feature_id": ["a"], "town_code": ["2301754420"]})
+    with pytest.raises(btl.TownLocatedRefused, match="carries no vintage"):
+        btl.locate_by_town(f, places, "lyr", "feature_id", "town_code", "23")
+
+
+def test_a_zip_a_spreadsheet_stripped_gets_its_zero_back():
+    # the shape the real export holds (session 11's Turner read): Maine's
+    # 04282 written 4282. a ZIP+4 so stripped must not shift into another ZIP
+    assert pno._zip5("4282") == "04282"
+    assert pno._zip5("4282-1234") == "04282"
+    assert pno._zip5("04106") == "04106" and pno._zip5("04106-1234") == "04106"
+    assert pno._zip5("041061234") == "04106"
+    assert pno._zip5("12") is None and pno._zip5("ME 04106") is None and pno._zip5(None) is None
+    df = grouped(("g1", "cision_raw", 5, "Two Cent Times", None, None, "Portland", None, NP,
+                  "5 Fern Street", "4282"),
+                 ("g2", "cision_raw", 6, "Moose Prints", None, None, "Portland", None, NP,
+                  "5 Fern Street", "04282"))
+    p = run(df, fallback="office_town_unshared")
+    assert listed(p) == {"Two Cent Times": "office_shared", "Moose Prints": "office_shared"}

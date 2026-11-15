@@ -3,7 +3,9 @@ soil/transform/build_town_located_in.py  |  rewildingCities
 
 located_in edges for a layer placed by town (Contract 3, section 2; D-246):
 every feature to the town its row names, and through that town's code to
-its county and state, weights 1 and 1. a feature here has no point, so it
+its county and state, weights 1 and 1. a feature whose scope is state (a
+listing calls it statewide, D-249) is placed in the state alone, with no
+town and no county, since none is said of it. a feature here has no point, so it
 is placed only where its town decides: never in a House or Senate district,
 a Census tribal area or a civil division, since a town can lie across
 several, and which one a feature is in is not something its town can say.
@@ -14,7 +16,9 @@ several, and which one a feature is in is not something its town can say.
     count's boundary_vintage is the places' own and never a second guess
     (D-231)
   ~ a feature with no town, a town that is not one of the state's places,
-    or a feature id used twice is refused, never dropped
+    or a feature id used twice is refused, never dropped. with scope_field,
+    each row says town or state: a state row naming a town, a town row
+    naming none, or any other scope is refused
 
 the edges are their own artifact, of type located_in_edges, beside
 build_located_in's, in the same columns and key (D-207). ~
@@ -25,6 +29,8 @@ Params:
   layer       required: the layer's label, every edge's from_authority
   id_field    required: the column naming each feature
   town_field  required: the column holding each feature's town code
+  scope_field optional: the column saying town or state for each feature;
+              without it every feature is a town feature
   state_fips  required: two digits
 Output: the located_in edges, parquet or csv by the output's extension. ~
 """
@@ -39,6 +45,7 @@ COLUMNS = ["from_authority", "from_code", "to_authority", "to_code", "kind",
 KEY = ["from_authority", "from_code", "to_authority", "to_code"]
 KIND = "located_in"
 PLACED_AT = ("state", "county", "cousub")
+SCOPES = ("town", "state")
 NOT_PLACED_AT = {
     "sldl": "a town can lie across House districts, and a feature placed by town has no point",
     "sldu": "a town can lie across Senate districts, and a feature placed by town has no point",
@@ -46,6 +53,7 @@ NOT_PLACED_AT = {
     "division": "a civil division is made of blocks, and a feature placed by town has no block",
 }
 SOURCE = "the town each feature names, through the places table's codes (D-246)"
+SOURCE_STATE = "a feature a listing calls statewide, placed in the state alone (D-249)"
 
 
 class TownLocatedRefused(ValueError):
@@ -53,33 +61,61 @@ class TownLocatedRefused(ValueError):
 
 
 def _text(x) -> str | None:
-    if x is None or (isinstance(x, float) and pd.isna(x)):
+    """a value as text, or None when it is missing in any of pandas' ways
+    (None, NaN, NA). judged one value at a time: in pandas 3, Series.map
+    over a str column turns a returned None back into NaN, so a missing
+    value is never read from a mapped Series by `is None`."""
+    if x is None:
         return None
+    try:
+        if pd.isna(x):
+            return None
+    except (TypeError, ValueError):
+        pass
     t = str(x).strip()
     return t or None
 
 
 def locate_by_town(features: pd.DataFrame, places: pd.DataFrame, layer: str,
-                   id_field: str, town_field: str, state_fips: str) -> pd.DataFrame:
-    for col in (id_field, town_field):
+                   id_field: str, town_field: str, state_fips: str,
+                   scope_field: str | None = None) -> pd.DataFrame:
+    for col in (id_field, town_field) + ((scope_field,) if scope_field else ()):
         if col not in features.columns:
             raise TownLocatedRefused(f"the layer has no column {col!r}")
     for col in ("authority", "code", "level", "vintage"):
         if col not in places.columns:
             raise TownLocatedRefused(f"the places table has no {col!r} column")
-    ids = features[id_field].map(_text)
-    if ids.isna().any():
-        raise TownLocatedRefused(f"{int(ids.isna().sum())} feature(s) carry no {id_field}")
-    dup = sorted(set(ids[ids.duplicated()]))
+    ids = [_text(x) for x in features[id_field]]
+    if None in ids:
+        raise TownLocatedRefused(f"{ids.count(None)} feature(s) carry no {id_field}")
+    dup = sorted({i for i in ids if ids.count(i) > 1})
     if dup:
         raise TownLocatedRefused(f"a feature id names one feature in its layer; used twice: "
                                  f"{', '.join(dup[:10])}")
     here = places[places["authority"].astype(str) == GEOID]
     level_of = dict(zip(here["code"].astype(str), here["level"].astype(str)))
-    vintage_of = dict(zip(here["code"].astype(str), here["vintage"].map(_text)))
+    vintage_of = {c: _text(v) for c, v in zip(here["code"].astype(str), here["vintage"])}
 
+    towns = [_text(x) for x in features[town_field]]
+    scopes = ([_text(x) for x in features[scope_field]] if scope_field
+              else ["town"] * len(features))
     rows = []
-    for fid, town in zip(ids, features[town_field].map(_text)):
+    for fid, town, scope in zip(ids, towns, scopes):
+        if scope not in SCOPES:
+            raise TownLocatedRefused(f"{layer}:{fid} has scope {scope!r}; a scope is one of "
+                                     f"{', '.join(SCOPES)}")
+        if scope == "state":
+            if town is not None:
+                raise TownLocatedRefused(f"{layer}:{fid} is placed in the state alone and "
+                                         f"names a town, {town}; a row means one thing")
+            if level_of.get(state_fips) != "state" or vintage_of.get(state_fips) is None:
+                raise TownLocatedRefused(f"the state {state_fips} is not in places with a "
+                                         f"vintage (D-231)")
+            rows.append({"from_authority": layer, "from_code": fid, "to_authority": GEOID,
+                         "to_code": state_fips, "kind": KIND, "weight_population": 1.0,
+                         "weight_households": 1.0, "weight_reason": None,
+                         "source": SOURCE_STATE, "vintage": vintage_of[state_fips]})
+            continue
         if town is None:
             raise TownLocatedRefused(f"{layer}:{fid} names no town")
         if not town.startswith(state_fips) or level_of.get(town) != "cousub":
@@ -107,16 +143,17 @@ def output_metadata(edges: pd.DataFrame) -> dict:
     the levels it never does, each with why."""
     return {"data_category": "tabular", "crs": None, "row_count": len(edges),
             "variables": COLUMNS, "id_fields": KEY, "spatial_unit": "edge",
-            "placed_at": list(PLACED_AT), "not_placed_at": NOT_PLACED_AT}
+            "placed_at": list(PLACED_AT), "not_placed_at": NOT_PLACED_AT,
+            "state_only": int((edges["source"] == SOURCE_STATE).sum())}
 
 
 def main():
     try:
-        from canopy.pr_io import (parse_primitive_args, get_input, require_param,
+        from canopy.pr_io import (parse_primitive_args, get_input, get_param, require_param,
                                   WarningsCollector, primitive_success, primitive_failure,
                                   primitive_error_handling)
     except ImportError:
-        from pr_io import (parse_primitive_args, get_input, require_param,
+        from pr_io import (parse_primitive_args, get_input, get_param, require_param,
                            WarningsCollector, primitive_success, primitive_failure,
                            primitive_error_handling)
 
@@ -133,7 +170,8 @@ def main():
             edges = locate_by_town(features, read(get_input(i, "places")), layer,
                                    str(require_param(p, "id_field")),
                                    str(require_param(p, "town_field")),
-                                   str(require_param(p, "state_fips")).zfill(2))
+                                   str(require_param(p, "state_fips")).zfill(2),
+                                   get_param(p, "scope_field"))
         except TownLocatedRefused as e:
             primitive_failure("located_in refused", str(e))
         w.info(f"{layer}: {len(features)} feature(s), {len(edges)} edge(s), at "

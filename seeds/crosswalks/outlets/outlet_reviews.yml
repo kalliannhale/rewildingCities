@@ -18,9 +18,11 @@
 #           would hold one source twice (D-202)
 #   towns   name the town (its ten-digit county subdivision code) a person
 #           read for one record's outlet, only when the run would otherwise
-#           list it as towns_disagree, no_town_match, ambiguous_town or
-#           no_town_given. refused when the run places it on its own, when
-#           it is listed as ceased, or when no record gives the name
+#           list it as towns_disagree, no_town_match, ambiguous_town,
+#           no_town_given or office_shared. refused when the run places it
+#           on its own (in a town or the state), when it is listed as ceased
+#           or for its medium (the medium is judged first, D-248), or when
+#           no record gives the name
 #
 # each review names its evidence, the day it was read and who read it:
 #
@@ -41,7 +43,8 @@
 #       read_on: "YYYY-MM-DD"
 #       read_by: ...
 #
-# none yet: the first run's receipt lists the outlets worth a person's read.
+# none yet: the receipt's listed_outlets name the outlets worth a person's
+# read, each with its reason (OUTREV-1).
 # ============================================================================
 
 from: "Maine outlet listing records that exact keys and declared names cannot decide"

@@ -692,6 +692,10 @@ datasets:
   # these paths reach outside the plot (D-205). they are read only as
   # seeds/crosswalks/outlets/outlet_sources.yml declares (D-201); a column it
   # does not name is never read. excluded tier: none of this leaves as it is.
+  # each was collected at the end of summer 2026 (Kalli, session 11); no
+  # export recorded its own day, so source.collected says the month, and a
+  # compiled list describes a day before it. the outlet count's time is held
+  # to it (D-252).
 
   outlets_cision:
     available: true
@@ -700,7 +704,7 @@ datasets:
     license: terms_unknown   # D-116
     license_note: a commercial media database's export; its terms are not recorded (SRC-4)
     format: csv
-    source: {type: manual, notes: "Exported from Cision and copied into garden/reference/ unchanged."}
+    source: {type: manual, collected: "2026-08", notes: "Exported from Cision and copied into garden/reference/ unchanged."}
     cache: {path: "../../garden/reference/Maine Media Outlets_Cision(Sheet 1).csv", refresh_policy: manual}
     provenance: {source: Cision, published_by: cision}
     quality:
@@ -708,6 +712,7 @@ datasets:
         - Outlet County reads Cook (Illinois) on 235 of 353 rows, across every outlet type (D-204).
         - The address is the publisher's office, not the outlet's town (D-203).
         - Outlet Language reads English on every row and omits Amjambo Africa (P-9).
+        - Outlet Type mixes medium and audience (Magazine, trade/industry) and lists shows beside their stations; read through media_database_types (D-247).
 
   outlets_cision_raw:
     available: true
@@ -716,12 +721,13 @@ datasets:
     license: terms_unknown   # D-116
     license_note: as outlets_cision (SRC-4)
     format: csv
-    source: {type: manual, notes: "Exported from Cision and copied into garden/reference/ unchanged. Its headers are on the second line."}
+    source: {type: manual, collected: "2026-08", notes: "Exported from Cision and copied into garden/reference/ unchanged. Its headers are on the second line."}
     cache: {path: "../../garden/reference/Maine Media Outlets(Sheet 1) (1).csv", refresh_policy: manual}
     provenance: {source: Cision, published_by: cision}
     quality:
       known_issues:
         - As outlets_cision, without Still Operates?.
+        - Outlet Type reads 0, a placeholder, on 23 rows; declared unknown, never a class (D-247).
 
   outlets_easton:
     available: true
@@ -730,7 +736,7 @@ datasets:
     license: terms_unknown   # D-116
     license_note: her caveat welcomes corrections; terms of reuse not recorded (SRC-4)
     format: csv
-    source: {type: manual, notes: "Shared by Jo Easton (Bangor Daily News). A caveat line sits above the headers."}
+    source: {type: manual, collected: "2026-08", notes: "Shared by Jo Easton (Bangor Daily News). A caveat line sits above the headers."}
     cache: {path: "../../garden/reference/Jo Easton Maine News Outlets(Sheet1).csv", refresh_policy: manual}
     provenance: {source: Jo Easton, published_by: jo_easton}
     quality:
@@ -746,7 +752,7 @@ datasets:
     license: terms_unknown   # D-116
     license_note: terms not recorded (SRC-4)
     format: csv
-    source: {type: manual, notes: "Copied into garden/reference/ unchanged."}
+    source: {type: manual, collected: "2026-08", notes: "Copied into garden/reference/ unchanged."}
     cache: {path: "../../garden/reference/Local News Catalyst Local News Publications(Sheet 1).csv", refresh_policy: manual}
     provenance: {source: Local News Catalyst, published_by: local_news_catalyst}
     quality:
@@ -760,13 +766,15 @@ datasets:
     license: terms_unknown   # D-116
     license_note: its publisher is not yet known (SRC-4)
     format: csv
-    source: {type: manual, notes: "Copied into garden/reference/ unchanged."}
+    source: {type: manual, collected: "2026-08", notes: "Copied into garden/reference/ unchanged."}
     cache: {path: "../../garden/reference/Maine Media Ecosystem(Maine Media Ecosystem).csv", refresh_policy: manual}
     provenance: {source: unknown; ask before release (SRC-4)}
     quality:
       known_issues:
         - Print holds frequency for print media and a station's format for radio (D-201).
         - County holds region and multi-county values for some rows (Maine, Waldo/Knox, Central Maine).
+        - Medium reads CLOSED on 2 rows, a status in the wrong column; read as ceased (D-251).
+        - Town reads Statewide for Amjambo Africa; placed in the state alone (D-249).
 
   # ── carriers (Sprint 06, step 3) ──────────────────────────────────────────
 

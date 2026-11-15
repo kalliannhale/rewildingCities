@@ -2,10 +2,11 @@
 # garden/methods/information/outlet_carriers.yml
 # ============================================================================
 # a preparation method (D-98): local news outlets as carriers, placed by
-# town and counted in every area their town lies in (Sprint 06, step 3, the
-# fifth carrier; WHERE-1). this file is the one home for what is placed and
-# why (D-212); the primitives, the run, the crosswalks and the indicator
-# point here rather than restate it. ~
+# town (or in the state, for an outlet a listing calls statewide) and
+# counted in every area their place lies in (Sprint 06, step 3, the fifth
+# carrier; WHERE-1). this file is the one home for what is placed and why
+# (D-212); the primitives, the run, the crosswalks and the indicator point
+# here rather than restate it. ~
 # ============================================================================
 
 id: outlet_carriers
@@ -17,50 +18,81 @@ answers_question_types: [outlets, carriers, located_in, preparation]
 description: >
   Reads every outlet listing the way its declaration says, groups records
   that share an exact url or name (D-202), and writes each group once, as
-  one outlet, in the town its sources give. Each outlet is then placed in
-  its town, its county and its state through located_in edges, and counted
+  one outlet. Each outlet is asked three things, in order: is it closed, is
+  it local news, and where is it. Each placed outlet is then placed in its
+  town, its county and its state through located_in edges, and counted
   there per 1,000 people.
 
-  Where an outlet is means three things across the listings, and they are
-  never compared (D-203). A town a listing names for an outlet (Local News
-  Catalyst, the Maine Media Ecosystem file) places it (D-241). When no
-  listing names a town, the choice town_fallback says whether the town of
-  the publisher's office (Cision) may, by its town name only: never its
-  street address, which can sit far from the outlet (Cision puts the
-  Advertiser Democrat, a Norway paper, in South Portland), and never
-  against a named town, which always wins (D-242). The communities a
-  listing says an outlet serves (Jo Easton) are SERVES-1's, unread here.
+  Is it closed. A listing's operating status is read through a declared
+  vocabulary (D-245): operating, ceased, or quiet (a last post given as a
+  month and year, kept with its words and counted). A status a listing
+  writes in another column is read there too, by declared words: the Maine
+  Media Ecosystem file writes CLOSED in its Medium (D-251). Cision's
+  353-row file carries the only operating column, hand-added, its author
+  and day unrecorded, so a status is weak evidence. What a ceased outlet
+  becomes is the choice ceased_outlets.
+
+  Is it local news. Two kinds of listing say two different things (D-247).
+  A local news list (Local News Catalyst, the Maine Media Ecosystem file,
+  Jo Easton's list) is a person's choice of local news outlets, so an
+  outlet on one is local news by that list's say, whatever its medium. A
+  media database (Cision's two exports) holds every outlet with an
+  address: radio stations whatever their format, shows beside the stations
+  that air them, trade magazines, blogs, a gear-review site. An outlet only
+  a database holds is judged by the database's own type, declared with two
+  axes, medium and audience, every type named and a placeholder (0)
+  declared unknown. The choice database_alone says which classes count
+  (D-248). A program never counts under any choice: it airs on a station,
+  and counting both counts one transmitter twice (a rule). An outlet whose
+  database types disagree, one counted and one not, is listed as
+  medium_conflict; one whose types say nothing is medium_unknown. The
+  medium is judged before the town, so an outlet listed for its medium
+  never needs a town, and a review cannot place one (D-240's rule).
+
+  Where is it. Where an outlet is means three things across the listings,
+  and they are never compared (D-203). A town a listing names places it
+  (D-241). A name in statewide_names (Statewide) places it in the state
+  alone, with no town and no county, unless another listing names a town,
+  which wins (D-249): Amjambo Africa, which publishes in seven languages,
+  is the ecosystem file's statewide outlet. When no listing names either,
+  the choice town_fallback says whether the town of the publisher's office
+  (Cision) may, by its town name only, never its street address and never
+  against a named town (D-242). An office address two or more outlets give
+  is a publisher's office, not a newsroom (D-250): Cision puts the
+  Advertiser Democrat, a Norway paper, at its publisher's South Portland
+  address. Such an outlet is flagged office_shared, and listed under
+  office_town_unshared. An address is compared by its street, normalized
+  as a name is, and its five-digit ZIP; a ZIP a spreadsheet read as a
+  number lost its leading zero (Maine's 04282 written 4282) and gets it
+  back, since no US ZIP is shorter (a rule). Turner Publications' ten free
+  weeklies all give its Fern Street office, which says nothing of where
+  each one is read. The communities a listing says an outlet serves
+  (Jo Easton) are SERVES-1's, unread here.
 
   One outlet per group (D-243). Its id is made from its members, the first
   by the declaration's source_order, so a fresh copy of one listing
-  renumbers no other outlet. Exact keys miss some merges; a person's reading
-  of two records as one outlet is a reviewed merge, keyed by each record's
-  source and name as written, never by a group id that follows row order.
+  renumbers no other outlet. A person's reading of two records as one
+  outlet is a reviewed merge, keyed by each record's source and name as
+  written, never by a group id that follows row order.
 
   A town is matched by name, on both sides alike, after the declared Census
   suffixes come off (Auburn city, Durham town): lowercase, periods and
   apostrophes dropped, a hyphen read as a space. Nothing else is forgiven
-  and no abbreviation is expanded (D-244). A named county narrows the match;
-  an office county never does, since Cision's reads Cook for Maine outlets
-  (D-204). These are rules, each listed with its reason and never placed:
-  two different towns for one outlet (towns_disagree); a name matching no
-  town, a village included (no_town_match); a name matching two towns with
-  no county to choose (ambiguous_town); no town given (no_town_given). A
-  person's reading of one outlet's town is a reviewed town, under the same
-  keys, and only for an outlet the run would otherwise list.
-
-  A listing's operating status is read through a declared vocabulary
-  (D-245): operating, ceased, or quiet (a last post given as a month and
-  year, kept with its words and counted). Only Cision's 353-row file
-  carries one, a hand-added column whose author and day are not recorded,
-  so it is weak evidence. What a ceased outlet becomes is the choice
-  ceased_outlets.
+  and no abbreviation is expanded (D-244). A named county narrows the
+  match; an office county never does, since Cision's reads Cook for Maine
+  outlets (D-204). These are rules, each listed with its reason and never
+  placed: two different towns for one outlet (towns_disagree); a name
+  matching no town, a village included (no_town_match); a name matching two
+  towns with no county to choose (ambiguous_town); no town given
+  (no_town_given). A person's reading of one outlet's town is a reviewed
+  town, under the same keys, only for an outlet the run would otherwise
+  list for its town (an office_shared outlet included).
 
   An outlet has no point, so it is placed only where its town decides: its
-  town, county and state (D-246). It is never placed in a House or Senate
-  district, a Census tribal area or a civil division, since a town can lie
-  across several, and no outlet here says which. On the map it is a count
-  on its town, never a pin.
+  town, county and state, or the state alone (D-246, D-249). It is never
+  placed in a House or Senate district, a Census tribal area or a civil
+  division, since a town can lie across several, and no outlet here says
+  which. On the map it is a count on its place, never a pin.
 
 requires_data:
   - {name: listings, type: tabular, semantic_types: [outlet_listing], critical: true, as_acquired: true,
@@ -72,16 +104,19 @@ choices:
     options:
       none:
       office_town:
+      office_town_unshared:
     default: none
     description: >
       Whether an outlet no listing names a town for is placed in the town of
       its publisher's office. none: it is listed as no_town_given and
-      counted nowhere, so every count means one thing, a town a listing
+      counted nowhere, so every count means one thing, a place a listing
       names. office_town: the office's town name places it, flagged
-      office_town_not_named, and placed_by says office_town on every such
-      outlet. A chain's papers can share one office town, so an office town
-      may stand far from the community a paper covers; it is never used
-      where a listing names a town.
+      office_town_not_named, and placed_by says office_town; an office
+      address other outlets also give is flagged office_shared. office_town_unshared:
+      as office_town, except that an outlet whose office address two or
+      more outlets give is listed as office_shared, since a shared address
+      is a publisher's office and says nothing of where its papers are.
+      Never used where a listing names a town.
   ceased_outlets:
     options:
       listed:
@@ -94,6 +129,23 @@ choices:
       publishes. counted: it is placed like any other, flagged
       operating:ceased. Either way the mark is the listing's, whose author
       and day are not recorded.
+  database_alone:
+    options:
+      none:
+      newspapers:
+      print_and_web:
+    default: none
+    description: >
+      What an outlet only a media database holds, on no local news list, may
+      count as. none: nothing; every count rests on a list's say. newspapers:
+      the database's newspapers only, since its online type mixes local news
+      with sites that are not (Cision types Trailspace.com, a gear-review
+      site, Online, consumer); digital local news still comes in through the
+      lists. print_and_web: newspapers, newsletters and consumer online
+      outlets. Radio and television stations, magazines, blogs, podcasts and
+      trade press count under no option unless a list holds them, and a
+      program never does. Which class counts under which option is declared
+      with the types, in media_database_types.
 
 requires_primitives:
   - soil/stack_outlet_sources
@@ -104,16 +156,20 @@ requires_primitives:
 produces:
   - semantic_type: news_outlet
     data_category: tabular
-    description: Each placed outlet, once, with the town that placed it and how.
+    description: Each placed outlet, once, with the place that placed it, how, and on whose say it is local news.
   - semantic_type: located_in_edges
     data_category: tabular
-    description: Each placed outlet to its town, county and state.
+    description: Each placed outlet to its town, county and state, or to the state alone.
 
 interpretation: >
-  A located_in edge says a listing places an outlet in a town, never that
-  the outlet covers that town or only that town (SERVES-1). An outlet placed
-  by office town says where its publisher's office is. A place with no
-  placed outlet is not a place with no news: every outlet not placed is
+  A located_in edge says a listing places an outlet in a place, never that
+  the outlet covers that place or only that place (SERVES-1). An outlet
+  placed by office town says where its publisher's office is. A place with
+  no placed outlet is not a place with no news: every outlet not placed is
   listed with its reason, and the listings are commercial and personal
-  compilations, not a census of outlets. No outlet is counted in a district
-  or a tribal area.
+  compilations, not a census of outlets. Broadcast counts only where a list
+  holds a station: a media database's stations carry no word on whether
+  they air local news, so many rural radio stations that do are not
+  counted here, and the count says so rather than guess. No outlet is
+  counted in a district or a tribal area. The listings were collected at
+  the end of summer 2026; a compiled list describes a day before that.

@@ -1,43 +1,55 @@
 """
 soil/transform/prepare_news_outlets.py  |  rewildingCities
 
-prepare_news_outlets ~ one row per local news outlet, placed in a town by
-the town's code, never by a point (Sprint 06, step 3, the fifth carrier)
+prepare_news_outlets ~ one row per local news outlet, placed in a town (or,
+for an outlet a listing calls statewide, in the state) by the place's code,
+never by a point (Sprint 06, step 3, the fifth carrier)
 
 reads the grouped outlet stack (group_outlet_records) and the places table,
-and writes each outlet once, in the town its sources give. what is placed
-and why is the outlet_carriers method's (D-212); in short:
+and writes each outlet once, where its sources put it. what is placed and
+why is the outlet_carriers method's (D-212); in short, in the order the run
+asks it of each outlet:
 
   ~ one outlet per group (D-243). its id is made from its members, never
     from row order: outlet:<source>:<name key> of its first member by the
-    declaration's source_order, so a fresh copy of one listing renumbers
-    nobody else. groups that would share an id each add their first
-    member's line, flagged id_by_line
-  ~ a town a source names (named_town) places the outlet (D-241). when no
-    source names one, the method's choice town_fallback says whether the
-    town of the publisher's office may (office_town, D-242): never its
-    street address, and never compared with a named town
-  ~ towns are matched by name after the declared Census suffixes come off
-    (seeds/crosswalks/places/census_name_suffixes.yml): lowercase, periods
-    and apostrophes dropped, a hyphen read as a space, spaces collapsed.
-    nothing else is forgiven, and no abbreviation is expanded. a named
-    county narrows the match when it is one of the state's; an office
-    county never does, since Cision's reads Cook (D-204)
-  ~ two different towns in one group are towns_disagree; a name matching no
-    town is no_town_match; one matching two with no county to choose is
-    ambiguous_town; no town at all is no_town_given. each is listed with
-    its records, never placed (D-244)
-  ~ a source's operating status is read through the declaration's
-    operating_vocabulary (D-245): operating, ceased, or last_post (a value
-    opening with the declared prefix, kept with its words). a value in no
-    list stays counted and says so. what a ceased outlet becomes is the
-    method's choice ceased_outlets: listed, or counted and flagged
+    declaration's source_order. groups that would share an id each add
+    their first member's line, flagged id_by_line
+  ~ is it closed? a source's operating status is read through the
+    declaration's operating_vocabulary (D-245), and a status a source
+    writes in another column through operating_elsewhere (D-251): the
+    ecosystem file writes CLOSED in its Medium. what a ceased outlet
+    becomes is the method's choice ceased_outlets
+  ~ is it local news? each source is declared a local_news_list (a person
+    chose every outlet on it as local news) or a media_database (every
+    outlet with an address) in source_kinds (D-247). an outlet any list
+    holds is local news by that list's say. an outlet only a database
+    holds is judged by its database type, read through
+    media_database_types: every type declared, an undeclared one refusing
+    the run, a placeholder declared unknown. the method's choice
+    database_alone says which classes count (D-248). a program never
+    counts, under any choice: it airs on a station (a rule). the medium is
+    judged before the town, so an outlet listed for its medium never needs
+    a town
+  ~ where is it? a town a source names places the outlet (D-241); a name
+    in statewide_names places it in the state only, unless a town is also
+    named, which wins (D-249). when no source names either, the choice
+    town_fallback says whether the publisher's office town may (D-242):
+    never its street address, and never against a named town. an office
+    address that two or more outlets give is a publisher's office: an
+    outlet placed there is flagged office_shared, and listed under
+    office_town_unshared (D-250). an address is its street as normalized
+    and its ZIP as five digits, leading zeros a spreadsheet dropped given
+    back
+  ~ towns are matched by name after the declared Census suffixes come off,
+    lowercase, periods and apostrophes dropped, a hyphen read as a space;
+    nothing else forgiven (D-244). two towns, none, two matches or none
+    given are listed, never placed
   ~ a review (seeds/crosswalks/outlets/outlet_reviews.yml) is a person's
-    reading: a merge joins the groups of the records it names; a town names
-    the code a person read for one record's outlet. a review is keyed by
-    the source and the name as written, so it lapses when the words change,
-    and it refuses the run when no record gives it or the run no longer
-    needs it (D-240's rule)
+    reading, keyed by source and name as written: a merge joins groups, a
+    town names the code a person read for an outlet the run would list for
+    its town. it refuses when no record gives it, when the run no longer
+    needs it, and when the outlet is listed as ceased or for its medium
+    (D-240's rule)
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
 Inputs:  grouped (outlet_groups), places (places)
@@ -45,8 +57,9 @@ Params:
   sources         required: the outlet declaration ($crosswalks.outlet_sources)
   names           required: the Census name suffixes ($crosswalks.census_name_suffixes)
   reviews         optional: reviewed records ($crosswalks.outlet_reviews)
-  town_fallback   required: none | office_town
+  town_fallback   required: none | office_town | office_town_unshared
   ceased_outlets  required: listed | counted
+  database_alone  required: none | newspapers | print_and_web
   state_fips      required: two digits
 Output: the outlets, csv, one row per placed outlet, keyed by feature_id;
         every outlet not placed is listed in the receipt with its reason. ~
@@ -63,12 +76,18 @@ import pandas as pd
 GEOID = "us_census_geoid"
 KEY = ["feature_id"]
 SPATIAL_UNIT = "news_outlet"
-COLUMNS = ["feature_id", "name", "town_code", "town_name", "county_code", "placed_by",
-           "town_as_written", "town_from", "operating", "operating_note", "sources",
-           "records", "review_evidence", "review_read_on", "review_read_by", "flags"]
-TOWN_FALLBACKS = ("none", "office_town")
+COLUMNS = ["feature_id", "name", "scope", "town_code", "town_name", "county_code",
+           "placed_by", "town_as_written", "town_from", "vouched_by", "database_class",
+           "medium_as_written", "operating", "operating_note", "sources", "records",
+           "review_evidence", "review_read_on", "review_read_by", "flags"]
+TOWN_FALLBACKS = ("none", "office_town", "office_town_unshared")
 CEASED_CHOICES = ("listed", "counted")
-REVIEWABLE = ("towns_disagree", "no_town_match", "ambiguous_town", "no_town_given")
+DATABASE_ALONE = ("none", "newspapers", "print_and_web")
+KINDS = ("local_news_list", "media_database")
+STATUS_CLASSES = ("operating", "ceased")
+REVIEWABLE = ("towns_disagree", "no_town_match", "ambiguous_town", "no_town_given",
+              "office_shared")
+MEDIUM_REASONS = ("medium_not_counted", "medium_conflict", "medium_unknown")
 REVIEW_FIELDS = ("evidence", "read_on", "read_by")
 
 
@@ -77,8 +96,17 @@ class OutletsRefused(ValueError):
 
 
 def _text(x) -> str | None:
-    if x is None or (isinstance(x, float) and pd.isna(x)):
+    """a value as text, or None when it is missing in any of pandas' ways
+    (None, NaN, NA). judged one value at a time: in pandas 3, Series.map
+    over a str column turns a returned None back into NaN, so a missing
+    value is never read from a mapped Series by `is None`."""
+    if x is None:
         return None
+    try:
+        if pd.isna(x):
+            return None
+    except (TypeError, ValueError):
+        pass
     t = str(x).strip()
     return t or None
 
@@ -144,6 +172,100 @@ def read_source_order(sources: dict, held) -> list[str]:
         raise OutletsRefused(f"the stack holds sources source_order does not name: "
                              f"{', '.join(unknown)}")
     return order
+
+
+def read_kinds(sources: dict, order: list[str]) -> dict:
+    """each source's kind: what being on it says about an outlet (D-247)."""
+    kinds = (sources or {}).get("source_kinds")
+    if not isinstance(kinds, dict):
+        raise OutletsRefused("the outlet declaration has no source_kinds, so what being on "
+                             "a listing says about an outlet is unknown (D-247)")
+    if set(kinds) != set(order):
+        raise OutletsRefused(f"source_kinds ({', '.join(sorted(kinds))}) and the declared "
+                             f"sources ({', '.join(sorted(order))}) must be the same set")
+    bad = sorted(f"{s}: {k}" for s, k in kinds.items() if k not in KINDS)
+    if bad:
+        raise OutletsRefused(f"a source's kind is one of {', '.join(KINDS)}; read "
+                             f"{', '.join(bad)}")
+    return dict(kinds)
+
+
+@dataclass(frozen=True)
+class DatabaseTypes:
+    read_for: frozenset
+    values: dict          # a type as written, trimmed -> class id
+    classes: dict         # class id -> its declaration
+
+
+def read_database_types(sources: dict, kinds: dict) -> DatabaseTypes:
+    """the media databases' types, every one declared (D-247, D-248). a class
+    counts under the database_alone options it names; a program and an
+    unknown class name none, and saying otherwise refuses."""
+    databases = {s for s, k in kinds.items() if k == "media_database"}
+    d = (sources or {}).get("media_database_types")
+    if not databases:
+        return DatabaseTypes(frozenset(), {}, {})
+    if not isinstance(d, dict):
+        raise OutletsRefused("a source is a media_database, so the outlet declaration "
+                             "needs media_database_types (D-247)")
+    read_for = set(d.get("read_for") or [])
+    if read_for != databases:
+        raise OutletsRefused(f"media_database_types reads for {', '.join(sorted(read_for))}; "
+                             f"the media databases are {', '.join(sorted(databases))}")
+    classes = d.get("classes") or {}
+    values = {str(k).strip(): str(v) for k, v in (d.get("values") or {}).items()}
+    if not classes or not values:
+        raise OutletsRefused("media_database_types needs classes and values (D-247)")
+    undeclared = sorted({c for c in values.values() if c not in classes})
+    if undeclared:
+        raise OutletsRefused(f"media_database_types maps a type to an undeclared class: "
+                             f"{', '.join(undeclared)}")
+    counting = set(DATABASE_ALONE) - {"none"}
+    for cid, c in classes.items():
+        c = c or {}
+        under = list(c.get("counted_under") or [])
+        wrong = sorted(set(under) - counting)
+        if wrong:
+            raise OutletsRefused(f"class {cid} counts under {', '.join(wrong)}; a class counts "
+                                 f"under {', '.join(sorted(counting))} or none of them")
+        if c.get("program") and under:
+            raise OutletsRefused(f"class {cid} is a program and names options it counts "
+                                 f"under; a program airs on a station, so counting both "
+                                 f"counts one transmitter twice (D-248)")
+        if c.get("unknown") and under:
+            raise OutletsRefused(f"class {cid} is unknown and names options it counts under; "
+                                 f"an unknown type is never evidence of a medium (D-247)")
+    return DatabaseTypes(frozenset(read_for), values, dict(classes))
+
+
+def read_statewide(sources: dict) -> frozenset:
+    names = (sources or {}).get("statewide_names")
+    if names is None:
+        raise OutletsRefused("the outlet declaration has no statewide_names (an empty list "
+                             "says none), so a listing's statewide outlet cannot be told "
+                             "from a missing town (D-249)")
+    return frozenset(norm(x) for x in names)
+
+
+def read_operating_elsewhere(sources: dict, order: list[str], columns) -> list:
+    """(source, column, class, words): statuses a source writes outside its
+    operating column (D-251)."""
+    d = (sources or {}).get("operating_elsewhere") or {}
+    out = []
+    for src, cols in d.items():
+        if src not in order:
+            raise OutletsRefused(f"operating_elsewhere names {src}, which is not a source")
+        for col, by_class in (cols or {}).items():
+            if col not in columns:
+                raise OutletsRefused(f"operating_elsewhere reads {src}'s {col}, which the "
+                                     f"grouped stack does not hold")
+            for cls, words in (by_class or {}).items():
+                if cls not in STATUS_CLASSES:
+                    raise OutletsRefused(f"operating_elsewhere: {cls} is not one of "
+                                         f"{', '.join(STATUS_CLASSES)}")
+                for w in words or []:
+                    out.append((src, col, cls, norm(w)))
+    return out
 
 
 @dataclass
@@ -278,11 +400,10 @@ def apply_merges(grouped: pd.DataFrame, merges) -> tuple[pd.DataFrame, dict]:
 
 # ── one outlet ─────────────────────────────────────────────────────────────
 
-def operating_of(values, vocab: Vocabulary) -> tuple[str, str | None]:
-    """(class, note) from the members' operating values."""
+def operating_of(values, vocab: Vocabulary, written=()) -> tuple[str, str | None]:
+    """(class, note) from the members' operating values, and from statuses
+    written elsewhere, given as (class, words) pairs (D-251)."""
     held = sorted({v for v in (_text(x) for x in values) if v})
-    if not held:
-        return "not_given", None
     classes = set()
     for v in held:
         n = norm(v)
@@ -294,19 +415,121 @@ def operating_of(values, vocab: Vocabulary) -> tuple[str, str | None]:
             classes.add("last_post")
         else:
             classes.add("unmapped")
+    words = list(held)
+    for cls, w in written:
+        classes.add(cls)
+        words.append(w)
+    if not classes:
+        return "not_given", None
     if len(classes) > 1:
-        return "conflicting", "; ".join(held)
+        return "conflicting", "; ".join(words)
     (cls,) = classes
-    return cls, (None if cls == "operating" else "; ".join(held))
+    return cls, (None if cls == "operating" else "; ".join(words))
 
 
-def place_one(members: pd.DataFrame, towns: Towns, town_fallback: str) -> dict:
-    """where one outlet's sources put it: placed_by and a code, or a reason."""
-    named = [(r.named_town, _text(r.named_county), r.source) for r in members.itertuples()
-             if _text(r.named_town)]
+def written_statuses(members: pd.DataFrame, elsewhere: list) -> list:
+    """the statuses members write outside their operating column."""
+    out = []
+    for r in members.to_dict("records"):
+        for src, col, cls, word in elsewhere:
+            v = _text(r.get(col))
+            if r["source"] == src and v and norm(v) == word:
+                out.append((cls, f"{v} ({src} {col})"))
+    return out
+
+
+def medium_of(members: pd.DataFrame, kinds: dict, types: DatabaseTypes,
+              database_alone: str) -> dict:
+    """whether an outlet is local news, and on whose say (D-247, D-248).
+    {vouched_by, database_class, medium_as_written} and, when it is not
+    counted, a reason and its detail."""
+    vouched = sorted({s for s in members["source"].astype(str) if kinds[s] == "local_news_list"})
+    found = []                       # (class id, the type as written)
+    written = []
+    for r in members.to_dict("records"):
+        raw = _text(r.get("medium_raw"))
+        if raw:
+            written.append(f"{r['source']}: {raw}")
+        if r["source"] not in types.read_for:
+            continue
+        cid = types.values.get(raw if raw is not None else "")
+        if raw is None:
+            cid = None
+        elif cid is None:
+            raise OutletsRefused(f"{r['source']} line {r['source_line']} gives the type "
+                                 f"{raw!r}, which media_database_types does not declare; "
+                                 f"every type is declared before it is read (D-247)")
+        found.append((cid, raw))
+    database_class = "; ".join(sorted({c for c, _ in found if c})) or None
+    out = {"vouched_by": "; ".join(vouched) or None, "database_class": database_class,
+           "medium_as_written": "; ".join(sorted(set(written))) or None}
+    if vouched:
+        return out
+    known = sorted({c for c, _ in found if c and not (types.classes[c] or {}).get("unknown")})
+    if not known:
+        as_written = sorted({w for _, w in found if w}) or ["no type"]
+        return {**out, "reason": "medium_unknown",
+                "detail": f"no list holds it and its database type says nothing: "
+                          f"{', '.join(as_written)}"}
+    counted = [c for c in known
+               if database_alone in ((types.classes[c] or {}).get("counted_under") or [])]
+    if len(counted) == len(known):
+        return out
+    reason = "medium_conflict" if counted else "medium_not_counted"
+    return {**out, "reason": reason,
+            "detail": f"database_alone is {database_alone}; no list holds it; its database "
+                      f"types: {', '.join(known)}"}
+
+
+def _zip5(z) -> str | None:
+    """a ZIP as five digits, from its part before any hyphen. three or four
+    digits are a ZIP a spreadsheet read as a number, its leading zeros
+    dropped (Maine's 04282 written 4282), and get them back, since no US
+    ZIP is shorter (a rule, D-250). nine digits are ZIP+4 written whole.
+    anything else gives no key."""
+    t = _text(z)
+    if not t:
+        return None
+    head = t.split("-")[0].strip()
+    if not head.isdigit():
+        return None
+    if len(head) == 9:
+        return head[:5]
+    if 3 <= len(head) <= 5:
+        return head.zfill(5)
+    return None
+
+
+def office_keys(members: pd.DataFrame) -> set:
+    """an outlet's office addresses, compared: street as normalized, ZIP5."""
+    keys = set()
+    for r in members.to_dict("records"):
+        a, z = _text(r.get("address_raw")), _zip5(_text(r.get("zip_raw")))
+        if a and z:
+            keys.add((norm(a), z))
+    return keys
+
+
+def place_one(members: pd.DataFrame, towns: Towns, town_fallback: str,
+              statewide: frozenset) -> dict:
+    """where one outlet's sources put it: a scope, placed_by and a code, or a
+    reason."""
+    named, state_named = [], []
+    for r in members.itertuples():
+        t = _text(r.named_town)
+        if not t:
+            continue
+        if norm(t) in statewide:
+            state_named.append((t, r.source))
+        else:
+            named.append((t, _text(r.named_county), r.source))
+    if not named and state_named:
+        return {"scope": "state", "placed_by": "named_state",
+                "town_as_written": "; ".join(sorted({t for t, _ in state_named})),
+                "town_from": "; ".join(sorted({s for _, s in state_named})), "flags": []}
     if named:
         kind, given = "named_town", named
-    elif town_fallback == "office_town":
+    elif town_fallback in ("office_town", "office_town_unshared"):
         kind = "office_town"
         given = [(r.office_town, None, r.source) for r in members.itertuples()
                  if _text(r.office_town)]
@@ -314,7 +537,7 @@ def place_one(members: pd.DataFrame, towns: Towns, town_fallback: str) -> dict:
         kind, given = "named_town", []
     if not given:
         return {"reason": "no_town_given", "detail": "no source names a town"
-                + ("" if town_fallback == "office_town" else ", and town_fallback is none")}
+                + ("" if town_fallback != "none" else ", and town_fallback is none")}
     found, missed = {}, []
     for town, county, source in given:
         code, reason, detail = resolve(str(town).strip(), county, towns)
@@ -331,7 +554,8 @@ def place_one(members: pd.DataFrame, towns: Towns, town_fallback: str) -> dict:
         return {"reason": reason, "detail": f"{kind}: " + "; ".join(d for _, d in missed)}
     (code, written), = found.items()
     flags = [f"town_unmatched:{d}" for _, d in missed]
-    return {"code": code, "placed_by": kind,
+    flags += [f"statewide_also:{s}" for _, s in state_named]
+    return {"scope": "town", "code": code, "placed_by": kind,
             "town_as_written": "; ".join(sorted({t for t, _ in written})),
             "town_from": "; ".join(sorted({s for _, s in written})), "flags": flags}
 
@@ -347,7 +571,7 @@ class Prepared:
 
 
 def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: dict,
-            town_fallback: str, ceased_outlets: str, state_fips: str,
+            town_fallback: str, ceased_outlets: str, database_alone: str, state_fips: str,
             reviews: dict | None = None) -> Prepared:
     if town_fallback not in TOWN_FALLBACKS:
         raise OutletsRefused(f"town_fallback is {town_fallback!r}; it is one of "
@@ -355,18 +579,34 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
     if ceased_outlets not in CEASED_CHOICES:
         raise OutletsRefused(f"ceased_outlets is {ceased_outlets!r}; it is one of "
                              f"{', '.join(CEASED_CHOICES)}")
+    if database_alone not in DATABASE_ALONE:
+        raise OutletsRefused(f"database_alone is {database_alone!r}; it is one of "
+                             f"{', '.join(DATABASE_ALONE)}")
     need = ("source", "source_line", "name", "name_key", "group_id", "named_town",
-            "named_county", "office_town", "operating_raw")
+            "named_county", "office_town", "operating_raw", "medium_raw", "address_raw",
+            "zip_raw")
     absent = [c for c in need if c not in grouped.columns]
     if absent:
         raise OutletsRefused(f"the grouped stack has no {', '.join(absent)}")
     vocab = read_vocabulary(sources)
     order = read_source_order(sources, grouped["source"].astype(str).unique())
+    kinds = read_kinds(sources, order)
+    types = read_database_types(sources, kinds)
+    statewide = read_statewide(sources)
+    elsewhere = read_operating_elsewhere(sources, order, grouped.columns)
     towns = town_index(places, names, state_fips)
     reviews = reviews or {}
     grouped = grouped.reset_index(drop=True)
     grouped, merged = apply_merges(grouped, reviews.get("merges"))
     ids, by_line = outlet_ids(grouped, order)
+
+    # an office address two or more outlets give is a publisher's (D-250),
+    # counted over every outlet, whatever becomes of it
+    keys_of = {gid: office_keys(grouped[grouped["group_id"] == gid]) for gid in ids}
+    holders: dict = {}
+    for gid, keys in keys_of.items():
+        for k in keys:
+            holders.setdefault(k, set()).add(gid)
 
     town_reviews = {}
     for n, entry in enumerate(reviews.get("towns") or [], start=1):
@@ -387,7 +627,8 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
         members = grouped[grouped["group_id"] == gid]
         first = _first_members(members, order).iloc[0]
         fid, name = ids[gid], _text(first["name"])
-        op, op_note = operating_of(members["operating_raw"], vocab)
+        op, op_note = operating_of(members["operating_raw"], vocab,
+                                   written_statuses(members, elsewhere))
         records = _records_of(members)
         flags = []
         if gid in by_line:
@@ -395,39 +636,69 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
         review = merged.get(gid)
         if review is not None:
             flags.append("merged_by_review")
+
+        def listing(reason, detail):
+            return {"feature_id": fid, "name": name, "reason": reason, "detail": detail,
+                    "records": records}
+
         if op == "ceased" and ceased_outlets == "listed":
             if gid in town_reviews:
                 raise OutletsRefused(f"{town_reviews[gid][0]}: its outlet is listed as ceased, "
                                      f"so a town review cannot place it")
-            listed.append({"feature_id": fid, "name": name, "reason": "ceased",
-                           "detail": op_note, "records": records})
+            listed.append(listing("ceased", op_note))
             continue
-        placed = place_one(members, towns, town_fallback)
+        medium = medium_of(members, kinds, types, database_alone)
+        if "reason" in medium:
+            if gid in town_reviews:
+                raise OutletsRefused(f"{town_reviews[gid][0]}: its outlet is listed for its "
+                                     f"medium ({medium['reason']}), so a town review cannot "
+                                     f"place it; the medium is judged before the town (D-248)")
+            listed.append(listing(medium["reason"], medium["detail"]))
+            continue
+        placed = place_one(members, towns, town_fallback, statewide)
+        if placed.get("placed_by") == "office_town":
+            sharers = set().union(*(holders[k] for k in keys_of[gid])) if keys_of[gid] else set()
+            if len(sharers) > 1:
+                others = sorted(_text(grouped.loc[grouped["group_id"] == g, "name"].iloc[0])
+                                or ids[g] for g in sharers - {gid})
+                if town_fallback == "office_town_unshared":
+                    placed = {"reason": "office_shared",
+                              "detail": f"its office address is given by {len(sharers)} "
+                                        f"outlets, so it is a publisher's office: with "
+                                        f"{', '.join(others[:5])}"
+                                        + (f" and {len(others) - 5} more" if len(others) > 5 else "")}
+                else:
+                    placed["flags"] = placed["flags"] + [f"office_shared:{len(sharers)}"]
         if gid in town_reviews:
             where, code, entry = town_reviews[gid]
-            if "code" in placed:
+            if "code" in placed or placed.get("scope") == "state":
                 raise OutletsRefused(f"{where}: the run places this outlet on its own; a "
                                      f"review the run no longer needs refuses (D-240)")
-            placed = {"code": code, "placed_by": "reviewed",
+            placed = {"scope": "town", "code": code, "placed_by": "reviewed",
                       "town_as_written": _text(entry.get("name")),
                       "town_from": _text(entry.get("source")),
                       "flags": [f"review_settled:{placed['reason']}"]}
             review = entry
-        if "code" not in placed:
-            listed.append({"feature_id": fid, "name": name, "reason": placed["reason"],
-                           "detail": placed["detail"], "records": records})
+        if "reason" in placed:
+            listed.append(listing(placed["reason"], placed["detail"]))
             continue
         if op in ("ceased", "last_post", "unmapped", "conflicting"):
             flags.append(f"operating:{op}")
         flags.extend(placed["flags"])
         if placed["placed_by"] == "office_town":
             flags.append("office_town_not_named")
-        code = placed["code"]
+        if placed["placed_by"] == "named_state":
+            flags.append("placed_in_state_only")
+        code = placed.get("code")
         rows.append({
-            "feature_id": fid, "name": name, "town_code": code,
-            "town_name": towns.name_of[code], "county_code": code[:5],
+            "feature_id": fid, "name": name, "scope": placed["scope"], "town_code": code,
+            "town_name": towns.name_of[code] if code else None,
+            "county_code": code[:5] if code else None,
             "placed_by": placed["placed_by"], "town_as_written": placed["town_as_written"],
-            "town_from": placed["town_from"], "operating": op, "operating_note": op_note,
+            "town_from": placed["town_from"], "vouched_by": medium["vouched_by"],
+            "database_class": medium["database_class"],
+            "medium_as_written": medium["medium_as_written"],
+            "operating": op, "operating_note": op_note,
             "sources": "; ".join(sorted(set(members["source"].astype(str)))),
             "records": records,
             "review_evidence": _text((review or {}).get("evidence")),
@@ -440,20 +711,33 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
     return Prepared(outlets=out, listed=listed)
 
 
+def _tally(series) -> dict:
+    return dict(Counter(x for x in series if isinstance(x, str) and x))
+
+
 def output_metadata(p: Prepared) -> dict:
-    """what the receipt says: its key (KEYS-1), how each outlet was placed,
-    and every outlet not placed, by name, with its reason."""
-    return {"data_category": "tabular", "crs": None, "row_count": len(p.outlets),
+    """what the receipt says: its key (KEYS-1), how each outlet was placed
+    and on whose say it is local news, and every outlet not placed, by name,
+    with its reason."""
+    o = p.outlets
+    alone = o[o["vouched_by"].isna()]
+    return {"data_category": "tabular", "crs": None, "row_count": len(o),
             "variables": COLUMNS, "id_fields": KEY, "spatial_unit": SPATIAL_UNIT,
-            "placed_by": dict(Counter(p.outlets["placed_by"])),
+            "placed_by": _tally(o["placed_by"]), "scope": _tally(o["scope"]),
+            "vouched_by_a_list": int(o["vouched_by"].notna().sum()),
+            "database_alone": int(len(alone)),
+            "database_alone_classes": _tally(alone["database_class"]),
             "listed_reasons": dict(Counter(r["reason"] for r in p.listed)),
             "listed_outlets": p.listed}
 
 
 def summary(p: Prepared) -> list[str]:
-    return [f"{len(p.outlets)} outlet(s) placed: {dict(Counter(p.outlets['placed_by']))}",
+    o = p.outlets
+    return [f"{len(o)} outlet(s) placed: {_tally(o['placed_by'])}",
+            f"on a list's say {int(o['vouched_by'].notna().sum())}, "
+            f"a database's alone {int(o['vouched_by'].isna().sum())}",
             f"{len(p.listed)} listed: {dict(Counter(r['reason'] for r in p.listed))}",
-            f"operating: {dict(Counter(p.outlets['operating']))}"]
+            f"operating: {_tally(o['operating'])}"]
 
 
 def main():
@@ -478,6 +762,7 @@ def main():
                 pd.read_csv(get_input(i, "grouped"), dtype=str), read(get_input(i, "places")),
                 require_param(p, "sources"), require_param(p, "names"),
                 str(require_param(p, "town_fallback")), str(require_param(p, "ceased_outlets")),
+                str(require_param(p, "database_alone")),
                 str(require_param(p, "state_fips")).zfill(2), get_param(p, "reviews"))
         except OutletsRefused as e:
             primitive_failure("Outlets refused", str(e))

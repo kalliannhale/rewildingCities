@@ -47,6 +47,24 @@
 #     after lowercasing and collapsing spaces. a value opening with
 #     last_post_prefix is quiet, not closed: it is counted and keeps its
 #     words. a value in no list stays counted and says so
+#   ~ operating_elsewhere: a status a source writes outside its operating
+#     column (D-251). the ecosystem file writes CLOSED in its Medium; read
+#     it there, by exact words after lowercasing, as the class it names
+#   ~ source_kinds: what being on a listing says about an outlet (D-247).
+#     a local_news_list is a person's choice of local news outlets, so an
+#     outlet on one is local news by that list's say. a media_database
+#     holds every outlet with an address, so an outlet only a database
+#     holds is judged by its type. Easton's Format and the other lists'
+#     medium words are kept as written and never parsed
+#   ~ media_database_types: every type a media database writes, mapped by
+#     exact match after trimming to a class with two axes, its medium and
+#     its audience: Cision's "Magazine, trade/industry" is both. a type in
+#     no list refuses the run, so a fresh export with a new type stops
+#     rather than guesses. 0 is a placeholder, declared unknown, never a
+#     class (D-247). a class names the database_alone options it counts
+#     under; a program names none, since it airs on a station (D-248)
+#   ~ statewide_names: a town field holding one of these names an outlet
+#     for the whole state, placed in the state alone (D-249)
 
 counties: [Androscoggin, Aroostook, Cumberland, Franklin, Hancock, Kennebec,
            Knox, Lincoln, Oxford, Penobscot, Piscataquis, Sagadahoc, Somerset,
@@ -58,6 +76,64 @@ operating_vocabulary:
   operating: ["yes"]
   ceased: ["Ceased Operations"]
   last_post_prefix: "Last post"
+
+operating_elsewhere:
+  maine_media_ecosystem:
+    medium_raw: {ceased: ["CLOSED"]}
+
+source_kinds:
+  local_news_catalyst: local_news_list
+  maine_media_ecosystem: local_news_list
+  easton: local_news_list
+  cision: media_database
+  cision_raw: media_database
+
+statewide_names: ["Statewide"]
+
+media_database_types:
+  read_for: [cision, cision_raw]
+  classes:
+    newspaper:             {medium: newspaper, audience: general, counted_under: [newspapers, print_and_web]}
+    newsletter:            {medium: newsletter, audience: unstated, counted_under: [print_and_web]}
+    online_consumer:       {medium: online, audience: consumer, counted_under: [print_and_web]}
+    online_trade:          {medium: online, audience: trade}
+    magazine_consumer:     {medium: magazine, audience: consumer}
+    magazine_trade:        {medium: magazine, audience: trade}
+    magazine_academic:     {medium: magazine, audience: academic}
+    blog_consumer:         {medium: blog, audience: consumer}
+    blog_trade:            {medium: blog, audience: trade}
+    blog_podcast_consumer: {medium: "blog and podcast", audience: consumer}
+    podcast:               {medium: podcast, audience: unstated}
+    radio_station:         {medium: radio, audience: general}
+    television_station:    {medium: television, audience: general}
+    radio_program:         {medium: radio, audience: general, program: true}
+    television_program:    {medium: television, audience: general, program: true}
+    supplement:            {medium: supplement, audience: international}
+    social_network:        {medium: social network, audience: general}
+    not_media:             {medium: none, audience: none}
+    unknown:               {unknown: true}
+  # Cision's Outlet Type as written, from both Maine pulls (read in session 11)
+  values:
+    "Newspaper": newspaper
+    "Newsletter": newsletter
+    "Online, consumer": online_consumer
+    "Online, trade/industry": online_trade
+    "Magazine, consumer": magazine_consumer
+    "Magazine, trade/industry": magazine_trade
+    "Magazine, technical/scientific/academic": magazine_academic
+    "Blog, consumer": blog_consumer
+    "Blog, trade/industry": blog_trade
+    "Blog, Podcast, consumer": blog_podcast_consumer
+    "Podcast": podcast
+    "Radio station": radio_station
+    "Television station": television_station
+    "Radio program": radio_program
+    "Television program": television_program
+    "Supplement (International)": supplement
+    "Social Networking Site": social_network
+    "Maine.gov": not_media
+    "Industry research organization": not_media
+    "0": unknown
 
 frequency_vocabulary:
   daily: ["Daily", "Daily (Mon-Fri)", "5 Days", "6 Days"]
