@@ -66,5 +66,5 @@ cautions:
   - Public schools only. Private schools are a separate EDGE file on the Private School Survey's own schedule.
   - No status, type or grade span is carried; those are CCD directory fields, not yet read.
   - OPSTFIPS is who administers a school, not where it stands (D-230).
-  - SCHOOLYEAR reads 2024-2025. Loam's final-year rule would read 2025, while NCES's geography is 2024's, so a count's time is written to name 2024 (SURVEY-1).
+  - SCHOOLYEAR reads 2024-2025, while NCES's geography is 2024's. A count's boundaries travel in its rows' boundary_vintage, never its time (D-231).
   - A school's location is not whom it serves (SERVES-1's cousin).

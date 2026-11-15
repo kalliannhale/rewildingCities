@@ -99,6 +99,17 @@ types:
       its own type (D-218); private schools would be another.
     # no resolution_tier yet: Kalli declares it. until then it fails closed.
 
+  health_center_site:
+    category: vector
+    format: geojson
+    description: >
+      One placed health center site as a point, from a copy of HRSA's Health
+      Center Service Delivery and Look-Alike Sites file, keyed by its BPHC
+      Assigned Number. Which sites are placed, and why, is the
+      health_center_carriers method's to say (D-212). Each carrier kind is
+      its own type (D-218).
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
   relational_hub:
     category: vector
     format: geojson
@@ -230,3 +241,13 @@ types:
       and encoding.
     # no resolution_tier yet: Kalli declares it. until then it fails closed.
 
+  health_center_sites_snapshot:
+    category: tabular
+    format: csv
+    description: >
+      A copy of HRSA's Health Center Service Delivery and Look-Alike Sites
+      file as downloaded: one row per site with its BPHC Assigned Number,
+      site and location types, setting, status and HRSA's geocode. A daily
+      snapshot, not a release, so a copy is declared by its day and its
+      sha256. Read only by declared columns and encoding.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.

@@ -1,0 +1,66 @@
+# ============================================================================
+# seeds/sources/hrsa.yml
+# ============================================================================
+# A national source catalogue (D-226), reference only, like imls_pls and
+# nces_edge_geocode: no code reads this folder. It says what HRSA's data
+# warehouse files are and where each part of reading them lives. It restates
+# nothing that has another home:
+#
+#   how the sites file is read           seeds/crosswalks/health_centers/hrsa_health_center_sites.yml
+#   what is placed, and why              garden/methods/information/health_center_carriers.yml
+#   what a placed site counts toward     seeds/indicators/health_centers.yml
+#   a copy's encoding and day            its plot's manifest, source.sites_*
+#
+# Every fact below was read on 2026-11-14 from data.hrsa.gov, a downloaded
+# copy, or HRSA's Form 5B instructions; what has not been read says so.
+# ============================================================================
+
+id: hrsa
+name: HRSA Data Warehouse (data.hrsa.gov)
+published_by: Health Resources and Services Administration
+national: true
+
+datasets:
+  health_center_sites:
+    name: Health Center Service Delivery and Look-Alike Sites (HRSA-BPHC-71)
+    used: true
+    refresh: daily; no release or version, so a copy is declared by its day and sha256
+    files: [CSV, XLSX, metadata workbook EHB_SITE_DATAMART_METADATA.XLSX]
+    usage: HRSA's About the Data lists no usage limitations
+    read:
+      "2026-11-14":
+        sha256: 08b01537495bb6a483c0e9805b9eef102e05492ce2ec4f97b6202f03366da436
+        declared_in: plots/maine/manifest.yml (hrsa_health_center_sites_20261114)
+  shortage_areas:
+    name: Health Professional Shortage Areas (primary care, dental, mental health) and MUA/P
+    used: false
+    refresh: daily
+    note: >
+      HRSA's designations, as tables and boundary shapefiles. A designation
+      applies a stated standard; its criteria are to be read and cited
+      before any use. Each group carries its own usage terms, not yet read.
+  health_sites:
+    name: Health Sites
+    used: false
+    refresh: daily
+    note: >
+      HRSA's wider site file across site types. Which types it holds is not
+      yet read, including whether it sees the Wabanaki nations' clinics.
+  area_health_resources_files:
+    name: Area Health Resources Files (AHRF)
+    used: false
+    refresh: yearly releases (latest updated 2025-12-18)
+    note: County, state and national files of more than 6,000 variables; a county value would be borrowed onto towns.
+
+identifiers:
+  site: >
+    BPHC Assigned Number (BPS-H80-nnnnnn), one per site, unique on the file.
+    The Health Center Number names the grantee; the FQHC Site NPI is issued
+    by CMS. A key's issuer is not yet recorded anywhere (JOIN-1).
+
+cautions:
+  - Site types come from Form 5B. An Administrative site does no clinical work; changing a site between Administrative and a service type takes HRSA's approval, while the two service types are self-updated.
+  - HRSA does not collect street addresses for confidential domestic violence shelters.
+  - A mobile site's address is where it is parked.
+  - HRSA's program does not see the Wabanaki nations' own clinics (TRIBE-7).
+  - A site's location is not whom it serves (SERVES-1).

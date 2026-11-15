@@ -820,5 +820,41 @@ datasets:
         - Three names hold a quoted pipe (Indiana, Washington); a quote-aware reader keeps each whole.
         - OPSTFIPS is the administering state; Maine's three Wabanaki community schools carry 59, the Bureau of Indian Education.
         - No status, type or grade span; those are CCD directory fields.
-        - SCHOOLYEAR reads 2024-2025, while NCES's geography is 2024's (SURVEY-1).
+        - SCHOOLYEAR reads 2024-2025; the count's boundaries travel in boundary_vintage, never its time (D-231).
         - sha256 of the zip read on 2026-11-14 is 9dc51ecd5cdf6e38bdb679f7ac95e2bf73ee3fb48718b8612cf830800cffb288.
+
+  hrsa_health_center_sites_20261114:
+    available: true
+    description: >
+      HRSA Health Center Service Delivery and Look-Alike Sites, the copy
+      downloaded 2026-11-14: one row per site, nationally, with its BPHC
+      Assigned Number, site and location types, setting, status and HRSA's
+      geocode
+    semantic_type: health_center_sites_snapshot
+    license: us_government_work
+    license_note: HRSA lists no usage limitations for Health Center Service Delivery Sites (data.hrsa.gov, About the Data, read 2026-11-14)
+    format: csv
+    # a daily snapshot, not a release: this copy is the evidence. its
+    # encoding and day are its own facts: a run may write them, and is held
+    # to these (D-192); the primitive also holds every row's record date to
+    # the day. a later download is a new entry, never an overwrite
+    source:
+      type: manual
+      notes: >
+        Downloaded by hand from data.hrsa.gov/data/download (Health Center
+        Service Delivery and Look-Alike Sites, CSV) with its metadata
+        workbook, EHB_SITE_DATAMART_METADATA.XLSX, and copied into .data
+        unchanged under a name that carries its day.
+      sites_encoding: utf-8
+      sites_snapshot_date: "2026-11-14"
+    cache: {path: .data/hrsa_health_center_sites_20261114.csv, refresh_policy: manual}
+    provenance: {source: Health Resources and Services Administration, Health Center Service Delivery and Look-Alike Sites, published_by: hrsa}
+    quality:
+      known_issues:
+        - A daily snapshot with no release or version; every row's Data Warehouse Record Create Date reads 11/14/2026.
+        - 56 columns, 19,616 rows, valid UTF-8 with no byte-order mark; the site key is never blank or repeated.
+        - Maine holds 192 rows, all Active; 5 carry site state XX, no address and no point, so are listed, never placed.
+        - 10 Maine sites are Administrative, which Form 5B defines as not a service site; their setting reads Unknown or All Other Clinic Types.
+        - The geocode's datum is not yet read from HRSA's metadata workbook.
+        - HRSA's program does not see the Wabanaki nations' own clinics (TRIBE-7).
+        - sha256 of the copy read on 2026-11-14 is 08b01537495bb6a483c0e9805b9eef102e05492ce2ec4f97b6202f03366da436.

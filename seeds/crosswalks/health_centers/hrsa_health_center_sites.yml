@@ -1,0 +1,86 @@
+# ============================================================================
+# seeds/crosswalks/health_centers/hrsa_health_center_sites.yml
+# ============================================================================
+# how HRSA's Health Center Service Delivery and Look-Alike Sites file is read:
+# the header names of the columns read (any other column is never read), how
+# its record date is written, and what each code HRSA uses means. the same in
+# every state, so no plot declares it; a run passes it whole as `reading`
+# through $crosswalks.hrsa_health_center_sites (D-206), and freshness sees an
+# edit.
+#
+# what is placed, and why, is not here: that is the health_center_carriers
+# method's (D-212). each group below names a meaning the primitive acts on;
+# a value the file uses that is not declared here refuses the run, so a new
+# HRSA code is read by a person before it is counted (D-210's pattern).
+#
+# sources: the file's own header and values, read 2026-11-14 (56 columns,
+# 19,616 rows, Maine 192); HRSA's Form 5B instructions for site types,
+# location types and settings (bphc.hrsa.gov, Instructions for Form 5B:
+# Service Sites). the metadata workbook EHB_SITE_DATAMART_METADATA.XLSX is
+# downloaded beside the file and not yet read line by line.
+# ============================================================================
+
+from: "HRSA Health Center Service Delivery and Look-Alike Sites (data.hrsa.gov, CSV)"
+to: "rewildingCities: named columns; site types, location types, statuses and center types with meaning"
+
+source_scheme:
+  name: Health Center Service Delivery and Look-Alike Sites (HRSA-BPHC-71)
+  provider: Health Resources and Services Administration, Bureau of Primary Health Care
+  documentation: Instructions for Form 5B, Service Sites; EHB_SITE_DATAMART_METADATA.XLSX
+
+# role: the file's header name. only these columns are read
+columns:
+  site_key: BPHC Assigned Number             # the site, BPS-H80-nnnnnn; unique on the file
+  health_center_number: Health Center Number # the grantee, not the site
+  name: Site Name
+  health_center: Health Center Name
+  street: Site Address
+  city: Site City
+  site_state: Site State Abbreviation        # the site's own address
+  zip: Site Postal Code
+  hours: Operating Hours per Week
+  setting: Health Center Service Delivery Site Location Setting Description
+  status: Site Status Description
+  location_type: Health Center Location Type Description
+  site_type: Health Center Type Description
+  center_type: Health Center Type
+  operator: Health Center Operator Description
+  organization_state: Health Center Organization State   # the grantee's office, never where a site stands
+  longitude: Geocoding Artifact Address Primary X Coordinate
+  latitude: Geocoding Artifact Address Primary Y Coordinate
+  county_fips: State and County Federal Information Processing Standard Code
+  state_fips: State FIPS Code
+  record_date: Data Warehouse Record Create Date
+
+record_date_format: "%m/%d/%Y"   # 11/14/2026
+# a site field HRSA fills when it holds no state for a site
+no_state: XX
+
+statuses:
+  # group open: placed if every other rule allows. closed: listed
+  Active: {group: open}
+
+site_types:
+  # Form 5B: an Administrative site performs only non-clinical or
+  # administrative work, so it is not a service site
+  Service Delivery Site: {group: service}
+  Administrative/Service Delivery Site: {group: service}
+  Administrative: {group: administrative}
+
+location_types:
+  # Form 5B also names Migrant Voucher Screening and Intermittent; neither is
+  # declared until a file uses it and a person reads what its point means
+  Permanent: {group: fixed}
+  Seasonal: {group: fixed, seasonal: true}
+  Mobile Van: {group: mobile}   # its point is where the van is parked
+
+center_types:
+  # a look-alike meets the program's requirements without its funding
+  Federally Qualified Health Center (FQHC): {look_alike: false}
+  Federally Qualified Health Center (FQHC) Look-Alike: {look_alike: true}
+
+# settings whose address HRSA withholds to protect the people there. a site
+# in one is never placed and never located by any other means (a rule). none
+# in Maine's 2026-11-14 copy; declared so one is never placed by accident
+withheld_settings:
+  - Domestic Violence

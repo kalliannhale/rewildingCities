@@ -31,6 +31,8 @@ methods:
       path: information/geography_graph.yml
     - id: governance_units_conformed
       path: information/governance_units_conformed.yml
+    - id: health_center_carriers
+      path: information/health_center_carriers.yml
     - id: indicator_values
       path: information/indicator_values.yml
     - id: legislative_seats

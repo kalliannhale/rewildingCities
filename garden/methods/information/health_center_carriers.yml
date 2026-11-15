@@ -1,0 +1,78 @@
+# ============================================================================
+# garden/methods/information/health_center_carriers.yml
+# ============================================================================
+# a preparation method (D-98): health center sites as carriers, placed in
+# every area they fall in (Sprint 06, step 3, the third carrier). this file
+# is the one home for what is placed and why (D-212); the primitive, the
+# run, the crosswalk and the indicator point here rather than restate it. ~
+# ============================================================================
+
+id: health_center_carriers
+domain: information
+kind: preparation
+name: "Health Center Sites, Placed"
+answers_question_types: [health_centers, carriers, located_in, preparation]
+
+description: >
+  Reads one state's sites from HRSA's Health Center Service Delivery and
+  Look-Alike Sites file and places each one in its state, county, town,
+  House and Senate districts, Census tribal area and civil division through
+  located_in edges: towns from the 2024 face a point falls in, districts
+  from that face's 2020 block (D-207).
+
+  The file is a daily snapshot, not a release, so the copy read is the
+  evidence: it is declared by its day and its sha256, and every row must
+  carry that day as its record date. A later copy is a new declaration,
+  never an overwrite.
+
+  What is placed is a site where care is given, in the state its own fields
+  name. These are rules, since the other way is simply wrong for a count of
+  places to get care (D-212), each listed with its reason, never placed:
+  an Administrative site, which HRSA's Form 5B defines as one doing only
+  non-clinical or administrative work; a mobile unit, whose point is where
+  it parks (as bookmobiles, D-208); a site HRSA gives no point, for which
+  none is ever made; a site in a setting whose address HRSA withholds to
+  protect the people there, never placed and never located by any other
+  means; a site that is not open. A site's grantee may sit elsewhere: the
+  site is where it stands, as a school's operator never moves a school
+  (D-230).
+
+  Look-alikes are placed and counted: they meet the Health Center Program's
+  requirements without its funding, and to a person walking in there is no
+  difference. A seasonal site is placed and counted, and carries seasonal
+  as an adjective so a map can show or hide it. Every setting is placed,
+  schools and nursing homes included, with the setting kept on the point:
+  who may use a site is not in the file, and is SERVES-1's question, never
+  guessed for one setting and not another.
+
+  HRSA's program does not see the Wabanaki nations' own clinics, which the
+  reads of 2026-11-14 found none of by name or town. A Census tribal area's
+  count from this source is therefore unseen, never zero (TRIBE-7); how it
+  is shown waits on TRIBE-8.
+
+requires_data:
+  - {name: snapshot, type: tabular, semantic_types: [health_center_sites_snapshot], critical: true, as_acquired: true,
+     role: "HRSA's sites file, with each site's key, type, location type, setting and coordinates.",
+     uncertainty_without: "No site can be placed."}
+  - {name: faces, type: vector, semantic_types: [census_faces], critical: true, as_acquired: true,
+     role: "The 2024 faces, to place each point in its town and block.",
+     uncertainty_without: "No point can be placed."}
+
+choices: {}
+
+requires_primitives:
+  - soil/prepare_health_center_points
+  - soil/build_located_in
+
+produces:
+  - semantic_type: located_in_edges
+    data_category: tabular
+    description: Each placed health center site to every place it falls in.
+
+interpretation: >
+  A located_in edge says a site stands in a place, never that the place is
+  served by it or only by it: a health center serves a service area its
+  grant names, and a school or nursing home site may serve only its own
+  people (SERVES-1). HRSA places a site from the address its health center
+  reports; a point is HRSA's geocode of that address. A count from one day's
+  copy says what HRSA listed that day.

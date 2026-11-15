@@ -1260,6 +1260,39 @@ primitives:
         member: source.geocode_member
         encoding: source.geocode_encoding
 
+  prepare_health_center_points:
+    path: transform/prepare_health_center_points.py
+    version: 1.0.0
+    description: >
+      One state's HRSA health center sites as points, each named by its BPHC
+      Assigned Number; what is placed and why is the health_center_carriers
+      method's (D-212). A site is in the state its own fields name, never
+      its grantee's. An administrative site, a mobile unit, a site with no
+      point, a site whose address HRSA withholds, a site not open and a site
+      in another state are listed with their reasons and never placed.
+      Seasonal and look-alike sites are placed with those adjectives. The
+      columns read and HRSA's codes are one crosswalk,
+      hrsa_health_center_sites, passed whole as reading; an undeclared code,
+      a blank or doubled site key and a copy whose record dates are not the
+      declared snapshot day are refused. The encoding is the snapshot's
+      declared fact, never sniffed.
+    inputs:
+      - {name: snapshot, semantic_types: [health_center_sites_snapshot], required: true}
+    outputs: {semantic_type: health_center_site, data_category: vector}
+    params:
+      encoding: {type: string, required: true}
+      snapshot_date: {type: string, required: true}
+      state: {type: string, required: true}
+      state_fips: {type: string, required: true}
+      reading: {type: object, required: true}
+    # the two params a run writes that its snapshot already declares. a run
+    # may write them, and the orchestrator refuses one that disagrees (D-192)
+    source_facts:
+      input: snapshot
+      params:
+        encoding: source.sites_encoding
+        snapshot_date: source.sites_snapshot_date
+
   count_located:
     path: transform/count_located.py
     version: 1.0.0

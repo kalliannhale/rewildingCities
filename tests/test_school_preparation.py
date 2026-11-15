@@ -3,7 +3,6 @@ crosswalk and catalogue (Sprint 06, step 3, the second carrier; D-230). the
 release's own facts are declared once, in the manifest, which the run is
 held to (D-192, D-226)."""
 
-import re
 from pathlib import Path
 
 import yaml
@@ -76,9 +75,9 @@ def test_the_graph_is_read_through_loam():
     assert "check_block_field" not in s.params
 
 
-def test_the_count_names_the_year_of_its_places():
-    t = _steps()["schools_counts"].params["time"]
-    assert re.match(r".*([0-9]{4})", t).group(1) == "2024"
+def test_the_count_says_the_school_year_it_describes():
+    # its boundaries travel in boundary_vintage, from the edges (D-231)
+    assert _steps()["schools_counts"].params["time"] == "SY 2024-25"
 
 
 def test_the_registry_declares_every_param_the_steps_write():
