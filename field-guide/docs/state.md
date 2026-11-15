@@ -5,16 +5,17 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-14, at the hand-off closing Sprint 06's seventh build session.
+**Updated:** 2026-11-15, at the hand-off closing Sprint 06's eighth build session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 7's commits: 1bd4dfa (Kalli's: `sows` shares one run path with experiment.py, init validates plot names; made on a local branch, cli-sows-parity, and fast-forwarded onto main), 754d2f7 (schools as carriers, D-230), the session 7 ledger commit, and this hand-off.
-- Tests: `python -m pytest -q -rs | tail -3`. 896 passed, no skips, at this hand-off (new in session 7: tests/test_school_points.py, 13 cases; tests/test_school_preparation.py, 9; the other 7 new passes come from existing tests that walk every method, type and registry entry, not traced one by one). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 8's commits: 14f3100 (boundary_vintage, D-231), f6eecef (health centers, D-232), the tribal-count commit (D-233), the session 8 ledger commit, and this hand-off.
+- Tests: `python -m pytest -q -rs | tail -3`. 957 passed, no skips, at the D-233 commit (new in session 8: tests/test_health_center_points.py, 23; tests/test_health_center_preparation.py, 8; tests/test_tribal_counts.py, 3; new cases in test_count_located, test_loam_values and test_place_carrier). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-231. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-234. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
+- HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
 
 ## Sprint 06 ~ the place profile and the standard
 
@@ -22,23 +23,25 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233, below.
 
 **Order of work, and where each step stands:**
 
 ```
  1  P-9: read the outlet files                done      answered
  2  located_in edges + end checks             done      D-207
- 3  carriers, counted per 1,000               2 of 5    libraries and schools done end to end
+ 3  carriers, counted per 1,000               3 of 5    libraries, schools, health centers done
       libraries (IMLS PLS FY 2024)            done      D-208 to D-212: placed, counted, closures declared
       first, by Kalli's order (session 2):
         SCHEMA-2: the method schema           done      D-213 to D-217
         CMAP-1: the carrier map as a view     done      D-218, D-219, D-223 to D-226
         the drift CMAP-1's walk found         done      D-220 to D-222
       the drift session 6 found               done      D-227 to D-229; INDFILE-1 closed
-      schools (NCES EDGE 2024-25)             done      D-230: 598 placed, counted; TRIBE-8 open
+      schools (NCES EDGE 2024-25)             done      D-230: 598 placed, counted
+      the year rule SURVEY-1 hid              done      D-231: boundary_vintage
+      health centers (HRSA, 2026-11-14 copy)  done      D-232: 168 placed, 24 listed
+      tribal areas counted beside a note      done      D-233; TRIBE-8, LOAM-2 closed
       town offices                            blocked   no point source (see Traps); needs a geocoder
-      health centers (HRSA)                   next
       outlets                                 not yet   waits on WHERE-1 and a geocoder
  4  derive_margins (D-198)                    not yet
  5  language: ACS, safe harbor, section 203   not yet
@@ -52,7 +55,11 @@ is fixed.
 11  profiles for every place                  not yet
 ```
 
-**Schools, done (session 7).** Placed from NCES EDGE Public School Locations 2024-25 (D-230): one national release zip (sha256 9dc51ecd...cffb288, in the manifest's known_issues), its headerless text table read through seeds/crosswalks/schools/nces_edge_geocode.yml. 598 schools placed, none listed; the three Wabanaki community schools (OPSTFIPS 59, the Bureau of Indian Education) placed and flagged, one located_in edge per drawer each, Indian Island School in 2301957936 (the Penobscot County piece) and 2760R. Maine counts 598, 0.439 per 1,000 of 1,362,359 persons; Penobscot Indian Island Reservation counts 1 among 370. The tribal-area count waits on TRIBE-8. Maine DOE's 13 exports carry no ID and no school's coordinates, so they place nothing; their name lists may serve as a check later (seeds/sources/maine_doe_schools.yml, an export source: only our copy is evidence). MEGIS's school layer carries no state or NCES school ID either. The EDGE characteristics layer (status, grade span) could not be downloaded; the CCD directory, joined on NCESSCH, is in reserve if the DOE check needs the state school ID (its public-use terms limit use to statistical purposes).
+**Schools, done (session 7).** Placed from NCES EDGE Public School Locations 2024-25 (D-230): one national release zip (sha256 9dc51ecd...cffb288, in the manifest's known_issues), its headerless text table read through seeds/crosswalks/schools/nces_edge_geocode.yml. 598 schools placed, none listed; the three Wabanaki community schools (OPSTFIPS 59, the Bureau of Indian Education) placed and flagged, one located_in edge per drawer each, Indian Island School in 2301957936 (the Penobscot County piece) and 2760R. Maine counts 598, 0.439 per 1,000 of 1,362,359 persons; Penobscot Indian Island Reservation counts 1 among 370, shown beside its note since D-233. Maine DOE's 13 exports carry no ID and no school's coordinates, so they place nothing; their name lists may serve as a check later (seeds/sources/maine_doe_schools.yml, an export source: only our copy is evidence). MEGIS's school layer carries no state or NCES school ID either. The EDGE characteristics layer (status, grade span) could not be downloaded; the CCD directory, joined on NCESSCH, is in reserve if the DOE check needs the state school ID (its public-use terms limit use to statistical purposes).
+
+**Health centers, done (session 8).** Placed from HRSA's Health Center Service Delivery and Look-Alike Sites, the copy downloaded 2026-11-14 (D-232): a daily snapshot with no release, so the copy is the evidence, declared by its day and sha256, and every row's Data Warehouse Record Create Date is held to the day. Read through seeds/crosswalks/health_centers/hrsa_health_center_sites.yml (header names, codes; an undeclared code refuses). Maine: 192 rows, 168 placed (32 seasonal, 8 look-alikes, every setting), 24 listed (10 administrative, 9 mobile vans, 5 with no point). Maine counts 168, 0.123 per 1,000. No Wabanaki nation's clinic appears; HRSA's program does not see them.
+
+**Tribal areas, counted beside a note (session 8, D-233).** All three carriers count the 8 Census tribal areas, each row carrying context_note: carrier_unseen_on_nations_land (libraries, health centers: all zeros) or carrier_seen_on_nations_land (schools: Indian Township, Pleasant Point and Penobscot each count 1). The notes' words are Kalli's DRAFT in seeds/notes/notes.yml, waiting on the nations' terms (P-8). Four trust lands hold 4 to 202 persons, so their rates are unstable; the count and persons travel with each rate.
 
 **The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 has changed three rows' status):
 
@@ -64,7 +71,7 @@ is fixed.
 | Lacking cultural cues | languages spoken against languages carriers publish in | ACS and our own observation of outlets | town | needs our observation (OBS-1): no listing carries language |
 | Behind a paywall | share of local outlets free to read | our own observation (OBS-1), P-3 | town | needs our observation: no listing carries paywall status |
 | Outdated | outlet publishing frequency; observed last post | Cision, the ecosystem file, Easton (frequency); Cision's Still Operates? (last post) | town | acquirable from the stack |
-| Not where people look | carriers per 1,000 by type | IMLS (done), schools, health centers, town offices, outlets | every level | libraries acquired (D-209, D-211); on the map as loam's carriers view (D-225) |
+| Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA (done); town offices, outlets | every level | libraries, schools, health centers counted (D-209, D-230, D-232), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
 | Not from a trusted source | relational hubs, aggregate-only | consent-governed | as consented | needs_consent (Sprint 16) |
 
 **Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-7 (PIAAC 2023?), P-8 (section 203 on Wabanaki places; on the nations' terms). P-9 is closed.
@@ -134,6 +141,14 @@ is fixed.
 | --- | --- |
 | D-230 | Schools from NCES EDGE 2024-25, keyed NCESSCH, columns and codes from one crosswalk; a school is in the state where NCES's point stands (STFIP), never its operator's (a rule, tested): the three BIE-operated Wabanaki community schools are placed, flagged and counted in every drawer, once each; DOE and MEGIS place nothing. Kalli's choice A, with her guard that Indian Island counts once, as the county subdivision it is |
 
+## Decided in session 8
+
+| ID | One line |
+| --- | --- |
+| D-231 | A count says which boundaries it sits on in each row's boundary_vintage, the one vintage of the edges reaching that level; loam reads it for publishers whose rule says boundary_vintage (rewildingcities), so `time` says only when. Closes SURVEY-1 |
+| D-232 | Health centers from HRSA's sites file, a daily snapshot declared by day and sha256, rows held to the day; keyed BPHC Assigned Number. Rules: administrative sites, mobile units, sites with no point, withheld addresses, sites not open or elsewhere are listed. Look-alikes, seasonal sites (as an adjective) and every setting are placed (Kalli's choices); who a site serves stays SERVES-1's |
+| D-233 | A Census tribal area is counted, never refused, beside the note its step names (tribal_note), carried on every tribal row (context_note); the words are Kalli's DRAFT, on the nations' terms. loam refuses only the ACS on tribal areas (D-171) and judges each publisher on its own levels (LOAM-2). A tribal code and its persons are AIANNH plus component. A level no edge reaches takes its places' vintage |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -183,46 +198,53 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | A school is placed where NCES's point stands (STFIP), never by its operator; one operated elsewhere is flagged | prepare_school_points; tests/test_school_points.py (D-230) |
 | NCES's headerless table is read by declared columns with a quote-aware reader; another field count, a header row or a duplicate NCESSCH is refused; M and N are never values | prepare_school_points, seeds/crosswalks/schools/nces_edge_geocode.yml; tests/test_school_points.py (D-230) |
 | A school release's member and encoding are declared once and the run is held to them | source_facts, Orchestrator._validate_source_facts; tests/test_school_preparation.py (D-192, D-230) |
-| A school count's time names the year of its places (SY 2024-25 reads 2024) | maine_schools; tests/test_school_preparation.py (SURVEY-1) |
+| A count's boundaries travel in boundary_vintage from its edges, never its time; a level's two vintages refuse | count_located, loam place_values; tests/test_count_located.py, tests/test_loam_values.py (D-231) |
+| Each publisher is judged on its own levels; only the ACS is refused on a tribal area | loam place_values; tests/test_loam_values.py (D-233, LOAM-2) |
+| A tribal area is counted only beside a note that exists; its code and persons are AIANNH plus component | count_located; tests/test_count_located.py, tests/test_tribal_counts.py (D-233) |
+| A count's note is said with its number | place.py; tests/test_place_carrier.py (D-233) |
+| HRSA's copy is the one declared: its rows' record dates are its day | prepare_health_center_points; tests/test_health_center_points.py (D-232) |
+| Administrative, mobile, pointless, withheld, closed and out-of-state sites are listed, never placed; an undeclared HRSA code refuses | prepare_health_center_points; tests/test_health_center_points.py (D-232) |
 
 ## Open items
 
+Sorted for delivery (Kalli asked, session 8). **Delivery, as assumed here (Kalli to confirm):** the Maine product by 2026-12-01 to 12-11: every place's profile, carriers on the map with their toggles and notes, the barriers judged against the standard, the publish door, the Docker build. Town offices and outlets as carriers are assumed **after** delivery, named in "What we can't answer (yet)"; if Kalli puts them in scope, GEO-1, TOWN-OFF-1, WHERE-1, OWN-1 and SRC-4 move up.
+
+### Blocks delivery
+
 | ID | One line |
 | --- | --- |
-| JOIN-1 | loam's join grammar (id_field, id_fields, unit_key) and joinable() match key names, never issuers: every carrier writes feature_id, so IMLS's and NCES's points read as relatable, and a crosswalk between two issuers (DOE's state school ID beside NCESSCH) cannot be said. Places solved this with authority; carrier keys have none. Nothing reads joinable() for carriers yet |
-| TRIBE-8 | count_located refuses Census tribal areas (TRIBE-7's rule, made because the library survey does not see reservation libraries). NCES sees the three schools, and their edges reach 1575R, 2760R and 2850R, so public_schools_per_1000 has no tribal-area value yet. Revisit the refusal per layer, with D-171, D-173 and P-8 beside it; what is shown is the nations' to decide |
-| CHAIN-1 | Receipts repeat inherited provenance records: libraries_located_in_edges' chain holds 19 records, graph_repair_towns five times; libraries_counts_values holds 34 (session 6). Harmless to readers, but a receipt grows with every hop; find where inheritance appends without deduplicating |
-| STAND-1 | Two runs in the Maine plot write indicator_standings (county standings and 91b5c0), so $loam.indicator_standings would have to choose; nothing reads it today |
-| DEPS-1 | As in the ledger; noted in session 6: canopy/api/locustfile.py imports locust, which environment.yml does not install |
-| TIERREAD-1 | Vocabulary.get_tier reads extra["tier"], while every domain file declares resolution_tier, so get_tier is None for every information type. Find who reads resolution_tier before new carrier types lean on it |
-| QUADRAT-1 | Whether a measured quadrat becomes a bird's-eye mask, to share falsification_test's one currency (label masks): a modeling choice for the day field data exists |
-| FSCS-1 | Outlets of systems the survey does not count as public libraries (C_FSCS N; Cliff Island placed, Corinth listed) count under "Public library outlets"; IMLS keeps them in its files but out of aggregate figures. Place, list, or rename the indicator |
-| CHOICE-1 | The orchestrator only warns when a run's choice is not among its method's options, or a declared choice is missing (orchestrator.py, _validate_method_choices). Lean: an error. Sharper since D-213: the method's shape is now strict while a run's choice against it still only warns |
-| SCHEMA-3 | canopy/wonder (wondering.py, possibility.py) reads method YAML raw, not through load_method_data, and still accepts the retired produces and requires_primitives shapes; route it through the one loader and drop them. D-222 changed what _compose_steps writes, not how it reads |
-| INTERP-1 | The thermal, perception and county_units_for_mapping methods have no top-level interpretation; required once each has one |
-| OWN-1 | ownership_concentration_analysis is pre-graph: geocode_to_unit places an outlet by matching place-name strings (a silent WHERE-1 choice, against D-203, D-204), concentration_index keys by feature_id. Redesign over located_in and count_located at step 8, after WHERE-1 and GEO-1. Its institutions input still describes libraries, town halls, schools and government sites while its types hold library_outlet; widen it as each carrier type arrives |
-| GEO-1 | No geocoder exists. Fork with a lean: the Census Geocoder first (free, batch 10,000, returns match type and 2020 block), ArcGIS or Maine NG911 address points beside it later as second authorities. Unblocks town offices, outlets, WHERE-1 |
-| WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage) |
-| OBS-1 | Language of publication and paywall status need our own observation of each outlet, a receipt per observation |
-| SRC-4 | The ecosystem file's publisher, the Still Operates? receipt, every outlet source's terms |
-| TOWN-OFF-1 | Town offices: MEGIS Town Points are centroids, refused as carriers; an address list is needed (Maine Municipal Association? Secretary of State?) |
-| LIB-2 | (Schools, session 7: a second authority with no ID is a check, never a second set of points; that answers schools, not yet libraries.) MEGIS publishes its own Libraries layer (390 points) against IMLS's 261 placed outlets: a second authority, to be read side by side. Both would be library_outlet (D-224): today the carriers view refuses two edges receipts of one type by name (D-225), so reading both needs a decision on how the view and the count choose |
-| SERVES-1 | A carrier's location is not whom it serves; visits per person waits on a serves relation (library systems' legal service areas) |
-| TRIBE-7 | The PLS does not see reservation libraries; a tribal area's carrier reads as unseen, never zero. Kalli drafts the wording, on the nations' terms; seeds/notes/notes.yml holds none yet |
-| SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration; carry the scale in each value row |
-| SURVEY-1 | Loam's only boundary rule is the final year of `time`; a later survey on the 2024 places must still name 2024. Session 7: the rule reads a string's last four-digit run, so DOE's 2025-26 reads as its start and NCES's 2024-2025 as its end; maine_schools writes SY 2024-25 |
-| LOAM-2 | place_values reads the ACS's levels for every publisher |
-| OUT-REG-1 | stack_outlet_sources' registry entry names Maine's five listings |
-| CON3-2 | Contract 3 section 2 needs D-207's wording |
-| SCHEMA-1 | A metadata field's type is checked only by a real run; a test could validate output_metadata against seeds/schemas |
-| RECEIPT-1 | Rerun maine_counties, maine_county_units and maine_governance_units when anything reads them through $loam. (8 receipts predate D-167) |
-| SRC-3, USE-1, SPEC-1, LAYER-1, COUNT-1, TENURE-1, KIT-1, TRIBE-6, NOTE-3, LEDGER-1 to LEDGER-3 | as before; look each up in the ledger |
-| Kalli's (formerly Person 3's) | D-118's tiers, ROLE-1, the draft notes, NOTE-3, D-173's review, tiers for the outlet and located_in types, the proposed tiers for session 4's types (library_outlet, water_boundaries, forest_boundaries, neighborhood_boundaries, roads, nighttime_lights, population_density; measured_composition has none), and session 7's public_school and school_geocode_release, which have none and fail closed (EDGE is public domain) |
-| P-8, TRIBE-7's wording | Kalli drafts and reaches out; whether and how a Wabanaki place is represented is the nations' to decide, under CARE and OCAP (census_tigerweb.yml). They wait on that, never on a teammate |
+| P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
+| P-5, P-6, P-7 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
+| CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
+| Tiers | Kalli's tier declarations: public_school, school_geocode_release, health_center_site, health_center_sites_snapshot have none and fail closed, as do session 4's types and the outlet and located_in types; with NOTE-3, D-173's review and TIERREAD-1 (get_tier reads `tier`, domain files declare resolution_tier) |
+| FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
+| SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration |
+| LAYER-1, GJSON-1, D-157 | The publish door's items |
+| DEPS-1, OUT-REG-1 | The Docker build: locust not installed; stack_outlet_sources' registry entry names Maine's listings |
+| RECEIPT-1 | Rerun maine_counties, maine_county_units, maine_governance_units if profiles read them through $loam. |
+| TRIBE-7 | The notes' wording is drafted (D-233); it is shown as a draft until the nations' terms settle it, never withheld for want of them |
 
-Closed in session 2: STAT-1 (STATSTRU 25 is survey nonrespondent, IMLS PLS FY 2024 Documentation, Appendix B). Closed in session 3: SCHEMA-2 (D-213 to D-216). Closed in session 4: STUB-1 (D-222, retired). Closed in session 5: CMAP-1 (D-223 to D-226), LOC-VIEW-1 (D-225). Closed in session 6: INDFILE-1 (D-227; moving an indicator between files still changes declared_in, which is provenance). Opened in session 7: JOIN-1, TRIBE-8.
+### After delivery
 
-Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, COMP-1, REG-1, LOOP-1, ACQ-6, SCH-5, TAG-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1, LIN-2, VER-1, NOTE-2, TRIBE-5, PENOB-1, GJSON-1, RESOLVE-1, DEPS-1, SEAM-2, DAS-1, HIST-1.
+| ID | One line |
+| --- | --- |
+| JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
+| KIT-2 | A shared points kit (member and encoding, state field, key, placed or listed, an issuer per key) was weighed and deferred: little gain before delivery, a retrofit's cost now |
+| PLOT-2 | `city:` in preparations, manifests and sows' header ("City: Maine") should say plot: a schema key across the experiment and manifest schemas, every plot file and their readers |
+| HRSA-1 | HRSA's metadata workbook is not read; the geocode's datum is unknown. HPSA, MUA/P, Health Sites and AHRF are catalogued in seeds/sources/hrsa.yml, unused; whether Health Sites sees the nations' clinics is unread |
+| TRIBE-9 | The Census names 0115T "Aroostook Band of Micmac Trust Land"; as far as Claude knows the nation now calls itself the Mi'kmaq Nation. Verify, and decide on the nations' terms how a Census name and a nation's own name are shown |
+| ACQ-7 | A url release declares its expected hash in source, and a fetch that does not match is refused; receipts already hash every input (md5, full_file), so a change... The rest of the line was lost in a broken paste; restate it from where it was defined |
+| CHAIN-1, STAND-1, SCHEMA-1, SCHEMA-3, CHOICE-1, INTERP-1, QUADRAT-1 | As in the ledger |
+| LIB-2, SERVES-1, OBS-1, P-3 | A second library authority; whom a carrier serves; our own observation of outlets; the free-outlet question |
+| CON3-2, KIT-1 | Contract 3's wording; freshness never judges primitive code |
+| P-8 | Section 203 on Wabanaki places, and what is shown on them: the nations' to decide, under CARE and OCAP. Never a deadline |
+| GEO-1, TOWN-OFF-1, WHERE-1, OWN-1, SRC-4 | Town offices and outlets as carriers (see the delivery assumption above) |
+
+### Not yet sorted (look each up in the ledger)
+
+S2-1, GATE-2, GATE-3, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, COMP-1, REG-1, LOOP-1, ACQ-6, SCH-5, TAG-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1, LIN-2, VER-1, NOTE-2, TRIBE-5, PENOB-1, RESOLVE-1, SEAM-2, DAS-1, HIST-1, SRC-3, USE-1, SPEC-1, COUNT-1, TENURE-1, TRIBE-6, LEDGER-1 to LEDGER-3, ROLE-1, the draft notes. TRIBE-4 and SEN-1 are dated (2026-12-02) and block maine_seats.
+
+Closed in session 8: SURVEY-1 (D-231), LOAM-2 and TRIBE-8 (D-233). Opened: CARRY-1, KIT-2, PLOT-2, HRSA-1, TRIBE-9; ACQ-7 carried in from an uncommitted ledger line.
 
 ## Working agreement, as it stands
 
@@ -244,6 +266,8 @@ Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, T
 - Before changing a signature, search the keyword across every caller and test, then read each hit for meaning.
 - Read real output as its reader would before committing a telling. A receipt is read after every real run.
 - Usage: one step per chat; state.md is the only upload at the start; long output is filtered (`| tail -3`, `| grep`); Claude names exact files and asks for whole files rather than many line ranges.
+- When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name).
+- A data check is a "read", never a "probe" (Kalli, session 8).
 
 ## Traps
 
@@ -290,7 +314,13 @@ Also carried, look up in the ledger first: S2-1, GATE-2, GATE-3, MAP-8, MAP-9, T
 - Three state fields in EDGE mean three things: STATE the reported address, STFIP where NCES's point stands, OPSTFIPS who administers the school (59 BIE, 63 DoDEA). Place by STFIP (D-230).
 - A located_in edge's `to_authority` is not its level: us_census_geoid holds state (2 digits), county (5) and town (10). A per-drawer check groups by authority and code length; by authority alone it reads 3 for one card per drawer.
 - A dashboard export (Maine DOE) is not a release: a fresh export is a new source, and only our copy is evidence. Its file name's number is the export time in milliseconds since 1970, UTC.
-- loam's `joinable()` relates holdings by key name, so every carrier's feature_id looks joinable to every other (JOIN-1).
+- `loam`'s `joinable()` relates holdings by key name, so every carrier's feature_id looks joinable to every other (JOIN-1).
+- A count's boundaries are boundary_vintage, never its time (D-231): write `time` as what the source describes (FY 2024, SY 2024-25, a snapshot's day).
+- HRSA's three state fields: Site State Abbreviation (the site), State FIPS Code, Health Center Organization State (the grantee's office, never where a site stands). Rows HRSA holds with no site state read XX, with no point.
+- The spine stores a tribal area as AIANNH (four digits) plus aiannh_comptyp (R, T); a place's code is the two joined (2760R). Group by the bare code and a reservation merges with its trust land.
+- A count_located step at the aiannh level must name tribal_note; tests/test_tribal_counts.py walks every plot.
+- `Data Warehouse Record Create Date` is the day of HRSA's copy, not of any site.
+- The loam carriers view does not carry point properties beyond id, name and coordinates (CARRY-1).
 
 ## People
 
@@ -300,9 +330,10 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs.
 
-Schools are done (D-230), so step 3 continues with health centers, or the sprint turns to the barriers. Kalli chooses at the start of the session:
+Three of five carriers are done; the other two wait on a geocoder and are assumed after delivery. Kalli chooses at the start of the session:
 
-- **Health centers (HRSA)** (the plan's order): find HRSA's health center sites release, its documentation and its Maine count, then the same recipe as schools: a release in the manifest with its member and encoding, a crosswalk for its columns and codes, a points primitive writing feature_id and name, a method saying what is placed and why, an indicator naming `counts: <type>` in its own file, the type declared first. Read whether HRSA sees sites on Wabanaki land before anything is counted (TRIBE-7, TRIBE-8).
-- **Step 5, language** (unblocked, acquirable): ACS language-by-ability tables, safe-harbor languages, section 203 coverage. Before any threshold, Claude researches and cites what each source says, in the vintage the build uses. Verdicts wait on derive_margins (step 4, D-198), since small towns' language estimates carry wide margins.
+- **CARRY-1** (blocks the map): one generic pass-through so a point's adjectives and a count's note reach the carriers view, so the map can toggle seasonal sites and show the tribal notes. Small, and it finishes the carriers as a product.
+- **Step 5, language** (the plan's order): ACS language-by-ability tables, safe-harbor languages, section 203 coverage. Before any threshold, Claude researches and cites what each source says, in the vintage the build uses. Verdicts wait on derive_margins (step 4, D-198).
+- **Confirm delivery scope** first, in one line, so the open items' sort stands.
 
-What session 7 found, to build on: a source with no ID can check but never place; a filter on the wrong field can erase a nation's schools without an error, so the field a filter reads is a rule with a test; a time string's shape decides what loam's final-year rule reads; and the join grammar knows what a key is called, never who issued it.
+What session 8 found, to build on: a rule written for one source travels to the next unless it names its reason without naming the source (the tribal refusal said "reservation libraries" inside every carrier's count); a column with two meanings hides behind a coincidence until a third source breaks it (`time` meant both when and which boundaries); a daily snapshot has no release, but it states its own day, and the copy can be held to its own words; and refusing a place hides it, where a number with its note shows it in its context (Kalli).
