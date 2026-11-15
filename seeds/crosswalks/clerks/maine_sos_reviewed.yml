@@ -1,0 +1,53 @@
+# ============================================================================
+# seeds/crosswalks/clerks/maine_sos_reviewed.yml
+# ============================================================================
+# reviewed matches (GEO-4): addresses in the Maine Secretary of State's
+# clerk list that no exact match can place, each read by a person against
+# Maine's 911 address file and named to the one point that stands there.
+# shared by every plot that reads these two files, every Maine locality's
+# included, beside the list's own crosswalk; a run passes it whole as
+# `reviewed` through $crosswalks.maine_sos_reviewed (D-206), and freshness
+# sees an edit.
+#
+# what a review may do, held by the primitive:
+#   ~ name only a point that stands in the 911 file, once, in the same ZIP
+#   ~ apply only to an address the run would otherwise list (no_match, tie,
+#     number_not_read); every row that gives the address is placed by it
+#   ~ a review for an address the run places on its own, or that no row
+#     gives, refuses the run: a review never outlives its need
+#
+# keyed by the list's address as written (street and ZIP), because what a
+# review settles is an address, not a municipality: one review of 7 Minden
+# places every township whose row gives it.
+#
+# read against the copies of 2026-11-14 (the list) and of cutoff 2026-08-27
+# (the 911 file).
+# ============================================================================
+
+from: "Maine Secretary of State clerk list addresses that no exact match places"
+to: "rewildingCities: the 911 point a person read at each, with the evidence"
+
+reviewed:
+  - street: "8 Kennebasis Road"
+    zip: "04668"
+    site_uid: "urn:emergency:uid:gis:SSAP:845194:ngesi.maine.gov"
+    evidence: >
+      The list writes Kennebasis Road; the 911 file holds 8 Kennebasis St in
+      Indian Township Reservation, the only point at that number on that
+      street in 04668, classed Government - Municipal, landmark written by
+      the publisher as Pasamaquoddy Tribal Office (the nation's name is
+      Passamaquoddy). Road against St is the whole difference.
+    read_on: "2026-11-15"
+    read_by: Kalli A. Hale
+
+  - street: "7 Minden"
+    zip: "04441"
+    site_uid: "urn:emergency:uid:gis:SSAP:1114854:ngesi.maine.gov"
+    evidence: >
+      The list gives no street suffix; the 911 file holds 7 Minden St in
+      Greenville, the only point at that number on a Minden street in 04441.
+      It is classed Law Enforcement -Municipal, landmark Greenville Police
+      Department: these sources do not say whether the clerk shares that
+      building, only that it is the one point at the address the list gives.
+    read_on: "2026-11-15"
+    read_by: Kalli A. Hale

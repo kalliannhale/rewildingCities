@@ -40,6 +40,14 @@ say (D-212); this file says only how.
     finds an office; it only chooses among points one address already
     named, and every such point carries how many candidates stood there and
     how far apart
+  ~ a reviewed match is a person's reading, declared in a crosswalk passed
+    as `reviewed` (GEO-4): the list's address as written (street and ZIP)
+    and the SITE_UID of the 911 point the person read there, with the
+    evidence, the day and who read it. it may only name a point that
+    stands in the file, in the same ZIP, and only for an address the run
+    would otherwise list (no_match, tie or number_not_read). a review for
+    an address the run places on its own, or that no row gives, refuses
+    the run, so a review never outlives its need (placed_by reviewed)
   ~ the list's encoding is declared, never sniffed: its own fact, in its
     manifest declaration, which the run's copy must agree with (D-192). the
     address file's layer and CRS are declared in its crosswalk and checked
@@ -57,6 +65,7 @@ Params:
   addresses_reading  required: the address file's crosswalk, via $crosswalks.<name>
   streets            required: the usps_pub28 crosswalk, via $crosswalks.usps_pub28
   campus_ties        required: listed | municipal_class, the method's choice
+  reviewed           optional: the reviewed matches crosswalk, via $crosswalks.<name>
 Output: geojson points, one feature per placed office. ~
 """
 
@@ -76,6 +85,8 @@ ADDRESS_ROLES = ["site_uid", "number", "number_suffix", "predir", "street_name",
                  "unit", "building", "floor", "room"]
 SUBADDRESS = ["unit", "building", "floor", "room"]
 CAMPUS_TIES = ("listed", "municipal_class")
+REVIEW_FIELDS = ["street", "zip", "site_uid", "evidence", "read_on", "read_by"]
+REVIEWABLE = ("no_match", "tie", "number_not_read")
 PO_BOX = re.compile(r"^\s*P\.?\s*O\.?\s*BOX\b", re.I)
 NUMBERED = re.compile(r"^(\d+)([A-Z]?)\s+(\S.*)$")
 LAST_LINE = re.compile(r"\b([A-Z]{2})\s+(\d{5})(?:-\d{4})?\s*$")
@@ -314,6 +325,33 @@ def settle_tie(found: pd.DataFrame, campus_ties: str, municipal_class: str):
     return None, None
 
 
+def _as_written(street: str) -> str:
+    return " ".join(str(street or "").upper().split())
+
+
+def check_reviewed(reading) -> dict:
+    """the reviewed matches, keyed by the list's address as written and its ZIP."""
+    if reading is None:
+        return {}
+    entries = reading.get("reviewed") if isinstance(reading, dict) else None
+    if not isinstance(entries, list):
+        raise ClerkOfficesRefused("reviewed must be the reviewed matches crosswalk, with a `reviewed` list")
+    out = {}
+    for n, entry in enumerate(entries, 1):
+        if not isinstance(entry, dict):
+            raise ClerkOfficesRefused(f"reviewed entry {n} is not a mapping")
+        empty = [f for f in REVIEW_FIELDS if not isinstance(entry.get(f), str) or not entry[f].strip()]
+        if empty:
+            raise ClerkOfficesRefused(f"reviewed entry {n} lacks {', '.join(empty)}")
+        if not re.fullmatch(r"\d{5}", entry["zip"]):
+            raise ClerkOfficesRefused(f"reviewed entry {n}: zip {entry['zip']!r} is not five digits")
+        key = (_as_written(entry["street"]), entry["zip"])
+        if key in out:
+            raise ClerkOfficesRefused(f"{entry['street']}, {entry['zip']} is reviewed twice")
+        out[key] = entry
+    return out
+
+
 def _listed(r, reason: str, candidates: int | None = None) -> dict:
     item = {"feature_id": r.municipality, "municipality": r.municipality,
             "geocode": r.geocode or None, "street": r.street or None,
@@ -325,49 +363,81 @@ def _listed(r, reason: str, candidates: int | None = None) -> dict:
 
 def place(clerks: pd.DataFrame, points: pd.DataFrame, state: str, spelling: dict,
           operation: str = "", campus_ties: str = "listed",
-          municipal_class: str = "") -> tuple[dict, dict]:
+          municipal_class: str = "", reviewed=None) -> tuple[dict, dict]:
     """the placed offices as a geojson FeatureCollection, and what the receipt
     says of every row that was not placed."""
     if campus_ties not in CAMPUS_TIES:
         raise ClerkOfficesRefused(f"campus_ties {campus_ties!r} is not one of {', '.join(CAMPUS_TIES)}")
     if campus_ties == "municipal_class" and not municipal_class:
         raise ClerkOfficesRefused("campus_ties municipal_class needs the address file's declared municipal_class")
+    reviews = check_reviewed(reviewed)
+    used_reviews: set = set()
     keyed = clerk_keys(clerks, state, spelling)
     points = address_keys(points, spelling)
     wanted = {k for k in keyed["key"] if isinstance(k, str)}
     candidates = points[points["key"].isin(wanted)]
     by_key = {k: g for k, g in candidates.groupby("key")}
     listed, offices = [], {}
+    def review_point(r, review):
+        hit = points[points["site_uid"] == review["site_uid"]]
+        if len(hit) != 1:
+            raise ClerkOfficesRefused(
+                f"the review of {review['street']}, {review['zip']} names {review['site_uid']}, "
+                f"which the address file holds {len(hit)} time(s), not once")
+        point = hit.iloc[0]
+        if str(point["zip"])[:5] != review["zip"]:
+            raise ClerkOfficesRefused(
+                f"the review of {review['street']}, {review['zip']} names a point in ZIP "
+                f"{point['zip']}; a review never leaves its address's ZIP")
+        return point
+
     for r in keyed.itertuples(index=False):
+        review_key = (_as_written(r.street), r.zip if isinstance(r.zip, str) else "")
+        review = reviews.get(review_key)
+        reason, found, how, tie, point = None, None, "exact", None, None
         if isinstance(r.reason, str):
-            listed.append(_listed(r, r.reason))
-            continue
-        found = by_key.get(r.key)
-        if found is None:
-            listed.append(_listed(r, "no_match"))
-            continue
-        how, tie = "exact", None
-        if len(found) > 1:
-            point, how = settle_tie(found, campus_ties, municipal_class)
-            if point is None:
-                listed.append(_listed(r, "tie", candidates=len(found)))
-                continue
-            tie = {"candidates": len(found), "spread_m": round(_spread_m(found), 1)}
+            reason = r.reason
         else:
-            point = found.iloc[0]
+            found = by_key.get(r.key)
+            if found is None:
+                reason = "no_match"
+            elif len(found) > 1:
+                point, how = settle_tie(found, campus_ties, municipal_class)
+                if point is None:
+                    reason = "tie"
+                else:
+                    tie = {"candidates": len(found), "spread_m": round(_spread_m(found), 1)}
+            else:
+                point = found.iloc[0]
+        if review is not None:
+            if reason not in REVIEWABLE:
+                raise ClerkOfficesRefused(
+                    f"{r.street}, {r.zip} is reviewed, but the run "
+                    f"{'places it on its own' if reason is None else 'lists it as ' + reason}; "
+                    f"remove the review")
+            used_reviews.add(review_key)
+            point, how, reason = review_point(r, review), "reviewed", None
+        if reason is not None:
+            listed.append(_listed(r, reason, candidates=len(found) if reason == "tie" else None))
+            continue
         if not point["site_uid"]:
             raise ClerkOfficesRefused(f"the address point matched for {r.municipality} has no "
                                       f"site id; an office cannot be named")
-        office = offices.setdefault(point["site_uid"], {"point": point, "rows": [], "how": how, "tie": tie})
+        office = offices.setdefault(point["site_uid"], {"point": point, "rows": [], "how": how,
+                                                         "tie": tie, "review": review})
         office["rows"].append(r)
+    unused = [f"{e['street']}, {e['zip']}" for k, e in reviews.items() if k not in used_reviews]
+    if unused:
+        raise ClerkOfficesRefused(f"reviewed, but no row gives the address: {'; '.join(unused)}")
     features = []
     for site_uid, office in sorted(offices.items()):
         point, rows = office["point"], sorted(office["rows"], key=lambda x: x.municipality)
-        how, tie = office["how"], office["tie"] or {}
+        how, tie, review = office["how"], office["tie"] or {}, office["review"] or {}
         names = [x.municipality for x in rows]
         notes = sorted({x.street_note for x in rows if x.street_note})
         flags = (["shared_office"] if len(rows) > 1 else []) + (
-            ["tie_broken_by_class"] if how == "municipal_class" else []) + [
+            ["tie_broken_by_class"] if how == "municipal_class" else []) + (
+            ["reviewed"] if how == "reviewed" else []) + [
             f"placement:{point['placement'] or 'none'}", f"place_type:{point['place_type'] or 'none'}"]
         features.append({"type": "Feature",
                          "geometry": {"type": "Point",
@@ -382,6 +452,8 @@ def place(clerks: pd.DataFrame, points: pd.DataFrame, state: str, spelling: dict
             "place_type": point["place_type"] or None, "placement": point["placement"] or None,
             "landmark": point["landmark"] or None, "placed_by": how,
             "tie_candidates": tie.get("candidates"), "tie_spread_m": tie.get("spread_m"),
+            "review_evidence": review.get("evidence"), "review_read_on": review.get("read_on"),
+            "review_read_by": review.get("read_by"),
             "flags": ";".join(flags)}})
     coords = [f["geometry"]["coordinates"] for f in features]
     bbox = ([min(c[0] for c in coords), min(c[1] for c in coords),
@@ -395,7 +467,7 @@ def place(clerks: pd.DataFrame, points: pd.DataFrame, state: str, spelling: dict
             "attribute_fields": list(features[0]["properties"]) if features else [],
             "rows_read": len(keyed), "rows_placed": sum(len(o["rows"]) for o in offices.values()),
             "shared_offices": sum(1 for o in offices.values() if len(o["rows"]) > 1),
-            "campus_ties": campus_ties,
+            "campus_ties": campus_ties, "reviews_applied": len(used_reviews),
             "offices_by_placed_by": dict(sorted(
                 {h: sum(1 for o in offices.values() if o["how"] == h)
                  for h in {o["how"] for o in offices.values()}}.items())),
@@ -430,7 +502,8 @@ def main():
                                                     addresses_reading)
             collection, meta = place(clerks, points, state, spelling, operation,
                                      str(require_param(p, "campus_ties")),
-                                     addresses_reading.get("municipal_class", ""))
+                                     addresses_reading.get("municipal_class", ""),
+                                     p.get("reviewed"))
         except ClerkOfficesRefused as e:
             primitive_failure("Clerk office points refused", str(e))
         w.info(f"{meta['feature_count']} office(s) placed for {meta['rows_placed']} of "

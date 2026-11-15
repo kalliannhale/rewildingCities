@@ -66,6 +66,14 @@ def test_the_campus_choice_is_declared_in_the_method_and_made_in_the_run():
     assert _steps()["clerk_offices_points"].params["campus_ties"] == "$choices.campus_ties"
 
 
+def test_the_reviewed_matches_come_from_a_shared_crosswalk():
+    assert _steps()["clerk_offices_points"].params["reviewed"] == "$crosswalks.maine_sos_reviewed"
+    seed = yaml.safe_load((ROOT / "seeds" / "crosswalks" / "clerks" / "maine_sos_reviewed.yml").read_text())
+    streets = {(e["street"], e["zip"]) for e in seed["reviewed"]}
+    assert ("8 Kennebasis Road", "04668") in streets and ("7 Minden", "04441") in streets
+    assert all(e["evidence"] and e["read_by"] and e["read_on"] for e in seed["reviewed"])
+
+
 def test_build_located_in_lists_every_carrier_it_places():
     reg = yaml.safe_load(REGISTRY.read_text())["primitives"]
     points = next(i for i in reg["build_located_in"]["inputs"] if i["name"] == "points")

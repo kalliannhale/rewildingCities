@@ -63,6 +63,15 @@ description: >
   The address point's own placement (rooftop, parcel centroid, property
   access) and class travel with the office as adjectives, never judged.
 
+  A reviewed match is a person's reading, declared beside the list's own
+  crosswalk: the list's address as written, the one 911 point the person
+  read there, the evidence, the day and who read it (GEO-4). It may only
+  name a point that stands in the file, in the same ZIP, and only for an
+  address the run would otherwise list; a review for an address the run
+  places on its own, or that no row gives, refuses the run, so a review
+  never outlives its need. It reproduces as a record, not a computation,
+  and says so on its point (placed_by reviewed, with its evidence).
+
   This version places through the state's 911 file only. What it does not
   match is listed, so whether a second geocoder, the Census Geocoder, is
   worth adding is read from those rows (GEO-2).

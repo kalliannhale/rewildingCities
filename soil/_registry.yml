@@ -1310,7 +1310,9 @@ primitives:
       inside one building settles on its one point with no subaddress (a
       rule); a campus tie follows the method's campus_ties choice (listed,
       or its one point of the declared municipal class, flagged), and
-      otherwise is listed. The list is read by declared position
+      otherwise is listed. A reviewed match (GEO-4) names the one 911 point
+      a person read at an address the run would otherwise list, in the same
+      ZIP; a review the run no longer needs refuses. The list is read by declared position
       under an exact declared header, its names and phones never read; the
       address file by declared layer, CRS and fields; its points reprojected
       to EPSG:4326 by pyproj's default operation, named in the receipt.
@@ -1325,6 +1327,7 @@ primitives:
       addresses_reading: {type: object, required: true}
       streets: {type: object, required: true}
       campus_ties: {type: string, required: true}
+      reviewed: {type: object, required: false}
     # the param a run writes that the clerk list already declares. a run may
     # write it, and the orchestrator refuses one that disagrees (D-192). the
     # address file's layer and CRS live in its crosswalk and are checked

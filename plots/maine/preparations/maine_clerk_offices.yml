@@ -56,6 +56,9 @@ steps:
       addresses_reading: $crosswalks.maine_e911_fgdb
       streets: $crosswalks.usps_pub28
       campus_ties: $choices.campus_ties
+      # addresses a person read and named to a 911 point (GEO-4), shared by
+      # every plot reading these two files
+      reviewed: $crosswalks.maine_sos_reviewed
 
   - id: clerk_offices_located_in
     primitive: soil/build_located_in

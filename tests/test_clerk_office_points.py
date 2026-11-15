@@ -63,10 +63,16 @@ def point(site, number, street_name, suffix="", zip_="04406", predir="", postdir
 MUNICIPAL = ADDRESSES["municipal_class"]
 
 
-def placed(clerk_rows, point_rows, campus_ties="listed"):
+def placed(clerk_rows, point_rows, campus_ties="listed", reviewed=None):
     table = cp.read_clerks(clerk_csv(clerk_rows), "utf-8", CLERKS)
     return cp.place(table, pd.DataFrame(point_rows), "ME", SPELLING, "test",
-                    campus_ties, MUNICIPAL)
+                    campus_ties, MUNICIPAL, reviewed)
+
+
+def review(street, zip_, site, **over):
+    entry = {"street": street, "zip": zip_, "site_uid": site, "evidence": "read by a person",
+             "read_on": "2026-11-15", "read_by": "Kalli A. Hale"}
+    return {"reviewed": [{**entry, **over}]}
 
 
 def reasons(meta):
@@ -288,3 +294,70 @@ def test_an_exact_match_says_it_was_exact():
     collection, _ = placed([clerk("Abbot", "133 Main Road")], [point("U", 133, "Main", "Rd")])
     props = collection["features"][0]["properties"]
     assert props["placed_by"] == "exact" and props["tie_candidates"] is None
+
+
+# ── reviewed matches (GEO-4) ──────────────────────────────────────────────
+KENNEBASIS = [point("UK", 8, "Kennebasis", "St", zip_="04668", town="Indian Township Reservation",
+                    place_type=MUNICIPAL)]
+
+
+def test_a_review_places_an_address_no_exact_match_can():
+    collection, meta = placed([clerk("Indian Township", "8 Kennebasis Road", csz="Indian Township, ME  04668")],
+                              KENNEBASIS, reviewed=review("8 Kennebasis Road", "04668", "UK"))
+    props = collection["features"][0]["properties"]
+    assert props["feature_id"] == "UK" and props["placed_by"] == "reviewed"
+    assert props["review_read_by"] == "Kalli A. Hale" and "reviewed" in props["flags"]
+    assert meta["reviews_applied"] == 1 and meta["listed_rows"] == []
+
+
+def test_one_review_places_every_row_that_gives_its_address():
+    rows = [clerk(m, "7 Minden", csz="Greenville, ME  04441") for m in ("Greenville", "Cove Point Twp")]
+    collection, _ = placed(rows, [point("UG", 7, "Minden", "St", zip_="04441")],
+                           reviewed=review("7 minden", "04441", "UG"))
+    assert len(collection["features"]) == 1
+    assert collection["features"][0]["properties"]["rows_served"] == 2
+
+
+def test_a_review_the_run_no_longer_needs_refuses():
+    with pytest.raises(cp.ClerkOfficesRefused, match="places it on its own"):
+        placed([clerk("Abbot", "133 Main Road")], [point("U", 133, "Main", "Rd")],
+               reviewed=review("133 Main Road", "04406", "U"))
+
+
+def test_a_review_of_an_address_no_row_gives_refuses():
+    with pytest.raises(cp.ClerkOfficesRefused, match="no row gives"):
+        placed([clerk("Abbot", "133 Main Road")], [point("U", 133, "Main", "Rd")],
+               reviewed=review("9 Elsewhere Lane", "04406", "U"))
+
+
+def test_a_review_naming_no_point_in_the_file_refuses():
+    with pytest.raises(cp.ClerkOfficesRefused, match="0 time"):
+        placed([clerk("Indian Township", "8 Kennebasis Road", csz="Indian Township, ME  04668")],
+               KENNEBASIS, reviewed=review("8 Kennebasis Road", "04668", "NOT-THERE"))
+
+
+def test_a_review_never_leaves_its_zip():
+    far = [point("UF", 8, "Kennebasis", "St", zip_="04667")]
+    with pytest.raises(cp.ClerkOfficesRefused, match="never leaves"):
+        placed([clerk("Indian Township", "8 Kennebasis Road", csz="Indian Township, ME  04668")],
+               far, reviewed=review("8 Kennebasis Road", "04668", "UF"))
+
+
+def test_a_review_with_no_evidence_refuses():
+    with pytest.raises(cp.ClerkOfficesRefused, match="evidence"):
+        placed([clerk("Indian Township", "8 Kennebasis Road", csz="Indian Township, ME  04668")],
+               KENNEBASIS, reviewed=review("8 Kennebasis Road", "04668", "UK", evidence=" "))
+
+
+def test_a_review_can_settle_a_tie_the_rules_leave():
+    rows = [point("F", 63, "Broadway", "St", place_type="Fire Station"),
+            point("P", 63, "Broadway", "St", place_type="Law Enforcement -Municipal")]
+    collection, _ = placed([clerk("Baileyville", "63 Broadway Street")], rows,
+                           campus_ties="municipal_class",
+                           reviewed=review("63 Broadway Street", "04406", "P"))
+    assert collection["features"][0]["properties"]["feature_id"] == "P"
+
+
+def test_the_seeds_reviews_are_well_formed():
+    seed = yaml.safe_load((CROSSWALKS / "clerks" / "maine_sos_reviewed.yml").read_text())
+    assert len(cp.check_reviewed(seed)) == len(seed["reviewed"]) == 2
