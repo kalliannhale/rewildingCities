@@ -1,0 +1,117 @@
+# ============================================================================
+# garden/methods/information/clerk_office_carriers.yml
+# ============================================================================
+# a preparation method (D-98): municipal clerks' offices as carriers, placed
+# in every area they fall in (Sprint 06, step 3, the fourth carrier; GEO-1).
+# this file is the one home for what is placed and why (D-212); the
+# primitive, the run, the crosswalks and the indicator point here rather
+# than restate it. ~
+# ============================================================================
+
+id: clerk_office_carriers
+domain: information
+kind: preparation
+name: "Municipal Clerks' Offices, Placed"
+answers_question_types: [clerk_offices, carriers, located_in, preparation]
+
+description: >
+  Reads a state's list of municipal clerks, one row per municipality, and
+  places each clerk's office at the address point the state's own 911 file
+  holds at its street address. Each office is then placed in its state,
+  county, town, House and Senate districts, Census tribal area and civil
+  division through located_in edges: towns from the 2024 face a point falls
+  in, districts from that face's 2020 block (D-207).
+
+  The carrier is the clerk's office, not the town office as a building type
+  (D-236): it is where a person registers to vote, asks for a record, and
+  puts a question to the town, and the state names one for every
+  municipality. A 911 file's own classes cannot list town offices: its
+  default class is Residential, so a town with no Government - Municipal
+  point may simply have one nobody classed, and that class also holds salt
+  sheds and transfer stations.
+
+  An office is placed where the address point its street address names
+  stands (D-234, D-237): never by its row's municipal code, and never where
+  no point stands. A match is exact on the house number, the street and
+  the ZIP, the street spelled through USPS Publication 28 on both sides
+  alike: every directional word becomes its abbreviation, and a street's
+  last word, if it follows a name, becomes its suffix's primary name (D-238).
+  Nothing else is forgiven. These are rules, since the other way places a
+  point no source gives (D-212), each listed with its reason, never placed:
+  a row with no street address or only a post office box; a line that does
+  not open with a house number; no ZIP, or an address in another state; no
+  address point at that number, street and ZIP, a street with no suffix
+  included (no suffix is guessed).
+
+  More than one address point at one address is a tie, and two kinds were
+  read (2026-11-15, 66 rows). One building, many doors: when exactly one
+  candidate carries no unit, building, floor or room, it is the building
+  and the others are doors inside it, so it is placed (a rule: a suite is
+  inside its address; placed_by building_point). One campus, many
+  buildings: a town office, a fire station and a police station can share
+  one civic address, each its own point, tens of metres apart. What such a
+  tie becomes is the choice campus_ties. Every point a tie settles on
+  carries how many candidates stood there and how far apart, so no settled
+  tie reads as a clean match.
+
+  One point per distinct office. Where several rows give one address, as
+  towns answering for the townships around them do, they are one office,
+  counted once where it stands, and the municipalities it answers for ride
+  on the point. Whom an office serves is SERVES-1's question, kept, never
+  answered by moving or repeating a point.
+
+  The address point's own placement (rooftop, parcel centroid, property
+  access) and class travel with the office as adjectives, never judged.
+
+  This version places through the state's 911 file only. What it does not
+  match is listed, so whether a second geocoder, the Census Geocoder, is
+  worth adding is read from those rows (GEO-2).
+
+requires_data:
+  - {name: clerks, type: tabular, semantic_types: [municipal_clerk_list], critical: true, as_acquired: true,
+     role: "The state's clerk list, with each municipality's clerk's street address, ZIP and code.",
+     uncertainty_without: "No office can be named."}
+  - {name: addresses, type: tabular, semantic_types: [address_point_release], critical: true, as_acquired: true,
+     role: "The state's 911 address points, to place each office where a point stands.",
+     uncertainty_without: "No office can be placed."}
+  - {name: faces, type: vector, semantic_types: [census_faces], critical: true, as_acquired: true,
+     role: "The 2024 faces, to place each point in its town and block.",
+     uncertainty_without: "No point can be placed."}
+
+choices:
+  campus_ties:
+    options:
+      listed:
+      municipal_class:
+    default: listed
+    description: >
+      What a tie the building rule does not settle becomes. listed: it is
+      named in the receipt with its candidate count and counted nowhere,
+      since the address names several structures and nothing in the clerk
+      list says which holds the clerk. municipal_class: when exactly one
+      candidate carries the address file's declared municipal class, that
+      point is placed, flagged tie_broken_by_class, since a clerk works in
+      the town's own building far more often than in its fire or police
+      station; otherwise it stays listed. The class never finds an office,
+      the address does; it only chooses among points one address already
+      named, and the 911 file's classes are set town by town with a
+      Residential default, so a wrong or missing class leaves the tie
+      listed rather than moving it. Neither is a finding about the town.
+
+requires_primitives:
+  - soil/prepare_clerk_office_points
+  - soil/build_located_in
+
+produces:
+  - semantic_type: located_in_edges
+    data_category: tabular
+    description: Each placed clerk's office to every place it falls in.
+
+interpretation: >
+  A located_in edge says an office stands in a place, never that the place
+  is served by it or only by it: an office answering for several
+  municipalities stands in one of them (SERVES-1). A point is the 911 file's
+  point at the address the clerk list gives, so it says where the list says
+  the clerk's office is, as of the list's day and the file's cutoff. A
+  municipality with no placed office is not a municipality with no clerk:
+  its row is listed with the reason it could not be placed.

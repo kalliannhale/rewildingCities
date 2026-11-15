@@ -1,0 +1,107 @@
+# ============================================================================
+# plots/maine/preparations/maine_clerk_offices.yml
+# ============================================================================
+# a preparation (D-98): Maine's municipal clerks' offices as carriers
+# (Sprint 06, step 3, the fourth carrier; GEO-1). what is placed and why:
+# the clerk_office_carriers method (D-212).
+#   the clerk list + the 911 file -> offices as points; every unplaced row
+#                                    listed with why
+#   the points                    -> located_in edges
+#   the edges                     -> clerks' offices per 1,000 people, every place
+# the spine, places and divisions are read through loam ($loam., LOAM-1), so
+# they are judged fresh before any step runs (D-166).
+# how each file is read, and how a street is spelled, are crosswalks every
+# plot shares (seeds/crosswalks/clerks/maine_sos_clerk_info.yml,
+# seeds/crosswalks/addresses/maine_e911_fgdb.yml,
+# seeds/crosswalks/addresses/usps_pub28.yml), never written here (D-226).
+# the list's encoding is its own fact, declared with
+# maine_sos_clerk_info_20261114 in the manifest (source.clerks_encoding);
+# the orchestrator refuses a run that disagrees (D-192).
+# no located_in block check: neither file carries a Census block.
+# ============================================================================
+
+id: maine_clerk_offices
+name: "Maine's municipal clerks' offices, placed"
+kind: preparation
+description: >
+  Places every municipal clerk's office the Secretary of State lists at the
+  address point Maine's 911 file holds at its street address, then in each
+  area it falls in, and lists every row that is not placed, with its reason.
+
+method:
+  ref: $methods/information/clerk_office_carriers
+
+city: maine
+manifest: ../manifest.yml
+
+# a campus tie (a town office, fire and police stations sharing one civic
+# address) settles on its one Government - Municipal point, flagged
+# tie_broken_by_class (Kalli's choice C, session 9)
+choices:
+  campus_ties: municipal_class
+parameters: {}
+
+steps:
+  - id: clerk_offices_points
+    primitive: soil/prepare_clerk_office_points
+    inputs:
+      clerks: $manifest.maine_sos_clerk_info_20261114
+      addresses: $manifest.maine_e911_addresses_20260827
+    outputs:
+      points: municipal_clerk_office
+    params:
+      encoding: utf-8
+      state: ME
+      clerks_reading: $crosswalks.maine_sos_clerk_info
+      addresses_reading: $crosswalks.maine_e911_fgdb
+      streets: $crosswalks.usps_pub28
+      campus_ties: $choices.campus_ties
+
+  - id: clerk_offices_located_in
+    primitive: soil/build_located_in
+    inputs:
+      points: $steps.clerk_offices_points.points
+      faces: $manifest.faces_2024_me
+      spine: $loam.block_spine
+      places: $loam.places
+      divisions: $loam.block_division_assignment
+    outputs:
+      edges: located_in_edges
+    params:
+      # the edges' label: whose list, which address file, which days. the
+      # indicator counts municipal_clerk_office, the points' type; the
+      # orchestrator checks the two agree before the run (D-224)
+      layer: maine_sos_20261114_e911_20260827_clerk_offices
+      id_field: feature_id
+      state_fips: "23"
+      vintages:
+        state: "2024"
+        county: "2024"
+        town: "2024"
+        sldl: "2024"
+        sldu: "2024"
+        aiannh: "2020"
+        division: "MEGIS METWP24P"
+
+  - id: clerk_offices_counts
+    primitive: soil/count_located
+    inputs:
+      edges: $steps.clerk_offices_located_in.edges
+      spine: $loam.block_spine
+      places: $loam.places
+    outputs:
+      values: indicator_values
+    params:
+      indicator: $indicators.clerk_offices_per_1000
+      levels: [state, county, cousub, sldl, sldu, aiannh]
+      # a Census tribal area is counted beside the note its source earns
+      # (D-233). the read of 2026-11-15 found the list names Indian
+      # Township, Penobscot Nation Voting District and Pleasant Point Voting
+      # District, so the source sees offices on nations' land (TRIBE-10).
+      # the words are Kalli's DRAFT, on the nations' terms
+      tribal_note: carrier_seen_on_nations_land
+      # the day the clerk list's copy describes. the 911 file's cutoff
+      # (2026-08-27) is in its manifest entry; which boundaries the count
+      # sits on travels in each row's boundary_vintage (D-231)
+      time: "2026-11-14"
+      published_by: rewildingcities

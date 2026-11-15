@@ -1176,7 +1176,8 @@ primitives:
       artifact, never place_edges (D-207). Refuses a feature id used twice,
       a placed point with no district, and an edge to a place not in places.
     inputs:
-      - {name: points, semantic_types: [library_outlet, formal_outlet], required: true}
+      - {name: points, semantic_types: [library_outlet, public_school, health_center_site,
+                                        municipal_clerk_office, formal_outlet], required: true}
       - {name: faces, semantic_types: [census_faces], required: true}
       - {name: spine, semantic_types: [block_spine], required: true}
       - {name: places, semantic_types: [places], required: true}
@@ -1292,6 +1293,46 @@ primitives:
       params:
         encoding: source.sites_encoding
         snapshot_date: source.sites_snapshot_date
+
+  prepare_clerk_office_points:
+    path: transform/prepare_clerk_office_points.py
+    version: 1.0.0
+    description: >
+      Municipal clerks' offices as points (GEO-1): each row of a state's
+      clerk list matched exactly, on house number, street and ZIP, to the
+      address point the state's 911 file holds there, the street spelled
+      through USPS Publication 28 on both sides (D-238). One point per
+      distinct office, named by the address point's own site id; the rows
+      whose addresses name it are the municipalities it answers for (D-237).
+      What is placed and why is the clerk_office_carriers method's (D-212).
+      No street address, a post office box, no house number, no ZIP, another
+      state, or no address point there are listed with their reasons. A tie
+      inside one building settles on its one point with no subaddress (a
+      rule); a campus tie follows the method's campus_ties choice (listed,
+      or its one point of the declared municipal class, flagged), and
+      otherwise is listed. The list is read by declared position
+      under an exact declared header, its names and phones never read; the
+      address file by declared layer, CRS and fields; its points reprojected
+      to EPSG:4326 by pyproj's default operation, named in the receipt.
+    inputs:
+      - {name: clerks, semantic_types: [municipal_clerk_list], required: true}
+      - {name: addresses, semantic_types: [address_point_release], required: true}
+    outputs: {semantic_type: municipal_clerk_office, data_category: vector}
+    params:
+      encoding: {type: string, required: true}
+      state: {type: string, required: true}
+      clerks_reading: {type: object, required: true}
+      addresses_reading: {type: object, required: true}
+      streets: {type: object, required: true}
+      campus_ties: {type: string, required: true}
+    # the param a run writes that the clerk list already declares. a run may
+    # write it, and the orchestrator refuses one that disagrees (D-192). the
+    # address file's layer and CRS live in its crosswalk and are checked
+    # against the file itself
+    source_facts:
+      input: clerks
+      params:
+        encoding: source.clerks_encoding
 
   count_located:
     path: transform/count_located.py

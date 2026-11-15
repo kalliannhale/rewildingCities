@@ -1,0 +1,265 @@
+# ============================================================================
+# seeds/crosswalks/addresses/usps_pub28.yml
+# ============================================================================
+# how two spellings of one street are made comparable: USPS Publication 28,
+# Postal Addressing Standards (October 2024 edition), read 2026-11-15.
+#
+#   suffixes      Appendix C1, Street Suffix Abbreviations: for each primary
+#                 street suffix name, the forms USPS lists as commonly used
+#                 and its standard abbreviation, transcribed group by group
+#                 from https://pe.usps.com/text/pub28/28apc_002.htm (206
+#                 groups). every form maps to its group's primary name, so
+#                 RD and ROAD are one word, and both sides of a match say
+#                 the same thing however each source abbreviates
+#   resolved      the forms C1 itself lists in two groups. each is declared
+#                 here by a person, never by an ordering rule in code; a form
+#                 in two groups that is not named here refuses the reading
+#   directionals  section 233, Directionals: the eight standard directionals
+#                 and their one- or two-letter abbreviations
+#                 (https://pe.usps.com/text/pub28/28c2_014.htm). the words
+#                 are mapped to the abbreviations; 233's own rules for where a
+#                 directional sits in a street are not used, because a match
+#                 maps every directional word on both sides the same way
+#
+# shared by every plot and every source with a street address (D-238): it
+# names no plot, no state and no file. what a match is, and where it looks,
+# is the method's to say; this file says only how a street is spelled.
+# ============================================================================
+
+from: "USPS Publication 28, Postal Addressing Standards, October 2024: Appendix C1 and section 233"
+to: "rewildingCities: one spelling per street suffix (its primary name) and per directional"
+
+source_scheme:
+  name: Publication 28, Postal Addressing Standards
+  provider: United States Postal Service
+  edition: October 2024
+  documentation: https://pe.usps.com/text/pub28/welcome.htm
+
+# the forms C1 lists in two groups, each sent to one, with why
+resolved:
+  MDW: MEADOW       # MEADOW's standard abbreviation; only a listed form of MEADOWS
+  PARK: PARK        # PARK's own name; also listed as the standard for PARKS
+  SPUR: SPUR        # SPUR's own name; also listed as the standard for SPURS
+  WALK: WALK        # WALK's own name; also listed as the standard for WALKS
+  PKWY: PARKWAY     # the standard for both PARKWAY and PARKWAYS: USPS does not
+                    # tell them apart in abbreviation, so neither can a match
+
+directionals:
+  NORTH: N
+  SOUTH: S
+  EAST: E
+  WEST: W
+  NORTHEAST: NE
+  NORTHWEST: NW
+  SOUTHEAST: SE
+  SOUTHWEST: SW
+
+# primary street suffix name: {standard: USPS abbreviation, forms: every form
+# C1 lists in the group, the primary name included}
+suffixes:
+  ALLEY: {standard: ALY, forms: [ALLEE, ALLEY, ALLY, ALY]}
+  ANEX: {standard: ANX, forms: [ANEX, ANNEX, ANNX, ANX]}
+  ARCADE: {standard: ARC, forms: [ARC, ARCADE]}
+  AVENUE: {standard: AVE, forms: [AV, AVE, AVEN, AVENU, AVENUE, AVN, AVNUE]}
+  BAYOU: {standard: BYU, forms: [BAYOO, BAYOU, BYU]}
+  BEACH: {standard: BCH, forms: [BCH, BEACH]}
+  BEND: {standard: BND, forms: [BEND, BND]}
+  BLUFF: {standard: BLF, forms: [BLF, BLUF, BLUFF]}
+  BLUFFS: {standard: BLFS, forms: [BLFS, BLUFFS]}
+  BOTTOM: {standard: BTM, forms: [BOT, BOTTM, BOTTOM, BTM]}
+  BOULEVARD: {standard: BLVD, forms: [BLVD, BOUL, BOULEVARD, BOULV]}
+  BRANCH: {standard: BR, forms: [BR, BRANCH, BRNCH]}
+  BRIDGE: {standard: BRG, forms: [BRDGE, BRG, BRIDGE]}
+  BROOK: {standard: BRK, forms: [BRK, BROOK]}
+  BROOKS: {standard: BRKS, forms: [BRKS, BROOKS]}
+  BURG: {standard: BG, forms: [BG, BURG]}
+  BURGS: {standard: BGS, forms: [BGS, BURGS]}
+  BYPASS: {standard: BYP, forms: [BYP, BYPA, BYPAS, BYPASS, BYPS]}
+  CAMP: {standard: CP, forms: [CAMP, CMP, CP]}
+  CANYON: {standard: CYN, forms: [CANYN, CANYON, CNYN, CYN]}
+  CAPE: {standard: CPE, forms: [CAPE, CPE]}
+  CAUSEWAY: {standard: CSWY, forms: [CAUSEWAY, CAUSWA, CSWY]}
+  CENTER: {standard: CTR, forms: [CEN, CENT, CENTER, CENTR, CENTRE, CNTER, CNTR, CTR]}
+  CENTERS: {standard: CTRS, forms: [CENTERS, CTRS]}
+  CIRCLE: {standard: CIR, forms: [CIR, CIRC, CIRCL, CIRCLE, CRCL, CRCLE]}
+  CIRCLES: {standard: CIRS, forms: [CIRCLES, CIRS]}
+  CLIFF: {standard: CLF, forms: [CLF, CLIFF]}
+  CLIFFS: {standard: CLFS, forms: [CLFS, CLIFFS]}
+  CLUB: {standard: CLB, forms: [CLB, CLUB]}
+  COMMON: {standard: CMN, forms: [CMN, COMMON]}
+  COMMONS: {standard: CMNS, forms: [CMNS, COMMONS]}
+  CORNER: {standard: COR, forms: [COR, CORNER]}
+  CORNERS: {standard: CORS, forms: [CORNERS, CORS]}
+  COURSE: {standard: CRSE, forms: [COURSE, CRSE]}
+  COURT: {standard: CT, forms: [COURT, CT]}
+  COURTS: {standard: CTS, forms: [COURTS, CTS]}
+  COVE: {standard: CV, forms: [COVE, CV]}
+  COVES: {standard: CVS, forms: [COVES, CVS]}
+  CREEK: {standard: CRK, forms: [CREEK, CRK]}
+  CRESCENT: {standard: CRES, forms: [CRES, CRESCENT, CRSENT, CRSNT]}
+  CREST: {standard: CRST, forms: [CREST, CRST]}
+  CROSSING: {standard: XING, forms: [CROSSING, CRSSNG, XING]}
+  CROSSROAD: {standard: XRD, forms: [CROSSROAD, XRD]}
+  CROSSROADS: {standard: XRDS, forms: [CROSSROADS, XRDS]}
+  CURVE: {standard: CURV, forms: [CURV, CURVE]}
+  DALE: {standard: DL, forms: [DALE, DL]}
+  DAM: {standard: DM, forms: [DAM, DM]}
+  DIVIDE: {standard: DV, forms: [DIV, DIVIDE, DV, DVD]}
+  DRIVE: {standard: DR, forms: [DR, DRIV, DRIVE, DRV]}
+  DRIVES: {standard: DRS, forms: [DRIVES, DRS]}
+  ESTATE: {standard: EST, forms: [EST, ESTATE]}
+  ESTATES: {standard: ESTS, forms: [ESTATES, ESTS]}
+  EXPRESSWAY: {standard: EXPY, forms: [EXP, EXPR, EXPRESS, EXPRESSWAY, EXPW, EXPY]}
+  EXTENSION: {standard: EXT, forms: [EXT, EXTENSION, EXTN, EXTNSN]}
+  EXTENSIONS: {standard: EXTS, forms: [EXTENSIONS, EXTS]}
+  FALL: {standard: FALL, forms: [FALL]}
+  FALLS: {standard: FLS, forms: [FALLS, FLS]}
+  FERRY: {standard: FRY, forms: [FERRY, FRRY, FRY]}
+  FIELD: {standard: FLD, forms: [FIELD, FLD]}
+  FIELDS: {standard: FLDS, forms: [FIELDS, FLDS]}
+  FLAT: {standard: FLT, forms: [FLAT, FLT]}
+  FLATS: {standard: FLTS, forms: [FLATS, FLTS]}
+  FORD: {standard: FRD, forms: [FORD, FRD]}
+  FORDS: {standard: FRDS, forms: [FORDS, FRDS]}
+  FOREST: {standard: FRST, forms: [FOREST, FORESTS, FRST]}
+  FORGE: {standard: FRG, forms: [FORG, FORGE, FRG]}
+  FORGES: {standard: FRGS, forms: [FORGES, FRGS]}
+  FORK: {standard: FRK, forms: [FORK, FRK]}
+  FORKS: {standard: FRKS, forms: [FORKS, FRKS]}
+  FORT: {standard: FT, forms: [FORT, FRT, FT]}
+  FREEWAY: {standard: FWY, forms: [FREEWAY, FREEWY, FRWAY, FRWY, FWY]}
+  GARDEN: {standard: GDN, forms: [GARDEN, GARDN, GDN, GRDEN, GRDN]}
+  GARDENS: {standard: GDNS, forms: [GARDENS, GDNS, GRDNS]}
+  GATEWAY: {standard: GTWY, forms: [GATEWAY, GATEWY, GATWAY, GTWAY, GTWY]}
+  GLEN: {standard: GLN, forms: [GLEN, GLN]}
+  GLENS: {standard: GLNS, forms: [GLENS, GLNS]}
+  GREEN: {standard: GRN, forms: [GREEN, GRN]}
+  GREENS: {standard: GRNS, forms: [GREENS, GRNS]}
+  GROVE: {standard: GRV, forms: [GROV, GROVE, GRV]}
+  GROVES: {standard: GRVS, forms: [GROVES, GRVS]}
+  HARBOR: {standard: HBR, forms: [HARB, HARBOR, HARBR, HBR, HRBOR]}
+  HARBORS: {standard: HBRS, forms: [HARBORS, HBRS]}
+  HAVEN: {standard: HVN, forms: [HAVEN, HVN]}
+  HEIGHTS: {standard: HTS, forms: [HEIGHTS, HT, HTS]}
+  HIGHWAY: {standard: HWY, forms: [HIGHWAY, HIGHWY, HIWAY, HIWY, HWAY, HWY]}
+  HILL: {standard: HL, forms: [HILL, HL]}
+  HILLS: {standard: HLS, forms: [HILLS, HLS]}
+  HOLLOW: {standard: HOLW, forms: [HLLW, HOLLOW, HOLLOWS, HOLW, HOLWS]}
+  INLET: {standard: INLT, forms: [INLET, INLT]}
+  ISLAND: {standard: IS, forms: [IS, ISLAND, ISLND]}
+  ISLANDS: {standard: ISS, forms: [ISLANDS, ISLNDS, ISS]}
+  ISLE: {standard: ISLE, forms: [ISLE, ISLES]}
+  JUNCTION: {standard: JCT, forms: [JCT, JCTION, JCTN, JUNCTION, JUNCTN, JUNCTON]}
+  JUNCTIONS: {standard: JCTS, forms: [JCTNS, JCTS, JUNCTIONS]}
+  KEY: {standard: KY, forms: [KEY, KY]}
+  KEYS: {standard: KYS, forms: [KEYS, KYS]}
+  KNOLL: {standard: KNL, forms: [KNL, KNOL, KNOLL]}
+  KNOLLS: {standard: KNLS, forms: [KNLS, KNOLLS]}
+  LAKE: {standard: LK, forms: [LAKE, LK]}
+  LAKES: {standard: LKS, forms: [LAKES, LKS]}
+  LAND: {standard: LAND, forms: [LAND]}
+  LANDING: {standard: LNDG, forms: [LANDING, LNDG, LNDNG]}
+  LANE: {standard: LN, forms: [LANE, LN]}
+  LIGHT: {standard: LGT, forms: [LGT, LIGHT]}
+  LIGHTS: {standard: LGTS, forms: [LGTS, LIGHTS]}
+  LOAF: {standard: LF, forms: [LF, LOAF]}
+  LOCK: {standard: LCK, forms: [LCK, LOCK]}
+  LOCKS: {standard: LCKS, forms: [LCKS, LOCKS]}
+  LODGE: {standard: LDG, forms: [LDG, LDGE, LODG, LODGE]}
+  LOOP: {standard: LOOP, forms: [LOOP, LOOPS]}
+  MALL: {standard: MALL, forms: [MALL]}
+  MANOR: {standard: MNR, forms: [MANOR, MNR]}
+  MANORS: {standard: MNRS, forms: [MANORS, MNRS]}
+  MEADOW: {standard: MDW, forms: [MDW, MEADOW]}
+  MEADOWS: {standard: MDWS, forms: [MDW, MDWS, MEADOWS, MEDOWS]}
+  MEWS: {standard: MEWS, forms: [MEWS]}
+  MILL: {standard: ML, forms: [MILL, ML]}
+  MILLS: {standard: MLS, forms: [MILLS, MLS]}
+  MISSION: {standard: MSN, forms: [MISSION, MISSN, MSN, MSSN]}
+  MOTORWAY: {standard: MTWY, forms: [MOTORWAY, MTWY]}
+  MOUNT: {standard: MT, forms: [MNT, MOUNT, MT]}
+  MOUNTAIN: {standard: MTN, forms: [MNTAIN, MNTN, MOUNTAIN, MOUNTIN, MTIN, MTN]}
+  MOUNTAINS: {standard: MTNS, forms: [MNTNS, MOUNTAINS, MTNS]}
+  NECK: {standard: NCK, forms: [NCK, NECK]}
+  ORCHARD: {standard: ORCH, forms: [ORCH, ORCHARD, ORCHRD]}
+  OVAL: {standard: OVAL, forms: [OVAL, OVL]}
+  OVERPASS: {standard: OPAS, forms: [OPAS, OVERPASS]}
+  PARK: {standard: PARK, forms: [PARK, PRK]}
+  PARKS: {standard: PARK, forms: [PARK, PARKS]}
+  PARKWAY: {standard: PKWY, forms: [PARKWAY, PARKWY, PKWAY, PKWY, PKY]}
+  PARKWAYS: {standard: PKWY, forms: [PARKWAYS, PKWY, PKWYS]}
+  PASS: {standard: PASS, forms: [PASS]}
+  PASSAGE: {standard: PSGE, forms: [PASSAGE, PSGE]}
+  PATH: {standard: PATH, forms: [PATH, PATHS]}
+  PIKE: {standard: PIKE, forms: [PIKE, PIKES]}
+  PINE: {standard: PNE, forms: [PINE, PNE]}
+  PINES: {standard: PNES, forms: [PINES, PNES]}
+  PLACE: {standard: PL, forms: [PL, PLACE]}
+  PLAIN: {standard: PLN, forms: [PLAIN, PLN]}
+  PLAINS: {standard: PLNS, forms: [PLAINS, PLNS]}
+  PLAZA: {standard: PLZ, forms: [PLAZA, PLZ, PLZA]}
+  POINT: {standard: PT, forms: [POINT, PT]}
+  POINTS: {standard: PTS, forms: [POINTS, PTS]}
+  PORT: {standard: PRT, forms: [PORT, PRT]}
+  PORTS: {standard: PRTS, forms: [PORTS, PRTS]}
+  PRAIRIE: {standard: PR, forms: [PR, PRAIRIE, PRR]}
+  RADIAL: {standard: RADL, forms: [RAD, RADIAL, RADIEL, RADL]}
+  RAMP: {standard: RAMP, forms: [RAMP]}
+  RANCH: {standard: RNCH, forms: [RANCH, RANCHES, RNCH, RNCHS]}
+  RAPID: {standard: RPD, forms: [RAPID, RPD]}
+  RAPIDS: {standard: RPDS, forms: [RAPIDS, RPDS]}
+  REST: {standard: RST, forms: [REST, RST]}
+  RIDGE: {standard: RDG, forms: [RDG, RDGE, RIDGE]}
+  RIDGES: {standard: RDGS, forms: [RDGS, RIDGES]}
+  RIVER: {standard: RIV, forms: [RIV, RIVER, RIVR, RVR]}
+  ROAD: {standard: RD, forms: [RD, ROAD]}
+  ROADS: {standard: RDS, forms: [RDS, ROADS]}
+  ROUTE: {standard: RTE, forms: [ROUTE, RTE]}
+  ROW: {standard: ROW, forms: [ROW]}
+  RUE: {standard: RUE, forms: [RUE]}
+  RUN: {standard: RUN, forms: [RUN]}
+  SHOAL: {standard: SHL, forms: [SHL, SHOAL]}
+  SHOALS: {standard: SHLS, forms: [SHLS, SHOALS]}
+  SHORE: {standard: SHR, forms: [SHOAR, SHORE, SHR]}
+  SHORES: {standard: SHRS, forms: [SHOARS, SHORES, SHRS]}
+  SKYWAY: {standard: SKWY, forms: [SKWY, SKYWAY]}
+  SPRING: {standard: SPG, forms: [SPG, SPNG, SPRING, SPRNG]}
+  SPRINGS: {standard: SPGS, forms: [SPGS, SPNGS, SPRINGS, SPRNGS]}
+  SPUR: {standard: SPUR, forms: [SPUR]}
+  SPURS: {standard: SPUR, forms: [SPUR, SPURS]}
+  SQUARE: {standard: SQ, forms: [SQ, SQR, SQRE, SQU, SQUARE]}
+  SQUARES: {standard: SQS, forms: [SQRS, SQS, SQUARES]}
+  STATION: {standard: STA, forms: [STA, STATION, STATN, STN]}
+  STRAVENUE: {standard: STRA, forms: [STRA, STRAV, STRAVEN, STRAVENUE, STRAVN, STRVN, STRVNUE]}
+  STREAM: {standard: STRM, forms: [STREAM, STREME, STRM]}
+  STREET: {standard: ST, forms: [ST, STR, STREET, STRT]}
+  STREETS: {standard: STS, forms: [STREETS, STS]}
+  SUMMIT: {standard: SMT, forms: [SMT, SUMIT, SUMITT, SUMMIT]}
+  TERRACE: {standard: TER, forms: [TER, TERR, TERRACE]}
+  THROUGHWAY: {standard: TRWY, forms: [THROUGHWAY, TRWY]}
+  TRACE: {standard: TRCE, forms: [TRACE, TRACES, TRCE]}
+  TRACK: {standard: TRAK, forms: [TRACK, TRACKS, TRAK, TRK, TRKS]}
+  TRAFFICWAY: {standard: TRFY, forms: [TRAFFICWAY, TRFY]}
+  TRAIL: {standard: TRL, forms: [TRAIL, TRAILS, TRL, TRLS]}
+  TRAILER: {standard: TRLR, forms: [TRAILER, TRLR, TRLRS]}
+  TUNNEL: {standard: TUNL, forms: [TUNEL, TUNL, TUNLS, TUNNEL, TUNNELS, TUNNL]}
+  TURNPIKE: {standard: TPKE, forms: [TPKE, TRNPK, TURNPIKE, TURNPK]}
+  UNDERPASS: {standard: UPAS, forms: [UNDERPASS, UPAS]}
+  UNION: {standard: UN, forms: [UN, UNION]}
+  UNIONS: {standard: UNS, forms: [UNIONS, UNS]}
+  VALLEY: {standard: VLY, forms: [VALLEY, VALLY, VLLY, VLY]}
+  VALLEYS: {standard: VLYS, forms: [VALLEYS, VLYS]}
+  VIADUCT: {standard: VIA, forms: [VDCT, VIA, VIADCT, VIADUCT]}
+  VIEW: {standard: VW, forms: [VIEW, VW]}
+  VIEWS: {standard: VWS, forms: [VIEWS, VWS]}
+  VILLAGE: {standard: VLG, forms: [VILL, VILLAG, VILLAGE, VILLG, VILLIAGE, VLG]}
+  VILLAGES: {standard: VLGS, forms: [VILLAGES, VLGS]}
+  VILLE: {standard: VL, forms: [VILLE, VL]}
+  VISTA: {standard: VIS, forms: [VIS, VIST, VISTA, VST, VSTA]}
+  WALK: {standard: WALK, forms: [WALK]}
+  WALKS: {standard: WALK, forms: [WALK, WALKS]}
+  WALL: {standard: WALL, forms: [WALL]}
+  WAY: {standard: WAY, forms: [WAY, WY]}
+  WAYS: {standard: WAYS, forms: [WAYS]}
+  WELL: {standard: WL, forms: [WELL, WL]}
+  WELLS: {standard: WLS, forms: [WELLS, WLS]}

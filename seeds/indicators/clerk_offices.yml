@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/clerk_offices.yml
+# Municipal clerk office carrier indicators: counts of a point layer's
+# located_in edges per place, over the place's own people (D-209). Their own
+# file, one family per file (INDFILE-1, D-227).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+
+  clerk_offices_per_1000:
+    name: Municipal clerks' offices per 1,000 people
+    defined_by: rewildingcities
+    measures: municipal_clerk_offices
+    role: carrier
+    rests_on: {add: [P1_001N], counts: persons}
+    unit: per_1000_persons
+    derivation:
+      kind: located_count
+      counts: municipal_clerk_office
+      denominator: persons
+      scale: 1000
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: rewildingcities
+    rationale: >
+      Counts the municipal clerks' offices placed in a place: which offices
+      are placed, and why, is the clerk_office_carriers method's to say
+      (D-212). It names the type it counts, municipal_clerk_office; whose
+      list, which address file and which days are the preparation's to say
+      (D-224). An office answering for several municipalities is counted
+      once, where it stands; whom it serves is SERVES-1's. A municipality
+      whose row could not be placed counts zero offices here, and its row is
+      listed with its reason. The denominator is the place's 2020 persons
+      (P.L. 94-171 P1), the vintage of the edges. A small place's rate is
+      unstable, so the count and the persons always travel with the rate.
+      Aggregation none: a rate never moves along an edge (D-179).

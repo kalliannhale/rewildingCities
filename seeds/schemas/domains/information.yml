@@ -110,6 +110,19 @@ types:
       its own type (D-218).
     # no resolution_tier yet: Kalli declares it. until then it fails closed.
 
+  municipal_clerk_office:
+    category: vector
+    format: geojson
+    description: >
+      One placed municipal clerk's office as a point: the address point a
+      state's 911 file holds at the street address a state's clerk list
+      gives, keyed by that point's own site id. One point per distinct
+      office; the municipalities whose rows name it ride on the point, and
+      whom it serves stays SERVES-1's. Which offices are placed, and why, is
+      the clerk_office_carriers method's to say (D-212). Each carrier kind
+      is its own type (D-218).
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
   relational_hub:
     category: vector
     format: geojson
@@ -250,4 +263,26 @@ types:
       site and location types, setting, status and HRSA's geocode. A daily
       snapshot, not a release, so a copy is declared by its day and its
       sha256. Read only by declared columns and encoding.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  municipal_clerk_list:
+    category: tabular
+    format: csv
+    description: >
+      A copy of a state's list of municipal clerks as published: one row per
+      municipality with its clerk's street address and a code for the
+      municipality. An export, not a release, so a copy is declared by its
+      day and its sha256. Read only by declared columns and encoding; the
+      clerks' names and phones are never read (D-236).
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  address_point_release:
+    category: tabular
+    format: zip
+    description: >
+      A state's 911 address points as published, in the archive it arrives
+      in: one point per addressable site with its house number, street
+      parts, ZIP, use and how it was placed. Declared by its information
+      cutoff and its sha256; read only by declared layer, CRS and fields.
+      It holds home addresses: only points a method matches ever leave it.
     # no resolution_tier yet: Kalli declares it. until then it fails closed.

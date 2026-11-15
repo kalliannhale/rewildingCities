@@ -165,11 +165,14 @@ datasets:
         county comes from the geography graph through its town, never from a
         listing (D-204).
 
-        Each outlet needs a name, a location (an address is enough; the
-        pipeline will geocode it), a medium, and an owning entity. If the
-        inventory carries addresses rather than coordinates, run
-        soil/geocode_to_unit before this can settle as a vector ~ an
-        un-geocoded outlet list is a table, not a map layer.
+        Each outlet needs a name, a location, a medium, and an owning
+        entity. An address becomes a point only by a match to an address
+        point that already stands: GEO-1 builds that match for clerks'
+        offices first (D-234 to D-238), and WHERE-1 decides whether an
+        office address is where an outlet is before any outlet is matched.
+        soil/geocode_to_unit matches place names to units and places no
+        point (OWN-1); it is not a geocoder. An unplaced outlet list is a
+        table, not a map layer.
 
         Ownership must come from public records and be traceable. An outlet
         whose owner cannot be sourced should carry that explicitly rather
@@ -858,3 +861,71 @@ datasets:
         - The geocode's datum is not yet read from HRSA's metadata workbook.
         - HRSA's program does not see the Wabanaki nations' own clinics (TRIBE-7).
         - sha256 of the copy read on 2026-11-14 is 08b01537495bb6a483c0e9805b9eef102e05492ce2ec4f97b6202f03366da436.
+
+  maine_sos_clerk_info_20261114:
+    available: true
+    description: >
+      The Maine Secretary of State's list of municipal clerks and
+      registrars, the export downloaded 2026-11-14: one row per
+      municipality with its clerk's street address, ZIP and MEGIS code
+    semantic_type: municipal_clerk_list
+    license: terms_unknown
+    license_note: The Secretary of State's page offers the list as a CSV download and states no terms that were found (read 2026-11-14); read them before anything derived is published
+    format: csv
+    # an export, not a release: this copy is the evidence. its encoding is
+    # its own fact: a run may write it, and is held to this (D-192). a later
+    # download is a new entry, never an overwrite
+    source:
+      type: manual
+      notes: >
+        Downloaded by hand from the Secretary of State's Find a Municipal
+        Clerk or Registrar page ("download this list (CSV)"), saved by the
+        browser as FULLFILE_CVR_Clerk_Info_1.csv, and copied into .data
+        unchanged under a name that carries its day.
+      clerks_encoding: utf-8
+      export_date: "2026-11-14"
+    cache: {path: .data/sos_clerk_info_20261114.csv, refresh_policy: manual}
+    provenance: {source: Maine Department of the Secretary of State, Find a Municipal Clerk or Registrar, published_by: maine_sos}
+    quality:
+      known_issues:
+        - 560 rows and 14 columns, valid UTF-8; five column names appear twice (the clerk's, then the registrar's), so columns are read by position (seeds/crosswalks/clerks/maine_sos_clerk_info.yml).
+        - Address Line 1 is a street address on every row that has one, never a post office box; 7 rows are blank (Cyr Plt, Grand Isle, Kingsbury Plt, Lambert Lake Twp, Robbinston, Vanceboro, Webster Plt). The page shows a mailing address beside the street address; the CSV does not carry it.
+        - Address Line 2 is not an address on any of its 11 filled rows (a street continuation, a village, a building); carried as a note.
+        - 478 distinct street addresses for 560 rows; 47 are shared, mostly a town answering for its townships (7 Minden, Greenville, 9 rows).
+        - GeoCode is MEGIS's GEOCODE (all 540 present in our town file); 17 are blank, Chebeague Island's among them; three townships carry their serving town's code (Louds Island Twp 15050, Eagle Island Twp 09110, T17 R3 03610).
+        - Frenchville's page entry gives a post office box; its CSV row gives a street address. Only this copy is evidence.
+        - sha256 of the copy read on 2026-11-14 is abdaef75416413a2081253af100464dda7dee5942f5024eeb6a705e0fedee816.
+
+  maine_e911_addresses_20260827:
+    available: true
+    description: >
+      Maine E911 Addresses, Roads, Structure, and PSAP FGDB from the Maine
+      GeoLibrary, the copy whose information cutoff is 2026-08-27: the
+      911 address points (NG_ADDRESSES), footprints, roads and PSAP areas
+    semantic_type: address_point_release
+    license: terms_unknown
+    license_note: The GeoLibrary item page reads "No License Provided, Request permission to use" (read 2026-11-15); permission is asked of the publisher before anything derived is published (E911-1)
+    format: zip
+    # published monthly, each copy stating its own cutoff: this copy is the
+    # evidence, named for its cutoff. a later download is a new entry, never
+    # an overwrite. it holds home addresses: it stays in .data, and only the
+    # points a method matches ever leave it
+    source:
+      type: manual
+      notes: >
+        Downloaded by hand from the Maine GeoLibrary item "Maine E911
+        Addresses, Roads, Structure, and PSAP FGDB" (E911Agol.gdb.zip,
+        212 MB) on 2026-11-14, and copied into .data unchanged under a name
+        that carries its information cutoff. Read through
+        seeds/crosswalks/addresses/maine_e911_fgdb.yml.
+      information_cutoff: "2026-08-27"
+    cache: {path: .data/e911_agol_20260827.gdb.zip, refresh_policy: manual}
+    provenance: {source: Maine Emergency Services Communication Bureau, through the Maine GeoLibrary, published_by: maine_escb}
+    quality:
+      known_issues:
+        - NG_ADDRESSES holds 798,422 points in EPSG:26919; the zip also holds NG_FOOTPRINTS (769,679), NG_PSAP (24) and NG_ROADS (155,677).
+        - The live FeatureServer counted 801,786 points on 2026-11-14, though both it and this file report an August 27 edit; they are not the same set, and only this file is read.
+        - The file's fields are the older E911 names (STREETNAME, SUFFIX), not the NENA names the service serves (ST_FULLNAME, ST_POSTTYP).
+        - PLACE_TYPE defaults to Residential and is set town by town, so a class is never evidence of a use; Government - Municipal holds town offices and salt sheds alike, and Abbot's clerk's address is Residential.
+        - The item page states the cutoff 2026-08-27 15:34:32; the file's own rows are not held to it.
+        - sha256 of the copy read on 2026-11-15 is ec15309586a0f43207631f947807fd67cd5025ab92f8ccfb21ab69ae01a7b692.

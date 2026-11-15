@@ -1,0 +1,63 @@
+# ============================================================================
+# seeds/crosswalks/clerks/maine_sos_clerk_info.yml
+# ============================================================================
+# how the Maine Secretary of State's list of municipal clerks and registrars
+# (the CSV offered on its Find a Municipal Clerk or Registrar page) is read:
+# its header, exactly and in order, and the position and name of each column
+# read. any other column is never read: the clerks' and registrars' names,
+# phones and faxes never enter a run (D-236). shared by every plot that reads
+# this list, every Maine locality's included, so no plot declares it; a run
+# passes it whole as `clerks_reading` through $crosswalks.maine_sos_clerk_info
+# (D-206), and freshness sees an edit.
+#
+# the file names five columns twice (Address Line 1, Address Line 2,
+# CityStateZip, Work Phone, Fax Number: the clerk's, then the registrar's),
+# so a column is found by its position and its name is checked there. a
+# header that moves or renames anything refuses the run.
+#
+# what each column means, read 2026-11-14 from the copy of that day (560
+# rows, UTF-8):
+#   street        a street address on every row that has one; never a post
+#                 office box in this copy. 7 rows are blank
+#   street_note   not an address: 11 rows hold a street continuation, a
+#                 village (Islesford, Northeast Harbor) or a building
+#                 (Revere Memorial Library). carried on the point as a note,
+#                 never matched
+#   geocode       the MEGIS GEOCODE our town file carries (all 540 found).
+#                 17 rows are blank, and three townships carry their serving
+#                 town's code (Louds Island Twp, Bristol's; Eagle Island Twp,
+#                 Deer Isle's; T17 R3, Van Buren's): a check and a serves-key,
+#                 never a placer (D-237)
+# ============================================================================
+
+from: "Maine Secretary of State, municipal clerks and registrars (CSV)"
+to: "rewildingCities: a municipality's clerk's office street address, ZIP and MEGIS code"
+
+source_scheme:
+  name: Find a Municipal Clerk or Registrar
+  provider: Maine Department of the Secretary of State
+  documentation: https://www.maine.gov/sos/elections-voting/find-a-municipal-clerk-or-registrar
+
+header:
+  - Municipality
+  - Clerk Name
+  - Address Line 1
+  - Address Line 2
+  - CityStateZip
+  - Work Phone
+  - Fax Number
+  - Registrar Name
+  - Address Line 1
+  - Address Line 2
+  - CityStateZip
+  - Work Phone
+  - Fax Number
+  - GeoCode
+
+# role: {position (from 0), name the header holds there}. only these are read
+columns:
+  municipality: {position: 0, name: Municipality}
+  street: {position: 2, name: Address Line 1}         # the clerk's; the registrar's is at 8, never read
+  street_note: {position: 3, name: Address Line 2}
+  city_state_zip: {position: 4, name: CityStateZip}   # "Abbot, ME  04406"
+  geocode: {position: 13, name: GeoCode}

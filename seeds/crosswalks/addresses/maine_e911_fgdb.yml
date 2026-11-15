@@ -1,0 +1,67 @@
+# ============================================================================
+# seeds/crosswalks/addresses/maine_e911_fgdb.yml
+# ============================================================================
+# how the Maine 911 address points are read from the GeoLibrary's file
+# geodatabase, Maine E911 Addresses, Roads, Structure, and PSAP FGDB
+# (E911Agol.gdb.zip): the layer, its CRS, and the fields read. any other
+# field is never read: MAO_NAME names a person, the municipal addressing
+# officer. shared by every plot that reads this file, every Maine locality's
+# included; a run passes it whole as `addresses_reading` through
+# $crosswalks.maine_e911_fgdb (D-206).
+#
+# read 2026-11-15 from the copy whose information cutoff is 2026-08-27:
+# NG_ADDRESSES holds 798,422 points in EPSG:26919. its fields are the older
+# E911 names (STREETNAME, SUFFIX), not the NENA names the live FeatureServer
+# serves (ST_FULLNAME, ST_POSTTYP): the file and the service are not one
+# schema, and only the file is read.
+#
+# what the fields mean, as far as the reads of 2026-11-14 and 15 show:
+#   site_uid     a NENA site id, urn:emergency:uid:gis:SSAP:<n>:ngesi.maine.gov,
+#                one per point; the placed office's feature id
+#   suffix       a short form (Rd, Ln), which Publication 28 maps to its
+#                primary name (D-238)
+#   place_type   the structure's use, as each town's addressing officer
+#                classed it; its default is Residential, so a class is never
+#                evidence of a use (Abbot's clerk's address is Residential)
+#   placement    how the point was placed (Structure - Rooftop, Parcel -
+#                Centroid, Property Access, ...): carried, never judged. the
+#                file holds blanks and one "Sturcture - Rooftop"
+#   unit, building, floor, room   a subaddress: a door inside the addressed
+#                structure (STE 104, LBBY). a candidate with none is the
+#                structure itself, which settles a tie inside one building
+# ============================================================================
+
+from: "Maine E911 Addresses, Roads, Structure, and PSAP FGDB (Maine GeoLibrary), layer NG_ADDRESSES"
+to: "rewildingCities: an address point's site id, house number, street parts, ZIP and use"
+
+source_scheme:
+  name: Maine E911 Addresses, Roads, Structure, and PSAP FGDB
+  provider: Maine Emergency Services Communication Bureau, through the Maine GeoLibrary
+  documentation: https://www.maine.gov/geolib/
+
+layer: NG_ADDRESSES
+crs: "EPSG:26919"
+# the class the file gives a municipal government's structure. used only to
+# settle a tie among points one address already named, and only when the
+# method's campus_ties choice says so; never to find an office (D-236)
+municipal_class: "Government - Municipal"
+
+# role: the layer's field name. only these are read
+columns:
+  site_uid: SITE_UID
+  number: ADDRESS_NUMBER
+  number_suffix: ADDNUMSUF
+  predir: PREDIR
+  street_name: STREETNAME
+  suffix: SUFFIX
+  postdir: POSTDIR
+  zip: ZIPCODE
+  town: TOWN
+  state: STATE
+  place_type: PLACE_TYPE
+  placement: PLACEMENT
+  landmark: LANDMARK
+  unit: UNIT
+  building: BUILDING
+  floor: FLOOR
+  room: ROOM
