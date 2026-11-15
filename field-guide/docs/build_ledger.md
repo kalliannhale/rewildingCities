@@ -1295,3 +1295,30 @@ Built since D-209: place.py reads a carrier apart (count first, its persons, its
 | --- | --- | --- |
 | **JOIN-1** | loam's join grammar matches key names, never issuers: every carrier's id_field is feature_id, so joinable() relates IMLS's and NCES's points, and a crosswalk between two issuers cannot be said. Places solved this with authority; carrier keys have none | session 7 |
 | **TRIBE-8** | count_located refuses Census tribal areas (TRIBE-7's rule, made because the library survey does not see reservation libraries). NCES sees the three schools and their edges reach 1575R, 2760R and 2850R, so public_schools_per_1000 has no tribal-area value yet. Revisit the refusal per layer, with D-171, D-173 and P-8 beside it | session 7 |
+
+## Sprint 06, session 8 (2026-11-14): boundary_vintage, health centers, tribal areas beside their notes
+
+| ID | Decided | Session |
+| --- | --- | --- |
+| **D-231** | A count says which boundaries it sits on in each row's boundary_vintage, the one vintage of the edges reaching that level. loam reads it for publishers whose rule says boundary_vintage (rewildingcities), so `time` says only when: FY 2024, SY 2024-25, or a snapshot's day. Closes SURVEY-1. Commit 14f3100 | session 8 |
+| **D-232** | Health centers from HRSA's Health Center Service Delivery and Look-Alike Sites, a daily snapshot declared by its day and sha256 (the copy of 2026-11-14), every row's record date held to the day; keyed BPHC Assigned Number; read through seeds/crosswalks/health_centers/hrsa_health_center_sites.yml. Rules: administrative sites (Form 5B: no clinical work), mobile units, sites with no point, withheld addresses, sites not open and sites in another state are listed. Kalli's choices: look-alikes counted, seasonal sites placed with seasonal as an adjective, every setting placed (A), who a site serves left to SERVES-1. Maine: 168 placed, 24 listed. Commit f6eecef | session 8 |
+| **D-233** | A Census tribal area is counted beside a note, never refused (Kalli): the step names tribal_note and every tribal row carries it as context_note. carrier_unseen_on_nations_land for libraries and health centers, carrier_seen_on_nations_land for schools, Kalli's DRAFT words in seeds/notes/notes.yml, on the nations' terms. loam refuses only the ACS on a tribal area (D-171) and judges each publisher on its own levels (LOAM-2). A tribal code and its persons are AIANNH plus component (R, T). A level no edge reaches takes its places' vintage. Closes TRIBE-8, LOAM-2 | session 8 |
+
+| ID | Opened | Defined |
+| --- | --- | --- |
+| **CARRY-1** | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes | session 8 |
+| **KIT-2** | A shared points kit (member and encoding, state field, key, placed or listed, an issuer per key) was weighed and deferred until after delivery; rewildr and pr_io already hold the contract part | session 8 |
+| **PLOT-2** | `city:` in preparations, manifests and sows' header ("City: Maine") should say plot: a schema key across the experiment and manifest schemas, every plot file and their readers. After delivery | session 8 |
+| **HRSA-1** | HRSA's metadata workbook is not read and the geocode's datum is unknown. HPSA, MUA/P, Health Sites and AHRF are catalogued in seeds/sources/hrsa.yml, unused; whether Health Sites sees the nations' clinics is unread | session 8 |
+| **TRIBE-9** | The Census names 0115T "Aroostook Band of Micmac Trust Land"; as far as known the nation now calls itself the Mi'kmaq Nation. Verify, and decide on the nations' terms how a Census name and a nation's own name are shown | session 8 |
+| **ACQ-7** | A url release declares its expected hash in source, and a fetch that does not match is refused. Receipts already hash every input (md5, full_file), so a change... The rest of the line was lost in a broken paste before it was committed; restate it from where it was defined | before session 8 |
+
+Closed in session 8: SURVEY-1 (D-231), TRIBE-8 and LOAM-2 (D-233).
+
+Lessons:
+
+- A rule written for one source travels to the next unless it names its reason without naming its source: count_located's tribal refusal said "reservation libraries" inside every carrier's count.
+- A column with two meanings hides behind a coincidence: `time` meant both when and which boundaries until a daily snapshot broke the match.
+- A snapshot with no release still states its own day; hold the copy to its own words.
+- Refusing a place hides it. A number with its note shows it in its context (Kalli).
+- A guard that refuses an empty level refuses exactly the unseen case; the empty level takes its places' own vintage, said aloud.
