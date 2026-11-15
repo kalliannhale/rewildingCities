@@ -1,0 +1,65 @@
+# ============================================================================
+# seeds/crosswalks/schools/nces_edge_geocode.yml
+# ============================================================================
+# how NCES EDGE's public school geocode text table is read: its columns, in
+# order, since the file has no header row, and NCES's markers and codes. the
+# same in every state, so no plot declares it; a run passes it whole as
+# `reading` through $crosswalks.nces_edge_geocode (D-206), and freshness
+# sees an edit.
+#
+# what is placed, and why, is not here: that is the school_carriers
+# method's (D-212).
+#
+# source: Geverdt, D. and Maselli, A. (2024). EDGE Public School and Local
+# Education Agency Geocodes Technical Documentation, NCES: 5.1 Record Layout,
+# 5.4 OPSTFIPS, 6.1 Missing and Not Applicable Values. read 2026-11-14 from
+# a mirror (git.lsit.ucsb.edu); the publisher's copy is
+# https://nces.ed.gov/programs/edge/docs/EDGE_GEOCODE_PUBLIC_TECHDOC.pdf.
+# the 2024-25 table's 23 fields match this layout in count and order, and
+# the REST service's field list for the same release names them in the same
+# order.
+# ============================================================================
+
+from: "NCES EDGE Public School Geocode File, text table (EDGE_GEOCODE_PUBLICSCH_YYYY.TXT)"
+to: "rewildingCities: named columns; NCES markers read as absent; operating codes with meaning"
+
+source_scheme:
+  name: EDGE Public School Geocode File
+  provider: National Center for Education Statistics, EDGE program
+  documentation: EDGE Public School and LEA Geocodes Technical Documentation (2024), 5.1, 5.4, 6.1
+
+columns:
+  - NCESSCH      # school identification number, 12: state FIPS, LEA code, school code
+  - LEAID        # school district identification number, 7
+  - NAME         # name of institution
+  - OPSTFIPS     # FIPS code of the state responsible for administering the school
+  - STREET       # reported location street address
+  - CITY         # reported location city
+  - STATE        # reported location state
+  - ZIP          # reported location ZIP code
+  - STFIP        # FIPS code of the state where the point stands, from its LAT and LON
+  - CNTY         # county FIPS, from LAT and LON
+  - NMCNTY       # county name
+  - LOCALE       # NCES locale code
+  - LAT          # latitude, six decimals
+  - LON          # longitude, six decimals
+  - CBSA         # core based statistical area
+  - NMCBSA       # its name
+  - CBSATYPE     # 1 metropolitan, 2 micropolitan, 0 outside a CBSA
+  - CSA          # combined statistical area
+  - NMCSA        # its name
+  - CD           # congressional district, state FIPS prefixed
+  - SLDL         # state legislative district, lower
+  - SLDU         # state legislative district, upper
+  - SCHOOLYEAR   # the academic year, e.g. 2024-2025
+
+separator: "|"
+quote: '"'      # a field holding the separator is quoted
+missing: "M"         # an expected response that is missing (6.1)
+not_applicable: "N"  # a character field that does not apply (6.1); numeric is -2
+
+operating_codes:
+  # OPSTFIPS values that are not a state (5.4). any other code is a state's
+  # FIPS, read as "another state" when it is not the run's own
+  "59": {meaning: operated by the Bureau of Indian Education}
+  "63": {meaning: operated by the Department of Defense Education Activity}

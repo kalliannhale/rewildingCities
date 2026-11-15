@@ -89,6 +89,16 @@ types:
       (D-219).
     resolution_tier: public   # IMLS public-use files, as library_survey_release
 
+  public_school:
+    category: vector
+    format: geojson
+    description: >
+      One placed public school as a point, from an NCES EDGE public school
+      geocode release, keyed by NCESSCH. Which schools are placed, and why,
+      is the school_carriers method's to say (D-212). Each carrier kind is
+      its own type (D-218); private schools would be another.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
   relational_hub:
     category: vector
     format: geojson
@@ -208,4 +218,15 @@ types:
       and one for outlets (central libraries, branches, bookmobiles, with
       coordinates). Read only by declared member and encoding.
     resolution_tier: public   # public-use files, no license required
+
+  school_geocode_release:
+    category: tabular
+    format: zip
+    description: >
+      An NCES EDGE public school geocode release as published: a zip holding
+      one table four ways (shapefile, Excel, a headerless pipe-separated text
+      table, SAS), one row per CCD public school with NCESSCH, reported
+      address, operating state and coordinates. Read only by declared member
+      and encoding.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
 

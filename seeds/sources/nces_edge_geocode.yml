@@ -1,0 +1,70 @@
+# ============================================================================
+# seeds/sources/nces_edge_geocode.yml
+# ============================================================================
+# A national source catalogue (D-226), reference only, like imls_pls: no
+# code reads this folder. It says what NCES EDGE's public school geocodes
+# are and where each part of reading them lives. It restates nothing that
+# has another home:
+#
+#   how the text table is read           seeds/crosswalks/schools/nces_edge_geocode.yml
+#   what is placed, and why              garden/methods/information/school_carriers.yml
+#   what a placed school counts toward   seeds/indicators/schools.yml
+#   a release's member and encoding      its plot's manifest, source.geocode_*
+#
+# Every fact below was read from a release, its REST service or its
+# documentation on 2026-11-14; what has not been read says so.
+# ============================================================================
+
+id: nces_edge_geocode
+name: NCES EDGE Public School Locations (geocodes)
+published_by: National Center for Education Statistics
+national: true
+
+releases:
+  note: >
+    One release per school year, a zip holding the same table four ways: a
+    nested shapefile zip, Excel, a pipe-separated text table with no header
+    row, and SAS. A plot declares the release it reads as a manifest dataset
+    of type school_geocode_release, with its url, the text table's member and
+    its encoding; the year belongs to the release.
+  read:
+    "2024-25":
+      url: https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip
+      members: [Shapefile_SCH.zip, EDGE_GEOCODE_PUBLICSCH_2425.xlsx, EDGE_GEOCODE_PUBLICSCH_2425.TXT, EDGE_GEOCODE_PUBLICSCH_2425.sas7bdat]
+      sha256: 9dc51ecd5cdf6e38bdb679f7ac95e2bf73ee3fb48718b8612cf830800cffb288
+      documentation: EDGE Public School and LEA Geocodes Technical Documentation (Geverdt and Maselli, 2024)
+      declared_in: plots/maine/manifest.yml (edge_publicsch_2425)
+
+identifiers:
+  school: >
+    NCESSCH, twelve digits: the state FIPS, a five-digit LEA code, a
+    five-digit school code; unique on the file. No state school ID is
+    carried; the documentation says the shared NCES ID joins the geocodes to
+    the CCD directory files.
+
+method:
+  location: >
+    Points are geocoded from the physical address reported in the CCD
+    directory files, and may be repositioned by manual review, including
+    satellite imagery, so a point's reverse geocode may not match its
+    address. No field says which points were placed by hand.
+  associations: >
+    County, CBSA, congressional and state legislative districts, and STFIP
+    are assigned from the point with Census TIGER boundaries in NAD83, whose
+    vintage is the starting year of the academic year.
+
+measured:
+  maine_2024_25: >
+    The text table holds 102,178 rows, 23 fields each when read with its
+    quotes (three names hold a quoted pipe, none in Maine), all SCHOOLYEAR
+    2024-2025, valid UTF-8 with no byte-order mark. 598 rows have STATE ME
+    and 595 OPSTFIPS 23; the three others are Indian Township School,
+    Sipayik Elementary School and Indian Island School, OPSTFIPS 59.
+    Rows by STFIP 23 not yet counted.
+
+cautions:
+  - Public schools only. Private schools are a separate EDGE file on the Private School Survey's own schedule.
+  - No status, type or grade span is carried; those are CCD directory fields, not yet read.
+  - OPSTFIPS is who administers a school, not where it stands (D-230).
+  - SCHOOLYEAR reads 2024-2025. Loam's final-year rule would read 2025, while NCES's geography is 2024's, so a count's time is written to name 2024 (SURVEY-1).
+  - A school's location is not whom it serves (SERVES-1's cousin).

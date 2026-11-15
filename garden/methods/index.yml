@@ -41,6 +41,8 @@ methods:
       path: information/outlet_reconciliation.yml
     - id: ownership_concentration_analysis
       path: information/ownership_concentration_analysis.yml
+    - id: school_carriers
+      path: information/school_carriers.yml
 
   perception:
     - id: inverse_perspective_composition

@@ -1228,6 +1228,38 @@ primitives:
         member: source.outlet_member
         encoding: source.outlet_encoding
 
+  prepare_school_points:
+    path: transform/prepare_school_points.py
+    version: 1.0.0
+    description: >
+      One state's NCES EDGE public schools as points, each named by NCESSCH;
+      what is placed and why is the school_carriers method's (D-212). A
+      school is in the state where NCES's point stands (STFIP), never where
+      its operator sits: a school operated from elsewhere is placed and
+      flagged with its operator (D-230). A school reported in the state but
+      located in another, or without coordinates, is listed and never
+      placed. The headerless table's columns, NCES's M and N markers and its
+      operating codes are one crosswalk, nces_edge_geocode, passed whole as
+      reading. Read with a quote-aware reader; a row with another field
+      count, a blank NCESSCH and a feature id used twice are refused. The
+      encoding is the release's declared fact, never sniffed.
+    inputs:
+      - {name: release, semantic_types: [school_geocode_release], required: true}
+    outputs: {semantic_type: public_school, data_category: vector}
+    params:
+      member: {type: string, required: true}
+      encoding: {type: string, required: true}
+      state: {type: string, required: true}
+      state_fips: {type: string, required: true}
+      reading: {type: object, required: true}
+    # the two params a run writes that its release already declares. a run
+    # may write them, and the orchestrator refuses one that disagrees (D-192)
+    source_facts:
+      input: release
+      params:
+        member: source.geocode_member
+        encoding: source.geocode_encoding
+
   count_located:
     path: transform/count_located.py
     version: 1.0.0

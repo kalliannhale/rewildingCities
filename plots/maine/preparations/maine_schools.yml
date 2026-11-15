@@ -1,0 +1,94 @@
+# ============================================================================
+# plots/maine/preparations/maine_schools.yml
+# ============================================================================
+# a preparation (D-98): Maine's public schools as carriers (Sprint 06, step
+# 3, the second carrier). what is placed and why: the school_carriers method
+# (D-212).
+#   the EDGE geocode table -> schools as points; elsewhere and unplaced listed
+#   the points             -> located_in edges
+#   the edges              -> public schools per 1,000 people, every place
+# the spine, places and divisions are read through loam ($loam., LOAM-1), so
+# they are judged fresh before any step runs (D-166).
+# how NCES's table is read (its columns, markers and operating codes) is
+# national, so it is a crosswalk every plot shares, seeds/crosswalks/
+# schools/nces_edge_geocode.yml, never written here (D-226).
+# the table's member and encoding are the release's own facts, declared with
+# edge_publicsch_2425 in the manifest (source.geocode_member,
+# source.geocode_encoding); the orchestrator refuses a copy that disagrees
+# (D-192).
+# no located_in block check: the release carries no Census block.
+# ============================================================================
+
+id: maine_schools
+name: "Maine's public schools, placed"
+kind: preparation
+description: >
+  Places every public school NCES locates in Maine in each area it falls in,
+  and lists the schools reported in Maine but located elsewhere or without
+  coordinates.
+
+method:
+  ref: $methods/information/school_carriers
+
+city: maine
+manifest: ../manifest.yml
+
+choices: {}
+parameters: {}
+
+steps:
+  - id: schools_points
+    primitive: soil/prepare_school_points
+    inputs:
+      release: $manifest.edge_publicsch_2425
+    outputs:
+      points: public_school
+    params:
+      member: EDGE_GEOCODE_PUBLICSCH_2425.TXT
+      encoding: utf-8
+      state: ME
+      state_fips: "23"
+      reading: $crosswalks.nces_edge_geocode
+
+  - id: schools_located_in
+    primitive: soil/build_located_in
+    inputs:
+      points: $steps.schools_points.points
+      faces: $manifest.faces_2024_me
+      spine: $loam.block_spine
+      places: $loam.places
+      divisions: $loam.block_division_assignment
+    outputs:
+      edges: located_in_edges
+    params:
+      # the edges' label: whose points and which release. the indicator
+      # counts public_school, the points' type; the orchestrator checks the
+      # two agree before the run (D-224)
+      layer: nces_edge_2425_public_schools
+      id_field: feature_id
+      state_fips: "23"
+      vintages:
+        state: "2024"
+        county: "2024"
+        town: "2024"
+        sldl: "2024"
+        sldu: "2024"
+        aiannh: "2020"
+        division: "MEGIS METWP24P"
+
+  - id: schools_counts
+    primitive: soil/count_located
+    inputs:
+      edges: $steps.schools_located_in.edges
+      spine: $loam.block_spine
+      places: $loam.places
+    outputs:
+      values: indicator_values
+    params:
+      indicator: $indicators.public_schools_per_1000
+      levels: [state, county, cousub, sldl, sldu]
+      # loam's only boundary rule is the last four-digit year in `time`.
+      # NCES writes 2024-2025, which would read as 2025, while its geography
+      # and our places are 2024's; SY 2024-25 reads as 2024 (SURVEY-1)
+      time: SY 2024-25
+      published_by: rewildingcities

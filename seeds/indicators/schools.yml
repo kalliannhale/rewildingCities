@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/indicators/schools.yml
+# School carrier indicators: counts of a point layer's located_in edges per
+# place, over the place's own people (D-209). Their own file, one family per
+# file (INDFILE-1, D-227).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+indicators:
+
+  public_schools_per_1000:
+    name: Public schools per 1,000 people
+    defined_by: rewildingcities
+    measures: public_schools
+    role: carrier
+    rests_on: {add: [P1_001N], counts: persons}
+    unit: per_1000_persons
+    derivation:
+      kind: located_count
+      counts: public_school
+      denominator: persons
+      scale: 1000
+    direction: higher_is_better
+    aggregation: none
+    uncertainty: none
+    source:
+      provider: rewildingcities
+    rationale: >
+      Counts the public school buildings placed in a place: which schools
+      are placed, and why, is the school_carriers method's to say (D-212).
+      It names the type it counts, public_school; whose points and which
+      release are the preparation's to say (D-224). A school standing in a
+      place is not whom it serves: SAUs and districts serve towns. The
+      denominator is the place's 2020 persons (P.L. 94-171 P1), the vintage
+      of the edges. A small place's rate is unstable, so the count and the
+      persons always travel with the rate. Unlike the library survey, NCES
+      sees schools on Wabanaki land, so a Census tribal area's count is not
+      unseen; count_located does not yet count at that level (TRIBE-8).
+      Aggregation none: a rate never moves along an edge (D-179).

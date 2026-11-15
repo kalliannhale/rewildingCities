@@ -1,0 +1,111 @@
+# ============================================================================
+# seeds/sources/maine_doe_schools.yml
+# ============================================================================
+# A state source catalogue (D-226), reference only, like imls_pls: no code
+# reads this folder. It says what the Maine DOE's Schools & SAU Data is and
+# what its exports hold, so a team working in Maine can judge it without
+# repeating the reading.
+#
+# Nothing reads DOE data. Schools are placed from NCES EDGE instead
+# (seeds/sources/nces_edge_geocode.yml): no DOE export carries an ID or a
+# school's coordinates. DOE's name lists may serve later as a check against
+# NCES's points, never as a second set of points (LIB-2's shape).
+#
+# Every fact below was read from the dashboard, its metadata tab or the
+# exports themselves on 2026-11-14; what has not been read says so.
+# ============================================================================
+
+id: maine_doe_schools
+name: Maine DOE Data Warehouse, Schools & SAU Data
+published_by: Maine Department of Education
+national: false
+
+entry_points:
+  page: https://www.maine.gov/doe/data-warehouse/reporting/schools
+  dashboard: >
+    https://p20w.slds.maine.gov/SchoolsandSAUs, an AWS QuickSight dashboard
+    on the P20W+ SLDS, linked from the page. It renders in a browser and
+    fetches empty from a script. Tabs: by location, SAUs/Orgs by type,
+    schools by type, grade ranges, metadata. School years 2021-22 to 2025-26.
+
+kind:
+  export: >
+    There is no versioned release. Each CSV is an export of one dashboard
+    visual at one moment, and the dashboard can change underneath it, so a
+    fresh export is a new source, never a reproduction. Our copy is the
+    evidence: a plot declares each export it reads as a manifest dataset
+    with its export time and its hash. The number in an export's file name
+    is its export time in milliseconds since 1970, UTC.
+  read:
+    "2026-11-14": >
+      13 exports, made 06:46 to 06:48 UTC, held in plots/maine/.data
+      (ignored). Not yet manifest datasets.
+
+metadata_tab:
+  - Public use.
+  - A state school ID exists. ID 2117 is excluded; no reason is given.
+  - Opened, closed, renamed and repurposed are inferred from a change in name or ID between years, not reported.
+  - Non-Maine schools are excluded.
+  - Tables named LEA, SCHOOL, October enrollment, SPED and CEDS Organizations.
+  - Nothing says where coordinates come from.
+
+identifiers:
+  school: >
+    No export carries the state school ID the metadata names. A school row
+    is named by its name and school year only, and a name is not a key.
+  sau: >
+    No export carries an SAU ID. An SAU row is named by its name and school
+    year only.
+
+exports:
+  note: >
+    Four shapes. file(1) reports each as CSV text; encoding not otherwise
+    checked. Row counts exclude the header. Which school year each location
+    export holds is not recorded in the file, and was not noted at export.
+  school_locations:
+    files: 5
+    columns: [k12school_latitude, k12school_longitude, Count]
+    rows: 707 to 745 per file
+    grain: >
+      One row per coordinate, with the number of schools drawn there. No
+      ID and no name, so a row joins to no school.
+  sau_locations:
+    files: 5
+    columns: [lea_latitude, lea_longitude, Count]
+    rows: 294 to 315 per file
+    grain: One row per coordinate, with the number of SAUs drawn there. No ID and no name.
+  schools_by_type:
+    files: 1
+    columns: [rptg_school_type, k12school_leaorganizationname, k12school_nameofinstitution, School Year, Organization Count, Student Count]
+    rows: 3720
+    grain: >
+      One row per school name, SAU and school year, all years in one file.
+      Types seen in the rows read: Charter. The full list of types and
+      years is not yet tallied.
+  schools_by_grade_range:
+    files: 1
+    columns: [School Year, School Type, School Name, Lowest Grade, Highest Grade]
+    rows: 3720
+    grain: >
+      One row per school name and school year. Grades are blank in the rows
+      read; how many are blank is not yet tallied. Types seen: Public.
+  saus_by_type:
+    files: 1
+    columns: [lea_leatypedescription, lea_leaorganizationname, School Year, Organization Count, Student Count]
+    rows: 1943
+    grain: >
+      One row per SAU name and school year. Student Count is blank in the
+      Alternative Organizational Structure rows read.
+
+measured:
+  maine: >
+    Line counts only. No school or SAU has been counted, typed or placed
+    from these exports.
+
+cautions:
+  - School status is inferred from changes between years, never reported, so a closure read from it is the dashboard's inference, not the state's record.
+  - Points stand outside Maine despite the exclusion, e.g. 3 schools at 42.201722, -71.051231 and 2 at 42.890704, -73.222113 in one school_locations export.
+  - Many entities share one coordinate (44 SAUs at 44.307455, -69.782807 in one sau_locations export). With no stated coordinate origin, a shared point may be an office, a default or a geocode.
+  - A school year is written 2025-26. Loam's final-year rule takes the last four-digit run, so it reads 2025-26 as 2025, the start, while it reads an ACS 2019-2023 as 2023, the end (SURVEY-1).
+  - Whether the Maine Indian Education schools appear is not yet checked; unseen is never zero (TRIBE-7's cousin).
+  - A school's location is not whom it serves; SAUs serve towns (SERVES-1's cousin).

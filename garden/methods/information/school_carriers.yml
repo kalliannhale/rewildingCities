@@ -1,0 +1,64 @@
+# ============================================================================
+# garden/methods/information/school_carriers.yml
+# ============================================================================
+# a preparation method (D-98): public schools as carriers, placed in every
+# area they fall in (Sprint 06, step 3). this file is the one home for what
+# is placed and why (D-212); the primitive, the run and the indicator point
+# here rather than restate it. ~
+# ============================================================================
+
+id: school_carriers
+domain: information
+kind: preparation
+name: "Public Schools, Placed"
+answers_question_types: [schools, carriers, located_in, preparation]
+
+description: >
+  Reads one state's public schools from NCES EDGE's geocode release and
+  places each one in its state, county, town, House and Senate districts,
+  Census tribal area and civil division through located_in edges: towns from
+  the 2024 face a point falls in, districts from that face's 2020 block
+  (D-207).
+
+  A school is in the state where NCES's point stands (STFIP), never where its
+  operator sits (OPSTFIPS): a rule, since the other way is simply wrong
+  (D-230). The Bureau of Indian Education operates Maine's three Wabanaki
+  community schools, Indian Township School, Sipayik Elementary School and
+  Indian Island School; an operator filter would erase them, and unseen is
+  never zero (TRIBE-7). A school operated from outside the state is placed,
+  flagged with its operator, and placed in every area it falls in, a Census
+  tribal area included; counting at that level waits on TRIBE-8.
+
+  A school reported in the state whose point NCES assigns to another state is
+  listed, never placed. A school with no coordinates is listed. NCES's M and
+  N markers are never read as values.
+
+  The release carries no status, type or grade span, so every school on the
+  file is placed: a closure, a school type or a grade band cannot be judged
+  from it, and nothing is guessed.
+
+requires_data:
+  - {name: release, type: tabular, semantic_types: [school_geocode_release], critical: true, as_acquired: true,
+     role: "The EDGE public school geocode table, with NCESSCH, coordinates and operating state.",
+     uncertainty_without: "No school can be placed."}
+  - {name: faces, type: vector, semantic_types: [census_faces], critical: true, as_acquired: true,
+     role: "The 2024 faces, to place each point in its town and block.",
+     uncertainty_without: "No point can be placed."}
+
+choices: {}
+
+requires_primitives:
+  - soil/prepare_school_points
+  - soil/build_located_in
+
+produces:
+  - semantic_type: located_in_edges
+    data_category: tabular
+    description: Each placed public school to every place it falls in.
+
+interpretation: >
+  A located_in edge says a school building stands in a place, never that the
+  place is served by it or only by it. Maine's SAUs serve towns, and a town
+  with no school may send its students elsewhere by contract or tuition
+  (SERVES-1). NCES places a school from its reported address, and some points
+  by hand review; a point is NCES's estimate of the building.

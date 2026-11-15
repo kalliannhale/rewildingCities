@@ -793,3 +793,32 @@ datasets:
         - Each Maine bookmobile carries its home library's coordinates (SERVES-1).
         - Visits are reported for the library system, never the outlet.
         - The README does not say which vintage CENBLOCK's blocks are; the located_in block check shows it.
+
+  edge_publicsch_2425:
+    available: true
+    description: >
+      NCES EDGE Public School Locations, 2024-25: one row per CCD public
+      school with NCESSCH, reported address, operating state and
+      coordinates, as a nested shapefile zip, Excel, a headerless
+      pipe-separated text table and SAS
+    semantic_type: school_geocode_release
+    license: us_government_work
+    license_note: public domain, as the release and its documentation state (NCES EDGE)
+    format: zip
+    # the text table's member and encoding are the release's own facts: a
+    # run may write them, and is held to these (D-192, D-226)
+    source:
+      type: url
+      url: "https://nces.ed.gov/programs/edge/data/EDGE_GEOCODE_PUBLICSCH_2425.zip"
+      geocode_member: EDGE_GEOCODE_PUBLICSCH_2425.TXT
+      geocode_encoding: utf-8
+    cache: {path: .data/EDGE_GEOCODE_PUBLICSCH_2425.zip, refresh_policy: manual}
+    provenance: {source: National Center for Education Statistics, EDGE Public School Locations 2024-25, published_by: nces}
+    quality:
+      known_issues:
+        - The text table has no header row; its columns are declared in seeds/crosswalks/schools/nces_edge_geocode.yml.
+        - Three names hold a quoted pipe (Indiana, Washington); a quote-aware reader keeps each whole.
+        - OPSTFIPS is the administering state; Maine's three Wabanaki community schools carry 59, the Bureau of Indian Education.
+        - No status, type or grade span; those are CCD directory fields.
+        - SCHOOLYEAR reads 2024-2025, while NCES's geography is 2024's (SURVEY-1).
+        - sha256 of the zip read on 2026-11-14 is 9dc51ecd5cdf6e38bdb679f7ac95e2bf73ee3fb48718b8612cf830800cffb288.
