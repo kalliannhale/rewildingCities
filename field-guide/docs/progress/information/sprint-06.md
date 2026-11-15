@@ -157,6 +157,32 @@ STAND-1 (new), CHAIN-1 (34 records in libraries_counts_values), TIERREAD-1, QUAD
 - Read origin before pushing, and commit through guarded blocks only: `git add .` put one commit's file under another commit's message.
 - One experiment per question: a receipt that borrows a bigger question says something its numbers do not.
 
+## Session 7: schools as the second carrier
+
+Written in session 9 from the build ledger: session 7's own entry never landed in this file.
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| 1bd4dfa | Kalli's: sows shares one run path with experiment.py, and init validates plot names (cli-sows-parity, fast-forwarded onto main) |
+| 754d2f7 | schools from NCES EDGE 2024-25: 598 Maine public schools placed where each stands (STFIP), operator flagged; the three Wabanaki community schools placed and counted once in every drawer (D-230) |
+
+### Found
+
+- Maine DOE's 13 dashboard exports carry no school ID, and its location exports no names: a dashboard export is not a release, and only our copy is evidence.
+- EDGE's text table holds 102,178 rows, 23 fields each when read with its quotes, valid UTF-8; all 598 Maine rows stand in Maine by STFIP.
+- loam's join grammar matches key names, never issuers, so every carrier's feature_id looks joinable to every other (JOIN-1).
+
+### Carried forward
+
+JOIN-1, TRIBE-8 (closed in session 8 by D-233), and state.md's open items.
+
+### Lessons
+
+- A name is never a key.
+- Three state fields can mean three things: where an address says, where the point stands, and who operates the school.
+
 ## Session 8: boundary_vintage, health centers, tribal areas beside their notes
 
 ### Built
@@ -184,29 +210,31 @@ CARRY-1 (blocks the map), the tiers, the Contract 4 questions, and every item in
 - A column with two meanings hides behind a coincidence until a third source breaks it.
 - Refusing a place hides it; a number with its note shows it in context.
 
-## Session 8: boundary_vintage, health centers, tribal areas beside their notes
+
+## Session 9: GEO-1, clerks' offices placed through Maine's 911 points
 
 ### Built
 
 | Commit | What |
 | --- | --- |
-| 14f3100 | boundary_vintage on every count row, from its edges; loam reads it for our counts, so `time` says only when (D-231, SURVEY-1 closed); libraries and schools rerun |
-| f6eecef | health centers from HRSA's 2026-11-14 copy: 168 Maine sites placed, 24 listed with reasons; seasonal and look-alike as adjectives; seeds/sources/hrsa.yml (D-232) |
-| the D-233 commit | tribal areas counted beside a note on every row; loam refuses only the ACS there and judges each publisher on its own levels; all three carriers rerun (TRIBE-8, LOAM-2 closed) |
+| 8c6c645 | clerks' offices as carriers: the Secretary of State's clerk list matched exactly to Maine's 911 address points through USPS Publication 28; 390 offices for 458 of 560 rows; ties settled by the building rule and Kalli's campus choice (D-234 to D-239) |
+| adfb469 | the session 9 ledger: D-234 to D-239; E911-1, GEO-2, GEO-3, GEO-4, ARC-1, TRIBE-10 opened |
 
 ### Found
 
-- No Wabanaki nation's clinic appears in HRSA's file, by name or by town; the PLS sees no reservation library; NCES sees the three BIE schools, each now counted on its reservation.
-- HRSA's 10 administrative Maine sites carry setting Unknown or All Other Clinic Types; Form 5B asks no setting of an administrative site.
-- The 5 Maine rows with site state XX are service sites with no address or point, not withheld shelters.
-- loam's carriers view drops every point property but id and name (CARRY-1).
+- The 911 file's classes cannot list town offices: its default is Residential, and of the 352 exact matches only 152 are Government - Municipal (44 Residential, 21 fire stations, 16 police).
+- Most ties are campuses, a town office and a fire station under one civic address, tens of metres apart; 66 ties became 20 under the building rule and the campus choice.
+- Penobscot Nation's and Pleasant Point's offices are placed on their reservations; Indian Township is missed by Road against St, so 1575R reads zero until a reviewed match (GEO-4).
+- The 74 misses read so far are spelling on our side (suites, highway names, a detached number letter, streets with no suffix) more than a case for a second geocoder (GEO-2).
+- The GeoLibrary file and the live 911 service are not one dataset: different counts, different field names.
 
 ### Carried forward
 
-CARRY-1 (blocks the map), the tiers, the Contract 4 questions, and every item in state.md's open items, now sorted for delivery.
+GEO-4 (before publishing), E911-1, TRIBE-10, GEO-2, GEO-3, ARC-1, and state.md's open items.
 
 ### Lessons
 
-- A rule written for one source travels unless it names its reason without its source.
-- A column with two meanings hides behind a coincidence until a third source breaks it.
-- Refusing a place hides it; a number with its note shows it in context.
+- A default value is a silent classifier: a class is never evidence of a use.
+- Match by address, never by class.
+- A read that cannot come back positive proves nothing.
+- A long paste can lose its middle or land twice: read its line count before trusting it.

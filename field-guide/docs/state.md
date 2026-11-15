@@ -5,17 +5,18 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-15, at the hand-off closing Sprint 06's eighth build session.
+**Updated:** 2026-11-15, at the hand-off closing Sprint 06's ninth build session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 8's commits: 14f3100 (boundary_vintage, D-231), f6eecef (health centers, D-232), the tribal-count commit (D-233), the session 8 ledger commit, and this hand-off.
-- Tests: `python -m pytest -q -rs | tail -3`. 957 passed, no skips, at the D-233 commit (new in session 8: tests/test_health_center_points.py, 23; tests/test_health_center_preparation.py, 8; tests/test_tribal_counts.py, 3; new cases in test_count_located, test_loam_values and test_place_carrier). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 9's commits: 8c6c645 (clerks' offices, D-234 to D-239), adfb469 (the session 9 ledger, amended once to remove a doubled paste), and this hand-off. Session 8's hand-off commit 177a7e6 was pushed with them.
+- Tests: `python -m pytest -q -rs | tail -3`. 1003 passed, no skips, at 8c6c645 (new in session 9: tests/test_clerk_office_points.py, 30; tests/test_clerk_office_preparation.py, 9; the rest from existing walks over new files). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-234. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-240. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
+- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Both are terms_unknown: nothing derived is published until E911-1 and the list's terms are read. The 911 file holds home addresses; it never leaves .data.
 
 ## Sprint 06 ~ the place profile and the standard
 
@@ -23,14 +24,14 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239, below.
 
 **Order of work, and where each step stands:**
 
 ```
  1  P-9: read the outlet files                done      answered
  2  located_in edges + end checks             done      D-207
- 3  carriers, counted per 1,000               3 of 5    libraries, schools, health centers done
+ 3  carriers, counted per 1,000               4 of 5    libraries, schools, health centers, clerks' offices
       libraries (IMLS PLS FY 2024)            done      D-208 to D-212: placed, counted, closures declared
       first, by Kalli's order (session 2):
         SCHEMA-2: the method schema           done      D-213 to D-217
@@ -41,8 +42,9 @@ is fixed.
       the year rule SURVEY-1 hid              done      D-231: boundary_vintage
       health centers (HRSA, 2026-11-14 copy)  done      D-232: 168 placed, 24 listed
       tribal areas counted beside a note      done      D-233; TRIBE-8, LOAM-2 closed
-      town offices                            blocked   no point source (see Traps); needs a geocoder
-      outlets                                 not yet   waits on WHERE-1 and a geocoder
+      clerks' offices (GEO-1)                 done      D-234 to D-239: 390 offices, 458 of 560 rows;
+                                                        GEO-4 (reviewed matches) before publishing
+      outlets                                 not yet   waits on WHERE-1; the matcher exists (D-238)
  4  derive_margins (D-198)                    not yet
  5  language: ACS, safe harbor, section 203   not yet
  6  literacy: PIAAC county estimates (P-7)    not yet
@@ -59,6 +61,8 @@ is fixed.
 
 **Health centers, done (session 8).** Placed from HRSA's Health Center Service Delivery and Look-Alike Sites, the copy downloaded 2026-11-14 (D-232): a daily snapshot with no release, so the copy is the evidence, declared by its day and sha256, and every row's Data Warehouse Record Create Date is held to the day. Read through seeds/crosswalks/health_centers/hrsa_health_center_sites.yml (header names, codes; an undeclared code refuses). Maine: 192 rows, 168 placed (32 seasonal, 8 look-alikes, every setting), 24 listed (10 administrative, 9 mobile vans, 5 with no point). Maine counts 168, 0.123 per 1,000. No Wabanaki nation's clinic appears; HRSA's program does not see them.
 
+**Clerks' offices, done (session 9).** Town offices became the municipal clerk's office (D-236): where a person registers, asks for a record and puts a question to the town. The list is the Secretary of State's clerk CSV (560 rows, MEGIS GeoCode, five column names twice, read by position; names and phones never read). Each street address is matched exactly to Maine's 911 address points (the GeoLibrary FGDB, NG_ADDRESSES, 798,422 points, EPSG:26919) on house number, street and ZIP, the street spelled through USPS Publication 28 on both sides (D-234, D-235, D-238). One point per distinct office, named by the 911 point's SITE_UID; the rows naming it ride on it as the municipalities it answers for (D-237). Ties: one building settles on its bare point (a rule); a campus settles on its one Government - Municipal point when campus_ties says municipal_class, Kalli's choice (D-239). Maine: 390 offices for 458 rows (352 exact, 6 building_point, 32 municipal_class, spreads 0 to 117.6 m); listed 74 no_match, 20 tie, 7 no_street_address, 1 number_not_read. Penobscot Nation's office stands in 2760R and Pleasant Point's in 2850R; Indian Township is no_match (its row says 8 Kennebasis Road, the 911 file 8 Kennebasis St), so 1575R's zero is our miss until GEO-4. The note is carrier_seen_on_nations_land (TRIBE-10). pyproj 3.8.0 does not report its operation for 26919 to 4326; the receipt says so.
+
 **Tribal areas, counted beside a note (session 8, D-233).** All three carriers count the 8 Census tribal areas, each row carrying context_note: carrier_unseen_on_nations_land (libraries, health centers: all zeros) or carrier_seen_on_nations_land (schools: Indian Township, Pleasant Point and Penobscot each count 1). The notes' words are Kalli's DRAFT in seeds/notes/notes.yml, waiting on the nations' terms (P-8). Four trust lands hold 4 to 202 persons, so their rates are unstable; the count and persons travel with each rate.
 
 **The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 has changed three rows' status):
@@ -71,7 +75,7 @@ is fixed.
 | Lacking cultural cues | languages spoken against languages carriers publish in | ACS and our own observation of outlets | town | needs our observation (OBS-1): no listing carries language |
 | Behind a paywall | share of local outlets free to read | our own observation (OBS-1), P-3 | town | needs our observation: no listing carries paywall status |
 | Outdated | outlet publishing frequency; observed last post | Cision, the ecosystem file, Easton (frequency); Cision's Still Operates? (last post) | town | acquirable from the stack |
-| Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA (done); town offices, outlets | every level | libraries, schools, health centers counted (D-209, D-230, D-232), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
+| Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA, the Secretary of State's clerk list through Maine's 911 points (done); outlets | every level | libraries, schools, health centers, clerks' offices counted (D-209, D-230, D-232, D-239), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
 | Not from a trusted source | relational hubs, aggregate-only | consent-governed | as consented | needs_consent (Sprint 16) |
 
 **Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-7 (PIAAC 2023?), P-8 (section 203 on Wabanaki places; on the nations' terms). P-9 is closed.
@@ -149,6 +153,17 @@ is fixed.
 | D-232 | Health centers from HRSA's sites file, a daily snapshot declared by day and sha256, rows held to the day; keyed BPHC Assigned Number. Rules: administrative sites, mobile units, sites with no point, withheld addresses, sites not open or elsewhere are listed. Look-alikes, seasonal sites (as an adjective) and every setting are placed (Kalli's choices); who a site serves stays SERVES-1's |
 | D-233 | A Census tribal area is counted, never refused, beside the note its step names (tribal_note), carried on every tribal row (context_note); the words are Kalli's DRAFT, on the nations' terms. loam refuses only the ACS on tribal areas (D-171) and judges each publisher on its own levels (LOAM-2). A tribal code and its persons are AIANNH plus component. A level no edge reaches takes its places' vintage |
 
+## Decided in session 9
+
+| ID | One line |
+| --- | --- |
+| D-234 | Maine's 911 address points place an address first, the Census Geocoder second: Census interpolates potential ranges, misses non-residential addresses, withholds in sparse places, and matches one batch differently twice |
+| D-235 | The 911 points come from the GeoLibrary FGDB, declared by its information cutoff and sha256, never paged from the live service (whose count and schema differ) |
+| D-236 | Town offices are the Secretary of State's clerk list; the carrier is the clerk's office. The 911 classes cannot list them (default Residential) |
+| D-237 | One point per distinct office, placed where the matched point stands, named by its SITE_UID; GeoCode a check and serves-key, never a placer (a rule) |
+| D-238 | Exact match: house number, street, ZIP; the street spelled through USPS Pub 28 (C1 suffixes, 233 directionals) on both sides; no suffix guessed; ZIP over town |
+| D-239 | A tie in one building settles on its bare point (a rule); a campus tie follows campus_ties (Maine: municipal_class, flagged tie_broken_by_class); every settled point carries its candidate count and spread |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -204,6 +219,10 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | A count's note is said with its number | place.py; tests/test_place_carrier.py (D-233) |
 | HRSA's copy is the one declared: its rows' record dates are its day | prepare_health_center_points; tests/test_health_center_points.py (D-232) |
 | Administrative, mobile, pointless, withheld, closed and out-of-state sites are listed, never placed; an undeclared HRSA code refuses | prepare_health_center_points; tests/test_health_center_points.py (D-232) |
+| The clerk list is read by position under its exact header; names and phones never read | prepare_clerk_office_points; tests/test_clerk_office_points.py (D-236) |
+| An office is placed only where a matched 911 point stands, once, by its SITE_UID; a row's code never places | prepare_clerk_office_points; tests/test_clerk_office_points.py (D-237) |
+| A match is exact on number, Pub 28 street and ZIP; a C1 form in two groups refuses unless the seed resolves it | prepare_clerk_office_points, seeds/crosswalks/addresses/usps_pub28.yml; tests/test_clerk_office_points.py (D-238) |
+| A tie settles only by the building rule or the declared campus choice, and says so on the point | prepare_clerk_office_points; tests/test_clerk_office_points.py, tests/test_clerk_office_preparation.py (D-239) |
 
 ## Open items
 
@@ -213,9 +232,10 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
-| GEO-1 | No geocoder exists. Next session's design (see Starting the next session) |
-| TOWN-OFF-1 | Town offices have no address list: MEGIS Town Points are centroids, refused. A geocoder places addresses; it cannot invent the list |
-| WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage): decided before any outlet is geocoded |
+| GEO-4 | Person-reviewed matches: a declared row per municipality naming the SITE_UID a person read, with its evidence, placed_by reviewed. First Indian Township (8 Kennebasis St) and 7 Minden (nine rows). Before publishing: 1575R's zero is ours. Next session |
+| E911-1 | The 911 FGDB's page says No License Provided, Request permission to use: ask the publisher before anything derived is published; the clerk list's terms are unread too |
+| TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
+| WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage): decided before any outlet is matched. The matcher exists (D-238) |
 | OWN-1, SRC-4 | Ownership concentration redesigned over located_in; every outlet source's terms read before outlets are published |
 | P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
 | P-5, P-6, P-7 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
@@ -233,6 +253,9 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | ID | One line |
 | --- | --- |
 | JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
+| GEO-2 | The Census Geocoder as second authority; the first read of the 74 misses leans against it (suites, highway names, suffix-less streets) |
+| GEO-3 | D-237's GeoCode check needs a MEGIS GEOCODE to Census GEOID link; not built |
+| ARC-1 | canopy/providers/arcgis.py pages by offset with no orderByFields and no held-still guard; off the clerk path since D-235 |
 | KIT-2 | A shared points kit (member and encoding, state field, key, placed or listed, an issuer per key) was weighed and deferred: little gain before delivery, a retrofit's cost now |
 | PLOT-2 | `city:` in preparations, manifests and sows' header ("City: Maine") should say plot: a schema key across the experiment and manifest schemas, every plot file and their readers |
 | HRSA-1 | HRSA's metadata workbook is not read; the geocode's datum is unknown. HPSA, MUA/P, Health Sites and AHRF are catalogued in seeds/sources/hrsa.yml, unused; whether Health Sites sees the nations' clinics is unread |
@@ -248,6 +271,8 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 S2-1, GATE-2, GATE-3, MAP-8, MAP-9, TRIBE-4, SEN-1, LEGI-1, LEG-4, LIC-1, KEY-1, XCHK-1, COMP-1, REG-1, LOOP-1, ACQ-6, SCH-5, TAG-1, MEGIS-3, LURC-1, BAXTER-1, DISS-1, METH-1, LIN-2, VER-1, NOTE-2, TRIBE-5, PENOB-1, RESOLVE-1, SEAM-2, DAS-1, HIST-1, SRC-3, USE-1, SPEC-1, COUNT-1, TENURE-1, TRIBE-6, LEDGER-1 to LEDGER-3, ROLE-1, the draft notes. TRIBE-4 and SEN-1 are dated (2026-12-02) and block maine_seats.
 
 Closed in session 8: SURVEY-1 (D-231), LOAM-2 and TRIBE-8 (D-233). Opened: CARRY-1, KIT-2, PLOT-2, HRSA-1, TRIBE-9; ACQ-7 carried in from an uncommitted ledger line.
+
+Closed in session 9: GEO-1 (D-234 to D-239), TOWN-OFF-1 (D-236). Opened: E911-1, GEO-2, GEO-3, GEO-4, ARC-1, TRIBE-10.
 
 ## Working agreement, as it stands
 
@@ -271,6 +296,7 @@ Closed in session 8: SURVEY-1 (D-231), LOAM-2 and TRIBE-8 (D-233). Opened: CARRY
 - Usage: one step per chat; state.md is the only upload at the start; long output is filtered (`| tail -3`, `| grep`); Claude names exact files and asks for whole files rather than many line ranges.
 - When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name).
 - A data check is a "read", never a "probe" (Kalli, session 8).
+- Every long paste runs alone, and after any heredoc append the expected line count is read in `git --no-pager diff --stat` before committing (session 9: one paste lost its middle, one landed twice).
 
 ## Traps
 
@@ -324,6 +350,12 @@ Closed in session 8: SURVEY-1 (D-231), LOAM-2 and TRIBE-8 (D-233). Opened: CARRY
 - A count_located step at the aiannh level must name tribal_note; tests/test_tribal_counts.py walks every plot.
 - `Data Warehouse Record Create Date` is the day of HRSA's copy, not of any site.
 - The loam carriers view does not carry point properties beyond id, name and coordinates (CARRY-1).
+- The ledger is field-guide/docs/build_ledger.md, underscore. A grep on a misspelled path prints nothing, exactly like a clean grep.
+- The 911 FGDB and the live FeatureServer are not one dataset: 798,422 points against 801,786, older field names (STREETNAME, SUFFIX) against NENA's (ST_FULLNAME). Only the file is read.
+- PLACE_TYPE in the 911 file defaults to Residential and is set town by town: never evidence of a use. Government - Municipal holds salt sheds and a snowmobile club.
+- The Secretary of State's clerk CSV names five columns twice; pandas renames the second copies (.1). The primitive reads by position with the csv module.
+- pyogrio opens the .gdb.zip directly; leave the zip whole, it is the evidence.
+- The clerk list's GeoCode means the row's own town on most rows and its serving town on three; it is blank on 17.
 
 ## People
 
@@ -333,22 +365,17 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs.
 
-**Next: GEO-1, the geocoder (Kalli's choice, session 8), so town offices and outlets can be placed.** What exists today, from Claude's read of its snapshot and the repo's file list, to be confirmed on Kalli's machine first with:
+**Next: GEO-4, person-reviewed matches, so the clerk carrier can be published honestly.** Then WHERE-1 and outlets, then step 4 (derive_margins). What exists today:
 
-```
-git --no-pager grep -n -i -E "geocod|geocoder|address" -- '*.py' '*.yml' | grep -v "^tests/" | cut -c1-150 | head -60
-```
-
-- No geocoder. canopy/providers holds arcgis, base, census_acs, earthengine, maine_legislature, s3, socrata, stac and youtube; none turns an address into a point. Providers live in canopy/providers as Provider subclasses (a lesson), and fetching from a service is a provider's job.
-- soil/validate/geocode_to_unit.py is not a geocoder: it matches place-name strings (with fuzzy matching) to governance units, a silent WHERE-1 choice against D-203 and D-204 (OWN-1). It places no point and should not be the base.
-- build_located_in already places any point layer with coordinates and a feature_id, through the 2024 faces and the 2020 spine. So a geocoder's job ends at a point layer with a receipt; everything after it exists.
-- prepare_library_points already reads a source's own geocode quality (IMLS's GEOMTYPE, flagged manual_geocode), the pattern for carrying how a point was made.
+- prepare_clerk_office_points places through exact matches and two tie rules, and lists every miss with its reason in the receipt (plots/maine/.envelopes/clerk_offices_points_points.envelope.json, listed_rows). Nothing a person matched by reading has a home yet.
+- The receipt's 74 no_match and 20 tie rows are the candidates. The ones that matter most: Indian Township (8 Kennebasis Road in the list, 8 Kennebasis St in the 911 file, a Government - Municipal point labelled Pasamaquoddy Tribal Office), whose miss makes 1575R read zero; and 7 Minden, Greenville (nine rows, one office, no suffix).
+- Pattern to follow: owner_crosswalk (every merge a row a person can read) and the IMLS manual-geocode flag (how a point was made travels with it).
 
 Questions the next session answers, one at a time with a lean:
 
-1. Which geocoder: GEO-1's lean is the Census Geocoder first (free, no key, batch files, returns match type and the 2020 block), with ArcGIS or Maine NG911 address points as second authorities later. Claude researches and cites the Census Geocoder's current documentation (batch size, benchmark and vintage, what each match field means) before anything is designed, since the batch call runs only on Kalli's machine (the sandbox has no network).
-2. What a geocode is in the codebase: a provider that fetches, a soil primitive that turns the response into points (and lists the unmatched with their reasons, as every carrier does), and a type for the response, declared first.
-3. How match quality travels: exact, non-exact and tie as declared codes; whether a non-exact match is placed, flagged or listed is a choice for the method.
-4. The address lists themselves: outlets have office addresses (D-203's office_*), but WHERE-1 decides whether an office address is where an outlet is; town offices need a list from a source with an ID (TOWN-OFF-1: Maine Municipal Association? the Secretary of State?). A geocoder unblocks neither alone.
+1. Where a reviewed match lives: a plot file (Maine's own reading of Maine's rows) or a seed. It names one municipality, one SITE_UID, the evidence read, the day and who read it.
+2. What a reviewed match may do: only name a point that already stands (never coordinates typed in), and only for a row the run listed. A reviewed row for a municipality the run now places exactly is refused, so a review never silently outlives its need.
+3. How it shows: placed_by reviewed, with the evidence on the point, beside exact, building_point and municipal_class.
+4. Whether the misses' spelling patterns (suites per Pub 28 C2, a detached number letter, highway names) deserve rules before reviews, or reviews first and rules from what reviews teach.
 
-What session 8 found, to build on: a rule written for one source travels to the next unless it names its reason without naming the source (the tribal refusal said "reservation libraries" inside every carrier's count); a column with two meanings hides behind a coincidence until a third source breaks it (`time` meant both when and which boundaries); a daily snapshot has no release, but it states its own day, and the copy can be held to its own words; and refusing a place hides it, where a number with its note shows it in its context (Kalli).
+What session 9 found, to build on: a default value is a silent classifier, so a class is never evidence of a use; match by address, never by class, because an address does not care how its point was filed; a read that cannot come back positive proves nothing; when a decision's premise moves before it is written, reopen it then; and a long paste can lose its middle or land twice, so its line count is read before it is trusted.
