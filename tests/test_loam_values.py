@@ -8,7 +8,9 @@ them to places, so towns, districts and counties sit in one view. Each row
 says whether it attached and, if not, why: no place, no declared rule (D-170),
 a Census tribal area (D-171), boundaries that differ, or attached but
 unchecked for a statistical area. A key two tables both give is one fact when
-they agree and no view when they disagree (D-172).
+they agree and no view when they disagree (D-172). A count of ours says which
+boundaries it was counted on in boundary_vintage, never through `time`
+(D-231).
 """
 
 import json
@@ -202,3 +204,60 @@ def test_deleting_and_rebuilding_loam_gives_the_same_values(tmp_path):
     (plot / ".loam" / "loam.duckdb").unlink()
     _vocab, again, _ = opened(plot)
     assert again.con.execute(query).fetchall() == before
+
+
+# ── a count's boundaries travel in boundary_vintage (D-231) ───────────────
+def a_count(authority, code, boundary_vintage="2024", time="2026-11-14"):
+    row = value(authority, code, indicator="health_center_sites_per_1000", time=time,
+                publisher="rewildingcities", v=1.5)
+    if boundary_vintage is not ...:
+        row["boundary_vintage"] = boundary_vintage
+    return row
+
+
+def a_counted_plot(tmp_path, rows):
+    plot = a_valued_plot(tmp_path)
+    a_receipt(plot, "sites_counts_values", pd.DataFrame(rows), "indicator_values",
+              {"id_field": "measurement_id"})
+    return plot
+
+
+def test_a_count_dated_by_its_snapshot_attaches_on_its_edges_boundaries(tmp_path):
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, [a_count("us_census_geoid", "2300560545")]))
+    status, attached, _why, _ = status_of(loam, "us_census_geoid", "2300560545",
+                                          "health_center_sites_per_1000")
+    assert (status, attached) == ("attached", True)
+
+
+def test_a_count_on_other_boundaries_is_a_mismatch_whatever_its_time(tmp_path):
+    rows = [a_count("us_census_geoid", "23005", boundary_vintage="2020", time="FY 2024")]
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, rows))
+    status, attached, why, _ = status_of(loam, "us_census_geoid", "23005",
+                                         "health_center_sites_per_1000")
+    assert (status, attached) == ("vintage_mismatch", False)
+    assert "2020 boundaries" in why
+
+
+def test_a_count_that_does_not_say_its_boundaries_is_refused_by_name(tmp_path):
+    _vocab, loam, _ = opened(a_counted_plot(
+        tmp_path, [a_count("us_census_geoid", "23005", boundary_vintage=...)]))
+    status, attached, why, _ = status_of(loam, "us_census_geoid", "23005",
+                                         "health_center_sites_per_1000")
+    assert (status, attached) == ("no_boundary_vintage", False)
+    assert "boundary_vintage" in why and "D-231" in why
+
+
+def test_a_blank_boundary_vintage_beside_a_filled_one_is_refused(tmp_path):
+    rows = [a_count("us_census_geoid", "2300560545"),
+            a_count("us_census_geoid", "23005", boundary_vintage=None)]
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, rows))
+    assert status_of(loam, "us_census_geoid", "23005",
+                     "health_center_sites_per_1000")[0] == "no_boundary_vintage"
+    assert status_of(loam, "us_census_geoid", "2300560545",
+                     "health_center_sites_per_1000")[0] == "attached"
+
+
+def test_the_acs_is_still_judged_by_its_time_beside_our_counts(tmp_path):
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, [a_count("us_census_geoid", "2300560545")]))
+    assert status_of(loam, "us_census_geoid", "23005", "cii_rent_burden")[0] == "vintage_mismatch"
+    assert status_of(loam, "us_census_sldl", "23118")[0] == "attached"

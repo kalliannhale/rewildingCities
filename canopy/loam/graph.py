@@ -35,11 +35,18 @@ values join the graph the same way (plan build 2):
                   value's level is its place's, never its own (D-169). every
                   row says whether it attached and, if not, why: no place, no
                   declared rule for its publisher, a Census tribal area (D-171),
-                  boundaries that differ (D-170), or attached but unchecked, for
-                  a statistical area whose vintage the rule cannot confirm
+                  boundaries that differ (D-170), a count that does not say
+                  which boundaries it was counted on (D-231), or attached but
+                  unchecked, for a statistical area whose vintage the rule
+                  cannot confirm
 
 the rule for boundaries is a seed, seeds/vintages/boundaries.yml (D-170),
-read here and written into the view, so the view says the rule it applied. ~
+read here and written into the view, so the view says the rule it applied.
+a publisher's boundary year is read one of two ways, as its rule says: the
+last four-digit year in `time` (final_year_of_time, the ACS's own rule), or
+the row's own boundary_vintage (boundary_vintage: a count made over the
+graph's places, which carries the vintage its edges were built on, D-231).
+so a count's `time` says only when its points were observed. ~
 
 and the plot's own places (plan build 3, D-174):
 
@@ -209,8 +216,11 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
     rules = _boundary_rules(root)
     acs = rules.get("us_census_acs") or {}
     levels = acs.get("levels") or {}
-    publishers = [name for name, rule in rules.items()
-                  if (rule or {}).get("boundary_year") == "final_year_of_time"]
+    by_time = [name for name, rule in rules.items()
+               if (rule or {}).get("boundary_year") == "final_year_of_time"]
+    by_vintage = [name for name, rule in rules.items()
+                  if (rule or {}).get("boundary_year") == "boundary_vintage"]
+    publishers = by_time + by_vintage
     ruled_levels = list(levels)
     statistical = acs.get("statistical_funcstat") or []
     decennial = str(acs.get("decennial_year") or "")
@@ -231,6 +241,16 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                       f"{acs_only}p.level = 'cousub' AND COALESCE(p.census_funcstat, '') "
                       f"IN {_sql_list(statistical)}")
     final_year = "regexp_extract(v.time, '.*([0-9]{4})', 1)"
+    # D-231: a boundary_vintage publisher's year is the row's own, never read
+    # from `time`; a row of one that carries none is refused, never guessed
+    if by_vintage and "published_by" in value_columns:
+        counted_on = ("NULLIF(CAST(v.boundary_vintage AS VARCHAR), '')"
+                      if "boundary_vintage" in value_columns else "CAST(NULL AS VARCHAR)")
+        from_vintage = f"COALESCE(v.published_by, '') IN {_sql_list(by_vintage)}"
+        boundary_year = f"(CASE WHEN {from_vintage} THEN {counted_on} ELSE {final_year} END)"
+        lacks_vintage = f"{from_vintage} AND {counted_on} IS NULL"
+    else:
+        boundary_year, lacks_vintage = final_year, "FALSE"
 
     loam.con.execute(f"""
         CREATE VIEW place_values AS
@@ -240,6 +260,9 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                 WHEN 'no_place' THEN 'no place in the graph has this key'
                 WHEN 'no_rule' THEN 'no declared rule says which boundaries this '
                     || 'publisher''s values sit on at this level (D-170)'
+                WHEN 'no_boundary_vintage' THEN 'this publisher''s values say which '
+                    || 'boundaries they were counted on in boundary_vintage, and this '
+                    || 'row carries none (D-231, SURVEY-1)'
                 WHEN 'tribal_area' THEN 'ACS estimates for this tribal area are on '
                     || boundary_year || ' boundaries; the graph holds the Census '
                     || place_vintage || ' legal area, so they are not shown (D-171, TRIBE-6)'
@@ -253,13 +276,14 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
         FROM (
             SELECT v.*, p.level, p.kind AS place_kind, p.name AS place_name,
                 p.vintage AS place_vintage, p.census_funcstat,
-                {final_year} AS boundary_year,
+                {boundary_year} AS boundary_year,
                 CASE
                     WHEN p.code IS NULL THEN 'no_place'
                     WHEN p.level = 'aiannh' THEN 'tribal_area'
                     WHEN {unruled} THEN 'no_rule'
+                    WHEN {lacks_vintage} THEN 'no_boundary_vintage'
                     WHEN {is_statistical} THEN 'unchecked_statistical'
-                    WHEN {final_year} = CAST(p.vintage AS VARCHAR) THEN 'attached'
+                    WHEN {boundary_year} = CAST(p.vintage AS VARCHAR) THEN 'attached'
                     ELSE 'vintage_mismatch'
                 END AS status
             FROM indicator_values v

@@ -85,10 +85,11 @@ def test_a_layer_label_in_the_seed_is_refused_by_name(tmp_path):
         IndicatorRegistry.load(tmp_path)
 
 
-def test_our_counts_have_a_boundary_rule_on_the_acs_levels():
+def test_our_counts_say_their_boundaries_in_each_row_on_the_acs_levels():
     import yaml
     pubs = yaml.safe_load((ROOT / "seeds" / "vintages" / "boundaries.yml").read_text())["publishers"]
     ours = pubs["rewildingcities"]
-    assert ours["boundary_year"] == "final_year_of_time"
+    # a count's boundaries travel in its rows' boundary_vintage, never its time (D-231)
+    assert ours["boundary_year"] == "boundary_vintage"
     # loam reads the ACS's levels for every publisher, so ours must be the same set
     assert set(ours["levels"]) == set(pubs["us_census_acs"]["levels"])

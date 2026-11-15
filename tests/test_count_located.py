@@ -1,5 +1,5 @@
 """tests for soil/transform/count_located.py (Sprint 06, step 3, D-209;
-one layer, named in the receipt, D-224)."""
+one layer, named in the receipt, D-224; boundary_vintage, D-231)."""
 
 import importlib.util
 import sys
@@ -31,9 +31,10 @@ PLACES = pd.DataFrame([{"authority": a, "code": c, "level": l, "name": n} for a,
     ("us_census_sldu", "23001", "sldu", "Senate 1"), ("us_census_sldu", "23002", "sldu", "Senate 2")]])
 
 
-def _edges(rows):
+def _edges(rows, vintage="2024"):
     return pd.DataFrame([{"from_authority": "libs", "from_code": f, "to_authority": a,
-                          "to_code": c, "kind": "located_in"} for f, a, c in rows])
+                          "to_code": c, "kind": "located_in", "vintage": vintage}
+                         for f, a, c in rows])
 
 
 EDGES = _edges([("L1", "us_census_geoid", "23"), ("L1", "us_census_geoid", "23001"),
@@ -105,3 +106,34 @@ def test_the_receipt_names_the_layer_counted():
 def test_only_a_located_count_is_counted():
     with pytest.raises(cl.CountRefused, match="not a located_count"):
         _count(ind={"id": "x", "derivation": {"kind": "ratio"}})
+
+
+# ── which boundaries a count sits on (D-231) ──────────────────────────────
+def test_every_row_carries_its_levels_edge_vintage_zeros_included():
+    out = _count()
+    assert set(out["boundary_vintage"]) == {"2024"}
+    assert out.loc[("us_census_geoid", "2300100002"), "boundary_vintage"] == "2024"
+
+
+def test_time_is_written_as_given_and_never_read_for_boundaries():
+    out = cl.count(EDGES, SPINE, PLACES, IND, LEVELS, "2026-11-14", "rewildingcities")
+    assert set(out["time"]) == {"2026-11-14"} and set(out["boundary_vintage"]) == {"2024"}
+
+
+def test_a_level_whose_edges_carry_two_vintages_is_refused():
+    mixed = pd.concat([EDGES, _edges([("L2", "us_census_geoid", "2300100002")], vintage="2020")],
+                      ignore_index=True)
+    with pytest.raises(cl.CountRefused, match="cousub places carry vintages 2020, 2024"):
+        _count(edges=mixed)
+
+
+def test_a_level_no_edge_reaches_is_refused():
+    with pytest.raises(cl.CountRefused, match="no edge reaches a sldu place"):
+        _count(edges=EDGES[EDGES["to_authority"] != "us_census_sldu"])
+
+
+def test_edges_without_a_vintage_are_refused():
+    with pytest.raises(cl.CountRefused, match="carry no vintage"):
+        _count(edges=EDGES.drop(columns=["vintage"]))
+    with pytest.raises(cl.CountRefused, match="carries no vintage"):
+        _count(edges=EDGES.assign(vintage=None))

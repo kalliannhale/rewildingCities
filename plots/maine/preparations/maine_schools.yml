@@ -87,8 +87,8 @@ steps:
     params:
       indicator: $indicators.public_schools_per_1000
       levels: [state, county, cousub, sldl, sldu]
-      # loam's only boundary rule is the last four-digit year in `time`.
-      # NCES writes 2024-2025, which would read as 2025, while its geography
-      # and our places are 2024's; SY 2024-25 reads as 2024 (SURVEY-1)
+      # the school year the release describes. which boundaries the count
+      # sits on travels in each row's boundary_vintage, from the edges
+      # (D-231), so `time` says only when
       time: SY 2024-25
       published_by: rewildingcities

@@ -45,12 +45,12 @@ publishers:
     # no ACS table is keyed by
   rewildingcities:
     # counts made over the graph's own places through located_in edges
-    # (D-207, D-209): a count's boundaries are its place's by construction.
-    # loam's only rule is the final year of `time`, so a count's time names
-    # the year whose places it was counted on; FY 2024 counts sit on the 2024
-    # places. a later survey counted on the same places must still say 2024
-    # here, or it would read as a mismatch (SURVEY-1)
-    boundary_year: final_year_of_time
+    # (D-207, D-209). each value row carries boundary_vintage: the vintage
+    # the edges at its level were built on, from the preparation's
+    # `vintages` (count_located). loam compares it with the place's own, so
+    # `time` says only when the points were observed: FY 2024, SY 2024-25,
+    # or the day a daily snapshot was copied (D-231, closing SURVEY-1)
+    boundary_year: boundary_vintage
     levels:
       state: graph
       county: graph

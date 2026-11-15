@@ -19,6 +19,11 @@ district (Contract 3, section 2).
     they are the type the indicator counts is checked before the run, by
     the orchestrator
   ~ a Census tribal area is never a declared level here (TRIBE-7)
+  ~ every row says which boundaries it was counted on, in boundary_vintage:
+    the one vintage of the edges that reach its level's places (D-231). a
+    level whose edges carry two vintages, or none, or that no edge reaches,
+    is refused, never guessed. so `time` says only when the points were
+    observed, and loam compares boundary_vintage with the place's own
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
 Inputs:  edges (located_in_edges), spine (block_spine), places (places)
@@ -29,8 +34,8 @@ Params:
                 cousub, sldl, sldu]
   time          required: what `time` the values carry
   published_by  required: who made the values (rewildingcities)
-Output: value rows, parquet or csv, in indicator_values' columns, keyed
-(unit_authority, unit_code, indicator, time). ~
+Output: value rows, parquet or csv, in indicator_values' columns plus
+boundary_vintage, keyed (unit_authority, unit_code, indicator, time). ~
 """
 
 from __future__ import annotations
@@ -42,7 +47,7 @@ KEY = ["unit_authority", "unit_code", "indicator", "time"]
 COLUMNS = ["measurement_id", "unit_authority", "unit_code", "name", "indicator", "value",
            "moe", "moe_status", "bound", "empty_reason", "households", "households_counts",
            "households_reason", "cv", "reliability_note", "published_by", "method", "time",
-           "count"]
+           "boundary_vintage", "count"]
 
 
 class CountRefused(ValueError):
@@ -58,6 +63,38 @@ def _persons_by_level(spine: pd.DataFrame, level: str, basis: str) -> dict:
         raise CountRefused(f"level {level!r} has no column in the spine; countable "
                            f"levels are state, {', '.join(LEVEL_COLUMN)}")
     return counts.groupby(spine[col].astype(str)).sum().to_dict()
+
+
+def vintage_by_level(edges: pd.DataFrame, places: pd.DataFrame, levels) -> dict:
+    """the one boundary vintage each level was counted on (D-231), read from
+    the edges that reach its places: build_located_in writes each edge's
+    vintage from the preparation's `vintages`. an edge's level is its `to`
+    place's, since one authority holds state, county and town."""
+    if "vintage" not in edges.columns:
+        raise CountRefused("the edges carry no vintage, so which boundaries were counted "
+                           "on is unknown (D-231)")
+    level_of = {(str(a), str(c)): str(lv) for a, c, lv in
+                zip(places["authority"], places["code"].astype(str), places["level"])}
+    seen: dict = {}
+    for a, c, v in zip(edges["to_authority"].astype(str), edges["to_code"].astype(str),
+                       edges["vintage"]):
+        level = level_of.get((a, c))
+        if level in levels:
+            seen.setdefault(level, set()).add("" if pd.isna(v) else str(v).strip())
+    out = {}
+    for level in levels:
+        vintages = seen.get(level, set())
+        if not vintages:
+            raise CountRefused(f"no edge reaches a {level} place, so which {level} "
+                               f"boundaries were counted on is unknown (D-231)")
+        if "" in vintages:
+            raise CountRefused(f"an edge reaching a {level} place carries no vintage (D-231)")
+        if len(vintages) > 1:
+            raise CountRefused(f"the edges reaching {level} places carry vintages "
+                               f"{', '.join(sorted(vintages))}; a level is counted on one "
+                               f"set of boundaries (D-231)")
+        out[level] = vintages.pop()
+    return out
 
 
 def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
@@ -76,6 +113,7 @@ def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
     if (edges["kind"] != "located_in").any():
         raise CountRefused("a count reads located_in edges only")
 
+    counted_on = vintage_by_level(edges, places, levels)
     n = edges.groupby(["to_authority", "to_code"]).size().to_dict()
     rows = []
     for level in levels:
@@ -97,7 +135,7 @@ def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
                 "households": people, "households_counts": basis,
                 "households_reason": None, "cv": None, "reliability_note": None,
                 "published_by": published_by, "method": "count_located:located_count",
-                "time": time, "count": k})
+                "time": time, "boundary_vintage": counted_on[level], "count": k})
     out = pd.DataFrame(rows, columns=COLUMNS)
     if out.duplicated(KEY).any():
         raise CountRefused("one place and indicator twice")
