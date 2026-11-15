@@ -34,7 +34,10 @@ values join the graph the same way (plan build 2):
   ~ place_values      values joined to places by (unit_authority, unit_code), so a
                   value's level is its place's, never its own (D-169). every
                   row says whether it attached and, if not, why: no place, no
-                  declared rule for its publisher, a Census tribal area (D-171),
+                  declared rule for its publisher at that level (each publisher
+                  on its own levels, LOAM-2), an ACS estimate for a Census
+                  tribal area (D-171; a count of ours attaches there by its
+                  boundary_vintage, carrying its note, D-233),
                   boundaries that differ (D-170), a count that does not say
                   which boundaries it was counted on (D-231), or attached but
                   unchecked, for a statistical area whose vintage the rule
@@ -228,10 +231,15 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
     # level declared, every value is unruled, said as plainly as SQL allows
     value_columns = [d[0] for d in loam.con.execute(
         "SELECT * FROM indicator_values LIMIT 0").description]
-    unruled = ("TRUE" if not publishers or not ruled_levels
+    # LOAM-2: each publisher is judged on its own declared levels, never the
+    # ACS's for everyone. a publisher with none declared attaches nothing
+    own_levels = {name: list(((rules.get(name) or {}).get("levels") or {}))
+                  for name in publishers}
+    pairs = [f"(COALESCE(v.published_by, '') = {_sql_text(name)} "
+             f"AND p.level IN {_sql_list(lv)})" for name, lv in own_levels.items() if lv]
+    unruled = ("TRUE" if not pairs or not ruled_levels
                or "published_by" not in value_columns else
-               f"COALESCE(v.published_by, '') NOT IN {_sql_list(publishers)} "
-               f"OR p.level NOT IN {_sql_list(ruled_levels)}")
+               f"NOT ({' OR '.join(pairs)})")
     # the statistical class is the ACS's own rule (its decennial boundaries), so
     # it judges only the ACS's values: a count made over the graph's own places
     # sits on the place's boundaries by construction (D-209)
@@ -241,6 +249,12 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                       f"{acs_only}p.level = 'cousub' AND COALESCE(p.census_funcstat, '') "
                       f"IN {_sql_list(statistical)}")
     final_year = "regexp_extract(v.time, '.*([0-9]{4})', 1)"
+    # D-171 is the ACS's: its estimates sit on another year's boundaries than
+    # the Census 2020 legal areas. our counts are on those areas' own vintage
+    # and carry their note (D-233). with no publisher column, every tribal
+    # value is refused, as before
+    tribal_refused = ("p.level = 'aiannh' AND COALESCE(v.published_by, '') = 'us_census_acs'"
+                      if "published_by" in value_columns else "p.level = 'aiannh'")
     # D-231: a boundary_vintage publisher's year is the row's own, never read
     # from `time`; a row of one that carries none is refused, never guessed
     if by_vintage and "published_by" in value_columns:
@@ -279,7 +293,7 @@ def _plant_place_values(loam, root: Path, report: dict) -> None:
                 {boundary_year} AS boundary_year,
                 CASE
                     WHEN p.code IS NULL THEN 'no_place'
-                    WHEN p.level = 'aiannh' THEN 'tribal_area'
+                    WHEN {tribal_refused} THEN 'tribal_area'
                     WHEN {unruled} THEN 'no_rule'
                     WHEN {lacks_vintage} THEN 'no_boundary_vintage'
                     WHEN {is_statistical} THEN 'unchecked_statistical'

@@ -49,7 +49,9 @@ publishers:
     # the edges at its level were built on, from the preparation's
     # `vintages` (count_located). loam compares it with the place's own, so
     # `time` says only when the points were observed: FY 2024, SY 2024-25,
-    # or the day a daily snapshot was copied (D-231, closing SURVEY-1)
+    # or the day a daily snapshot was copied (D-231, closing SURVEY-1).
+    # loam judges each publisher on its own levels (LOAM-2), so ours include
+    # Census tribal areas, counted beside a note (D-233)
     boundary_year: boundary_vintage
     levels:
       state: graph
@@ -57,10 +59,13 @@ publishers:
       cousub: graph
       sldl: graph
       sldu: graph
+      aiannh: graph
     classes:
       graph: >
         Counted over the geography graph's own places, so a value's
         boundaries are the place's: state, counties and towns from the 2024
-        topological faces, districts from the 2024 block equivalency files.
+        topological faces, districts from the 2024 block equivalency files,
+        Census tribal areas from the 2020 blocks, on the Census 2020 legal
+        areas the places hold.
     cites:
       - field-guide/docs/contracts/03-geography-graph.md

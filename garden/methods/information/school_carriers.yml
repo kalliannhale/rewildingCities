@@ -27,7 +27,9 @@ description: >
   Indian Island School; an operator filter would erase them, and unseen is
   never zero (TRIBE-7). A school operated from outside the state is placed,
   flagged with its operator, and placed in every area it falls in, a Census
-  tribal area included; counting at that level waits on TRIBE-8.
+  tribal area included. NCES sees these schools, so a tribal area's count is
+  shown, beside the note carrier_seen_on_nations_land: programs a nation
+  keeps on its own terms may not appear (D-233).
 
   A school reported in the state whose point NCES assigns to another state is
   listed, never placed. A school with no coordinates is listed. NCES's M and

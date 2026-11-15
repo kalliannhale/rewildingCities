@@ -47,8 +47,9 @@ description: >
 
   HRSA's program does not see the Wabanaki nations' own clinics, which the
   reads of 2026-11-14 found none of by name or town. A Census tribal area's
-  count from this source is therefore unseen, never zero (TRIBE-7); how it
-  is shown waits on TRIBE-8.
+  count from this source is shown beside the note
+  carrier_unseen_on_nations_land: a zero there cannot be trusted, and any
+  count may be low (TRIBE-7, D-233).
 
 requires_data:
   - {name: snapshot, type: tabular, semantic_types: [health_center_sites_snapshot], critical: true, as_acquired: true,

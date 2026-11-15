@@ -1301,9 +1301,12 @@ primitives:
       levels, how many of one layer's points stand in it, from located_in
       edges, and that count per the place's own persons. Every place gets a
       row, zeros included; a place with no persons has no rate, with its
-      reason. The count travels with the rate. Refuses edges from another
-      layer than the indicator declares, any edge kind but located_in, a
-      non-located_count indicator, and a Census tribal area (TRIBE-7).
+      reason. The count travels with the rate, and every row says which
+      boundaries it was counted on (boundary_vintage, D-231). A Census tribal
+      area is counted only beside a note its step names (tribal_note), carried
+      on every tribal row as context_note (D-233). Refuses edges from another
+      layer than the indicator declares, any edge kind but located_in, and a
+      non-located_count indicator.
     inputs:
       - {name: edges, semantic_types: [located_in_edges], required: true}
       - {name: spine, semantic_types: [block_spine], required: true}
@@ -1314,3 +1317,4 @@ primitives:
       levels: {type: array, required: true}
       time: {type: string, required: true}
       published_by: {type: string, required: true}
+      tribal_note: {type: string, required: false}

@@ -159,6 +159,9 @@ class IndicatorReading:
     counts_noun: str = ""
     # need, barrier, carrier, outcome or context, from the registry (D-223)
     role: str = ""
+    # the seeds/notes id a count's own row carries, as a tribal area's does
+    # (D-233): its words travel with the number, never apart from it
+    own_context_note: str | None = None
 
     @property
     def in_range(self) -> list[TownValue]:
@@ -371,7 +374,8 @@ def read_place(loam, authority: str, code: str, *, root: str | Path | None = Non
                 own_count=None if count is None else int(count),
                 own_universe_count=_number(own.get("households")),
                 counted_by=_text(own.get("published_by")),
-                counts_noun=measures.get(indicator, indicator).replace("_", " ")))
+                counts_noun=measures.get(indicator, indicator).replace("_", " "),
+                own_context_note=_text(own.get("context_note")) or None))
             continue
         counts = _text((own or {}).get("households_counts")) or next(
             (_text(r.get("households_counts")) for k, r in town_rows.items()
@@ -525,9 +529,12 @@ def _rate(v: float | None) -> str:
 
 
 def _say_located(ind: IndicatorReading) -> list[str]:
-    """an exact count, said: the count first, what it rests on, who counted it."""
+    """an exact count, said: the count first, what it rests on, who counted it,
+    and the note its row carries, if any (D-233)."""
+    note = ([f"     carries the note {ind.own_context_note} (seeds/notes)"]
+            if ind.own_context_note else [])
     if ind.own_status is not None and ind.own_status not in ("attached", "unchecked_statistical"):
-        return [f"     not shown here: {ind.own_why or ind.own_status}"]
+        return [f"     not shown here: {ind.own_why or ind.own_status}"] + note
     persons = _count(ind.own_universe_count)
     count = "an unknown number of" if ind.own_count is None else f"{ind.own_count:,}"
     line = f"     this place: {count} {ind.counts_noun} on {persons} {ind.universe or 'people'}"
@@ -536,7 +543,7 @@ def _say_located(ind: IndicatorReading) -> list[str]:
     return [line + f", counted by {ind.counted_by or 'an unnamed maker'} from where "
                    f"each stands (D-209)",
             "     a count is exact at every level, read from this place's own edges, so "
-            "no range of towns stands in for it"]
+            "no range of towns stands in for it"] + note
 
 
 def say_place(reading: PlaceReading) -> str:

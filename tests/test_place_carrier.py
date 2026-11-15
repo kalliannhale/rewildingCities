@@ -14,7 +14,8 @@ def _reading(**kw):
         own_why=kw.get("why", ""), own_moe=None, own_moe_status=None, own_reliability="",
         universe="persons", universe_relation=None, universe_note="",
         located=True, role="carrier", own_count=kw.get("count", 2), own_universe_count=kw.get("persons", 9500),
-        counted_by="rewildingcities", counts_noun="library outlets")
+        counted_by="rewildingcities", counts_noun="library outlets",
+        own_context_note=kw.get("note"))
     return PlaceReading(authority="us_census_sldl", code="23042", found=True, level="sldl",
                         kind="house_district", name="State House District 42",
                         vintage="2024", indicators=[ind])
@@ -49,3 +50,9 @@ def test_a_role_comes_from_the_registry():
     roles = _indicator_field(project_root(), "role")
     assert roles["library_outlets_per_1000"] == "carrier"
     assert set(roles.values()) <= {"need", "barrier", "carrier", "outcome", "context"}
+
+
+def test_a_counts_note_is_said_with_the_number():
+    text = say_place(_reading(note="carrier_unseen_on_nations_land"))
+    assert "carries the note carrier_unseen_on_nations_land (seeds/notes)" in text
+    assert "carries the note" not in say_place(_reading())

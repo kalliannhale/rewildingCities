@@ -33,6 +33,6 @@ indicators:
       denominator is the place's 2020 persons (P.L. 94-171 P1), the vintage
       of the edges. A small place's rate is unstable, so the count and the
       persons always travel with the rate. Unlike the library survey, NCES
-      sees schools on Wabanaki land, so a Census tribal area's count is not
-      unseen; count_located does not yet count at that level (TRIBE-8).
+      sees schools on Wabanaki land, so a Census tribal area's count is shown
+      beside its note (D-233).
       Aggregation none: a rate never moves along an edge (D-179).

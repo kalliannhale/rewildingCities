@@ -34,5 +34,5 @@ indicators:
       edges. A small place's rate is unstable, so the count and the persons
       always travel with the rate. HRSA's program does not see the Wabanaki
       nations' own clinics, so a Census tribal area's count from this source
-      is unseen, never zero (TRIBE-7, TRIBE-8). Aggregation none: a rate
+      is shown beside a note saying a zero cannot be trusted (TRIBE-7, D-233). Aggregation none: a rate
       never moves along an edge (D-179).

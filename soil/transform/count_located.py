@@ -18,11 +18,18 @@ district (Contract 3, section 2).
     whom and of which release, is the preparation's to say (D-224). that
     they are the type the indicator counts is checked before the run, by
     the orchestrator
-  ~ a Census tribal area is never a declared level here (TRIBE-7)
+  ~ a Census tribal area is counted only beside a note (D-233): its step
+    names a tribal_note, a seeds/notes id, and every tribal-area row
+    carries it in context_note. a federal source may not see the nations'
+    own institutions (TRIBE-7), so a tribal count never travels without
+    the words that say how far it can be trusted. a tribal area's code is
+    AIANNH plus its component (R, T), as located_in writes it (D-125), and
+    its persons are its own blocks'
   ~ every row says which boundaries it was counted on, in boundary_vintage:
     the one vintage of the edges that reach its level's places (D-231). a
-    level whose edges carry two vintages, or none, or that no edge reaches,
-    is refused, never guessed. so `time` says only when the points were
+    level no edge reaches (no point stands in any of its places) takes its
+    places' own vintage, and the run says so. a level whose edges carry two
+    vintages, or a blank one, is refused, never guessed. so `time` says only when the points were
     observed, and loam compares boundary_vintage with the place's own
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
@@ -34,6 +41,8 @@ Params:
                 cousub, sldl, sldu]
   time          required: what `time` the values carry
   published_by  required: who made the values (rewildingcities)
+  tribal_note   required when levels holds aiannh, never otherwise: the
+                seeds/notes id every tribal-area row carries (D-233)
 Output: value rows, parquet or csv, in indicator_values' columns plus
 boundary_vintage, keyed (unit_authority, unit_code, indicator, time). ~
 """
@@ -42,12 +51,13 @@ from __future__ import annotations
 
 import pandas as pd
 
-LEVEL_COLUMN = {"county": "county", "cousub": "cousub", "sldl": "sldl", "sldu": "sldu"}
+LEVEL_COLUMN = {"county": "county", "cousub": "cousub", "sldl": "sldl", "sldu": "sldu",
+                "aiannh": "aiannh"}
 KEY = ["unit_authority", "unit_code", "indicator", "time"]
 COLUMNS = ["measurement_id", "unit_authority", "unit_code", "name", "indicator", "value",
            "moe", "moe_status", "bound", "empty_reason", "households", "households_counts",
            "households_reason", "cv", "reliability_note", "published_by", "method", "time",
-           "boundary_vintage", "count"]
+           "boundary_vintage", "context_note", "count"]
 
 
 class CountRefused(ValueError):
@@ -62,6 +72,16 @@ def _persons_by_level(spine: pd.DataFrame, level: str, basis: str) -> dict:
     if col is None:
         raise CountRefused(f"level {level!r} has no column in the spine; countable "
                            f"levels are state, {', '.join(LEVEL_COLUMN)}")
+    if level == "aiannh":
+        # the place's code is AIANNH plus its component, as located_in's
+        # spine_table writes it (D-125): a reservation and its nation's trust
+        # land are two places, never one denominator
+        if "aiannh_comptyp" not in spine.columns:
+            raise CountRefused("the spine carries no aiannh_comptyp, so a tribal area's "
+                               "code cannot be made (D-125)")
+        has = spine["aiannh"].notna() & (spine["aiannh"].astype(str).str.strip() != "")
+        codes = (spine["aiannh"].astype(str) + spine["aiannh_comptyp"].astype(str)).where(has)
+        return counts[has].groupby(codes[has]).sum().to_dict()
     return counts.groupby(spine[col].astype(str)).sum().to_dict()
 
 
@@ -85,8 +105,17 @@ def vintage_by_level(edges: pd.DataFrame, places: pd.DataFrame, levels) -> dict:
     for level in levels:
         vintages = seen.get(level, set())
         if not vintages:
-            raise CountRefused(f"no edge reaches a {level} place, so which {level} "
-                               f"boundaries were counted on is unknown (D-231)")
+            # no point stands in any place at this level: its zeros are said of
+            # those places, on their own boundaries
+            here = places[places["level"] == level]
+            own = (set(here["vintage"].dropna().astype(str).str.strip()) - {""}
+                   if "vintage" in here.columns else set())
+            if len(own) != 1:
+                raise CountRefused(f"no edge reaches a {level} place and its places carry "
+                                   f"{'no vintage' if not own else 'vintages ' + ', '.join(sorted(own))}, "
+                                   f"so which {level} boundaries were counted on is unknown (D-231)")
+            out[level] = own.pop()
+            continue
         if "" in vintages:
             raise CountRefused(f"an edge reaching a {level} place carries no vintage (D-231)")
         if len(vintages) > 1:
@@ -97,14 +126,28 @@ def vintage_by_level(edges: pd.DataFrame, places: pd.DataFrame, levels) -> dict:
     return out
 
 
+def levels_without_edges(edges: pd.DataFrame, places: pd.DataFrame, levels) -> list:
+    """the declared levels no edge reaches, whose vintage is their places'."""
+    ends = set(zip(edges["to_authority"].astype(str), edges["to_code"].astype(str)))
+    reached = {str(lv) for a, c, lv in zip(places["authority"].astype(str),
+                                           places["code"].astype(str), places["level"])
+               if (a, c) in ends}
+    return [lv for lv in levels if lv not in reached]
+
+
 def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
-          indicator: dict, levels, time: str, published_by: str) -> pd.DataFrame:
+          indicator: dict, levels, time: str, published_by: str,
+          tribal_note: str | None = None) -> pd.DataFrame:
     d = indicator.get("derivation") or {}
     if d.get("kind") != "located_count":
         raise CountRefused(f"{indicator.get('id')} is a {d.get('kind')}, not a located_count")
-    if "aiannh" in levels:
-        raise CountRefused("a Census tribal area is never counted here: the survey does "
-                           "not see reservation libraries, so a zero would be false (TRIBE-7)")
+    if "aiannh" in levels and not tribal_note:
+        raise CountRefused("a Census tribal area is counted only beside a note: name its "
+                           "seeds/notes id as tribal_note, since a source may not see the "
+                           "nations' own institutions and a bare zero would mislead "
+                           "(TRIBE-7, D-233)")
+    if tribal_note and "aiannh" not in levels:
+        raise CountRefused("tribal_note is named but no tribal level is counted (D-233)")
     basis, scale = d["denominator"], float(d["scale"])
     layers = set(edges["from_authority"].astype(str))
     if len(layers) != 1:
@@ -135,7 +178,8 @@ def count(edges: pd.DataFrame, spine: pd.DataFrame, places: pd.DataFrame,
                 "households": people, "households_counts": basis,
                 "households_reason": None, "cv": None, "reliability_note": None,
                 "published_by": published_by, "method": "count_located:located_count",
-                "time": time, "boundary_vintage": counted_on[level], "count": k})
+                "time": time, "boundary_vintage": counted_on[level],
+                "context_note": tribal_note if level == "aiannh" else None, "count": k})
     out = pd.DataFrame(rows, columns=COLUMNS)
     if out.duplicated(KEY).any():
         raise CountRefused("one place and indicator twice")
@@ -176,12 +220,18 @@ def main():
         i, p = args["inputs"], args["params"]
         edges = read(get_input(i, "edges"))
         try:
-            out = count(edges, read(get_input(i, "spine")),
-                        read(get_input(i, "places")), require_param(p, "indicator"),
-                        require_param(p, "levels"), str(require_param(p, "time")),
-                        require_param(p, "published_by"))
+            places = read(get_input(i, "places"))
+            levels = require_param(p, "levels")
+            out = count(edges, read(get_input(i, "spine")), places,
+                        require_param(p, "indicator"), levels,
+                        str(require_param(p, "time")), require_param(p, "published_by"),
+                        p.get("tribal_note"))
         except CountRefused as e:
             primitive_failure("Count refused", str(e))
+        empty = levels_without_edges(edges, places, levels)
+        if empty:
+            w.info(f"no point stands in any {', '.join(empty)} place; those zeros sit on "
+                   f"the places' own vintage (D-231)")
         zero = int((out["count"] == 0).sum())
         w.info(f"{len(out)} place value(s); {zero} place(s) with none of the layer here; "
                f"{int(out['empty_reason'].notna().sum())} with no persons and so no rate")

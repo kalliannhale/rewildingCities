@@ -10,7 +10,8 @@ a Census tribal area (D-171), boundaries that differ, or attached but
 unchecked for a statistical area. A key two tables both give is one fact when
 they agree and no view when they disagree (D-172). A count of ours says which
 boundaries it was counted on in boundary_vintage, never through `time`
-(D-231).
+(D-231). Each publisher is judged on its own levels (LOAM-2), so a count of
+ours attaches to a Census tribal area, beside its note (D-233).
 """
 
 import json
@@ -261,3 +262,31 @@ def test_the_acs_is_still_judged_by_its_time_beside_our_counts(tmp_path):
     _vocab, loam, _ = opened(a_counted_plot(tmp_path, [a_count("us_census_geoid", "2300560545")]))
     assert status_of(loam, "us_census_geoid", "23005", "cii_rent_burden")[0] == "vintage_mismatch"
     assert status_of(loam, "us_census_sldl", "23118")[0] == "attached"
+
+
+# ── a tribal area: our count attaches with its note, the ACS still does not ─
+def test_our_tribal_count_attaches_on_the_areas_own_vintage_with_its_note(tmp_path):
+    row = a_count("us_census_aiannh", "2760R", boundary_vintage="2020")
+    row["context_note"] = "carrier_unseen_on_nations_land"
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, [row]))
+    status, attached, _why, level = status_of(loam, "us_census_aiannh", "2760R",
+                                              "health_center_sites_per_1000")
+    assert (status, attached, level) == ("attached", True, "aiannh")
+    (note,) = loam.con.execute(
+        "SELECT context_note FROM place_values WHERE unit_code = '2760R' "
+        "AND indicator = 'health_center_sites_per_1000'").fetchone()
+    assert note == "carrier_unseen_on_nations_land"
+
+
+def test_the_acs_on_a_tribal_area_is_still_refused_beside_our_count(tmp_path):
+    row = a_count("us_census_aiannh", "2760R", boundary_vintage="2020")
+    _vocab, loam, _ = opened(a_counted_plot(tmp_path, [row]))
+    assert status_of(loam, "us_census_aiannh", "2760R")[0] == "tribal_area"
+
+
+def test_a_publisher_is_judged_on_its_own_levels(tmp_path):
+    # the ACS declares no tribal level, ours does: one rule never stands in
+    # for another (LOAM-2)
+    rules = yaml.safe_load((REPO / "seeds" / "vintages" / "boundaries.yml").read_text())
+    assert "aiannh" not in rules["publishers"]["us_census_acs"]["levels"]
+    assert "aiannh" in rules["publishers"]["rewildingcities"]["levels"]

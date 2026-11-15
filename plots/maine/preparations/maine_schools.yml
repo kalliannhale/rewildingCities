@@ -86,7 +86,10 @@ steps:
       values: indicator_values
     params:
       indicator: $indicators.public_schools_per_1000
-      levels: [state, county, cousub, sldl, sldu]
+      levels: [state, county, cousub, sldl, sldu, aiannh]
+      # a Census tribal area is counted beside the note its source earns: the
+      # method says what this source sees on Wabanaki land (D-233)
+      tribal_note: carrier_seen_on_nations_land
       # the school year the release describes. which boundaries the count
       # sits on travels in each row's boundary_vintage, from the edges
       # (D-231), so `time` says only when

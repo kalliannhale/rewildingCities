@@ -34,6 +34,11 @@ description: >
   choice, below (D-211). Every status code a run may meet is declared with
   its meaning and group, and a code not declared stops the run.
 
+  The survey does not see the Wabanaki nations' own libraries (TRIBE-7). A
+  Census tribal area's count from this source is shown beside the note
+  carrier_unseen_on_nations_land: a zero there cannot be trusted, and any
+  count may be low (D-233).
+
 requires_data:
   - {name: survey, type: tabular, semantic_types: [library_survey_release], critical: true, as_acquired: true,
      role: "The IMLS outlet file, with coordinates, outlet types and structure statuses.",

@@ -91,5 +91,6 @@ def test_our_counts_say_their_boundaries_in_each_row_on_the_acs_levels():
     ours = pubs["rewildingcities"]
     # a count's boundaries travel in its rows' boundary_vintage, never its time (D-231)
     assert ours["boundary_year"] == "boundary_vintage"
-    # loam reads the ACS's levels for every publisher, so ours must be the same set
-    assert set(ours["levels"]) == set(pubs["us_census_acs"]["levels"])
+    # each publisher is judged on its own levels (LOAM-2): ours are the ACS's
+    # and Census tribal areas, counted beside a note (D-233)
+    assert set(ours["levels"]) == set(pubs["us_census_acs"]["levels"]) | {"aiannh"}

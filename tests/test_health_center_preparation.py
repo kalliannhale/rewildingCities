@@ -54,8 +54,9 @@ def test_the_count_says_the_day_its_copy_describes():
     assert _steps()["health_centers_counts"].params["time"] == "2026-11-14"
 
 
-def test_a_tribal_area_is_not_counted_from_a_source_that_does_not_see_it():
-    assert "aiannh" not in _steps()["health_centers_counts"].params["levels"]
+def test_a_tribal_area_is_counted_beside_the_unseen_note():
+    p = _steps()["health_centers_counts"].params
+    assert "aiannh" in p["levels"] and p["tribal_note"] == "carrier_unseen_on_nations_land"
 
 
 def test_the_catalogue_points_at_homes_that_exist():

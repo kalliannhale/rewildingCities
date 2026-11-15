@@ -54,3 +54,20 @@ notes:
       held that the reservation does not include them, and in 2022 the
       Supreme Court declined to review that ruling. The Penobscot Nation and
       the United States, as its trustee, disputed that reading.
+
+  # DRAFT (D-233), Kalli's words, waiting on the nations' terms (P-8, CARE)
+  carrier_unseen_on_nations_land:
+    text: >
+      This count comes from a federal source that does not see the nation's
+      own libraries, clinics or programs, which are kept on the nation's own
+      terms. A zero here cannot be trusted, and any count may be low. We are
+      aware of the context surrounding this number. The boundary is the U.S.
+      Census Bureau's, not the nation's own.
+
+  # DRAFT (D-233), Kalli's words, waiting on the nations' terms (P-8, CARE)
+  carrier_seen_on_nations_land:
+    text: >
+      This count includes schools the nation operates with the Bureau of
+      Indian Education, as the federal source sees them. Programs the nation
+      keeps on its own terms may not appear. The boundary is the U.S. Census
+      Bureau's, not the nation's own.
