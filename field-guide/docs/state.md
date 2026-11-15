@@ -207,12 +207,16 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 
 ## Open items
 
-Sorted for delivery (Kalli asked, session 8). **Delivery, as assumed here (Kalli to confirm):** the Maine product by 2026-12-01 to 12-11: every place's profile, carriers on the map with their toggles and notes, the barriers judged against the standard, the publish door, the Docker build. Town offices and outlets as carriers are assumed **after** delivery, named in "What we can't answer (yet)"; if Kalli puts them in scope, GEO-1, TOWN-OFF-1, WHERE-1, OWN-1 and SRC-4 move up.
+Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** the Maine product by 2026-12-01 to 12-11: every place's profile, all five carriers on the map with their toggles and notes (town offices and outlets included, so a geocoder is in scope), the barriers judged against the standard, the publish door, the Docker build. Claude's honest note at the hand-off: steps 4 to 11 and Sprints 07, 08 and 10 remain; at session 8's pace that does not all fit, so a cut may be needed later, and is a design choice when it comes, never a failure.
 
 ### Blocks delivery
 
 | ID | One line |
 | --- | --- |
+| GEO-1 | No geocoder exists. Next session's design (see Starting the next session) |
+| TOWN-OFF-1 | Town offices have no address list: MEGIS Town Points are centroids, refused. A geocoder places addresses; it cannot invent the list |
+| WHERE-1 | Which place meaning counts as where an outlet is (office, named town, coverage): decided before any outlet is geocoded |
+| OWN-1, SRC-4 | Ownership concentration redesigned over located_in; every outlet source's terms read before outlets are published |
 | P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
 | P-5, P-6, P-7 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
 | CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
@@ -238,7 +242,6 @@ Sorted for delivery (Kalli asked, session 8). **Delivery, as assumed here (Kalli
 | LIB-2, SERVES-1, OBS-1, P-3 | A second library authority; whom a carrier serves; our own observation of outlets; the free-outlet question |
 | CON3-2, KIT-1 | Contract 3's wording; freshness never judges primitive code |
 | P-8 | Section 203 on Wabanaki places, and what is shown on them: the nations' to decide, under CARE and OCAP. Never a deadline |
-| GEO-1, TOWN-OFF-1, WHERE-1, OWN-1, SRC-4 | Town offices and outlets as carriers (see the delivery assumption above) |
 
 ### Not yet sorted (look each up in the ledger)
 
@@ -330,10 +333,22 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next step needs.
 
-Three of five carriers are done; the other two wait on a geocoder and are assumed after delivery. Kalli chooses at the start of the session:
+**Next: GEO-1, the geocoder (Kalli's choice, session 8), so town offices and outlets can be placed.** What exists today, from Claude's read of its snapshot and the repo's file list, to be confirmed on Kalli's machine first with:
 
-- **CARRY-1** (blocks the map): one generic pass-through so a point's adjectives and a count's note reach the carriers view, so the map can toggle seasonal sites and show the tribal notes. Small, and it finishes the carriers as a product.
-- **Step 5, language** (the plan's order): ACS language-by-ability tables, safe-harbor languages, section 203 coverage. Before any threshold, Claude researches and cites what each source says, in the vintage the build uses. Verdicts wait on derive_margins (step 4, D-198).
-- **Confirm delivery scope** first, in one line, so the open items' sort stands.
+```
+git --no-pager grep -n -i -E "geocod|geocoder|address" -- '*.py' '*.yml' | grep -v "^tests/" | cut -c1-150 | head -60
+```
+
+- No geocoder. canopy/providers holds arcgis, base, census_acs, earthengine, maine_legislature, s3, socrata, stac and youtube; none turns an address into a point. Providers live in canopy/providers as Provider subclasses (a lesson), and fetching from a service is a provider's job.
+- soil/validate/geocode_to_unit.py is not a geocoder: it matches place-name strings (with fuzzy matching) to governance units, a silent WHERE-1 choice against D-203 and D-204 (OWN-1). It places no point and should not be the base.
+- build_located_in already places any point layer with coordinates and a feature_id, through the 2024 faces and the 2020 spine. So a geocoder's job ends at a point layer with a receipt; everything after it exists.
+- prepare_library_points already reads a source's own geocode quality (IMLS's GEOMTYPE, flagged manual_geocode), the pattern for carrying how a point was made.
+
+Questions the next session answers, one at a time with a lean:
+
+1. Which geocoder: GEO-1's lean is the Census Geocoder first (free, no key, batch files, returns match type and the 2020 block), with ArcGIS or Maine NG911 address points as second authorities later. Claude researches and cites the Census Geocoder's current documentation (batch size, benchmark and vintage, what each match field means) before anything is designed, since the batch call runs only on Kalli's machine (the sandbox has no network).
+2. What a geocode is in the codebase: a provider that fetches, a soil primitive that turns the response into points (and lists the unmatched with their reasons, as every carrier does), and a type for the response, declared first.
+3. How match quality travels: exact, non-exact and tie as declared codes; whether a non-exact match is placed, flagged or listed is a choice for the method.
+4. The address lists themselves: outlets have office addresses (D-203's office_*), but WHERE-1 decides whether an office address is where an outlet is; town offices need a list from a source with an ID (TOWN-OFF-1: Maine Municipal Association? the Secretary of State?). A geocoder unblocks neither alone.
 
 What session 8 found, to build on: a rule written for one source travels to the next unless it names its reason without naming the source (the tribal refusal said "reservation libraries" inside every carrier's count); a column with two meanings hides behind a coincidence until a third source breaks it (`time` meant both when and which boundaries); a daily snapshot has no release, but it states its own day, and the copy can be held to its own words; and refusing a place hides it, where a number with its note shows it in its context (Kalli).
