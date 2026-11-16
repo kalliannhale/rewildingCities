@@ -942,6 +942,7 @@ datasets:
 
   acs_state_2024:
     available: true
+    fetched_at: '2026-11-16T03:44:50.943200+00:00'
     description: "ACS 2020-2024 five-year estimates by state; the API serves every state at this level, and only Maine's row attaches to a place"
     semantic_type: indicator_source
     license: us_government_work   # D-116
@@ -963,6 +964,7 @@ datasets:
 
   acs_state_2024_language:
     available: true
+    fetched_at: '2026-11-16T03:44:51.715105+00:00'
     description: "Maine's C16001 limited-English persons by language group, ACS 2020-2024 (D-261); every state at this level"
     semantic_type: indicator_source
     license: us_government_work   # D-116
@@ -984,6 +986,7 @@ datasets:
 
   acs_county_2024_language:
     available: true
+    fetched_at: '2026-11-16T03:44:52.407505+00:00'
     description: "Maine's sixteen counties: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
     semantic_type: indicator_source
     license: us_government_work   # D-116
@@ -1006,6 +1009,7 @@ datasets:
 
   acs_cousub_2024_language:
     available: true
+    fetched_at: '2026-11-16T03:44:53.208049+00:00'
     description: "Maine's 529 county subdivisions: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
     semantic_type: indicator_source
     license: us_government_work   # D-116
@@ -1028,6 +1032,7 @@ datasets:
 
   acs_sldl_2024_language:
     available: true
+    fetched_at: '2026-11-16T03:44:53.988894+00:00'
     description: "Maine's 151 House districts: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
     semantic_type: indicator_source
     license: us_government_work   # D-116
@@ -1050,6 +1055,7 @@ datasets:
 
   acs_sldu_2024_language:
     available: true
+    fetched_at: '2026-11-16T03:44:54.762556+00:00'
     description: "Maine's 35 Senate districts: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
     semantic_type: indicator_source
     license: us_government_work   # D-116

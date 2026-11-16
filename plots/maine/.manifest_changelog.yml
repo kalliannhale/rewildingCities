@@ -1271,3 +1271,609 @@
     field: fetched_at
     value: '''2026-11-11T02:22:22.160597+00:00'''
     reason: Cache timestamp updated
+- timestamp: '2026-11-16T03:44:55.413337+00:00'
+  triggered_by: manifest_transaction
+  changes_applied: 12
+  changes_failed: 0
+  changes:
+  - dataset: acs_state_2024
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 52 state(s); vintage 2020-2024
+      (5-year estimates); 4 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state
+      within: {}
+      indicators:
+      - cii_broadband
+      - households_without_broadband
+      variables_requested:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      variables_returned:
+      - B28002_004E
+      - B28002_001E
+      - B28002_004M
+      - B28002_001M
+      variables_not_returned: []
+      n_units: 52
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,B28002_004E,B28002_001E,B28002_004M,B28002_001M
+          for: state:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:50.943132+00:00'
+  - dataset: acs_state_2024
+    field: fetched_at
+    value: '''2026-11-16T03:44:50.943200+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_state_2024_language
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 52 state(s); vintage 2020-2024
+      (5-year estimates); 26 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state
+      within: {}
+      indicators:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      variables_requested:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_returned:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_not_returned: []
+      n_units: 52
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,C16001_005E,C16001_008E,C16001_011E,C16001_014E,C16001_017E,C16001_020E,C16001_023E,C16001_026E,C16001_029E,C16001_032E,C16001_035E,C16001_038E,C16001_001E,C16001_005M,C16001_008M,C16001_011M,C16001_014M,C16001_017M,C16001_020M,C16001_023M,C16001_026M,C16001_029M,C16001_032M,C16001_035M,C16001_038M,C16001_001M
+          for: state:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:51.715012+00:00'
+  - dataset: acs_state_2024_language
+    field: fetched_at
+    value: '''2026-11-16T03:44:51.715105+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_county_2024_language
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 16 county(s); vintage 2020-2024
+      (5-year estimates); 26 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county
+      within:
+        state: '23'
+      indicators:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      variables_requested:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_returned:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_not_returned: []
+      n_units: 16
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,C16001_005E,C16001_008E,C16001_011E,C16001_014E,C16001_017E,C16001_020E,C16001_023E,C16001_026E,C16001_029E,C16001_032E,C16001_035E,C16001_038E,C16001_001E,C16001_005M,C16001_008M,C16001_011M,C16001_014M,C16001_017M,C16001_020M,C16001_023M,C16001_026M,C16001_029M,C16001_032M,C16001_035M,C16001_038M,C16001_001M
+          for: county:*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:52.407392+00:00'
+  - dataset: acs_county_2024_language
+    field: fetched_at
+    value: '''2026-11-16T03:44:52.407505+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_cousub_2024_language
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 529 county subdivision(s);
+      vintage 2020-2024 (5-year estimates); 26 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: county subdivision
+      within:
+        state: '23'
+        county: '*'
+      indicators:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      variables_requested:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_returned:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_not_returned: []
+      n_units: 529
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,C16001_005E,C16001_008E,C16001_011E,C16001_014E,C16001_017E,C16001_020E,C16001_023E,C16001_026E,C16001_029E,C16001_032E,C16001_035E,C16001_038E,C16001_001E,C16001_005M,C16001_008M,C16001_011M,C16001_014M,C16001_017M,C16001_020M,C16001_023M,C16001_026M,C16001_029M,C16001_032M,C16001_035M,C16001_038M,C16001_001M
+          for: county subdivision:*
+          in: state:23 county:*
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:53.207744+00:00'
+  - dataset: acs_cousub_2024_language
+    field: fetched_at
+    value: '''2026-11-16T03:44:53.208049+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_sldl_2024_language
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 151 state legislative district
+      (lower chamber)(s); vintage 2020-2024 (5-year estimates); 26 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state legislative district (lower chamber)
+      within:
+        state: '23'
+      indicators:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      variables_requested:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_returned:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_not_returned: []
+      n_units: 151
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,C16001_005E,C16001_008E,C16001_011E,C16001_014E,C16001_017E,C16001_020E,C16001_023E,C16001_026E,C16001_029E,C16001_032E,C16001_035E,C16001_038E,C16001_001E,C16001_005M,C16001_008M,C16001_011M,C16001_014M,C16001_017M,C16001_020M,C16001_023M,C16001_026M,C16001_029M,C16001_032M,C16001_035M,C16001_038M,C16001_001M
+          for: state legislative district (lower chamber):*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:53.988761+00:00'
+  - dataset: acs_sldl_2024_language
+    field: fetched_at
+    value: '''2026-11-16T03:44:53.988894+00:00'''
+    reason: Cache timestamp updated
+  - dataset: acs_sldu_2024_language
+    field: available
+    value: 'true'
+    reason: Acquired via Fetched from the Census ACS ~ 35 state legislative district
+      (upper chamber)(s); vintage 2020-2024 (5-year estimates); 26 variable(s)
+    provenance:
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      vintage_window: 2020-2024 (5-year estimates)
+      geography: state legislative district (upper chamber)
+      within:
+        state: '23'
+      indicators:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      variables_requested:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_returned:
+      - C16001_005E
+      - C16001_008E
+      - C16001_011E
+      - C16001_014E
+      - C16001_017E
+      - C16001_020E
+      - C16001_023E
+      - C16001_026E
+      - C16001_029E
+      - C16001_032E
+      - C16001_035E
+      - C16001_038E
+      - C16001_001E
+      - C16001_005M
+      - C16001_008M
+      - C16001_011M
+      - C16001_014M
+      - C16001_017M
+      - C16001_020M
+      - C16001_023M
+      - C16001_026M
+      - C16001_029M
+      - C16001_032M
+      - C16001_035M
+      - C16001_038M
+      - C16001_001M
+      variables_not_returned: []
+      n_units: 35
+      annotations_emptied: {}
+      annotation_columns: []
+      unparseable_emptied: 0
+      request:
+        url: https://api.census.gov/data/2024/acs/acs5
+        params:
+          get: NAME,C16001_005E,C16001_008E,C16001_011E,C16001_014E,C16001_017E,C16001_020E,C16001_023E,C16001_026E,C16001_029E,C16001_032E,C16001_035E,C16001_038E,C16001_001E,C16001_005M,C16001_008M,C16001_011M,C16001_014M,C16001_017M,C16001_020M,C16001_023M,C16001_026M,C16001_029M,C16001_032M,C16001_035M,C16001_038M,C16001_001M
+          for: state legislative district (upper chamber):*
+          in: state:23
+      api_key_used: true
+      format: parquet
+      fetched_at: '2026-11-16T03:44:54.762422+00:00'
+  - dataset: acs_sldu_2024_language
+    field: fetched_at
+    value: '''2026-11-16T03:44:54.762556+00:00'''
+    reason: Cache timestamp updated
