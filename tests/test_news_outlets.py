@@ -640,3 +640,127 @@ def test_a_zip_a_spreadsheet_stripped_gets_its_zero_back():
                   "5 Fern Street", "04282"))
     p = run(df, fallback="office_town_unshared")
     assert listed(p) == {"Two Cent Times": "office_shared", "Moose Prints": "office_shared"}
+
+
+# ── editions and records written twice (D-254, D-255) ──────────────────────
+
+def test_an_edition_merge_may_hold_one_source_twice_when_it_says_so():
+    # the Press Herald: Cision lists the daily and its Sunday edition apart,
+    # and two lists name one or the other
+    df = grouped(("g1", "maine_media_ecosystem", 43, "Portland Press Herald", "Portland", None, None, None),
+                 ("g1", "cision", 140, "Portland Press Herald", None, None, "South Portland", "yes", NP),
+                 ("g2", "local_news_catalyst", 3, "Portland Press Herald/Maine Sunday Telegram", "Portland",
+                  None, None, None),
+                 ("g2", "cision", 143, "Portland Press Herald - Maine Sunday Telegram", None, None,
+                  "South Portland", "yes", NP))
+    assert len(run(df).outlets) == 2
+    merge = {"records": [{"source": "cision", "name": "Portland Press Herald"},
+                         {"source": "cision", "name": "Portland Press Herald - Maine Sunday Telegram"}],
+             "editions": "the daily and its Sunday edition, one newsroom", **REVIEW}
+    p = run(df, reviews={"merges": [merge]})
+    assert len(p.outlets) == 1
+    r = p.outlets.iloc[0]
+    assert r.town_code == "2300560545" and "editions_by_review" in r["flags"]
+    assert pno.output_metadata(p)["edition_merges"][0]["editions"].startswith("the daily")
+
+
+def test_editions_where_no_source_is_twice_refuses():
+    df = grouped(("g1", "local_news_catalyst", 2, "A", "Norway", None, None, None),
+                 ("g2", "cision", 5, "B", None, None, "Portland", "yes", NP))
+    merge = {"records": [{"source": "local_news_catalyst", "name": "A"}, {"source": "cision", "name": "B"}],
+             "editions": "print and web", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="editions would say what is not there"):
+        run(df, reviews={"merges": [merge]})
+
+
+def test_a_record_written_twice_is_not_a_source_held_twice():
+    df = grouped(("g1", "local_news_catalyst", 2, "Wiscasset Paper", "Norway", None, None, None),
+                 ("g2", "cision", 5, "Wiscasset Paper Inc", None, None, "Portland", "yes", NP),
+                 ("g2", "cision", 6, "Wiscasset Paper Inc, The", None, None, "Portland", "yes", NP))
+    df["same_record_as"] = [None, None, "5"]
+    merge = {"records": [{"source": "local_news_catalyst", "name": "Wiscasset Paper"},
+                         {"source": "cision", "name": "Wiscasset Paper Inc"}], **REVIEW}
+    p = run(df, reviews={"merges": [merge]})
+    assert len(p.outlets) == 1 and "editions_by_review" not in p.outlets.iloc[0]["flags"]
+
+
+# ── office reads (D-256) ───────────────────────────────────────────────────
+
+OFFICE = grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes", NP))
+
+
+def _read(verdict, **more):
+    return {"source": "cision", "name": "Office Only", "verdict": verdict, **more, **REVIEW}
+
+
+def test_an_unread_office_town_says_so():
+    r = run(OFFICE).outlets.iloc[0]
+    assert "office_town_unread" in r["flags"] and "office_town_not_named" in r["flags"]
+
+
+def test_an_office_read_may_keep_an_outlet_where_it_is():
+    p = run(OFFICE, reviews={"office_reads": [_read("keep")]})
+    r = p.outlets.iloc[0]
+    assert r.placed_by == "office_town" and r.town_code == "2300560545"
+    assert "office_read:keep" in r["flags"] and "office_town_unread" not in r["flags"]
+    assert r.review_read_by == "Kalli A. Hale"
+    assert pno.output_metadata(p)["office_reads"] == {"keep": 1}
+
+
+def test_an_office_read_may_move_an_outlet_to_its_town():
+    r = run(OFFICE, reviews={"office_reads": [_read("town", town_code="2301754420")]}).outlets.iloc[0]
+    assert r.placed_by == "reviewed" and r.town_code == "2301754420" and r.county_code == "23017"
+    assert "office_read:town" in r["flags"]
+
+
+def test_an_office_read_may_place_an_outlet_in_the_state_alone():
+    p = run(OFFICE, reviews={"office_reads": [_read("state")]})
+    r = p.outlets.iloc[0]
+    assert r.scope == "state" and pd.isna(r.town_code) and "placed_in_state_only" in r["flags"]
+    e = btl.locate_by_town(p.outlets, PLACES, "lyr", "feature_id", "town_code", "23", "scope")
+    assert set(e["to_code"]) == {"23"}
+
+
+def test_an_office_read_may_list_an_outlet_with_its_reason():
+    p = run(OFFICE, reviews={"office_reads": [_read("list", reason="a bureau of a daily")]})
+    assert p.outlets.empty and listed(p) == {"Office Only": "office_read_listed"}
+    assert p.listed[0]["detail"] == "a bureau of a daily"
+
+
+def test_an_office_read_must_be_whole():
+    for bad, words in ((_read("move"), "verdict"), (_read("keep", town_code="2301754420"), "only a town"),
+                       (_read("town", town_code="23017"), "not a town"), (_read("list"), "reason")):
+        with pytest.raises(pno.OutletsRefused, match=words):
+            run(OFFICE, reviews={"office_reads": [bad]})
+
+
+def test_an_office_read_the_run_no_longer_needs_refuses():
+    named = grouped(("g1", "cision", 5, "Office Only", "Norway", None, "Portland", "yes", NP))
+    with pytest.raises(pno.OutletsRefused, match="no longer needs"):
+        run(named, reviews={"office_reads": [_read("keep")]})
+    blog = grouped(("g1", "cision", 5, "Office Only", None, None, "Portland", "yes", "Blog, consumer"))
+    with pytest.raises(pno.OutletsRefused, match="no longer needs"):
+        run(blog, reviews={"office_reads": [_read("keep")]})
+    with pytest.raises(pno.OutletsRefused, match="no longer needs"):
+        run(_chain(), fallback="office_town_unshared",
+            reviews={"office_reads": [{**_read("keep"), "name": "North Weekly"}]})
+
+
+def test_one_outlet_takes_one_reading_of_where_it_is():
+    town = {"source": "cision", "name": "Office Only", "town_code": "2301754420", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="already has a reading"):
+        run(OFFICE, reviews={"office_reads": [_read("keep")], "towns": [town]})
+
+
+def test_a_review_names_a_record_written_twice_once():
+    df = grouped(("g2", "local_news_catalyst", 2, "Bay Paper", None, None, None, None),
+                 ("g2", "cision_raw", 347, "Bay Paper", None, None, "Portland", "yes", NP),
+                 ("g2", "cision_raw", 348, "Bay Paper", None, None, "Portland", "yes", NP))
+    df["same_record_as"] = [None, None, "347"]
+    merge = {"records": [{"source": "local_news_catalyst", "name": "Bay Paper"},
+                         {"source": "cision_raw", "name": "Bay Paper"}], **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="already one group"):
+        run(df, reviews={"merges": [merge]})
+    df.loc[0, "group_id"] = "g9"
+    p = run(df, reviews={"merges": [merge]})
+    assert len(p.outlets) == 1 and p.outlets.iloc[0].records.count("cision_raw") == 2

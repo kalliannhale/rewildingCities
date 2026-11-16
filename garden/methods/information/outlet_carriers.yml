@@ -71,9 +71,15 @@ description: >
 
   One outlet per group (D-243). Its id is made from its members, the first
   by the declaration's source_order, so a fresh copy of one listing
-  renumbers no other outlet. A person's reading of two records as one
-  outlet is a reviewed merge, keyed by each record's source and name as
-  written, never by a group id that follows row order.
+  renumbers no other outlet. A name written inverted is the same name
+  (Cision's "Star-Herald, The", D-253). A record one listing writes twice,
+  alike in name, url and office address, is one record, never two outlets
+  (D-254, a rule): before it, Lincoln County News, one paper, stood as six
+  groups. A person's reading of two records as one outlet is a reviewed
+  merge, keyed by each record's source and name as written, never by a
+  group id that follows row order. Only a person may join one listing's
+  records as editions of one outlet (the Portland Press Herald and its
+  Sunday edition), and the merge says so in words (D-255).
 
   A town is matched by name, on both sides alike, after the declared Census
   suffixes come off (Auburn city, Durham town): lowercase, periods and
@@ -86,7 +92,13 @@ description: >
   towns with no county to choose (ambiguous_town); no town given
   (no_town_given). A person's reading of one outlet's town is a reviewed
   town, under the same keys, only for an outlet the run would otherwise
-  list for its town (an office_shared outlet included).
+  list for its town (an office_shared outlet included). An outlet placed
+  by its office town alone deserves a person's read, since a database's
+  newspapers hold bureaus, publishers, sections and statewide newsrooms
+  beside town weeklies: an office read keeps it, moves it to a town or the
+  state, or lists it with its reason in words (D-256). Until read it stays
+  placed, flagged office_town_unread, so the map says which counts rest on
+  a database's office alone.
 
   An outlet has no point, so it is placed only where its town decides: its
   town, county and state, or the state alone (D-246, D-249). It is never

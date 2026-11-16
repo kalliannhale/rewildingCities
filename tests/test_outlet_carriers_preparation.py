@@ -72,9 +72,19 @@ def test_the_declaration_orders_every_source_and_says_what_a_status_means():
     assert doc["statewide_names"] == ["Statewide"]
 
 
-def test_reviews_start_empty_and_keyed_by_the_words():
+def test_every_review_is_keyed_by_the_words_and_names_its_reading():
+    # a review is a person's reading (D-240, D-255, D-256): keyed by source
+    # and name as written, with its evidence, day and reader
     doc = yaml.safe_load((CROSSWALKS / "outlets" / "outlet_reviews.yml").read_text())
-    assert doc["merges"] == [] and doc["towns"] == []
+    assert set(doc) >= {"merges", "towns", "office_reads"}
+    entries = list(doc["towns"] or []) + list(doc["office_reads"] or [])
+    entries += [r for m in doc["merges"] or [] for r in m["records"]]
+    for e in entries:
+        assert e["source"] and e["name"], e
+    for e in list(doc["merges"] or []) + list(doc["towns"] or []) + list(doc["office_reads"] or []):
+        for f in ("evidence", "read_on", "read_by"):
+            assert str(e.get(f) or "").strip(), (f, e)
+        assert "group_id" not in e and "line" not in e
 
 
 def test_an_outlet_is_counted_at_town_county_and_state_only():

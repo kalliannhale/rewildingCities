@@ -97,3 +97,81 @@ def test_the_disagreements_primitive_uses_the_same_comparison():
     spec.loader.exec_module(lod)
     assert lod.COMPARED == gor.COMPARED
     assert lod.KEY == ["group_id", "field", "source", "source_line"]
+
+
+# ── a name written inverted, and one record written twice (D-253, D-254) ──
+
+def _stack_at(rows):
+    cols = ["source", "source_line", "name", "url", "frequency", "named_town", "office_town",
+            "address_raw", "zip_raw"]
+    return pd.DataFrame([dict(zip(cols, r)) for r in rows], columns=cols)
+
+
+def test_a_name_written_inverted_is_the_same_name():
+    assert gor.name_key("Star-Herald, The") == "star herald"
+    assert gor.name_key("Lincoln County News, The") == gor.name_key("The Lincoln County News")
+    assert gor.name_key("Bangor Daily News, The (BPC)") == "bangor daily news"
+    assert gor.name_key("Theater News") == "theater news"
+
+
+LCN = "https://lcnme.com/"
+MILLS = ("116 Mills Road", "04553-3408")
+
+
+def test_one_record_written_twice_joins_itself_and_its_key_joins_the_rest():
+    # the shape the real export holds (session 12's read): Cision lists one
+    # paper under two spellings, Cision's raw pull twice alike, and the lists
+    # once each; before D-254 the name key went dark for everyone
+    g = gor.group_records(_stack_at([
+        ("cision", 86, "Lincoln County News", LCN, None, None, "Newcastle", *MILLS),
+        ("cision", 87, "Lincoln County News, The", LCN, None, None, "Newcastle", *MILLS),
+        ("cision_raw", 347, "Lincoln County News", LCN, None, None, "Newcastle", *MILLS),
+        ("cision_raw", 348, "Lincoln County News", LCN, None, None, "Newcastle", "116 Mills Road.", "4553"),
+        ("easton", 18, "Lincoln County News", LCN, None, None, None, None, None),
+        ("local_news_catalyst", 20, "The Lincoln County News", None, None, "Newcastle", None, None, None)]))
+    assert g["group_id"].nunique() == 1
+    by = g.set_index("source_line")
+    assert by.loc[87, "same_record_as"] == "86" and by.loc[348, "same_record_as"] == "347"
+    assert pd.isna(by.loc[86, "same_record_as"]) or by.loc[86, "same_record_as"] is None
+    assert "same_record" in by.loc[87, "match_basis"]
+    assert "not used to join" not in (gor._text(by.loc[20, "match_note"]) or "")
+
+
+def test_one_name_at_two_addresses_stays_two_outlets():
+    g = gor.group_records(_stack_at([
+        ("cision", 3, "Town Crier", "towncrier.com", None, None, None, "1 Main St", "04101"),
+        ("cision", 4, "Town Crier", "towncrier.com", None, None, None, "9 Elm St", "04901")]))
+    assert g["group_id"].nunique() == 2
+    assert g["same_record_as"].isna().all()
+    assert all("not used to join" in n for n in g["match_note"])
+
+
+def test_a_record_with_no_address_or_url_is_never_read_as_written_twice():
+    g = gor.group_records(_stack_at([
+        ("easton", 3, "Quoddy Tides", None, None, None, None, None, None),
+        ("easton", 4, "Quoddy Tides", None, None, None, None, None, None),
+        ("cision", 5, "Free Press", "fp.com", None, None, None, None, "04843"),
+        ("cision", 6, "Free Press", "fp.com", None, None, None, None, "04843")]))
+    assert g["group_id"].nunique() == 4
+    assert g["same_record_as"].isna().all()
+
+
+def test_written_twice_survives_the_csv_between_steps():
+    import tempfile
+    rows = [("cision", 1, "Weekly", "weekly.com", None, None, None, "5 Fern Street", "4282"),
+            ("cision", 2, "Weekly", "weekly.com", None, None, None, "5 Fern street", "04282"),
+            ("cision", 3, "Other", None, None, None, None, None, None)]
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "stack.csv"
+        _stack_at(rows).to_csv(path, index=False)
+        back = pd.read_csv(path, dtype=str)
+    g = gor.group_records(back).set_index("source_line")
+    assert g.loc["2", "same_record_as"] == "1"
+    assert g.loc["1", "group_id"] != g.loc["3", "group_id"]
+
+
+def test_an_office_key_has_one_home():
+    assert gor.office_key("116 Mills Rd.", "4553") == gor.office_key("116 mills rd", "04553-3408")
+    assert gor.office_key("116 Mills Rd", None) is None
+    assert gor.office_key(None, "04553") is None
+    assert gor.zip5("041061234") == "04106" and gor.zip5("12") is None

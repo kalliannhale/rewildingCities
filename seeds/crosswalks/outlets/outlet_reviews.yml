@@ -13,9 +13,14 @@
 #
 # what a review may do, held by prepare_news_outlets:
 #   merges  join the groups of two or more records a person read as one
-#           outlet. refused when the records are already one group, when no
-#           record or two records give a name, or when the joined group
-#           would hold one source twice (D-202)
+#           outlet. refused when the records are already one group, or when
+#           no record or two records give a name. a joined group may hold
+#           one source twice only when the merge says editions: in words,
+#           what the person read the records as (the daily and its Sunday
+#           edition, a print and an online edition). the grouping never
+#           does this on its own (D-202, D-255); editions where no source
+#           is twice refuses. a record a source wrote twice alike (name,
+#           url, office address) is already one record (D-254)
 #   towns   name the town (its ten-digit county subdivision code) a person
 #           read for one record's outlet, only when the run would otherwise
 #           list it as towns_disagree, no_town_match, ambiguous_town,
@@ -23,6 +28,16 @@
 #           on its own (in a town or the state), when it is listed as ceased
 #           or for its medium (the medium is judged first, D-248), or when
 #           no record gives the name
+#   office_reads
+#           a person's reading of an outlet the run places by its
+#           publisher's office town alone (D-256). verdict keep (it is
+#           there), town (it is in the town_code read), state (it serves
+#           the state, no town) or list (it is not a local outlet to count
+#           here, its reason in words: a bureau, a publisher, a section).
+#           refused when the run does not place the outlet by its office
+#           town, when its outlet has a town review too, or when a verdict
+#           is incomplete. an outlet placed by its office town with no read
+#           is flagged office_town_unread, and stays placed
 #
 # each review names its evidence, the day it was read and who read it:
 #
@@ -30,6 +45,7 @@
 #     - records:
 #         - {source: cision, name: "..."}
 #         - {source: local_news_catalyst, name: "..."}
+#       editions: "..."          (only when one source is held twice)
 #       evidence: >
 #         ...
 #       read_on: "YYYY-MM-DD"
@@ -38,6 +54,16 @@
 #     - source: local_news_catalyst
 #       name: "..."
 #       town_code: "23........"
+#       evidence: >
+#         ...
+#       read_on: "YYYY-MM-DD"
+#       read_by: ...
+#   office_reads:
+#     - source: cision
+#       name: "..."
+#       verdict: keep            (keep, town, state or list)
+#       town_code: "23........"  (a town verdict only)
+#       reason: "..."            (a list verdict only)
 #       evidence: >
 #         ...
 #       read_on: "YYYY-MM-DD"
@@ -52,3 +78,4 @@ to: "rewildingCities: the merge or town a person read, with the evidence"
 
 merges: []
 towns: []
+office_reads: []

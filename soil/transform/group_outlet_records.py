@@ -14,8 +14,10 @@ two keys, both exact after normalizing, never fuzzy:
   ~ url    scheme, www. and a trailing slash dropped, lowercased. the path is
            kept, because one domain can host several outlets
            (sunjournal.com/weeklies/advertiser-democrat is not sunjournal.com)
-  ~ name   lowercased, & read as and, a trailing parenthetical and a leading
-           "the" dropped, punctuation removed, spaces collapsed
+  ~ name   lowercased, & read as and, a trailing parenthetical dropped, a
+           "the" dropped from the front or, written inverted, from the end
+           (Cision's "Star-Herald, The" is the Star-Herald, D-253),
+           punctuation removed, spaces collapsed
 
 a missed match costs a duplicate someone can see; a wrong match attributes
 one outlet's owner to another. so a key never joins two records from the
@@ -25,13 +27,21 @@ which of its two records another source's record belongs with would
 otherwise be decided by row order, a silent choice. such a value is named
 in match_note on every record that holds it. a join refused because two
 keys together would put one source in a group twice is noted the same way
-(D-202). ~
+(D-202).
+
+one record written twice is not two outlets (D-254, a rule). records of one
+source alike in name key, url key and office address (street normalized,
+ZIP as five digits, office_key) are one record: they join each other first,
+their key held once, and every row but the first by line says
+same_record_as. a source's same name with another url or address stays two
+outlets. which identical row is named first decides nothing, since they are
+alike in everything grouping reads. ~
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
 Inputs:  stack   the stack from stack_outlet_sources
 Params:  none
-Output:  the stack with url_key, name_key, group_id, match_basis and
-         match_note, csv, keyed by (source, source_line)
+Output:  the stack with url_key, name_key, group_id, match_basis,
+         match_note and same_record_as, csv, keyed by (source, source_line)
 
 disagreements() is its own primitive, list_outlet_disagreements, since a
 step writes one output. run by hand for a look with --stack, --out and
@@ -56,8 +66,15 @@ COMPARED = ("frequency", "office_town", "office_county", "named_town", "named_co
 
 
 def _text(x) -> str | None:
-    if x is None or (isinstance(x, float) and pd.isna(x)):
+    """a value as text, or None when it is missing in any of pandas' ways,
+    judged one value at a time (pandas 3 reads a missing str as NaN)."""
+    if x is None:
         return None
+    try:
+        if pd.isna(x):
+            return None
+    except (TypeError, ValueError):
+        pass
     text = str(x).strip()
     return text or None
 
@@ -79,10 +96,62 @@ def name_key(name) -> str | None:
         return None
     text = text.lower().replace("&", " and ")
     text = re.sub(r"\s*\([^)]*\)\s*$", "", text)
+    text = re.sub(r"\s*,\s*the\s*$", "", text)
     text = re.sub(r"^the\s+", "", text)
     text = re.sub(r"[^a-z0-9 ]+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text or None
+
+
+def address_norm(text) -> str | None:
+    """a street as compared: lowercase, periods and apostrophes dropped, a
+    hyphen read as a space, spaces collapsed. nothing else (D-250)."""
+    t = _text(text)
+    if not t:
+        return None
+    t = re.sub(r"[.'\u2019]", "", t.lower()).replace("-", " ")
+    return re.sub(r"\s+", " ", t).strip() or None
+
+
+def zip5(z) -> str | None:
+    """a ZIP as five digits, from its part before any hyphen. three or four
+    digits are a ZIP a spreadsheet read as a number, its leading zeros
+    dropped (Maine's 04282 written 4282), and get them back, since no US
+    ZIP is shorter (a rule, D-250). nine digits are ZIP+4 written whole.
+    anything else gives no key."""
+    t = _text(z)
+    if not t:
+        return None
+    head = t.split("-")[0].strip()
+    if not head.isdigit():
+        return None
+    if len(head) == 9:
+        return head[:5]
+    if 3 <= len(head) <= 5:
+        return head.zfill(5)
+    return None
+
+
+def office_key(address, zip_code) -> tuple | None:
+    """an office address as compared, street and ZIP5, or None. the one home
+    of the comparison: prepare_news_outlets reads it from here (D-250)."""
+    a, z = address_norm(address), zip5(zip_code)
+    return (a, z) if a and z else None
+
+
+def _identity(row) -> tuple | None:
+    """what makes two of one source's rows one record: name key, url key and
+    office address, all given (D-254)."""
+    parts = (_text(row.get("name_key")), _text(row.get("url_key")),
+             office_key(row.get("address_raw"), row.get("zip_raw")))
+    return parts if all(parts) else None
+
+
+def _line_order(line):
+    try:
+        return (0, int(str(line)))
+    except ValueError:
+        return (1, str(line))
 
 
 class _Groups:
@@ -109,20 +178,52 @@ class _Groups:
         self.sources[ra] |= self.sources[rb]
         return True
 
+    def same(self, a, b) -> None:
+        """join one source's record written twice: no source check, since
+        the two rows are one record (D-254)."""
+        ra, rb = self.find(a), self.find(b)
+        if ra != rb:
+            self.parent[rb] = ra
+
 
 def group_records(stack: pd.DataFrame) -> pd.DataFrame:
-    """the stack with url_key, name_key, group_id, match_basis and match_note."""
+    """the stack with url_key, name_key, group_id, match_basis, match_note
+    and same_record_as."""
     out = stack.copy().reset_index(drop=True)
-    out["url_key"] = out["url"].map(url_key)
-    out["name_key"] = out["name"].map(name_key)
+    out["url_key"] = [url_key(x) for x in out["url"]]
+    out["name_key"] = [name_key(x) for x in out["name"]]
     groups = _Groups(list(out["source"]))
     basis = {i: set() for i in range(len(out))}
     notes = {i: [] for i in range(len(out))}
 
+    # one record written twice joins itself first (D-254)
+    rep = list(range(len(out)))
+    same_as = [None] * len(out)
+    alike: dict = {}
+    for i, row in enumerate(out.to_dict("records")):
+        ident = _identity(row)
+        if ident:
+            alike.setdefault((str(row["source"]),) + ident, []).append(i)
+    for rows in alike.values():
+        if len(rows) < 2:
+            continue
+        rows = sorted(rows, key=lambda i: _line_order(out.loc[i, "source_line"]))
+        first = rows[0]
+        for other in rows[1:]:
+            groups.same(first, other)
+            rep[other] = first
+            same_as[other] = str(out.loc[first, "source_line"])
+            notes[other].append(f"same record as {out.loc[first, 'source']} line "
+                                f"{out.loc[first, 'source_line']}: name, url and office "
+                                f"address alike")
+        for r in rows:
+            basis[r].add("same_record")
+
     for key in ("url_key", "name_key"):
         for value, rows in out.groupby(key, sort=True).groups.items():
             rows = sorted(rows)
-            sources = out.loc[rows, "source"]
+            reps = sorted({rep[r] for r in rows})
+            sources = out.loc[reps, "source"]
             twice = sorted(sources[sources.duplicated(keep=False)].unique())
             if twice:
                 msg = (f"{key} {value!r} is held by more than one record of "
@@ -130,17 +231,19 @@ def group_records(stack: pd.DataFrame) -> pd.DataFrame:
                 for r in rows:
                     notes[r].append(msg)
                 continue
-            for other in rows[1:]:
-                joined = groups.join(rows[0], other)
+            for other in reps[1:]:
+                joined = groups.join(reps[0], other)
                 if joined:
-                    basis[rows[0]].add(key)
-                    basis[other].add(key)
+                    for r in rows:
+                        basis[r].add(key)
                 elif joined is False:
-                    msg = (f"{key} {value!r} also names {out.loc[rows[0], 'source']} "
-                           f"line {out.loc[rows[0], 'source_line']}; not joined, "
+                    msg = (f"{key} {value!r} also names {out.loc[reps[0], 'source']} "
+                           f"line {out.loc[reps[0], 'source_line']}; not joined, "
                            f"since with the other key the group would hold one "
                            f"source twice")
-                    notes[other].append(msg)
+                    for r in rows:
+                        if rep[r] == other:
+                            notes[r].append(msg)
 
     roots = [groups.find(i) for i in range(len(out))]
     first = {}
@@ -149,6 +252,7 @@ def group_records(stack: pd.DataFrame) -> pd.DataFrame:
     out["group_id"] = [f"g{first[r]:04d}" for r in roots]
     out["match_basis"] = [",".join(sorted(basis[i])) or None for i in range(len(out))]
     out["match_note"] = ["; ".join(notes[i]) or None for i in range(len(out))]
+    out["same_record_as"] = same_as
     return out
 
 
@@ -187,7 +291,9 @@ def output_metadata(grouped: pd.DataFrame) -> dict:
 def summary(grouped: pd.DataFrame) -> list[str]:
     sizes = grouped.groupby("group_id")["source"].nunique()
     notes = grouped["match_note"].fillna("")
+    same = int(grouped["same_record_as"].notna().sum()) if "same_record_as" in grouped else 0
     return [f"{len(grouped)} records in {len(sizes)} groups",
+            f"records read as another of their source's written twice (D-254): {same}",
             f"groups by number of sources: {sizes.value_counts().sort_index().to_dict()}",
             "records holding a key not used (one source holds it twice): "
             f"{int(notes.str.contains('not used to join').sum())}",

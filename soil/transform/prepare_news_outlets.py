@@ -49,7 +49,13 @@ asks it of each outlet:
     town names the code a person read for an outlet the run would list for
     its town. it refuses when no record gives it, when the run no longer
     needs it, and when the outlet is listed as ceased or for its medium
-    (D-240's rule)
+    (D-240's rule). a merge may hold one source twice only when it says,
+    in words, what the person read the records as (editions, D-255): the
+    grouping never does. an office read is a person's reading of an outlet
+    placed by its office town alone: keep it there, move it to the town or
+    the state the person read, or list it, with the reason in words
+    (D-256). an outlet placed by its office town with no read is flagged
+    office_town_unread
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
 Inputs:  grouped (outlet_groups), places (places)
@@ -63,15 +69,23 @@ Params:
   state_fips      required: two digits
 Output: the outlets, csv, one row per placed outlet, keyed by feature_id;
         every outlet not placed is listed in the receipt with its reason. ~
+
+an office address is compared by group_outlet_records.office_key, its one
+home (D-254 reads it there too). ~
 """
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 
 import pandas as pd
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from group_outlet_records import office_key, zip5  # noqa: E402  the one home (D-250)
 
 GEOID = "us_census_geoid"
 KEY = ["feature_id"]
@@ -89,6 +103,7 @@ REVIEWABLE = ("towns_disagree", "no_town_match", "ambiguous_town", "no_town_give
               "office_shared")
 MEDIUM_REASONS = ("medium_not_counted", "medium_conflict", "medium_unknown")
 REVIEW_FIELDS = ("evidence", "read_on", "read_by")
+OFFICE_VERDICTS = ("keep", "town", "state", "list")
 
 
 class OutletsRefused(ValueError):
@@ -353,8 +368,12 @@ def outlet_ids(grouped: pd.DataFrame, order: list[str]) -> tuple[dict, set]:
 
 
 def _record(grouped: pd.DataFrame, source: str, name: str, where: str) -> int:
+    first = ([_text(x) is None for x in grouped["same_record_as"]]
+             if "same_record_as" in grouped.columns else [True] * len(grouped))
     hits = grouped.index[(grouped["source"].astype(str) == str(source))
-                         & (grouped["name"].map(_text) == _text(name))]
+                         & (pd.Series([_text(x) for x in grouped["name"]], index=grouped.index)
+                            == _text(name))
+                         & pd.Series(first, index=grouped.index)]
     if len(hits) == 0:
         raise OutletsRefused(f"{where}: no {source} record is named {name!r}; a review "
                              f"no record gives refuses the run, since its words have "
@@ -371,10 +390,21 @@ def _review_fields(entry: dict, where: str) -> None:
         raise OutletsRefused(f"{where}: a review names its {', '.join(missing)}")
 
 
+def _held_twice(members: pd.DataFrame) -> list:
+    """the sources a group holds as two or more records, a record written
+    twice counted once (D-254)."""
+    if "same_record_as" in members.columns:
+        members = members[[_text(x) is None for x in members["same_record_as"]]]
+    s = members["source"].astype(str)
+    return sorted(s[s.duplicated()].unique())
+
+
 def apply_merges(grouped: pd.DataFrame, merges) -> tuple[pd.DataFrame, dict]:
     """the groups with every reviewed merge joined, and each joined group's
     review. a merge naming records already in one group refuses (it is no
-    longer needed), and so does one that would put a source in a group twice."""
+    longer needed). one that would put a source in a group twice refuses
+    unless it says editions: what the person read the records as (D-255);
+    one that says editions where no source is twice refuses too."""
     out = grouped.copy()
     reviewed = {}
     for n, entry in enumerate(merges or [], start=1):
@@ -389,10 +419,16 @@ def apply_merges(grouped: pd.DataFrame, merges) -> tuple[pd.DataFrame, dict]:
             raise OutletsRefused(f"{where}: its records are already one group; a review "
                                  f"the run no longer needs refuses (D-240)")
         members = out[out["group_id"].isin(gids)]
-        if members["source"].duplicated().any():
-            twice = sorted(members.loc[members["source"].duplicated(), "source"].unique())
+        twice = _held_twice(members)
+        editions = _text(entry.get("editions"))
+        if twice and not editions:
             raise OutletsRefused(f"{where}: joined, the group would hold {', '.join(twice)} "
-                                 f"twice; one source listing two records is two outlets (D-202)")
+                                 f"twice; one source listing two records is two outlets "
+                                 f"(D-202) unless a person read them as one outlet's "
+                                 f"editions and the merge says so in editions (D-255)")
+        if editions and not twice:
+            raise OutletsRefused(f"{where}: it says editions, but joined, the group holds "
+                                 f"no source twice; editions would say what is not there")
         out.loc[out["group_id"].isin(gids), "group_id"] = gids[0]
         reviewed[gids[0]] = entry
     return out, reviewed
@@ -482,31 +518,18 @@ def medium_of(members: pd.DataFrame, kinds: dict, types: DatabaseTypes,
 
 
 def _zip5(z) -> str | None:
-    """a ZIP as five digits, from its part before any hyphen. three or four
-    digits are a ZIP a spreadsheet read as a number, its leading zeros
-    dropped (Maine's 04282 written 4282), and get them back, since no US
-    ZIP is shorter (a rule, D-250). nine digits are ZIP+4 written whole.
-    anything else gives no key."""
-    t = _text(z)
-    if not t:
-        return None
-    head = t.split("-")[0].strip()
-    if not head.isdigit():
-        return None
-    if len(head) == 9:
-        return head[:5]
-    if 3 <= len(head) <= 5:
-        return head.zfill(5)
-    return None
+    """a ZIP as five digits: group_outlet_records.zip5, its one home (D-250)."""
+    return zip5(z)
 
 
 def office_keys(members: pd.DataFrame) -> set:
-    """an outlet's office addresses, compared: street as normalized, ZIP5."""
+    """an outlet's office addresses, compared: street as normalized, ZIP5,
+    through group_outlet_records.office_key (D-250)."""
     keys = set()
     for r in members.to_dict("records"):
-        a, z = _text(r.get("address_raw")), _zip5(_text(r.get("zip_raw")))
-        if a and z:
-            keys.add((norm(a), z))
+        k = office_key(r.get("address_raw"), r.get("zip_raw"))
+        if k:
+            keys.add(k)
     return keys
 
 
@@ -568,6 +591,8 @@ def _records_of(members: pd.DataFrame) -> str:
 class Prepared:
     outlets: pd.DataFrame
     listed: list = field(default_factory=list)
+    editions: list = field(default_factory=list)
+    office_reads: dict = field(default_factory=dict)
 
 
 def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: dict,
@@ -622,6 +647,29 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
             raise OutletsRefused(f"{where}: its outlet already has a town review")
         town_reviews[gid] = (where, code, entry)
 
+    office_reads = {}
+    for n, entry in enumerate(reviews.get("office_reads") or [], start=1):
+        where = f"office read {n}"
+        _review_fields(entry, where)
+        verdict = _text(entry.get("verdict"))
+        if verdict not in OFFICE_VERDICTS:
+            raise OutletsRefused(f"{where}: verdict is {verdict!r}; it is one of "
+                                 f"{', '.join(OFFICE_VERDICTS)} (D-256)")
+        code = _text(entry.get("town_code"))
+        if verdict == "town" and code not in towns.name_of:
+            raise OutletsRefused(f"{where}: {code!r} is not a town of state {state_fips} "
+                                 f"in the places table")
+        if verdict != "town" and code:
+            raise OutletsRefused(f"{where}: only a town verdict names a town_code")
+        if verdict == "list" and not _text(entry.get("reason")):
+            raise OutletsRefused(f"{where}: a list verdict says its reason in words")
+        gid = grouped.loc[_record(grouped, entry.get("source"), entry.get("name"), where),
+                          "group_id"]
+        if gid in office_reads or gid in town_reviews:
+            raise OutletsRefused(f"{where}: its outlet already has a reading of where it is")
+        office_reads[gid] = (where, verdict, code, entry)
+    reads_used = set()
+
     rows, listed = [], []
     for gid in sorted(ids, key=lambda g: ids[g]):
         members = grouped[grouped["group_id"] == gid]
@@ -636,6 +684,8 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
         review = merged.get(gid)
         if review is not None:
             flags.append("merged_by_review")
+            if _text(review.get("editions")):
+                flags.append("editions_by_review")
 
         def listing(reason, detail):
             return {"feature_id": fid, "name": name, "reason": reason, "detail": detail,
@@ -669,6 +719,29 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
                                         + (f" and {len(others) - 5} more" if len(others) > 5 else "")}
                 else:
                     placed["flags"] = placed["flags"] + [f"office_shared:{len(sharers)}"]
+        if gid in office_reads:
+            where, verdict, code, entry = office_reads[gid]
+            if placed.get("placed_by") != "office_town":
+                raise OutletsRefused(f"{where}: the run does not place this outlet by its "
+                                     f"office town ({placed.get('placed_by') or placed.get('reason')}); "
+                                     f"a review the run no longer needs refuses (D-240, D-256)")
+            reads_used.add(gid)
+            review = entry
+            if verdict == "list":
+                listed.append(listing("office_read_listed", _text(entry.get("reason"))))
+                continue
+            if verdict == "town":
+                placed = {"scope": "town", "code": code, "placed_by": "reviewed",
+                          "town_as_written": placed["town_as_written"],
+                          "town_from": placed["town_from"],
+                          "flags": ["office_read:town"]}
+            elif verdict == "state":
+                placed = {"scope": "state", "placed_by": "reviewed",
+                          "town_as_written": placed["town_as_written"],
+                          "town_from": placed["town_from"],
+                          "flags": ["office_read:state", "placed_in_state_only"]}
+            else:
+                placed["flags"] = placed["flags"] + ["office_read:keep"]
         if gid in town_reviews:
             where, code, entry = town_reviews[gid]
             if "code" in placed or placed.get("scope") == "state":
@@ -687,6 +760,8 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
         flags.extend(placed["flags"])
         if placed["placed_by"] == "office_town":
             flags.append("office_town_not_named")
+            if gid not in reads_used:
+                flags.append("office_town_unread")
         if placed["placed_by"] == "named_state":
             flags.append("placed_in_state_only")
         code = placed.get("code")
@@ -705,10 +780,20 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
             "review_read_on": _text((review or {}).get("read_on")),
             "review_read_by": _text((review or {}).get("read_by")),
             "flags": ";".join(flags) or None})
+    unused = sorted(office_reads[g][0] for g in set(office_reads) - reads_used)
+    if unused:
+        raise OutletsRefused(f"{', '.join(unused)}: the run lists the outlet before asking "
+                             f"where it is (ceased, or for its medium); a review the run "
+                             f"no longer needs refuses (D-240, D-256)")
     out = pd.DataFrame(rows, columns=COLUMNS)
     if out["feature_id"].duplicated().any():
         raise OutletsRefused("one outlet id twice")
-    return Prepared(outlets=out, listed=listed)
+    editions = [{"feature_id": ids[g], "editions": _text(e.get("editions")),
+                 "records": _records_of(grouped[grouped["group_id"] == g])}
+                for g, e in sorted(merged.items(), key=lambda kv: ids[kv[0]])
+                if _text(e.get("editions"))]
+    reads = dict(Counter(office_reads[g][1] for g in reads_used))
+    return Prepared(outlets=out, listed=listed, editions=editions, office_reads=reads)
 
 
 def _tally(series) -> dict:
@@ -728,6 +813,9 @@ def output_metadata(p: Prepared) -> dict:
             "database_alone": int(len(alone)),
             "database_alone_classes": _tally(alone["database_class"]),
             "listed_reasons": dict(Counter(r["reason"] for r in p.listed)),
+            "edition_merges": p.editions,
+            "office_reads": p.office_reads,
+            "office_town_unread": int(o["flags"].fillna("").str.contains("office_town_unread").sum()),
             "listed_outlets": p.listed}
 
 
@@ -737,7 +825,10 @@ def summary(p: Prepared) -> list[str]:
             f"on a list's say {int(o['vouched_by'].notna().sum())}, "
             f"a database's alone {int(o['vouched_by'].isna().sum())}",
             f"{len(p.listed)} listed: {dict(Counter(r['reason'] for r in p.listed))}",
-            f"operating: {_tally(o['operating'])}"]
+            f"operating: {_tally(o['operating'])}",
+            f"office reads: {p.office_reads}; placed by office town, unread: "
+            f"{int(o['flags'].fillna('').str.contains('office_town_unread').sum())}",
+            f"edition merges: {len(p.editions)}"]
 
 
 def main():
