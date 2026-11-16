@@ -1495,3 +1495,47 @@ Lessons:
 
 Closed: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257 and the reviews seed).
 Opened: OUTCONF-1: before publishing, Kalli confirms the Claude-read reviews (read_by) and decides: student papers listed; the Castine Patriot and Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Kennebunk Post, South Portland Sentry and Peaks Islander still publish; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Unread office towns: The Cryer, USM's Free Press, Rolling Thunder Express, Twin City Times. Listed with no reading: The Local News Online, The Rising Tide, two records naming several outlets.
+
+## Sprint 06, session 13 (2026-11-15): zip 1's consultation, the measures
+
+Decided:
+- D-258: ratio margins are computed inside derive_indicator, in R and in preview.py, held equal by the oracle test; never as a second indicator_values artifact, since loam refuses a key two receipts tell differently (D-172). Supersedes D-198's "own preparation step"; D-198's verdict rule stands.
+- D-259: every ratio declares relation: proportion or ratio. Formulas from Census's 2025 Instructions for Applying Statistical Testing to ACS Data: a proportion falls back to the ratio formula when the value under the root is negative, flagged; sums by root-sum-of-squares; a controlled part's margin (-555555555) is 0; a part whose margin is not computable (-222222222) leaves the margin absent with its reason; every derived margin is labelled an approximation without covariance. No zero-estimate rule: the 2025 instructions carry none.
+- D-260: a derivation kind count adds and subtracts cells, its margin by the sum formula; a one-cell count's derived margin equals the published one (tested).
+- D-261: language from C16001 at state, county, cousub, sldl and sldu: 12 group counts, 12 group shares, the total count and share, 26 indicators in seeds/indicators/language.yml, groups named in Census's words; each level its own manifest entry (27 variables, under the API's 50). Codes read from the 2024 groups API on 2026-11-15. B16001 is a named gap: county and tract tables ended in 2016, and the state's 86 variables need the provider split.
+- D-262: the digital access count is B28002_001 minus B28002_004, the complement of cii_broadband, so the count beside the rate is its own left_out.
+- D-263: section 203 read from the 2021 public-use zip (sha256 2d6b21e9...22d6), cp1252 declared; keyed by LANCOUNT, never LANGUAGE text; the flags are the evidence, never recomputed from rounded values; a town joined by its 5-digit MCD to the last five digits of our town GEOID, refused if ambiguous; our towns with no record listed by name; its own artifact type, never loam's ACS values. Its margins state no confidence, so a verdict resting on them is cannot_judge.
+- D-264: section 203 tribal rows: an AIAN/MCD row is never a town's value (whole-area estimates); an AIAN-area row (0115, 1530, 1575, 2760, 2850) spans reservation and trust land and attaches to no single place; held whole and shown only on the nations' terms (P-8). A margin of 0 on these totals reads as not given.
+- D-265: literacy from the PIAAC Skills Map workbook (sha256 b6745055...34b5, downloaded 2026-11-15), County and State sheets, grpName all, Lit_P1 with 95 percent credible bounds and its out-of-bound and CV flags carried. left_out is POP_DOMAIN times the share and each bound, with NCES's note that the interval is too narrow. The entry says the estimate is modelled partly from race, poverty and education; it is never combined with its own predictors in any index (a rule, tested). openpyxl declared in environment.yml.
+- D-266: the ACS is pinned at 2020-2024; Census lists the 2021-2025 release as TBD (schedule updated 2026-10-29).
+
+Found:
+- loam's D-172 would have refused the whole values view if derive_margins wrote a second indicator_values artifact.
+- The provider already fetches every margin column for an acs_moe indicator, so no reacquisition is needed for margins.
+- Freshness never judges primitive code (KIT-1); D-259's new key moves each ratio's hash, so the reruns show.
+- The DOJ's 2002 LEP guidance, the safe harbor's source, was rescinded on 2025-03-21; no replacement had appeared by late 2026.
+- Section 203 covers four groups only (American Indian, Alaska Native, Asian American, Spanish heritage); Maine's largest limited-English communities can never cross it. Next determinations expected December 2026. No Maine place was determined in 2021.
+- The section 203 file differs from its documentation three ways: cp1252 where it says ASCII, LANGUAGE text unlike the documented labels, and the nation's illiteracy rate 1.3200 where the flag rule says 1.31.
+- Section 203 holds 522 Maine towns, every one with county 000, and no Maine county rows.
+- The Skills Map file writes Lit_P1 where NCES's guide writes LIT_P1. No 2023-cycle county estimates exist; P-7 closes on the pooled map.
+- Against "every adult at Level 2 or above", every Maine county reads below; left_out runs about 9,800 to 30,000 adults per county. The verdict cannot tell counties apart; left_out can.
+- The FCC's 2026 Section 706 report kept 100/20 and dropped the long-term goal; counting satellite makes service near universal, so step 7b must declare terrestrial only as a choice.
+- The acquire command was recorded nowhere in the docs: python -m canopy.cli acquire <plot> --type <semantic_type> senses only; --fetch acquires.
+
+Wrong hypotheses:
+- That D-198's separate step could write indicator_values: loam would refuse the view.
+- That the safe harbor is a live federal standard: rescinded 2025.
+- That B16001 serves towns: not published below the state since 2016.
+- That rewilding.yml's B16002 French variant could follow: C16001's French, Haitian or Cajun group is the path.
+- That section 203's town key is ST, CNTY and MCD: county is 000 on every Maine town row.
+- That an empty grep of the tribal-area file meant nothing for Maine: it searched names; the areas are named and coded differently.
+- That the Census files are ASCII because their documentation says so.
+
+Lessons:
+- A read that prints head(20) can cut off its own answer: count first, then list.
+- Documentation and file disagreed three times in one session: key every reader on the file as read, never on its documentation.
+- A sha256 of e3b0c442...b855 is an empty file.
+- Where a law withdraws a standard, the project that keeps the line signs its own name to it, as acs_small_sample.yml does.
+
+Closed: P-7 (D-265).
+Carried into P-1 (zip 2): the safe harbor's numbers only as rewildingcities' own declared line; section 203's four-group limit said in words; universal verdicts that cannot tell places apart, with left_out leading.
