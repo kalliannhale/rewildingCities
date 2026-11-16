@@ -292,3 +292,17 @@ OUTREV-1 with EDITION-1 (next), BCAST-1, SRCFACT-2, and every item in state.md's
 - Test the shapes the data holds, never the shapes imagined.
 - A test that never crosses the file the run crosses cannot fail the way the run fails.
 - A list's membership is stronger evidence than a database's label.
+
+## Session 12 (2026-11-15): the outlet carrier's last door
+
+Goal: close EDITION-1 and OUTREV-1 so outlets can publish honestly, and settle the shape of the rest of the build.
+
+Done:
+- Outlet records read whole: a name written inverted is one name (D-253); one source's record written twice is one record (D-254); edition merges said in words (D-255); office reads (D-256); a town review may place an outlet in the state alone (D-257). Commits 3b79798, c8e9a2d, 3bb6ad4.
+- The reviews: 5 merges, 23 towns, 12 office reads, each read by Claude from a cited page, to be confirmed by Kalli (OUTCONF-1).
+- Three papers no longer counted twice or thrice: the Press Herald, the Castine Patriot, the Boothbay Register / Wiscasset Newspaper.
+- Maine: 97 outlets placed, 405 listed, no towns disagreeing; Portland 19. Tests 1111.
+
+Decided for the rest of Sprint 06 (Kalli): three zips, each designed in a short consultation and built whole: the measures (steps 4 to 7a), the standard (steps 9 to 11), the door (CARRY-1, publish, Docker). Ownership concentration exists; anything Cision-derived may be left out if its terms say no.
+
+Next: zip 1's consultation, the measures.
