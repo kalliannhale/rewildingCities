@@ -5,21 +5,22 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-16, at the hand-off closing Sprint 06's fifteenth session (zips 2 and 2b built and run: the standard, every place's profile, the GeoLibrary license).
+**Updated:** 2026-11-16, at the hand-off closing Sprint 06 in its sixteenth session (zip 3a built and run: Cision out by name, tiers and terms for outlets and clerks, the outlet and clerk counts and the clerk office points allowed at public). Sprint 07's audit is below; Sprint 07 is next.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 15's commits: b3426b1 (zips 2 and 2b, 27 files, D-270 to D-293), then its ledger block (D-283 to D-293) and this state. Session 14's: its ledger block and state, no code.
-- Tests: `python -m pytest -q -rs | tail -3`. 1,221 passed at zip 2; zip 2b's run passed, its count not recorded (expect about 1,228: seven tests added). New in session 15: tests/test_verdicts.py, test_standard.py, test_loam_records.py, test_place_profile.py, test_license_geolibrary.py; test_count_located.py and test_place_reading.py moved. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
-- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes, a progress line every 50, into plots/maine/.data/place_profile_profiles.json and its receipt; `--place AUTHORITY:CODE` prints one and writes nothing. 36 of 58 receipts may leave at public; withheld from profiles: the outlet counts and the clerk counts only.
-- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-294. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
-- **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 16's commits: 825e32e (session 15's hand-off, committed at session 16's start), 1497bfa (zip 3a and its two review fixes, 17 files, D-294 to D-300, its ledger block inside), then this state. Sprint 06's progress report closes with the Master Plan's refresh (it reads field-guide/docs/progress/information/sprint-06.md first). Session 15's: b3426b1 (zips 2 and 2b).
+- Tests: `python -m pytest -q -rs | tail -3`. 1,247 passed at zip 3a. New in session 16: tests/test_tiers_and_terms.py (the real gate on the real seeds and manifest), with new tests in test_gate.py (requires_tier), test_outlet_sources.py (use) and the outlet and clerk preparation tests. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
+- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes, a progress line every 50, into plots/maine/.data/place_profile_profiles.json and its receipt; `--place AUTHORITY:CODE` prints one and writes nothing. The build reads 21 receipts and withholds none at public (session 16); the outlet counts, the clerk counts, the clerk office points and place_profile_profiles all judge allow.
+- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Kalli asked (session 16) that it be refreshed at Sprint 06's close: a delivery-cut tab, the decision table as a pointer to the ledger, Sprint 06's close. Not yet done at this hand-off.
+- Next decision ID: D-301. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- **Sprint 06 is closed** (Kalli, session 16), its order below. Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check. Progress: field-guide/docs/progress/information/sprint-06.md.
+- **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code; the library's account is set aside.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
 - The Section 203 release lives at plots/maine/.data/sec203_puf_2021_12_01.zip (sha256 2d6b21e9...22d6, cp1252 though documented as ASCII) and the PIAAC Skills Map workbook at plots/maine/.data/SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx (sha256 b6745055...34b5, downloaded 2026-11-15). Both are U.S. government works.
 - The Census key is set in the rewilding env (`conda env config vars`), loaded on activate; it was pasted into chat and shell history on 2026-11-16, so it is replaced (KEY-1).
-- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Both are terms_unknown: nothing derived is published until E911-1 and the list's terms are read. The 911 file holds home addresses; it never leaves .data.
+- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Since D-298 and D-299 the list is factual_directory and the 911 file maine_geolibrary_public, both public; the courtesy ask to the GeoLibrary goes in the wrap-up. The 911 file holds home addresses; it never leaves .data, and the door publishes receipts' artifacts only, never a manifest dataset (a test to write with the door, Sprint 08).
 
 ## Sprint 06 ~ the place profile and the standard
 
@@ -27,7 +28,7 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257. **In session 13:** D-258 to D-269. **In session 14:** D-270 to D-282. **In session 15:** D-283 to D-293, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257. **In session 13:** D-258 to D-269. **In session 14:** D-270 to D-282. **In session 15:** D-283 to D-293. **In session 16:** D-294 to D-300, below.
 
 **Order of work, and where each step stands:**
 
@@ -81,6 +82,8 @@ is fixed.
 **Outlets asked closed, local news, where (session 11, D-247 to D-252).** prepare_news_outlets now asks each outlet three things in order. Closed: operating_vocabulary, and a status written in another column through operating_elsewhere (the ecosystem file writes CLOSED in its Medium, D-251). Local news: source_kinds declares Local News Catalyst, the ecosystem file and Easton local_news_lists, whose membership is the evidence, and both Cision pulls media_databases (D-247); an outlet only a database holds is judged by media_database_types (all 20 Cision types declared, two axes, medium and audience; an undeclared type refuses; 0 declared unknown) under the choice database_alone, Maine: newspapers; a program never counts (D-248). The medium is judged before the town, so no review can place an outlet listed for its medium. Where: a named town wins; a name in statewide_names places an outlet in the state alone, scope state, one edge (D-249: Amjambo Africa); else town_fallback, Maine: office_town_unshared, where an office address two or more outlets give, compared as normalized street plus five-digit ZIP with leading zeros a spreadsheet dropped given back, is a publisher's office and the outlet is listed office_shared (D-250). Every listing declares source.collected "2026-08" in the manifest and the count's time reads "collected 2026-08", held there by a test (D-252, SRCFACT-2). Each outlet row carries scope, vouched_by, database_class and medium_as_written. Maine: 90 placed (70 named_town, 19 office_town, 1 named_state; 74 on a list's say, 16 Cision newspapers alone), 435 listed (327 medium_not_counted, 32 office_shared, 23 ceased, 23 medium_unknown, 19 no_town_given, 6 no_town_match, 3 towns_disagree, 2 ambiguous_town), 525 in all. Portland 18 (17 named), Cumberland County 29 of 90: what concentration remains is the lists' own. Turner's ten Fern Street weeklies and the Maine Trust for Local News' Portland address (20 outlets) are publishers' offices; the 32 office_shared hold publishers, one paper listed several times (Lincoln County News four times) and sections listed as outlets (The Maine Campus), which is OUTREV-1's queue and EDITION-1's question.
 
 **Outlets read whole and reviewed (session 12, D-253 to D-257).** group_outlet_records now reads a trailing ", The" as the name written inverted (D-253: Cision's "Star-Herald, The"), and joins one source's records alike in name key, url key and office address as one record written twice, its key held once, every copy saying same_record_as (D-254). The office address comparison has one home, group_outlet_records.office_key, which prepare_news_outlets imports. Before D-254, Lincoln County News stood as six groups: Cision's copies held its key twice, so the key joined nothing for anyone (D-202). A reviewed merge may hold one source twice only when it says editions, in words (D-255); a review names a record written twice once. office_reads (keep, town, state, list with a reason) read an outlet placed by its office town alone; an unread one stays placed, flagged office_town_unread (D-256). A town review may say state: true in place of a town_code (D-257). seeds/crosswalks/outlets/outlet_reviews.yml holds 5 merges (the Press Herald with its Sunday edition and site; The County with the Star-Herald, folded in January 2025; the Castine Patriot's two list records; Maine Wire twice; the Boothbay Register / Wiscasset Newspaper, one paper from 97 Townsend Ave.), 23 towns and 12 office reads. Claude read them from cited pages; read_by says so, and Kalli confirms each (OUTCONF-1). Every reading places an outlet where its newsroom, office or broadcast license is; the towns it covers stay SERVES-1's. Three papers had been on the map more than once (the Press Herald, the Castine Patriot, the Boothbay Register in three towns), and Cision lists papers that no longer stand apart (the Coastal Journal, into The Forecaster; The Free Press, into the Midcoast Villager). Maine: 97 placed (65 named_town, 26 reviewed, 5 office_town, 1 named_state), 405 listed (326 medium_not_counted, 23 ceased, 23 medium_unknown, 21 office_shared, 8 office_read_listed, 4 no_town_given); 4 edition merges; 4 office towns unread (The Cryer, USM's Free Press, Rolling Thunder Express, Twin City Times); no towns disagreeing. Portland counts 19.
+
+**Zip 3a, counts go public (session 16, D-294 to D-300).** Cision's two exports are their own type, commercial_outlet_listing, excluded, and maine_outlet_carriers stacks only the three lists, named in stack_outlet_sources' use parameter: Cision stays declared in the shared crosswalk and is left out by name (D-294). Choices database_alone none and town_fallback none. outlet_listing, outlet_stack, outlet_groups and news_outlet are aggregate-only (D-295, D-297); indicator_values and place_profile declare aggregates: true (D-296: rule 5's way out had been unreachable). The clerk types are public (D-297). Terms: the 911 file maine_geolibrary_public (D-298); the clerk list factual_directory and Easton's and LNC's lists factual_compilation_counts, which carries requires_tier: aggregate-only, enforced in rule 10 (D-299, Kalli's readings of Feist, not a lawyer's); the ecosystem file project_own_work (D-300). Reviews: Cision's 10 office reads and Rumford Falls Times removed; Maine Morning Star became a town review (state); The County's merge keeps editions (the ecosystem file lists both papers); the Castine Patriot's merge removed (its records now join by name). Maine: 90 outlets placed, 12 listed (10 no_town_given, 2 ceased). Named outlets wait for OUTCONF-1 and the lists' makers' word: every outlet type in the lineage binds, so the lists' tiers and terms move too. The map's outlet layer is two artifacts joined at the town: the counts (aggregate, leaving now) and the listing (news_outlet, leaving later), one GeoJSON display copy per town marker (session 16, for zip 3b).
 
 **Zip 1, the measures (session 13, D-258 to D-269).** Ratio margins are derived inside derive_indicator, in R and in preview.py, the arithmetic's one Python home canopy/indicators/margins.py, held equal by the oracle (D-258): never as a second indicator_values artifact, which loam would refuse (D-172). Every ratio declares relation: proportion or ratio (D-259), by the Census's 2025 statistical testing instructions: ratio fallback flagged in moe_formula, sums by root-sum-of-squares, a controlled part's margin 0; a proportion of exactly 1 is not_derived (D-269). A count kind adds and subtracts cells (D-260). The language family is C16001 at state, county, cousub and both chambers, 26 indicators in seeds/indicators/language.yml (D-261); households_without_broadband is cii_broadband's own complement (D-262). Section 203's 2021 public use file is read as published into section203_records (D-263): 516 Census towns matched, 12 of ours without a record, Penobscot Indian Island (57936) held whole across its county line, and six Census towns no longer ours (Atkinson, Bancroft, Cary, Codyville, Drew, Magalloway: deorganization between the maps) held under census_s203_mcd (D-267); five tribal areas under Census's own codes, attached to no place (D-264); 0 covered. Literacy is literacy_estimates from the Skills Map workbook (D-265, D-268): 17 rows, none flagged, left_out as NCES computes it, modelled partly from race, poverty and education, never combined with its predictors. First read: Aroostook's French, Haitian or Cajun share is 2.29% plus or minus 0.40 of persons 5 and over, about 85% of its limited English and about 1,465 persons; Androscoggin's limited English is 3.35%, two thirds in other groups.
 
@@ -269,6 +272,18 @@ is fixed.
 | D-292 | Every level is profiled: Contract 4's six first, then the MEGIS divisions, as groundwork, saying so |
 | D-293 | The places and edges receipts are inputs of every profile; when withheld, the whole file cannot leave, said |
 
+## Decided in session 16
+
+| ID | One line |
+| --- | --- |
+| D-294 | Cision is commercial_outlet_listing, excluded; maine_outlet_carriers stacks the three lists by name (use); database_alone none, town_fallback none; Cision's reviews removed (Kalli's cut) |
+| D-295 | outlet_listing is aggregate-only |
+| D-296 | indicator_values and place_profile declare aggregates: true |
+| D-297 | news_outlet, outlet_stack, outlet_groups aggregate-only; municipal_clerk_office, municipal_clerk_list, address_point_release public; the 911 release never a publish target |
+| D-298 | The 911 file takes maine_geolibrary_public by D-290's reading; courtesy ask in the wrap-up |
+| D-299 | factual_directory (every member, no selection: the clerk list, public) and factual_compilation_counts (a chosen list: counts only, requires_tier aggregate-only, enforced in rule 10); Kalli's readings of Feist |
+| D-300 | The ecosystem file is project_own_work, credited to the project; to confirm with Dr. Mittal |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.4 (D-281, carrying D-258, D-263, D-270 to D-293).
@@ -348,6 +363,10 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | An office read applies only to an outlet placed by its office town; an unread one says so | prepare_news_outlets; tests/test_news_outlets.py (D-256) |
 | A town review names a town or the state, never both | prepare_news_outlets; tests/test_news_outlets.py (D-257) |
 | Every review is keyed by source and name as written and names its evidence, day and reader | tests/test_outlet_carriers_preparation.py |
+| A run leaves a declared source out only by naming the ones it uses | stack_outlet_sources.read_use; tests/test_outlet_sources.py (D-294) |
+| Maine's outlets never stack a commercial_outlet_listing, and no review rests on a source the run leaves out | tests/test_outlet_carriers_preparation.py (D-294) |
+| A term with requires_tier holds only for a dataset whose own type declares that tier; a requires_tier that is no tier refuses at load | gate.decide, records.load_licenses; tests/test_gate.py (D-299) |
+| Outlet counts and profiles leave; named outlets and anything with Cision in its lineage do not; a clerk office leaves as a point | tests/test_tiers_and_terms.py (D-294 to D-300) |
 | Every ratio declares its relation; a count adds and subtracts declared cells | registry; tests/test_indicators.py, tests/test_derived_margins.py (D-259, D-260) |
 | R and Python derive the same margins to the last bit | margins.py, derive_indicator.R; tests/test_derive_indicator_oracle.py (D-258) |
 | A negative radicand takes the ratio formula and says so | tests/test_indicator_preview.py (D-259) |
@@ -372,19 +391,20 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
-| OUTCONF-1 | Before outlets publish: Kalli confirms the Claude-read reviews (read_by) and decides: student papers listed; the Castine Patriot and the Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Kennebunk Post, South Portland Sentry and Peaks Islander still publish; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Unread office towns: The Cryer, USM's Free Press, Rolling Thunder Express, Twin City Times. Listed with no reading: The Local News Online, The Rising Tide, two records naming several outlets |
-| E911-1 | The 911 FGDB's page says No License Provided, Request permission to use: ask the publisher before anything derived is published; the clerk list's terms are unread too |
+| OUTCONF-1 | Before named outlets publish (counts already may): Kalli confirms the Claude-read reviews still in the seed (read_by): the Castine Patriot and the Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Peaks Islander still publishes; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Cision's reads left with Cision (D-294). With the makers' word on Easton's and LNC's lists, named outlets move their tiers and terms (D-297, D-299) |
+| WATERFRONT-1 | The Working Waterfront's reading (Rockland, where the Island Institute makes it) waits for a town review naming Rockland's code; until then it is listed no_town_given |
 | TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
-| OWN-1, SRC-4 | OWN-1: ownership concentration exists (Kalli, session 12); confirm against the ledger's OWN-1 and close it. SRC-4: every outlet source's terms read before outlets publish. Kalli (session 12) accepts leaving out anything Cision-derived: then database_alone none, town_fallback none, and the reviews resting on Cision records revisited (office reads and Rumford Falls Times would refuse; merges keep their list records) |
+| OWN-1, SRC-4 | OWN-1: ownership concentration exists (Kalli, session 12); confirm against the ledger's OWN-1 and close it. SRC-4 narrowed to named outlets (D-299, D-300): Jo Easton's and Local News Catalyst's word, asked in the wrap-up (to Molly Meller or with the professor's delivery package) |
 | P-6 | The FCC benchmark, with 7b: 100/20 terrestrial is declared (D-271); the values wait |
 | CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
-| Tiers | Declared for schools, health centers, section 203, literacy and located_in_edges (D-283). Still none, by design until SRC-4 and E911-1: news_outlet, outlet_stack, outlet_groups, outlet_disagreements, municipal_clerk_office, municipal_clerk_list, address_point_release; with NOTE-3, D-173's review and TIERREAD-1 |
+| Tiers | Declared in session 16 for the outlet and clerk types (D-297); still none: outlet_disagreements and owner_crosswalk, with NOTE-3, D-173's review and TIERREAD-1 |
 | EDGE-NOTE-1 | located_in_edges receipts do not name their rows' notes, so the libraries', schools' and health centers' edges fail rule 9: the carriers map cannot leave until build_located_in writes row_context_notes (D-291's twin) |
 | FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
 | SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration |
 | LAYER-1, GJSON-1, D-157 | The publish door's items |
-| DEPS-1, OUT-REG-1 | The Docker build: locust not installed; stack_outlet_sources' registry entry names Maine's listings |
+| DEPS-1, OUT-REG-1 | The Docker build: locust not installed; stack_outlet_sources' registry entry names Maine's listings (Cision's two optional since D-294) |
 | RECEIPT-1 | Rerun maine_counties, maine_county_units, maine_governance_units if profiles read them through $loam. |
+| E911-1 | Publishing no longer waits on it (D-298); the courtesy ask to the GeoLibrary goes in the wrap-up package |
 | TRIBE-7 | The notes' wording is drafted (D-233); it is shown as a draft until the nations' terms settle it, never withheld for want of them |
 
 ### After delivery
@@ -546,6 +566,9 @@ Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-2
 - loam views only indicator_values; literacy_estimates and section203_records have no view until D-275 is built.
 - A shell export pasted across two lines exports a different name: check with `python -c "import os; print(bool(os.environ.get('CENSUS_API_KEY')))"`.
 
+- A declared outlet source is left out of a run by stack_outlet_sources' use, never by dropping its input: the stack refuses a used source with no input and an input it does not use (D-294). maine_outlets still stacks all five and is stale; nothing reads it.
+- `"cision"` in a carriers receipt is expected: the shared declaration rides in as params and the stack warns which declared sources it left out. Read input types and data_resolution for lineage, never a text search.
+- A merge needed only because one source held a record twice refuses as no longer needed once that source leaves (D-240): remove it then, never before.
 - The profile command prints its progress to stderr and its summary to stdout; `> file` keeps only the summary. `--place` prints one profile's JSON and writes nothing.
 - The gate reads the manifest's licenses at judging time: a license change needs no rerun; a receipt's own metadata does.
 - A level outside Contract 4 is profiled with place.level_note (D-292); a test counting profiles counts every level.
@@ -556,54 +579,37 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 ## Starting the next session
 
-Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for the reads zip below.
+Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
 
-**Next: zip 3, the door,** a consultation then one build. It holds: the publish door (D-157, LAYER-1, GJSON-1) with the profile's allow record decided there (D-274); CARRY-1 (a point's adjectives and a count's note reach the map) with EDGE-NOTE-1; the Docker build (DEPS-1, OUT-REG-1); NOTHR-1, and PROF-1 if cheap. OUTCONF-1 and SRC-4 stand before anything outlet-shaped publishes; E911-1 before anything clerk-shaped. Step 7b (the FCC map, P-6) only if the window allows.
+**Next: Sprint 07, storage outside AGOL.** bash-win built the safety rails (commits 5cc2108, 51811da, 2026-11-14) and applied a staging stack on his own account; Kalli finishes the rest (session 16). Decided in session 16, to be recorded as D-301 onward at Sprint 07's first ledger block (grep first): Kalli's own account, applied fresh (MP-70: canonical files are citations, not a helper's); us-east-1 (Kalli's 11/01 choice; staging/variables.tf defaults to us-east-2, drift); CloudFront in front of the bucket with Block Public Access kept on (bash-win's lean, which Claude adopted over a public prefix); GeoParquet canonical, GeoJSON display copies, GeoPackage only on request; referenced GeoJSON layers for December, a Parquet feature layer as a recorded read after; tests reach S3 through an injected fake client, no moto, boto3 added to environment.yml; old harvests are regenerated through the canonical write, never moved; Terraform state local on Kalli's machine while she alone applies.
 
-The reads, as one zip. A "name not matched" line is pasted back, never guessed around.
+**Sprint 07's audit (session 16), what is left:**
 
-```
-pats='publish|latch|LAYER-1|GJSON-1|D-157|_points_sql|carriers|located_in|row_context_notes|check_envelope|judge_receipts|place_profile|no_threshold|locust|stack_outlet_sources'
-fixed=(
-field-guide/docs/contracts/01-tiers-and-the-gate.md
-field-guide/docs/contracts/03-geography-graph.md
-field-guide/docs/contracts/04-place-profile.md
-canopy/expose/gate.py
-canopy/expose/check.py
-canopy/expose/records.py
-canopy/cli/__init__.py
-canopy/cli/map.py
-canopy/cli/profile.py
-canopy/loam/graph.py
-canopy/wonder/place.py
-canopy/wonder/verdicts.py
-canopy/api/app.py
-canopy/envelope.py
-soil/_registry.yml
-soil/transform/build_located_in.py
-soil/transform/count_located.py
-seeds/licenses/licenses.yml
-seeds/notes/notes.yml
-seeds/schemas/envelope.schema.json
-seeds/schemas/provenance.schema.json
-seeds/schemas/semantic_types.yml
-seeds/schemas/domains/information.yml
-plots/maine/manifest.yml
-pyproject.toml
-environment.yml
-docker-compose.yml
-)
-tests=( ${(f)"$(git --no-pager grep -l -E "$pats" -- tests)"} )
-code=( ${(f)"$(git --no-pager grep -l -E "$pats" -- canopy soil roots garden)"} )
-docker=( ${(f)"$(git --no-pager ls-files | grep -i -E 'dockerfile|dockerignore')"} )
-files=( $fixed $tests $code $docker )
-typeset -U files
-print "count: ${#files}"
-print -l $files
-rm -f ~/Downloads/session16_read.zip
-zip -q ~/Downloads/session16_read.zip $files
-unzip -l ~/Downloads/session16_read.zip | tail -1
-```
+| Step | Where it stands |
+| --- | --- |
+| Budget, tags, versioning, force_destroy off, TLS-only, SSE (SSE-C blocked), KMS access logs, account-regional bucket name, provider 6.72.0 locked | done (staging) |
+| A least-privilege identity for the canonical write (put and get under harvests/, never delete) | missing: zip 7a |
+| One stack (D-3) | three: canopy/terraform/storage.tf (the per-city bucket, beside staging/, would create rewilding-nyc-cache), staging/, and terraform/ (December 2025: force_destroy true, versioning off, AWS Academy's LabRole, us-east-1, provider 5.x). Zip 7a: staging moves up, storage.tf deleted, terraform/ recorded as an experiment and removed |
+| The budget | account-wide: fine on Kalli's account; on a shared account it would need a Project tag filter |
+| Lifecycle: noncurrent versions expire after 90 days | safe only if a version key is never overwritten: the writer puts with a condition (If-None-Match), so only current's own history expires |
+| Public reach (O-1) | none yet: CloudFront with origin access and CORS for ArcGIS, zip 7a |
+| canopy/aws/s3.py, batch.py, docker-compose.yml | 0 bytes: the canonical write, zip 7b |
+| The four tests | none exist: zip 7b |
+| The bucket name | bucket.tf writes the full -account-region-an suffix itself; whether the provider adds it again is unread: read terraform plan's name before applying |
+| The image | the whole environment (PyTorch, torchvision, OpenCV) against D-5's reviewed subset; lacks boto3 and pytest; DEPS-1; forced amd64 |
+| Reading by URL in Map Viewer and Experience Builder | Kalli, as the ArcGIS admin, after 7b |
+| DuckDB reads the canonical GeoParquet through CloudFront | zip 7b, then Kalli's run |
+
+Also from bash-win's log, not Sprint 07's and not on main: the API split (public_routes.py, production.py, tests/test_api_route_surface.py), decided 2026-11-14, perhaps on a branch; a slim Python-only API image (his option 2) beside the research image; E5's quota question for the NYC Batch pilot, unanswered. canopy/providers/s3.py is ESA WorldCover's reader, a namesake of canopy/aws/s3.py, never the canonical write.
+
+**Zip 7a's consultation needs from Kalli:** `terraform -version` and `aws sts get-caller-identity` on her machine; her budget alert address. **Its reads:** the staging .tf files and the December stack (read in session 16, sprint07_read.zip; reread if changed), Contract 2 (read), and terraform plan's output after the build. **Then zip 7b**, the canonical write, after rereading canopy/envelope.py and canopy/expose/check.py for how the allow record attaches. **Then Sprint 08, zip 3b, the door:** CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the profile's allow record (D-274), the test that no manifest dataset is ever a publish target, DEPS-1 and OUT-REG-1, NOTHR-1, PROF-1 if cheap. Its reads are session 15's zip command, kept in the ledger's session 15 block and in git history (825e32e).
+
+## Session 16's notes (zip 3a, built and run; Sprint 07 audited)
+
+- What went right: the reads came before code twice (zip 3a's surface, then the ledger's own shape); the gate's three locks were found by reading decide() rather than by a failed publish; every refusal the run gave was loud and named its review.
+- Wrong hypotheses: that Cision alone made The County's merge need editions; that named outlets would be one tier change; that a read after a failed run shows the new run (it showed the last good one, twice).
+- Lessons: a read reports whatever ran last, so check a receipt's time against the run first; keep a merge whose need is in doubt, since it refuses loudly when no longer needed; a stack that refuses a missing input needs a named way to leave a source out.
+- Session shape: one long chat held the plan, the Sprint 07 audit, zip 3a's consultation, build, two fixes and commit. The hand-off rule stands: a long build starts fresh from state.md.
 
 ## Session 15's notes (zips 2 and 2b, built and run)
 
