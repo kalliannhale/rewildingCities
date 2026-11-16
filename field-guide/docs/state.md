@@ -5,14 +5,14 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-16, at the hand-off closing Sprint 06's thirteenth session (zip 1's consultation and build).
+**Updated:** 2026-11-16, at the hand-off closing Sprint 06's fourteenth session (zip 2's consultation, the standard: decisions only, no code).
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 13's commits: ca48e63 (the consultation's ledger, D-258 to D-266), c70bee0 (zip 1, 38 files), ee3f3a5 (the build ledger, D-267 to D-269), the ACS fetch's manifest and changelog, and this hand-off (progress report, state).
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 13's commits: ca48e63 (the consultation's ledger, D-258 to D-266), c70bee0 (zip 1, 38 files), ee3f3a5 (the build ledger, D-267 to D-269), the ACS fetch's manifest and changelog, and the hand-off (progress report, state). Session 14 committed one thing: its ledger block (D-270 to D-282) and this state. No code moved, so the tests and receipts are session 13's.
 - Tests: `python -m pytest -q -rs | tail -3`. 1166 passed, no skips, at c70bee0 (session 13: tests/test_derived_margins.py, test_section203.py and test_piaac_skills_map.py new; test_indicators, test_indicator_preview, test_derive_indicator_oracle, test_declaration_hash, test_indicator_references, test_place_reading, test_district_values and test_honest_values moved with D-258 to D-262). The full suite runs about two minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-270. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-283. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
@@ -26,7 +26,7 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257. **In session 13:** D-258 to D-269, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257. **In session 13:** D-258 to D-269. **In session 14:** D-270 to D-282, below.
 
 **Order of work, and where each step stands:**
 
@@ -60,10 +60,13 @@ is fixed.
  8  outlets reconciled                        mostly    stacked, grouped, reviewed (D-253 to D-257);
                                                         ownership concentration exists (Kalli,
                                                         session 12); check OWN-1 in the ledger
- 9  profile.py + the standard seed            started   place.py reads exact counts apart and
-                                                        carries each value's role (D-223)
-10  pairing table (P-2)                       not yet
-11  profiles for every place                  not yet
+ 9  profile.py + the standard seed            decided   D-270 to D-282 (session 14); built in
+                                                        zip 2; place.py reads exact counts apart
+                                                        and carries each value's role (D-223)
+10  pairing table (P-2)                       research  cited research owed, then Kalli's table;
+                                                        part 6 may ship present but empty, its
+                                                        reason said (Kalli's cut to make)
+11  profiles for every place                  not yet   zip 2, by the profile command (D-274)
 ```
 
 **Schools, done (session 7).** Placed from NCES EDGE Public School Locations 2024-25 (D-230): one national release zip (sha256 9dc51ecd...cffb288, in the manifest's known_issues), its headerless text table read through seeds/crosswalks/schools/nces_edge_geocode.yml. 598 schools placed, none listed; the three Wabanaki community schools (OPSTFIPS 59, the Bureau of Indian Education) placed and flagged, one located_in edge per drawer each, Indian Island School in 2301957936 (the Penobscot County piece) and 2760R. Maine counts 598, 0.439 per 1,000 of 1,362,359 persons; Penobscot Indian Island Reservation counts 1 among 370, shown beside its note since D-233. Maine DOE's 13 exports carry no ID and no school's coordinates, so they place nothing; their name lists may serve as a check later (seeds/sources/maine_doe_schools.yml, an export source: only our copy is evidence). MEGIS's school layer carries no state or NCES school ID either. The EDGE characteristics layer (status, grade span) could not be downloaded; the CCD directory, joined on NCESSCH, is in reserve if the DOE check needs the state school ID (its public-use terms limit use to statistical purposes).
@@ -82,20 +85,20 @@ is fixed.
 
 **Tribal areas, counted beside a note (session 8, D-233).** All three carriers count the 8 Census tribal areas, each row carrying context_note: carrier_unseen_on_nations_land (libraries, health centers: all zeros) or carrier_seen_on_nations_land (schools: Indian Township, Pleasant Point and Penobscot each count 1). The notes' words are Kalli's DRAFT in seeds/notes/notes.yml, waiting on the nations' terms (P-8). Four trust lands hold 4 to 202 persons, so their rates are unstable; the count and persons travel with each rate.
 
-**The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 has changed three rows' status):
+**The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 changed three rows' status, session 13 acquired three, session 14 set their standard):
 
 | Barrier | Indicators | Source | Grain | Status |
 | --- | --- | --- | --- | --- |
-| Not in the right language | limited-English persons by language; safe-harbor languages; VRA section 203 coverage | ACS language-by-ability tables; DOJ LEP guidance (2002); Census section 203 file (2021) | town | acquirable |
-| Requires digital access | households with no internet subscription; no service at the FCC benchmark | ACS; FCC National Broadband Map | town | ACS acquired as a rate; counts and FCC acquirable |
-| At the wrong literacy level | adults at or below Level 1 | NCES PIAAC Skills Map (pooled 2012/14/17) | county, borrowed on towns | acquirable |
+| Not in the right language | limited-English persons by C16001 group (26 indicators); limited-English households; section 203 coverage | ACS C16001 at five levels (D-261); DOJ 2002 safe harbor as our own line (D-271); Census section 203 file (2021, D-263) | every level | acquired |
+| Requires digital access | households with no internet subscription (the judged count, D-262, D-272); the rate; no service at the FCC benchmark | ACS; FCC National Broadband Map | count at every level; rate at town and district | ACS acquired; FCC acquirable (7b) |
+| At the wrong literacy level | adults 16 to 74 at or below Level 1 | NCES PIAAC Skills Map (pooled 2012/14/17, D-265) | county and state, borrowed elsewhere (D-276) | acquired |
 | Lacking cultural cues | languages spoken against languages carriers publish in | ACS and our own observation of outlets | town | needs our observation (OBS-1): no listing carries language |
 | Behind a paywall | share of local outlets free to read | our own observation (OBS-1), P-3 | town | needs our observation: no listing carries paywall status |
 | Outdated | outlet publishing frequency; observed last post | Cision, the ecosystem file, Easton (frequency); Cision's Still Operates? (last post) | town | acquirable from the stack |
 | Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA, the Secretary of State's clerk list through Maine's 911 points, the outlet listings by town (done) | every level; outlets at town, county and state | libraries, schools, health centers, clerks' offices counted (D-209, D-230, D-232, D-239, D-240), outlets by town (D-246), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
 | Not from a trusted source | relational hubs, aggregate-only | consent-governed | as consented | needs_consent (Sprint 16) |
 
-**Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-8 (section 203 on Wabanaki places; on the nations' terms). P-7 and P-9 are closed.
+**Still open in Contract 4:** P-2 (pairing table), P-3 (free outlet), P-6 (FCC benchmark, with 7b), P-8 (section 203 on Wabanaki places; on the nations' terms). P-1 and P-5 closed in session 14 (D-271); P-7 and P-9 before.
 
 ## Decided in session 1
 
@@ -231,9 +234,27 @@ is fixed.
 | D-268 | Literacy is its own artifact, literacy_estimates, read by zip 2's profile |
 | D-269 | A proportion of exactly 1 is not_derived |
 
+## Decided in session 14
+
+| ID | One line |
+| --- | --- |
+| D-270 | The standard lives in seeds/standards/information_barriers.yml, its shape in seeds/schemas/standard.schema.yml, generic so another domain can declare its own. Each barrier lists sides; a side has a kind (universal, trigger, none), a statement, a source and who declared it, and names the indicators or artifact measures it judges. Barrier membership has its one home there; the registry keeps only role. The pairing table (P-2) is its own seed |
+| D-271 | P-1, row by row (P-1 and P-5 closed). Language trigger: the DOJ 2002 safe harbor as rewildingcities' own line, rescinded 2025-03-21, per C16001 group, residents 5 and over: translate at 1,000, or at 5% with 50 or more; written notice of free interpretation at 5% under 50; else nothing written. Section 203 as published, its four-group limit said. Language universal (P-5): every limited-English resident, our line, UNESCO's 2003 multilingualism Recommendation as its principle. Digital universal: every household, the ITU and UN Envoy 2030 household target, the subscription-versus-access gap said. FCC 100/20 terrestrial declared, acquirable until 7b. Literacy universal: every adult 16 to 74 at Level 2 or above, UIS's level for SDG 4.6.1, our line beyond target 4.6's own words. Cultural cues, paywall, outdated, where people look, trusted source: none |
+| D-272 | A universal side is judged once, on its left_out count against zero: below when the count less its margin is above zero, within_margin otherwise; meets is unreachable for an estimate, and says so. Literacy by its credible bounds. The side's other indicators carry judged_on, naming the count. D-269's proportion of 1 never reaches a verdict |
+| D-273 | Trigger verdicts: crosses, within_margin, does_not_cross, cannot_judge, margin-aware per group; the safe harbor says which tier. A published determination's verdict is as_published: the publisher decided it, we report it. D-263 stands: no verdict of ours rests on section 203's margins |
+| D-274 | Profiles are built by a canopy command, never a sows run ($loam names one artifact, D-163; values live in many receipts): one place_profile artifact with its own receipt, listing every receipt it read. place_profile is tier public (Kalli); the gate binds its whole lineage. The profile's own allow record is decided at the publish door (zip 3), never written inside the file it judges; part 5 carries its inputs' refusals |
+| D-275 | loam gains views over the literacy_estimates and section203_records receipts' files, keyed by (unit_authority, unit_code), each row naming its receipt; never through place_values (D-268 stands) |
+| D-276 | borrowed_from is a list: every coarser place a value comes from, each with its share of residents from the graph's edges (residents, never adults 16 to 74); no verdict and no left_out on a borrowed value |
+| D-277 | An uncertainty's confidence comes from its indicator's declared uncertainty (acs_moe: 0.90), held once; a row's own confidence wins (literacy's 0.95) |
+| D-278 | left_out means the people short of a universal line, everywhere a reader sees it; place.py's towns-out-of-range property becomes out_of_range (two lines in test_place_reading.py); graph.py's report key stays |
+| D-279 | cii_rent_burden, cii_no_vehicle and their cii_pub twins take role need (Contract 4 part 1; neither is an IFL barrier). Only labels and the carriers view read role; the hashes move, so the cousub, district and county runs and the county standings rerun, no fetch |
+| D-280 | Part 1's population is the 2020 Census count from the block spine, what every per_1000 divides by; the households' source is read in the build before it is chosen |
+| D-281 | Contract 4 moves to draft 0.4 in zip 2, carrying D-258, D-263 and D-270 to D-280 |
+| D-282 | Part 4 pairs one measure only: CII's average literacy score and PIAAC's share at or below Level 1 are different measures, shown side by side in the literacy family, never as a disagreement |
+
 ## Contracts
 
-field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
+field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3, moving to 0.4 in zip 2 (D-281).
 
 ## Where invariants are held
 
@@ -330,8 +351,8 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | E911-1 | The 911 FGDB's page says No License Provided, Request permission to use: ask the publisher before anything derived is published; the clerk list's terms are unread too |
 | TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
 | OWN-1, SRC-4 | OWN-1: ownership concentration exists (Kalli, session 12); confirm against the ledger's OWN-1 and close it. SRC-4: every outlet source's terms read before outlets publish. Kalli (session 12) accepts leaving out anything Cision-derived: then database_alone none, town_fallback none, and the reviews resting on Cision records revisited (office reads and Rumford Falls Times would refuse; merges keep their list records) |
-| P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
-| P-5, P-6 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
+| P-2 | The pairing table: cited research first, then Kalli's table. Part 6 may ship present but empty, its reason said, if the window tightens (Kalli's cut) |
+| P-6 | The FCC benchmark, with 7b: 100/20 terrestrial is declared (D-271); the values wait |
 | CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
 | Tiers | Kalli's tier declarations: public_school, school_geocode_release, health_center_site, health_center_sites_snapshot have none and fail closed, as do session 4's types and the outlet and located_in types; with NOTE-3, D-173's review and TIERREAD-1 (get_tier reads `tier`, domain files declare resolution_tier) |
 | FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
@@ -376,6 +397,8 @@ Closed in session 11: MEDIUM-1 (D-247, D-248), OFFTOWN-1 (D-250), UNDATED-1 (D-2
 Closed in session 12: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257, the reviews seed). Opened: OUTCONF-1.
 
 Closed in session 13: P-7 (D-265). KEY-1 now carries the key's replacement.
+
+Closed in session 14: P-1, P-5 (D-271).
 
 ## Working agreement, as it stands
 
@@ -484,6 +507,11 @@ Closed in session 13: P-7 (D-265). KEY-1 now carries the key's replacement.
 - The Skills Map file writes Lit_P1, not LIT_P1; its State sheet carries fewer flag columns than its County sheet.
 - acs_state_2024 and acs_state_2024_language hold all 52 states: the API's state level cannot be narrowed; only Maine's row attaches.
 - macOS sed edits in place with `sed -i ''`.
+- A receipt is named for its step and output (`county_language_derive_values`), never its type: find receipts by the semantic_type inside them, never by a pattern on the type's name (session 14's first find missed ten).
+- Claude's sandbox python glob skips dot folders: `glob('**/*.json')` never sees `.envelopes`. Glob inside the folder.
+- `left_out` meant three things before D-278: towns out of a range (place.py), receipts out of a view (graph.py's report) and people short of a line (literacy). Read which before using the word.
+- CII's literacy is an average score; PIAAC's is a share at or below Level 1. Same subject, different measures (D-282).
+- loam views only indicator_values; literacy_estimates and section203_records have no view until D-275 is built.
 - A shell export pasted across two lines exports a different name: check with `python -c "import os; print(bool(os.environ.get('CENSUS_API_KEY')))"`.
 
 ## People
@@ -492,25 +520,102 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 ## Starting the next session
 
-Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next consultation needs.
+Upload this file only, with a first message like the one in the hand-off. Claude reads it whole, the retrospectives first, confirms, and asks for the reads zip below.
 
-**Next: zip 2's consultation, the standard.** Read first, per the session 13 rule: Contract 4 whole; canopy/wonder/place.py whole; loam's place_values and indicator_values views (canopy/loam/graph.py); the section203_records and literacy_estimates receipts and files; the envelope, method and experiment schemas; the seeds/ layout for a new standard seed; and every test touching read_place.
+**Next: zip 2's build, the standard,** in a fresh chat (session 13's lesson). Every design choice is decided (D-270 to D-282); the build reads before it writes. What Claude still owes before code: P-2's cited research, if part 6 is to be filled.
 
 ```
- zip 2  the standard   step 9 build_profile (D-197), six parts and Contract 4's tests,
-                       reading loam's values, section203_records and literacy_estimates;
-                       the standard seed (P-1, Kalli's table); step 10 the pairing
-                       table (P-2); step 11 every place's profile
- zip 3  the door       CARRY-1 (toggles and notes on the map), the publish door
-                       (D-157, LAYER-1, GJSON-1), the Docker build (DEPS-1,
+ zip 2  the standard   the standard schema and seed (D-270, D-271); loam's two new views
+                       (D-275); build_profile in canopy/wonder/profile.py, wrapping
+                       read_place (D-197), six parts, verdicts by D-272 and D-273,
+                       borrowed lists (D-276), confidence (D-277), out_of_range (D-278);
+                       the profile command and the place_profile type, tier public
+                       (D-274); the role change and its reruns (D-279); part 1's
+                       population (D-280); Contract 4 0.4 (D-281); Contract 4's tests
+ zip 3  the door       CARRY-1, the publish door (D-157, LAYER-1, GJSON-1) with the
+                       profile's allow record (D-274), the Docker build (DEPS-1,
                        OUT-REG-1); OUTCONF-1 and SRC-4 before anything outlet-shaped
                        publishes
  later                 step 7b, the FCC map (P-6), if the window allows
 ```
 
-P-1, researched in session 13, each row with its kind and source: language trigger, the rescinded 2002 DOJ safe harbor (5 percent or 1,000, rescinded 2025-03-21) only as rewildingcities' own declared line, never as law, and its universe (persons 5 and over) said; section 203 as published, its four-group limit in words, new determinations expected December 2026; language universal side (P-5), every limited-English person counted, no numeric source; digital access universal, every household online (ITU and the UN Envoy on Technology's 2030 targets); FCC 100/20 retained in FCC 26-55 with the long-term goal dropped, terrestrial only a declared choice (7b); literacy universal, every adult at PIAAC Level 2, UNESCO's fixed level for SDG 4.6.1, the target's own words promising all youth and a substantial proportion of adults; cultural cues, paywall, outdated, where people look and trusted source: none for now. Against a universal line every Maine county reads below, so left_out leads (literacy: about 9,800 to 30,000 adults per county). Aroostook's French group, about 1,465 persons, crosses the safe harbor's 1,000 and never section 203.
+The build's reads, as one zip. Session 14 read the contract, place.py, graph.py's value views, the registry and every indicator seed, $loam's resolution, the gate's design, both new receipts and files, and the eleven value receipts. Not yet read, and read before any code: the tests below, orchestrator.py, envelope.py, the schemas whole, readiness and possibility, the cli, the block spine, and the experiment and graph receipts.
 
-Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and names the one zip of reads the consultation needs.
+```
+pats='read_place|say_place|PlaceReading|place_values|indicator_values|section203_records|literacy_estimates|measuring|with_role|role|acquisition_gap|holdings_by_type|context_note|tribal_note|borrowed|left_out|verdict|households_behind|build_profile|place_profile|indicators\.margins|universes\.yml|acs_small_sample|cii_rent_burden|cii_no_vehicle|canopy\.cli'
+fixed=(
+field-guide/docs/contracts/01-tiers-and-the-gate.md
+field-guide/docs/contracts/03-geography-graph.md
+field-guide/docs/contracts/04-place-profile.md
+canopy/envelope.py
+canopy/wonder/place.py
+canopy/wonder/reading.py
+canopy/wonder/possibility.py
+canopy/cli/__main__.py
+canopy/cli/_common.py
+canopy/cli/_run.py
+canopy/cli/wonder.py
+canopy/loam/loam.py
+canopy/loam/graph.py
+canopy/loam/reach.py
+canopy/loam/readiness.py
+canopy/loam/freshness.py
+canopy/loam/edge_rules.py
+canopy/indicators/registry.py
+canopy/indicators/margins.py
+canopy/indicators/reliability.py
+canopy/expose/gate.py
+canopy/expose/records.py
+canopy/expose/check.py
+canopy/orchestrator/references.py
+canopy/orchestrator/orchestrator.py
+canopy/orchestrator/parsing.py
+canopy/vocabulary.py
+seeds/schemas/envelope.schema.json
+seeds/schemas/provenance.schema.json
+seeds/schemas/metadata.tabular.schema.json
+seeds/schemas/method.schema.yml
+seeds/schemas/experiment.schema.yml
+seeds/schemas/manifest.schema.yml
+seeds/schemas/semantic_types.yml
+seeds/schemas/domains/information.yml
+seeds/schemas/readme.md
+seeds/indicators/*.yml
+seeds/universes/universes.yml
+seeds/notes/notes.yml
+seeds/reliability/acs_small_sample.yml
+seeds/authorities/authorities.yml
+seeds/vintages/boundaries.yml
+garden/methods/index.yml
+garden/methods/information/*.yml
+plots/maine/manifest.yml
+plots/maine/preparations/*.yml
+plots/maine/experiments/*.yml
+soil/transform/build_block_spine.py
+soil/transform/build_places.py
+soil/transform/prepare_section203.py
+soil/transform/prepare_piaac_skills_map.py
+)
+tests=( ${(f)"$(git --no-pager grep -l -E "$pats" -- tests)"} )
+code=( ${(f)"$(git --no-pager grep -l -E "$pats" -- canopy soil roots garden)"} )
+recs=( ${(f)"$(grep -l -E '"semantic_type": ?"(indicator_values|places|place_edges|literacy_estimates|section203_records|standings)"' plots/maine/.envelopes/*.envelope.json)"} )
+files=( $fixed $tests $code $recs plots/maine/.data/literacy_estimates_estimates.csv plots/maine/.data/section203_records_records.csv )
+typeset -U files
+print "count: ${#files}"
+print -l $files
+rm -f ~/Downloads/session15_read.zip
+zip -q ~/Downloads/session15_read.zip $files
+unzip -l ~/Downloads/session15_read.zip | tail -1
+```
+
+The last lines count, then list, then zip; a "name not matched" line is pasted back, never guessed around.
+
+
+## Session 14's notes (a consultation, no build)
+
+- Three reads, each named as one zip; the third found that receipts are named by step, not type (see Traps). Reads before decisions held: nothing was decided on a file not yet opened.
+- Wrong hypotheses: that CII's and PIAAC's literacy are one measure (D-282); that session 13's 5% or 1,000 was the whole safe harbor (it has a 50-person tier, D-271); that a universal verdict reads the rate (it reads the count, D-272); that a profile could be a sows run (D-163, D-274); that the profile's allow record could live in its own header (D-274).
+- Lesson: a rule taken from a secondary summary misses its edges; read the source's own text for every tier before declaring a line.
 
 ## Before a build: session 13's retrospective
 

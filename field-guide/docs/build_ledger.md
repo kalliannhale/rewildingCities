@@ -1568,3 +1568,46 @@ Lessons:
 - A variable that grows partway through a block is not safe to reuse below the growth.
 
 Still open: the four ACS runs (the key is not in this shell), the two county experiments, the push, the hand-off.
+
+## Sprint 06, session 14 (2026-11-16): zip 2's consultation, the standard
+
+Decided:
+- D-270: the standard lives in seeds/standards/information_barriers.yml, its shape in seeds/schemas/standard.schema.yml, generic for any domain. Each barrier lists sides; a side has a kind (universal, trigger, none), a statement, a source and who declared it, and names what it judges. Barrier membership has its one home there; the registry keeps only role. The pairing table (P-2) is its own seed.
+- D-271: P-1, row by row; P-1 and P-5 closed. Language trigger: the DOJ 2002 safe harbor as rewildingcities' own line (rescinded 2025-03-21, the Department's Federal Register notice 2025-06366), per C16001 group, residents 5 and over: translate at 1,000, or at 5% with 50 or more; written notice of free interpretation at 5% under 50 (the guidance's paragraph (b), as quoted in DOL's 2003 Federal Register guidance, 03-13125); else nothing written. Section 203 as published, its four-group limit said. Language universal (P-5): every limited-English resident, our line, UNESCO's 2003 Recommendation concerning the Promotion and Use of Multilingualism and Universal Access to Cyberspace as its principle. Digital universal: every household, the ITU and UN Envoy 2030 target that all households have Internet access; the ACS counts subscriptions, so a household with access and no subscription is in our left_out, said in the statement. FCC 100/20 terrestrial declared, acquirable until 7b. Literacy universal: every adult 16 to 74 at Level 2 or above, UIS's level for SDG 4.6.1; target 4.6 promises all youth and a substantial proportion of adults, so the line is ours. Cultural cues, paywall, outdated, where people look, trusted source: none.
+- D-272: a universal side is judged once, on its left_out count against zero: below when the count less its margin is above zero, within_margin otherwise; meets is unreachable for an estimate and says so. Literacy by its credible bounds. Other indicators of the side carry judged_on. D-269's proportion of 1 never reaches a verdict.
+- D-273: trigger verdicts crosses, within_margin, does_not_cross, cannot_judge, margin-aware per group, the safe harbor's tier named. A published determination's verdict is as_published. D-263 stands.
+- D-274: profiles are built by a canopy command into one place_profile artifact with its own receipt listing every receipt read; never a sows run, since $loam names one artifact (D-163) and values live in many receipts. place_profile is tier public (Kalli). The profile's own allow record is decided at the publish door (zip 3), never inside the file; part 5 carries its inputs' refusals.
+- D-275: loam gains views over the literacy_estimates and section203_records receipts' files, keyed by (unit_authority, unit_code), each row naming its receipt; never through place_values (D-268 stands).
+- D-276: borrowed_from is a list of every coarser place a value comes from, each with its share of residents from the graph's edges; no verdict, no left_out on a borrowed value.
+- D-277: an uncertainty's confidence comes from its indicator's declared uncertainty (acs_moe: 0.90), held once; a row's own confidence wins (literacy 0.95).
+- D-278: left_out means people short of a universal line wherever a reader sees it; place.py's property becomes out_of_range (two lines in test_place_reading.py); graph.py's report key stays.
+- D-279: cii_rent_burden, cii_no_vehicle and their cii_pub twins take role need. Only place.py's label and the carriers view read role (grepped); the hashes move, so the cousub, district and county runs and the county standings rerun, no fetch.
+- D-280: part 1's population is the 2020 Census count from the block spine, what every per_1000 divides by; the households' source is read in the build before it is chosen.
+- D-281: Contract 4 moves to draft 0.4 in zip 2, carrying D-258, D-263 and D-270 to D-280.
+- D-282: part 4 pairs one measure only. CII's literacy is an average score; PIAAC's is a share at or below Level 1: shown side by side, never as a disagreement.
+
+Found:
+- Contract 4 in the repo was still draft 0.3, naming D-198's derive_margins step that D-258 superseded.
+- loam views only indicator_values; literacy_estimates and section203_records have no reader yet.
+- $loam.<type> resolves to one artifact; the values live in eleven receipts, so a profile cannot be a run's input.
+- The value receipts carry no confidence column.
+- Coverage: the 26 language indicators and households_without_broadband exist at all five levels; cii_broadband and limited_english_households at town and both chambers only; rent burden and vehicle access at county, town and both chambers. county_derive_values is the national county set, 6,444 rows.
+- Section 203: one flag5 in the file, Nashville plantation, Chinese, values suppressed, not covered.
+- Literacy's universe is adults 16 to 74 (population_16_74), not every adult.
+- Receipts are named by step and output, not type: the first find for barrier values found none.
+
+Wrong hypotheses:
+- That CII's literacy and PIAAC's are one measure for part 4: an average score and a share (D-282).
+- That the safe harbor is 5% or 1,000 alone: it has a 50-person tier.
+- That a universal verdict reads the rate: the count reads every level and never meets D-269.
+- That a profile could be a sows run.
+- That a profile's allow record could sit in its own header: the gate judges the envelope that holds it.
+- That the barrier values' receipts carry "barrier_values" in their names.
+
+Lessons:
+- A rule taken from a summary misses its edges: read the source's own text for every tier before declaring a line.
+- An artifact cannot carry the verdict on itself; a judgment of the whole lives outside it.
+- Find receipts by the type inside them, not by a guess at their names.
+
+Closed: P-1, P-5 (D-271).
+Owed before code: P-2's cited research, if part 6 is to be filled; part 6 may ship present but empty, its reason said (Kalli's cut).
