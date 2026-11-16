@@ -1,12 +1,13 @@
 # Contract 2 ~ Canonical objects
 
-**Status:** draft 0.1, 2026-11-10, for review. **Owner:** Kalli. **Built in:**
-Sprint 07 (the infrastructure teammate), Sprint 08 (the publish door).
-**Read by:** the publish route, the explorer, the community kit, the grove.
-**Rests on:** MP-68 (two doors; the static snapshot is superseded), MP-69
-(DuckDB behind both doors), MP-70 (the library's AWS account, tested first on
-Kalli's), MP-71 (feature data outside AGOL, layers by URL), D-94 (harvests out
-of git).
+**Status:** draft 0.2, 2026-11-16, for review (0.1, 2026-11-10). **Owner:**
+Kalli. **Built in:** Sprint 07 (the stack, on bash-win's staging rails; the
+canonical write), Sprint 08 (the publish door). **Read by:** the publish
+route, the explorer, the community kit, the grove. **Rests on:** MP-68 (two
+doors; the static snapshot is superseded), MP-69 (DuckDB behind both doors),
+MP-70 as Kalli amended it in Sprint 06's session 16 (tested and run on Kalli's
+own AWS account, handed to the library as code: D-301), MP-71 (feature data
+outside AGOL, layers by URL), D-94 (harvests out of git).
 
 A canonical object is the truth that leaves. Everything outside the machine
 that shows a result (an ArcGIS layer, the explorer, a download) reads a
@@ -20,7 +21,7 @@ One harvest, as an open data file, with its envelope beside it.
 
 | Part | Rule |
 | --- | --- |
-| **Data** | GeoParquet (Sprint 07). Non-spatial results are Parquet |
+| **Data** | GeoParquet. Non-spatial results are Parquet (D-303) |
 | **Identity** | the sha256 of the data file's bytes. Two files with one hash are one object |
 | **Envelope** | the harvest's full envelope, as written by the run and then by the gate: lineage (kind, run, method, choices, and curiosity for experiments), the provenance chain, warnings, context notes, the license checked, the publication steps, and the gate's allow record |
 | **Mutability** | a version never changes once written. Only the `current` pointer moves |
@@ -32,13 +33,13 @@ the canonical write computes sha256 itself and never reuses an md5 (HASH-2).
 
 ## 2. The key layout
 
-In one bucket, in the library's AWS account:
+In one bucket, the canonical bucket that `canopy/terraform/` makes:
 
 ```
 harvests/<plot>/<harvest>/versions/<sha256>/data.parquet
 harvests/<plot>/<harvest>/versions/<sha256>/envelope.json
-harvests/<plot>/<harvest>/versions/<sha256>/display/<name>.geojson
-harvests/<plot>/<harvest>/versions/<sha256>/display/<name>.envelope.json
+harvests/<plot>/<harvest>/versions/<sha256>/display/<n>.geojson
+harvests/<plot>/<harvest>/versions/<sha256>/display/<n>.envelope.json
 harvests/<plot>/<harvest>/current
 ```
 
@@ -47,6 +48,8 @@ harvests/<plot>/<harvest>/current
   (MAP-7). The name says what the object is; the hash says which version.
 - Writing bytes whose sha256 already exists writes nothing and records nothing
   new. One version, not two (Sprint 07 test).
+- Harvests made before the canonical write are regenerated through it, never
+  moved into this layout (D-305).
 
 The infrastructure plan's `snapshots/` prefix is not part of this layout: the
 static snapshot is superseded by MP-68.
@@ -63,7 +66,9 @@ A small JSON object, the only thing in the layout that is ever overwritten:
 | `reason` | in plain words: a new vintage, a correction, a method change |
 
 Moving the pointer never deletes a version. Older versions stay readable at
-their own keys forever, so a link to a version is a citation.
+their own keys forever, so a link to a version is a citation. Every pointer
+the bucket ever held stays too, as a noncurrent S3 version, so the history of
+moves is never lost (D-307).
 
 ## 4. Display copies
 
@@ -78,32 +83,41 @@ never a second truth:
 - It is regenerable from its source version and is never edited by hand. The
   hand-made `__public` and `__upload` files of October are what this rule
   exists to end (CII-20, D-94).
+- GeoPackage copies are made only on request (D-303).
 
 ## 5. The bucket
 
-- Versioning on; `force_destroy` off. The December stack's `force_destroy =
-  true` is retired with it (Sprint 07).
-- A budget alarm before any other resource, a least-privilege IAM identity,
-  and project and environment tags on everything.
-- One Terraform stack, in `canopy/terraform/` (infrastructure D-3).
+- One Terraform stack, in `canopy/terraform/` (infrastructure D-3, D-306);
+  its README holds the order of apply and the handover addendum.
+- Versioning on; noncurrent versions kept; `force_destroy` off. The December
+  2025 stack's `force_destroy = true` is retired with it.
+- Private, Block Public Access declared on. The public reaches it only through
+  CloudFront, which may read `harvests/*` alone (O-1, D-302).
+- The bucket policy is the overwrite lock: a put to a version without
+  If-None-Match is refused, and a put to `current` without If-None-Match (its
+  first write) or If-Match (a move) is refused, for every principal (D-309).
+  Copies into `harvests/` are therefore refused too; nothing copies.
+- A budget alarm before any other resource: on Kalli's account, the console
+  budget it already had; where the stack makes one, it is applied first
+  (D-311). Project and environment tags on everything.
 
 ## 6. Who writes, who reads
 
 | Who | May |
 | --- | --- |
-| The canonical write (`canopy/aws/s3.py`) | write a version and move `current`, only after the gate allows |
+| The canonical write (`canopy/aws/s3.py`), as the role `rewilding-canonical-writer` | write a version and move `current`, only after the gate allows; never delete (D-308) |
 | The publish door | write display copies; push or reference them in ArcGIS |
-| ArcGIS, the explorer, DuckDB, the community kit | read by URL; never write |
+| ArcGIS, the explorer, DuckDB, the community kit | read by URL through CloudFront, from any origin; never write (D-310) |
 
 A write the gate has not allowed is refused by the writer itself, not by
-convention (Sprint 07 test).
+convention (Sprint 07 test). An overwrite is refused by the bucket itself.
 
 ## Open
 
 | ID | Question | Decided in |
 | --- | --- | --- |
-| O-1 | How the public reaches files: a public prefix with CORS for ArcGIS, or CloudFront in front of the bucket | Sprint 07 |
-| O-2 | GeoParquet alone, or GeoParquet with GeoPackage copies for ArcGIS Pro users | Sprint 07 |
-| O-3 | Referenced GeoJSON layers or Parquet feature layers for the explorer, and whether the latter use AGOL feature storage | Sprint 07 |
+| O-1 | How the public reaches files | Decided: CloudFront in front of a private bucket (D-302) |
+| O-2 | GeoParquet alone, or with GeoPackage copies | Decided: GeoParquet canonical, GeoJSON display copies, GeoPackage on request (D-303) |
+| O-3 | Referenced GeoJSON layers or Parquet feature layers for the explorer | Decided: referenced GeoJSON layers for December; a Parquet feature layer is a recorded read after (D-304) |
 | O-4 | Where the per-target identity record lives (manifest, a sidecar in the plot, or loam) | Sprint 08 |
 | O-5 | How an ArcGIS layer is updated in place: overwrite the source, or truncate and append | Sprint 08 |
