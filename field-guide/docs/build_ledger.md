@@ -1539,3 +1539,32 @@ Lessons:
 
 Closed: P-7 (D-265).
 Carried into P-1 (zip 2): the safe harbor's numbers only as rewildingcities' own declared line; section 203's four-group limit said in words; universal verdicts that cannot tell places apart, with left_out leading.
+
+## Sprint 06, session 13 (2026-11-15): zip 1 built and run
+
+Decided:
+- D-267: a Census town Section 203 writes once that we hold in pieces (Penobscot Indian Island Reservation, 57936, split at a county line), or that matches none of our towns (the file's 2019-era map; Atkinson, Bancroft, Cary, Codyville, Drew, Magalloway), is held whole under census_s203_mcd and attached to nothing; both are listed. An old town's determination is never mapped onto today's unorganized territory.
+- D-268: literacy is its own artifact, literacy_estimates, read by zip 2's profile, like section203_records; neither passes through loam's ACS values.
+- D-269: a proportion of exactly 1 is not_derived: the Census's special-case formula was not in the text read.
+
+Found:
+- Cumberland's broadband radicand is zero on paper and -4.5e-13 in floating point, so it takes the ratio fallback, as the Census instructions say.
+- Bancroft, Codyville and Drew stand in the Section 203 file as town or plantation and in ours as unorganized territory under a new code: deorganization between the two maps.
+- 12 of our towns have no Section 203 record (unorganized territories, a gore, small islands); 516 Census towns matched; 0 covered; 38,962 rows.
+- Literacy: 17 rows, none flagged; the State sheet carries POP_DOMAIN.
+- The oracle caught R counting the households margin twice: needed grows with the rests_on cells partway through the block.
+- The envelope schema requires crs on every receipt's metadata, null for a table; both new primitives lacked it.
+- The full suite counts 1,166, not 1,148: repo-wide walks gain a case per new file.
+
+Wrong hypotheses:
+- That R's needed held only a derivation's cells.
+- That two of our towns sharing five digits could only be an error: it is one town split at a county line.
+- That every Census town in the file is one of ours: the file's map is older.
+- That a ratio still had no CV: test_honest_values held D-18's premise, which D-258 reversed.
+
+Lessons:
+- Never build against a schema or part of the codebase not yet read: first read every contract the code must satisfy (schemas, registries, every test and caller) as it really is in the repo (Kalli, session 13).
+- Three of this session's five round trips were preventable by that rule; two were real data the runs had to show.
+- A variable that grows partway through a block is not safe to reuse below the growth.
+
+Still open: the four ACS runs (the key is not in this shell), the two county experiments, the push, the hand-off.
