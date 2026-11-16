@@ -4,9 +4,10 @@
 # Merged on top of the base file. Loader stamps domain = "information".
 #
 # Every type here previously had an empty `format:` (which crashed the loader,
-# since format is required). Formats are assigned by category. The
-# resolution_tier values are advisory metadata until an exposure gate exists
-# to enforce them.
+# since format is required). Formats are assigned by category. The gate
+# (canopy/expose/gate.py, Contract 1) enforces each resolution_tier; a type
+# that declares `aggregates: true` may carry an aggregate-only ancestor out
+# as counts (rule 5).
 #
 # Indicators are NOT types. A semantic type names a kind of artifact; what an
 # indicator measures, in what unit, which direction is better, and how it
@@ -36,7 +37,16 @@ types:
       commercial database's export, a journalist's own list, a funder's
       file. Read only as seeds/crosswalks/outlets/outlet_sources.yml
       declares (D-201). Input to a claim about outlets, never the claim.
-    resolution_tier: excluded   # holds commercial and personal data under unrecorded terms (SRC-4); it never leaves as it is
+    resolution_tier: aggregate-only   # Kalli, session 16 (D-295): leaves only as counts over a place; its license term says why (D-299, D-300)
+  commercial_outlet_listing:
+    category: tabular
+    format: csv
+    description: >
+      A commercial media database's export of outlet records (Cision's),
+      read as seeds/crosswalks/outlets/outlet_sources.yml declares. Its own
+      type so that no reading of a list's terms can reach it: a plot that
+      stacks one again is stopped at the door by its type (D-294).
+    resolution_tier: excluded   # Kalli, session 16 (D-294): a commercial database's terms do not permit redistribution of what it holds
 
   outlet_stack:
     category: tabular
@@ -45,8 +55,7 @@ types:
       Every listing's outlet records stacked side by side, one row per
       source record, keyed by (source, source_line), each field carrying
       the meaning its source gives it (D-203). Nothing is merged.
-    # no resolution_tier yet: Person 3 declares it. until then it fails
-    # closed, which is right while it carries listings' fields.
+    resolution_tier: aggregate-only   # Kalli, session 16 (D-297): it carries listings' fields, so only counts leave
 
   outlet_groups:
     category: tabular
@@ -55,7 +64,7 @@ types:
       The outlet stack with each record's group: records sharing an exact
       url or name key, never one source twice (D-202). A group is a set of
       records that share a key, not a judgment that they are one outlet.
-    # no resolution_tier yet: Person 3 declares it, as outlet_stack.
+    resolution_tier: aggregate-only   # Kalli, session 16 (D-297), as outlet_stack
 
   news_outlet:
     category: tabular
@@ -68,7 +77,7 @@ types:
       that placed it, its operating status and every record behind it.
       Counted through located_in edges at town, county and state only
       (D-246).
-    # no resolution_tier yet: Kalli declares it, as outlet_stack (Tiers).
+    resolution_tier: aggregate-only   # Kalli, session 16 (D-297): counts now; named outlets after OUTCONF-1, by a change of tier here
 
   outlet_disagreements:
     category: tabular
@@ -134,7 +143,7 @@ types:
       whom it serves stays SERVES-1's. Which offices are placed, and why, is
       the clerk_office_carriers method's to say (D-212). Each carrier kind
       is its own type (D-218).
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 16 (D-297): a public office at a point the state publishes
 
   relational_hub:
     category: vector
@@ -178,6 +187,7 @@ types:
       authorities about the same unit and indicator are held side by side,
       never averaged.
     resolution_tier: public
+    aggregates: true   # Kalli, session 16 (D-296): one value per unit, never a named member, so an aggregate-only ancestor may leave through it (rule 5)
 
   indicator_standings:
     category: tabular
@@ -287,7 +297,7 @@ types:
       municipality. An export, not a release, so a copy is declared by its
       day and its sha256. Read only by declared columns and encoding; the
       clerks' names and phones are never read (D-236).
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 16 (D-297): a state's directory of every clerk, under factual_directory (D-299)
 
   address_point_release:
     category: tabular
@@ -298,7 +308,7 @@ types:
       parts, ZIP, use and how it was placed. Declared by its information
       cutoff and its sha256; read only by declared layer, CRS and fields.
       It holds home addresses: only points a method matches ever leave it.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 16 (D-297, D-298): the state publishes it through the GeoLibrary. the release itself is never a publish target; only its matched points leave
 
   section203_public_use_file:
     category: tabular

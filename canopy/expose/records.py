@@ -15,7 +15,7 @@ from pathlib import Path
 
 import yaml
 
-from .gate import SHARING_LEVELS
+from .gate import SHARING_LEVELS, TIERS
 
 CONSENT_REQUIRED = ("id", "plot", "target", "sharing_level", "covers",
                     "granted_by", "on_behalf_of", "granted_on", "terms", "status")
@@ -35,6 +35,9 @@ def load_licenses(licenses_dir: str | Path) -> dict[str, dict]:
         if not t.get("verified") and set(t["permits"]) - {"private"}:
             raise ValueError(f"license term '{tid}' is unverified, so it may permit "
                              f"private only, never {t['permits']}")
+        if "requires_tier" in t and t["requires_tier"] not in TIERS:
+            raise ValueError(f"license term '{tid}': requires_tier must be one of "
+                             f"{', '.join(TIERS)}; got {t['requires_tier']!r}")
     return terms
 
 

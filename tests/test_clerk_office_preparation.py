@@ -31,11 +31,13 @@ def test_both_copies_are_declared_and_usable():
     assert addresses.semantic_type == "address_point_release"
 
 
-def test_neither_copy_may_be_published_until_its_terms_are_read():
-    # the parsed dataset carries no license, so the declaration is read raw
+def test_each_copy_names_the_term_kalli_read_for_it():
+    # the parsed dataset carries no license, so the declaration is read raw.
+    # the clerk list is a directory of every clerk (D-299); the 911 file came
+    # through the GeoLibrary (D-290, D-298)
     raw = yaml.safe_load((ROOT / "plots" / "maine" / "manifest.yml").read_text())["datasets"]
-    for name in ("maine_sos_clerk_info_20261114", "maine_e911_addresses_20260827"):
-        assert raw[name]["license"] == "terms_unknown", name
+    assert raw["maine_sos_clerk_info_20261114"]["license"] == "factual_directory"
+    assert raw["maine_e911_addresses_20260827"]["license"] == "maine_geolibrary_public"
 
 
 def test_every_reading_comes_from_a_shared_crosswalk_never_the_plot():

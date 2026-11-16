@@ -1654,3 +1654,40 @@ Lessons:
 Closed: SRC terms for the boundaries (D-290); the rule 9 gap on counts (D-291).
 Opened: LIC-2, the boundary layers' own item metadata, unread. GAPS-1, part 5's gaps in the method authors' own words from readiness and possibility. EDGE-NOTE-1, located_in_edges receipts do not name their rows' notes, so the libraries', schools' and health centers' edges fail rule 9 (the carriers map, zip 3). NOTHR-1, a no_threshold verdict says "this value is shown" when the entry is empty or withheld. PROF-1, read_place loads the registry three times a call, most of a build's time.
 Still open: zip 3, the door.
+
+## Sprint 06, session 16 (2026-11-16): zip 3a, counts go public
+
+Decided:
+- D-294: Cision's two exports take their own type, commercial_outlet_listing, excluded: a commercial database's terms do not permit redistribution of what it holds. maine_outlet_carriers stacks only the three lists, named in stack_outlet_sources' new use parameter; Cision stays declared in the shared crosswalk and is left out by name, never by a dropped input. Choices: database_alone none, town_fallback none (the office addresses were Cision's). Reviews resting on Cision records removed: 10 office reads, the Rumford Falls Times town review, Cision's records in two merges; Maine Morning Star's office read became a town review (state). Kalli's cut.
+- D-295: outlet_listing (Easton, Local News Catalyst, the ecosystem file) is aggregate-only.
+- D-296: indicator_values and place_profile declare aggregates: true, so an aggregate-only ancestor may leave through them as values per place (rule 5). No type had declared it, so rule 5's way out had been unreachable.
+- D-297: news_outlet, outlet_stack and outlet_groups are aggregate-only; municipal_clerk_office, municipal_clerk_list and address_point_release are public. Named outlets wait for OUTCONF-1 and the lists' makers' word: every outlet type in the lineage binds, so naming outlets moves the lists' tiers and terms too, never news_outlet's alone. The 911 release is never a publish target; only its matched points leave.
+- D-298: the 911 file takes maine_geolibrary_public, by D-290's reading of 5 M.R.S.A. section 2005: it was made available through the GeoLibrary. The courtesy ask goes in the wrap-up (E911-1).
+- D-299: two terms from Feist v. Rural Telephone (499 U.S. 340, 1991), Kalli's readings, not a lawyer's. factual_directory: a list of every member in an obvious order holds no original selection (the Secretary of State's clerk list), public. factual_compilation_counts: a list whose makers chose its members (Easton's, Local News Catalyst's), counts only, held by requires_tier: aggregate-only, which rule 10 now enforces against the dataset's own type and the loader checks is a tier.
+- D-300: the Maine Media Ecosystem file is the project's own work, project_own_work, credited to the project; to confirm with Dr. Mittal in the wrap-up.
+
+Built (zip 3a, 16 files): the tiers (seeds/schemas/domains/information.yml, semantic_types.yml); three terms (seeds/licenses/licenses.yml); requires_tier in rule 10 (canopy/expose/gate.py) and at load (records.py); the manifest's types and terms; use in stack_outlet_sources and its registry entry (Cision's inputs optional, commercial_outlet_listing); maine_outlet_carriers' choices and inputs; the reviews; tests/test_tiers_and_terms.py (the real gate on the real seeds) and new tests in test_gate, test_outlet_sources and the outlet and clerk preparation tests. 1,247 passed. Two review fixes after runs, below.
+
+Found:
+- The stack refused any declared source with no input, so leaving Cision out meant naming what a run uses.
+- Without Cision: 90 outlets placed (was 97), 12 listed, 10 no_town_given and 2 ceased (was 405, 326 of them records not counted for their medium).
+- The County's merge still needs editions: the ecosystem file lists both The County and the Star Herald (merge 2 refused without it; restored).
+- The Castine Patriot's two list records join on their own name key now (merge 3 refused as no longer needed; removed). The Press Herald and Boothbay merges still hold.
+- The gate allows the outlet counts, the clerk counts, the clerk office points and the profile; the profile withholds nothing at public (session 15 withheld the outlet and clerk counts).
+- "cision" in the counts receipt sits only in the declaration passed as params and in the stack's own warning that it left Cision out by use.
+- Two manifest provenance mappings held unquoted commas, read as extra keys; quoted.
+- The information types' header still called tiers advisory until a gate exists; corrected.
+
+Wrong hypotheses:
+- That Cision alone made The County's merge need editions.
+- That named outlets would be one tier change.
+- That a read after a failed run shows the new run: it showed the last good run, twice.
+
+Lessons:
+- A read reports whatever ran last: check the receipt's time against the run before reading its numbers.
+- Keep a merge whose need is in doubt: no longer needed, it refuses loudly; removed early, a double count could pass in silence.
+
+Closed: Tiers (D-297); E911-1 for publishing (D-298), the courtesy ask kept for the wrap-up.
+Narrowed: SRC-4, to named outlets (D-299, D-300); OUTCONF-1, Cision's reads gone.
+Opened: WATERFRONT-1, The Working Waterfront's reading (Rockland, the Island Institute's) waits for a town review naming Rockland's code; until then it is listed no_town_given.
+Still open: zip 3b, the door (Sprint 08), with CARRY-1 and EDGE-NOTE-1.

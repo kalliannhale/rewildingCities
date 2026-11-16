@@ -398,6 +398,7 @@ types:
       its receipt lists every receipt it read and every one the gate
       withheld, whose values never enter the file (D-284).
     resolution_tier: public   # Kalli (D-274); the gate binds its whole lineage
+    aggregates: true   # Kalli, session 16 (D-296): counts and values per place, never a named member
     # tribal areas are profiled as a qualified Census view, as places are
     required_context:
       - id: census_tribal_places

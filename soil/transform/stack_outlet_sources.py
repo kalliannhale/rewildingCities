@@ -23,11 +23,17 @@ same outlet is a later step, and a stack that kept both lets that be seen.
     location_note, never fixed
 
 Contract (pr_io): argv <inputs_json> <output_path> <params_json>
-Inputs:  one per declared source, named by its key (cision, easton, ...)
+Inputs:  one per source the run stacks, named by its key (easton, ...)
 Params:  declaration   the outlet_sources declaration, as a mapping
+         use           optional: the declared sources this run stacks, by
+                       name. absent, every declared source is stacked. a
+                       run leaves a declared source out only by naming the
+                       ones it uses, never by dropping an input (D-294)
 Output:  the stack, csv. one row per source record, keyed by
          (source, source_line)
-Refuses: a declared source with no input, or an input no source declares;
+Refuses: a source the run uses with no input, or an input it does not use;
+         a use naming a source the declaration does not, naming one twice,
+         or naming none;
          a declaration that maps one raw frequency to two cycles, names a
          field this stack does not carry, or declares a never_read column;
          a source whose header holds a declared column twice, or none.
@@ -193,11 +199,31 @@ def read_source(key: str, spec: dict, path: str | Path,
     return pd.DataFrame(rows, columns=list(COLUMNS))
 
 
-def stack_from(declared: dict, paths: dict[str, str | Path]) -> pd.DataFrame:
-    """every declared source's records, from the paths a run hands in, stacked
-    in declaration order. a declared source with no path, or a path no source
-    declares, is refused: one silently dropped source is a missing outlet."""
-    sources = declared["sources"]
+def read_use(declared: dict, use) -> list[str]:
+    """the declared sources a run stacks, in declaration order. None means
+    every declared source. a use is a list of declared names, each once."""
+    names = list(declared["sources"])
+    if use is None:
+        return names
+    if not isinstance(use, list) or not use or not all(isinstance(u, str) and u for u in use):
+        raise SourceRefused(f"use must be a list naming at least one declared source; got {use!r}")
+    twice = sorted({u for u in use if use.count(u) > 1})
+    if twice:
+        raise SourceRefused(f"use names a source twice: {', '.join(twice)}")
+    unknown = sorted(set(use) - set(names))
+    if unknown:
+        raise SourceRefused(f"use names sources the declaration does not: {', '.join(unknown)}")
+    return [n for n in names if n in use]
+
+
+def stack_from(declared: dict, paths: dict[str, str | Path], use=None) -> pd.DataFrame:
+    """the records of every source the run uses (every declared source, unless
+    it names some), from the paths a run hands in, stacked in declaration
+    order. a used source with no path, or a path it does not use, is refused:
+    one silently dropped source is a missing outlet. a source left out is
+    left out by name, in use."""
+    used = read_use(declared, use)
+    sources = {k: declared["sources"][k] for k in used}
     missing = sorted(set(sources) - set(paths))
     extra = sorted(set(paths) - set(sources))
     if missing or extra:
@@ -205,7 +231,8 @@ def stack_from(declared: dict, paths: dict[str, str | Path]) -> pd.DataFrame:
         if missing:
             parts.append(f"declared with no input: {', '.join(missing)}")
         if extra:
-            parts.append(f"input with no declaration: {', '.join(extra)}")
+            parts.append(f"input with no declaration: {', '.join(extra)}" if use is None else
+                         f"input the run does not use: {', '.join(extra)}")
         raise SourceRefused("the run's inputs and the declaration disagree; " + "; ".join(parts))
     frames = [read_source(k, s, paths[k], declared["vocabulary"], declared["counties"])
               for k, s in sources.items()]
@@ -254,7 +281,11 @@ def main():
     with primitive_error_handling(w):
         declared = check_declaration(require_param(args["params"], "declaration"))
         paths = {k: get_input(args["inputs"], k) for k in args["inputs"]}
-        stack = stack_from(declared, paths)
+        use = args["params"].get("use")
+        stack = stack_from(declared, paths, use)
+        left_out = [k for k in declared["sources"] if k not in read_use(declared, use)]
+        if left_out:
+            w.info(f"declared and left out by use: {', '.join(left_out)}")
         for line in summary(stack):
             w.info(line)
         stack.to_csv(args["output"], index=False)

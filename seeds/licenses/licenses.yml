@@ -9,6 +9,12 @@
 # (the owner only), organization, public. A term is a claim about someone
 # else's permission, so each says where the claim comes from and whether it
 # has been checked. An unverified term permits nothing beyond private.
+#
+# `requires_tier`, when a term declares it, ties the term to one form of
+# leaving: rule 10 refuses a dataset under the term unless the dataset's own
+# semantic type declares that tier. A reading that holds only for counts says
+# so here, and no plot can lay it on a type that leaves as named members
+# (D-299).
 # ═══════════════════════════════════════════════════════════════════════════════
 
 terms:
@@ -71,3 +77,44 @@ terms:
       No published terms were found, or nobody has looked yet. Nothing leaves
       beyond its owner until someone does. CII's published file is here while
       its terms are asked about (CII-19).
+
+  factual_directory:
+    name: A directory of facts, every member listed
+    permits: [private, organization, public]
+    attribution: recommended
+    verified: true
+    basis: >
+      Facts carry no copyright, and a compilation of them is protected only
+      in an original selection or arrangement of them (Feist Publications v.
+      Rural Telephone Service, 499 U.S. 340, 1991). A list of every member of
+      a class, in an obvious order, holds no original selection: the Maine
+      Secretary of State's list of every municipal clerk, alphabetical by
+      town, is such a list, and its page states no terms (read 2026-11-14).
+      That reading is Kalli's (session 16, D-299), not a lawyer's; the names
+      and phones in the list are never read (D-236), so only offices' places
+      and the municipalities they answer for can leave.
+
+  factual_compilation_counts:
+    name: A selected list of facts, counted only
+    permits: [private, organization, public]
+    requires_tier: aggregate-only
+    attribution: recommended
+    verified: true
+    basis: >
+      A list whose makers chose its members (which outlets count as Maine
+      news) may hold copyright in that selection (Feist, 499 U.S. 340). A
+      count of members per place reproduces facts and none of the
+      selection, so counts may leave and named members may not. Kalli's
+      reading (session 16, D-299), not a lawyer's, for Jo Easton's list and
+      Local News Catalyst's; requires_tier holds it to counts. Named
+      outlets wait for each maker's word, asked in the project's wrap-up.
+
+  project_own_work:
+    name: Made by this project
+    permits: [private, organization, public]
+    attribution: required
+    verified: true
+    basis: >
+      Compiled by the Maine news ecosystem project itself (the Maine Media
+      Ecosystem file, Kalli, session 16, D-300); credited to the project
+      wherever it is shown. To confirm with Dr. Mittal in the wrap-up.

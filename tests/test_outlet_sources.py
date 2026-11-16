@@ -144,6 +144,39 @@ def test_the_runs_inputs_must_match_the_declaration(tmp_path):
                                   "extra": tmp_path / "m.csv"})
 
 
+def test_a_run_leaves_a_declared_source_out_only_by_naming_what_it_uses(tmp_path):
+    # D-294: a source left out is left out by name, never by a dropped input
+    (tmp_path / "m.csv").write_text(MME)
+    declared = sos.check_declaration({"sources": {
+        "mme": {"columns": {"name": "Publication"}},
+        "lnc": {"columns": {"name": "Publication"}}}})
+    out = sos.stack_from(declared, {"mme": tmp_path / "m.csv"}, use=["mme"])
+    assert set(out["source"]) == {"mme"}
+    with pytest.raises(sos.SourceRefused, match="input the run does not use: lnc"):
+        sos.stack_from(declared, {"mme": tmp_path / "m.csv", "lnc": tmp_path / "m.csv"},
+                       use=["mme"])
+    with pytest.raises(sos.SourceRefused, match="declared with no input: lnc"):
+        sos.stack_from(declared, {"mme": tmp_path / "m.csv"}, use=["mme", "lnc"])
+
+
+@pytest.mark.parametrize("use, match", [
+    (["mme", "mme"], "names a source twice"),
+    (["cision"], "the declaration does not: cision"),
+    ([], "at least one declared source"),
+    ("mme", "at least one declared source"),
+])
+def test_a_use_that_is_not_a_list_of_declared_names_once_each_is_refused(tmp_path, use, match):
+    declared = sos.check_declaration({"sources": {"mme": {"columns": {"name": "Publication"}}}})
+    with pytest.raises(sos.SourceRefused, match=match):
+        sos.stack_from(declared, {"mme": tmp_path / "m.csv"}, use=use)
+
+
+def test_use_keeps_the_declaration_s_order():
+    declared = {"sources": {"a": {}, "b": {}, "c": {}}}
+    assert sos.read_use(declared, ["c", "a"]) == ["a", "c"]
+    assert sos.read_use(declared, None) == ["a", "b", "c"]
+
+
 def test_the_receipt_names_its_key():
     meta = sos.output_metadata(sos.pd.DataFrame(columns=list(sos.COLUMNS)))
     assert meta["id_fields"] == ["source", "source_line"]

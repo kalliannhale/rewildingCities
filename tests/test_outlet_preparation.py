@@ -40,18 +40,23 @@ def test_every_listing_is_a_usable_outlet_listing_in_garden_reference():
     for ref in _steps()["outlets_stack"].inputs.values():
         ds = manifest.datasets[ref.removeprefix("$manifest.")]
         assert ds.is_usable, ds.underspecified
-        assert ds.semantic_type == "outlet_listing"
+        # Cision's two exports are their own type since D-294
+        assert ds.semantic_type in ("outlet_listing", "commercial_outlet_listing")
         assert ds.format == "csv"
         assert ds.path.startswith("../../garden/reference/")
 
 
-def test_the_outlet_types_are_declared_and_the_listing_never_leaves():
+def test_the_outlet_types_are_declared_and_a_listing_leaves_only_as_counts():
     types = yaml.safe_load((ROOT / "seeds" / "schemas" / "domains" / "information.yml")
                            .read_text())["types"]
-    for name in ("outlet_listing", "outlet_stack", "outlet_groups", "outlet_disagreements"):
+    for name in ("outlet_listing", "commercial_outlet_listing", "outlet_stack",
+                 "outlet_groups", "outlet_disagreements"):
         assert types[name]["category"] == "tabular"
         assert types[name]["format"] == "csv"
-    assert types["outlet_listing"]["resolution_tier"] == "excluded"
+    # a list leaves only as counts over a place; a commercial database's
+    # export never leaves at all (D-294, D-295)
+    assert types["outlet_listing"]["resolution_tier"] == "aggregate-only"
+    assert types["commercial_outlet_listing"]["resolution_tier"] == "excluded"
 
 
 def test_each_step_writes_its_own_type():

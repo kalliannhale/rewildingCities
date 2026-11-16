@@ -41,9 +41,11 @@ def test_every_choice_is_declared_in_the_method_and_made_in_the_run():
     assert set(c["ceased_outlets"]["options"]) == {"listed", "counted"}
     assert set(c["database_alone"]["options"]) == {"none", "newspapers", "print_and_web"}
     assert c["town_fallback"]["default"] == "none" and c["database_alone"]["default"] == "none"
+    # with Cision left out no media database is stacked and no office
+    # address is read (Kalli, session 16, D-294)
     assert yaml.safe_load(PREP.read_text())["choices"] == {
-        "town_fallback": "office_town_unshared", "ceased_outlets": "listed",
-        "database_alone": "newspapers"}
+        "town_fallback": "none", "ceased_outlets": "listed",
+        "database_alone": "none"}
     p = _steps()["carriers_outlets"].params
     for name in ("town_fallback", "ceased_outlets", "database_alone"):
         assert p[name] == f"$choices.{name}"
@@ -108,6 +110,37 @@ def test_the_count_says_when_its_listings_were_collected():
     assert None not in collected, "every outlet listing declares source.collected"
     assert len(collected) == 1, f"listings collected on different days: {sorted(collected)}"
     assert _steps()["carriers_counts"].params["time"] == f"collected {collected.pop()}"
+
+
+def test_the_stack_uses_the_three_lists_and_leaves_cision_out_by_name():
+    # a commercial database's records never enter Maine's count (D-294): the
+    # stack names the sources it uses, its inputs are exactly those, and
+    # every declared source it leaves out is a commercial_outlet_listing
+    step = _steps()["carriers_stack"]
+    use = step.params["use"]
+    assert sorted(use) == ["easton", "local_news_catalyst", "maine_media_ecosystem"]
+    assert set(step.inputs) == set(use)
+    declared = yaml.safe_load((CROSSWALKS / "outlets" / "outlet_sources.yml").read_text())["sources"]
+    manifest = yaml.safe_load((ROOT / "plots" / "maine" / "manifest.yml").read_text())["datasets"]
+    for ref in step.inputs.values():
+        assert manifest[ref.removeprefix("$manifest.")]["semantic_type"] == "outlet_listing", ref
+    assert set(declared) - set(use) == {"cision", "cision_raw"}
+    commercial = {n for n, d in manifest.items() if d.get("semantic_type") == "commercial_outlet_listing"}
+    assert commercial == {"outlets_cision", "outlets_cision_raw"}
+    assert not {f"$manifest.{n}" for n in commercial} & set(step.inputs.values())
+
+
+def test_no_review_rests_on_a_source_the_run_leaves_out():
+    # a review keyed by a record the run never reads would refuse as unneeded
+    # (D-240); Cision's reviews left with Cision (D-294)
+    use = set(_steps()["carriers_stack"].params["use"])
+    doc = yaml.safe_load((CROSSWALKS / "outlets" / "outlet_reviews.yml").read_text())
+    entries = list(doc["towns"] or []) + list(doc["office_reads"] or [])
+    entries += [r for m in doc["merges"] or [] for r in m["records"]]
+    assert {e["source"] for e in entries} <= use
+    # with town_fallback none, no outlet is placed by an office town, so an
+    # office read could only refuse (D-256)
+    assert not doc["office_reads"]
 
 
 def test_the_indicator_counts_the_outlets_type():

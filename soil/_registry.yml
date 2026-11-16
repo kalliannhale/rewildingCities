@@ -1123,18 +1123,23 @@ primitives:
       keyed by (source, source_line). Each listing is read only as its
       declaration says: the header found by declared column names, an
       undeclared column never read, a never_read column refused (D-201).
-      Place fields keep their meaning (D-203). Refuses a declared source with
-      no input or an input no source declares. Its inputs name Maine's five
+      Place fields keep their meaning (D-203). Stacks the declared sources a
+      run names in use (every declared source when it names none), and
+      refuses a used source with no input or an input it does not use, so a
+      source is left out only by name (D-294). Its inputs name Maine's five
       listings; a plot with other listings needs its own entry (OUT-REG-1).
+      Cision's two exports are commercial_outlet_listing, excluded at the
+      door by their type, so they are optional here.
     inputs:
-      - {name: cision, semantic_types: [outlet_listing], required: true}
-      - {name: cision_raw, semantic_types: [outlet_listing], required: true}
+      - {name: cision, semantic_types: [commercial_outlet_listing], required: false}
+      - {name: cision_raw, semantic_types: [commercial_outlet_listing], required: false}
       - {name: easton, semantic_types: [outlet_listing], required: true}
       - {name: local_news_catalyst, semantic_types: [outlet_listing], required: true}
       - {name: maine_media_ecosystem, semantic_types: [outlet_listing], required: true}
     outputs: {semantic_type: outlet_stack, data_category: tabular}
     params:
       declaration: {type: object, required: true}
+      use: {type: array, required: false}
 
   group_outlet_records:
     path: transform/group_outlet_records.py

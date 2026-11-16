@@ -62,6 +62,13 @@ DATASETS = {
     "hubs": {"semantic_type": "relational_hub", "license": "us_government_work",
              "cache": {"path": ".data/hubs.geojson"}},
     "nolicense": {"semantic_type": "indicator_source", "cache": {"path": ".data/x.csv"}},
+    # a selected list read for counts only (D-299): its term requires its
+    # type be aggregate-only, so it holds for the first and not the second
+    "chosen_list": {"semantic_type": "relational_hub", "license": "factual_compilation_counts",
+                    "cache": {"path": ".data/chosen.csv"}},
+    "chosen_as_public": {"semantic_type": "indicator_source",
+                         "license": "factual_compilation_counts",
+                         "cache": {"path": ".data/chosen_public.csv"}},
 }
 
 
@@ -181,6 +188,31 @@ def test_a_dataset_without_a_license_is_refused():
     assert rules(gate(env)) == [10]
 
 
+def test_a_counts_only_term_admits_counts_from_an_aggregate_only_list():
+    env = envelope("hub_counts", [("hubs", "relational_hub")], datasets=("chosen_list",))
+    res = gate(env)
+    assert res["decision"] == "allow"
+    assert res["record"]["license"] == [{"dataset": "chosen_list",
+                                         "term": "factual_compilation_counts"}]
+
+
+def test_a_counts_only_term_on_a_type_that_could_leave_whole_is_refused():
+    # D-299: the reading holds for counts only, so a public type under it
+    # is refused at rule 10, naming the type and what would admit it
+    env = envelope("indicator_values", [("s", "indicator_source")], datasets=("chosen_as_public",))
+    res = gate(env)
+    assert rules(res) == [10]
+    r = res["refusals"][0]
+    assert "aggregate-only" in r["reason"] and r["semantic_type"] == "indicator_source"
+    assert r["tier"] == "public" and "aggregate-only" in r["would_admit"]
+
+
+def test_the_counts_only_term_never_lets_a_listing_leave_as_its_members():
+    # rule 5 and rule 10 agree: the list itself is refused at 5, its term passes
+    env = envelope("relational_hub", [("hubs", "relational_hub")], datasets=("chosen_list",))
+    assert rules(gate(env)) == [5]
+
+
 def test_no_lineage_no_publication():
     assert 4 in rules(gate(envelope("indicator_values", [("s", "indicator_source")], lineage=False)))
 
@@ -219,6 +251,14 @@ def test_the_license_list_loads_and_unverified_terms_permit_private_only():
     for tid, t in LICENSES.items():
         if not t["verified"]:
             assert t["permits"] == ["private"], tid
+
+
+def test_a_requires_tier_that_is_not_a_tier_is_refused_at_load(tmp_path):
+    (tmp_path / "licenses.yml").write_text(
+        "terms:\n  t:\n    permits: [private, public]\n    verified: true\n"
+        "    requires_tier: counts\n")
+    with pytest.raises(ValueError, match="requires_tier"):
+        load_licenses(tmp_path)
 
 
 def test_an_unverified_term_that_permits_public_is_refused_at_load(tmp_path):

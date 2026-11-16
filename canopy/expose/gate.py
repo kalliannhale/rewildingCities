@@ -22,7 +22,9 @@ the eleven rules, as this module applies them:
   9  a note must travel with what it describes: the notes the artifact's own
      type requires, and the notes its rows carry. an artifact that does not
      say what its rows carry is bound by every note in its lineage (D-156)
-  10 redistribution must be permitted at the target's sharing level
+  10 redistribution must be permitted at the target's sharing level; a term
+     that declares requires_tier holds only for a dataset whose own type
+     declares that tier (D-299)
   11 publication steps are recorded in provenance, by the step that made
      them; the gate gathers every one in the chain into its allow record (D-143)
 
@@ -225,6 +227,17 @@ def decide(envelope: dict, *, target: str, sharing_level: str, vocabulary,
                    f"declare a term from seeds/licenses/licenses.yml on '{name}'")
             continue
         licenses_checked.append({"dataset": name, "term": term_id})
+        needed = term.get("requires_tier")
+        if needed:
+            ds_type = (manifest_datasets.get(name) or {}).get("semantic_type")
+            ds_tier = exposure_tier(vocabulary, ds_type) if ds_type else None
+            if ds_tier != needed:
+                refuse(10, ds_type, ds_tier, f"dataset '{name}'",
+                       f"'{name}' is under '{term_id}', which holds only for a "
+                       f"dataset whose type is {needed}; '{ds_type}' is "
+                       f"{ds_tier or 'undeclared'}",
+                       f"declare '{ds_type}' {needed}, or a term that permits "
+                       f"its members to leave")
         if sharing_level not in term.get("permits", []):
             refuse(10, (manifest_datasets.get(name) or {}).get("semantic_type"), None,
                    f"dataset '{name}'",

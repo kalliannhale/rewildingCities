@@ -4,7 +4,9 @@
 # a preparation (D-98): Maine's local news outlets as carriers (Sprint 06,
 # step 3, the fifth carrier; WHERE-1). what is placed and why: the
 # outlet_carriers method (D-212).
-#   five listings -> one stack, then groups by exact key (D-201, D-202)
+#   three listings -> one stack, then groups by exact key (D-201, D-202).
+#                    Cision's two exports are declared in the shared
+#                    crosswalk and left out here by name (D-294)
 #   the groups    -> one outlet per group: closed? local news? where? every
 #                    outlet not placed listed with why (D-247 to D-251)
 #   the outlets   -> located_in edges to town, county and state, or to the
@@ -22,7 +24,7 @@ id: maine_outlet_carriers
 name: "Maine's local news outlets, placed by town"
 kind: preparation
 description: >
-  Groups the records of five outlet listings, writes each group once as an
+  Groups the records of three outlet listings, writes each group once as an
   outlet in the town its listings give, places each outlet in its town,
   county and state, counts outlets per 1,000 people, and lists every outlet
   that is not placed, with its reason.
@@ -34,23 +36,21 @@ city: maine
 manifest: ../manifest.yml
 
 # an outlet a listing marks ceased is listed, never counted (D-245; Kalli,
-# session 10). an outlet no local news list holds counts only as one of
-# Cision's newspapers (D-248), and one no listing names a town for is placed
-# by its publisher's office town, flagged, unless other outlets give that
-# office address too, which makes it a publisher's office (D-250). Kalli's
-# choices, session 11
+# session 10). with Cision left out (D-294, Kalli, session 16), no media
+# database is stacked, so an outlet counts only on a local news list's say
+# (database_alone: none), and an outlet no listing names a town for is
+# listed, never placed by an office town (town_fallback: none): the office
+# addresses were Cision's
 choices:
-  town_fallback: office_town_unshared
+  town_fallback: none
   ceased_outlets: listed
-  database_alone: newspapers
+  database_alone: none
 parameters: {}
 
 steps:
   - id: carriers_stack
     primitive: soil/stack_outlet_sources
     inputs:
-      cision: $manifest.outlets_cision
-      cision_raw: $manifest.outlets_cision_raw
       easton: $manifest.outlets_easton
       local_news_catalyst: $manifest.outlets_lnc
       maine_media_ecosystem: $manifest.outlets_mme
@@ -58,6 +58,10 @@ steps:
       stack: outlet_stack
     params:
       declaration: $crosswalks.outlet_sources
+      # the declared sources this run stacks, by name: a commercial
+      # database's terms do not let what it holds leave (D-294), so Cision's
+      # two exports are declared and left out here, never silently dropped
+      use: [local_news_catalyst, maine_media_ecosystem, easton]
 
   - id: carriers_groups
     primitive: soil/group_outlet_records
