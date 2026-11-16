@@ -53,7 +53,12 @@ UNCERTAINTIES = ("acs_moe", "published_interval", "none")
 # acquisition and never reaches derive_indicator.R. it names the type of the
 # points it counts (D-224): whose points, and which release, are the run's to
 # say, in the label its edges carry, and so the receipt's, never a seed's
-DERIVATION_KINDS = ("ratio", "passthrough", "located_count")
+# count (D-260): a sum of published cells, `add` minus `subtract`, its margin
+# from the Census sum formula. a one-cell count is the published number.
+DERIVATION_KINDS = ("ratio", "passthrough", "located_count", "count")
+# D-259: a ratio says whether its numerator is part of its denominator,
+# because the Census's margin formula differs for each. never inferred.
+RELATIONS = ("proportion", "ratio")
 LOCATED_DENOMINATORS = ("persons", "households")
 # what a value is for, read by the place profile to put it in its part
 # (Contract 4). one role per indicator (D-107).
@@ -87,8 +92,10 @@ def spec_sha256(spec: dict) -> str:
 
 @dataclass(frozen=True)
 class Derivation:
-    kind: str                                   # ratio | passthrough | located_count
-    numerator: tuple[str, ...] = ()
+    kind: str                                   # ratio | passthrough | located_count | count
+    numerator: tuple[str, ...] = ()             # a ratio's numerator; a count's add
+    subtract: tuple[str, ...] = ()              # count only
+    relation: str | None = None                 # ratio only: proportion | ratio (D-259)
     denominator: str | None = None
     scale: float = 1.0
     column: str | None = None                   # passthrough only
@@ -104,7 +111,9 @@ class Derivation:
         out: dict = {"kind": self.kind}
         if self.kind == "ratio":
             out.update(numerator=list(self.numerator), denominator=self.denominator,
-                       scale=self.scale)
+                       scale=self.scale, relation=self.relation)
+        elif self.kind == "count":
+            out.update(add=list(self.numerator), subtract=list(self.subtract))
         elif self.kind == "located_count":
             out.update(counts=self.counts, denominator=self.denominator, scale=self.scale)
         else:
@@ -165,7 +174,7 @@ class Indicator:
         d = self.derivation
         if d.kind == "located_count":
             return []
-        cols = list(d.numerator)
+        cols = list(d.numerator) + list(d.subtract)
         if d.denominator:
             cols.append(d.denominator)
         if d.column:
@@ -394,11 +403,36 @@ class IndicatorRegistry:
                     f"{where}: a ratio needs a positive numeric scale (100 for a "
                     f"percent, 1 for a proportion). no default: a rate off by a "
                     f"factor of 100 still looks like a rate.")
-            extra = [k for k in d if k not in ("kind", "numerator", "denominator", "scale")]
+            extra = [k for k in d if k not in ("kind", "numerator", "denominator", "scale",
+                                               "relation")]
             if extra:
                 raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
+            relation = d.get("relation")
+            if relation not in RELATIONS:
+                raise ValueError(
+                    f"{where}: a ratio needs relation, one of {', '.join(RELATIONS)}: "
+                    f"proportion when the numerator is part of the denominator, ratio "
+                    f"when it is not. the Census's margin formula differs for each, "
+                    f"so it is declared, never inferred (D-259)")
             return Derivation(kind="ratio", numerator=tuple(numerator),
-                              denominator=denominator, scale=float(scale))
+                              denominator=denominator, scale=float(scale),
+                              relation=relation)
+
+        if kind == "count":
+            add, subtract = d.get("add"), d.get("subtract", [])
+            if not isinstance(add, list) or not add or not all(isinstance(v, str) for v in add):
+                raise ValueError(
+                    f"{where}: a count needs add as a non-empty list of cells, even for "
+                    f"one, so a sum is never mistaken for a single cell (D-260)")
+            if not isinstance(subtract, list) or not all(isinstance(v, str) for v in subtract):
+                raise ValueError(f"{where}: a count's subtract must be a list of cells")
+            twice = sorted(set(add) & set(subtract))
+            if twice:
+                raise ValueError(f"{where}: a count adds and subtracts {', '.join(twice)}")
+            extra = [k for k in d if k not in ("kind", "add", "subtract")]
+            if extra:
+                raise ValueError(f"{where}: unknown derivation field(s): {', '.join(extra)}")
+            return Derivation(kind="count", numerator=tuple(add), subtract=tuple(subtract))
 
         if kind == "located_count":
             if "layer" in d:

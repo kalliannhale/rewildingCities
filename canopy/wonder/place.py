@@ -581,8 +581,10 @@ def say_place(reading: PlaceReading) -> str:
             own += f" ({ind.own_why})"
         elif ind.own_moe is not None:
             own += f", margin {ind.own_moe:.1f}"
+            if ind.own_moe_status == "derived":
+                own += " (derived by the Census's approximation, D-259)"
         elif ind.own_moe_status == "not_derived":
-            own += ", margin not derived (D-18)"
+            own += ", margin not derived (D-259)"
         if ind.own_reliability:
             own += f"; {ind.own_reliability}"
         lines.append(own + ", the publisher's own estimate")

@@ -937,3 +937,198 @@ datasets:
         - PLACE_TYPE defaults to Residential and is set town by town, so a class is never evidence of a use; Government - Municipal holds town offices and salt sheds alike, and Abbot's clerk's address is Residential.
         - The item page states the cutoff 2026-08-27 15:34:32; the file's own rows are not held to it.
         - sha256 of the copy read on 2026-11-15 is ec15309586a0f43207631f947807fd67cd5025ab92f8ccfb21ab69ae01a7b692.
+
+  # ── Sprint 06 session 13: the measures (D-258 to D-266) ──
+
+  acs_state_2024:
+    available: true
+    description: "ACS 2020-2024 five-year estimates by state; the API serves every state at this level, and only Maine's row attaches to a place"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state
+      unit_authority: us_census_geoid
+      indicators: [cii_broadband, households_without_broadband]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_state_2024.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  acs_state_2024_language:
+    available: true
+    description: "Maine's C16001 limited-English persons by language group, ACS 2020-2024 (D-261); every state at this level"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state
+      unit_authority: us_census_geoid
+      indicators: [limited_english_persons, limited_english_persons_share, limited_english_spanish, limited_english_spanish_share, limited_english_french_haitian_cajun, limited_english_french_haitian_cajun_share, limited_english_west_germanic, limited_english_west_germanic_share, limited_english_slavic, limited_english_slavic_share, limited_english_other_indo_european, limited_english_other_indo_european_share, limited_english_korean, limited_english_korean_share, limited_english_chinese, limited_english_chinese_share, limited_english_vietnamese, limited_english_vietnamese_share, limited_english_tagalog, limited_english_tagalog_share, limited_english_other_asian_pacific, limited_english_other_asian_pacific_share, limited_english_arabic, limited_english_arabic_share, limited_english_other_unspecified, limited_english_other_unspecified_share]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_state_2024_language.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  acs_county_2024_language:
+    available: true
+    description: "Maine's sixteen counties: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: county
+      within: {state: "23"}
+      unit_authority: us_census_geoid
+      indicators: [limited_english_persons, limited_english_persons_share, limited_english_spanish, limited_english_spanish_share, limited_english_french_haitian_cajun, limited_english_french_haitian_cajun_share, limited_english_west_germanic, limited_english_west_germanic_share, limited_english_slavic, limited_english_slavic_share, limited_english_other_indo_european, limited_english_other_indo_european_share, limited_english_korean, limited_english_korean_share, limited_english_chinese, limited_english_chinese_share, limited_english_vietnamese, limited_english_vietnamese_share, limited_english_tagalog, limited_english_tagalog_share, limited_english_other_asian_pacific, limited_english_other_asian_pacific_share, limited_english_arabic, limited_english_arabic_share, limited_english_other_unspecified, limited_english_other_unspecified_share]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_county_2024_language.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  acs_cousub_2024_language:
+    available: true
+    description: "Maine's 529 county subdivisions: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: county subdivision
+      within: {state: "23", county: "*"}
+      unit_authority: us_census_geoid
+      indicators: [limited_english_persons, limited_english_persons_share, limited_english_spanish, limited_english_spanish_share, limited_english_french_haitian_cajun, limited_english_french_haitian_cajun_share, limited_english_west_germanic, limited_english_west_germanic_share, limited_english_slavic, limited_english_slavic_share, limited_english_other_indo_european, limited_english_other_indo_european_share, limited_english_korean, limited_english_korean_share, limited_english_chinese, limited_english_chinese_share, limited_english_vietnamese, limited_english_vietnamese_share, limited_english_tagalog, limited_english_tagalog_share, limited_english_other_asian_pacific, limited_english_other_asian_pacific_share, limited_english_arabic, limited_english_arabic_share, limited_english_other_unspecified, limited_english_other_unspecified_share]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_cousub_2024_language.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  acs_sldl_2024_language:
+    available: true
+    description: "Maine's 151 House districts: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state legislative district (lower chamber)
+      within: {state: '23'}
+      unit_authority: us_census_sldl
+      indicators: [limited_english_persons, limited_english_persons_share, limited_english_spanish, limited_english_spanish_share, limited_english_french_haitian_cajun, limited_english_french_haitian_cajun_share, limited_english_west_germanic, limited_english_west_germanic_share, limited_english_slavic, limited_english_slavic_share, limited_english_other_indo_european, limited_english_other_indo_european_share, limited_english_korean, limited_english_korean_share, limited_english_chinese, limited_english_chinese_share, limited_english_vietnamese, limited_english_vietnamese_share, limited_english_tagalog, limited_english_tagalog_share, limited_english_other_asian_pacific, limited_english_other_asian_pacific_share, limited_english_arabic, limited_english_arabic_share, limited_english_other_unspecified, limited_english_other_unspecified_share]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_sldl_2024_language.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  acs_sldu_2024_language:
+    available: true
+    description: "Maine's 35 Senate districts: C16001 limited-English persons by language group, ACS 2020-2024 (D-261)"
+    semantic_type: indicator_source
+    license: us_government_work   # D-116
+    format: parquet
+    source:
+      type: api
+      provider: census_acs
+      dataset: acs/acs5
+      year: 2024
+      geography: state legislative district (upper chamber)
+      within: {state: '23'}
+      unit_authority: us_census_sldu
+      indicators: [limited_english_persons, limited_english_persons_share, limited_english_spanish, limited_english_spanish_share, limited_english_french_haitian_cajun, limited_english_french_haitian_cajun_share, limited_english_west_germanic, limited_english_west_germanic_share, limited_english_slavic, limited_english_slavic_share, limited_english_other_indo_european, limited_english_other_indo_european_share, limited_english_korean, limited_english_korean_share, limited_english_chinese, limited_english_chinese_share, limited_english_vietnamese, limited_english_vietnamese_share, limited_english_tagalog, limited_english_tagalog_share, limited_english_other_asian_pacific, limited_english_other_asian_pacific_share, limited_english_arabic, limited_english_arabic_share, limited_english_other_unspecified, limited_english_other_unspecified_share]
+      notes: >
+        Requires CENSUS_API_KEY. Margins are derived by declaration (D-258
+        to D-260). Pinned at 2020-2024: the 2021-2025 release is TBD on the
+        Census schedule (D-266).
+    cache: {path: .data/acs_sldu_2024_language.parquet, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau, American Community Survey, published_by: us_census_acs}
+
+  census_section203_puf_2021:
+    available: true
+    description: >
+      The Census's 2021 Section 203 public use files and their technical
+      documentation, as released: every state, county, town and American
+      Indian area by language minority group, with the flags that decided
+      coverage
+    semantic_type: section203_public_use_file
+    license: us_government_work
+    format: zip
+    # a release: this copy is the evidence. its encoding and member are its
+    # own facts, read 2026-11-15, and a run is held to them (D-192)
+    source:
+      type: manual
+      notes: >
+        Downloaded 2026-11-15 from census.gov/data/datasets/2021/dec/rdo/section-203-determinations.html
+        (Sec203_PUF_2021_12_01.zip, 4.33 MB), copied into .data unchanged.
+        Read through seeds/crosswalks/voting/section203_puf_2021.yml.
+      puf_encoding: cp1252
+      puf_member: sect203_All_Areas.csv
+      determination_date: "2021-12-08"
+      acs_basis: "2015-2019"
+    cache: {path: .data/sec203_puf_2021_12_01.zip, refresh_policy: manual}
+    provenance: {source: U.S. Census Bureau Redistricting and Voting Rights Data Office (Section 203 determinations), published_by: us_census_section203}
+    quality:
+      known_issues:
+        - The documentation calls the files Windows ASCII; their bytes are cp1252 (0xF1, a name with an n with tilde, refused a UTF-8 read).
+        - LANGUAGE text differs from the documentation's labels; rows are keyed by LANCOUNT.
+        - The nation's ILLRAT reads 1.3200; the documentation's FLAG_EDU rule says 1.31. The flags are copied as published.
+        - Maine holds 74 state rows, 38,628 town rows (522 towns, county written 000 on every one), 1,040 AIAN/MCD rows and no county rows.
+        - Census found a modelling error in the inputs and says no determination changed.
+        - Margins carry no stated confidence level.
+        - sha256 of the copy read on 2026-11-15 is 2d6b21e91f279989c23210c91b6c4db66e5d73154c76b61ec83edc4d6f3e22d6.
+
+  piaac_skills_map_20261115:
+    available: true
+    description: >
+      The U.S. PIAAC Skills Map's downloadable workbook: model-based literacy
+      and numeracy estimates for every state and county, adults 16 to 74,
+      with credible intervals, CVs and the workbook's own quality flags
+    semantic_type: piaac_skills_map_workbook
+    license: us_government_work
+    format: xlsx
+    # the download carries a website build fingerprint in its name, so this
+    # copy is declared by its day and sha256 rather than by its name
+    source:
+      type: manual
+      notes: >
+        Downloaded 2026-11-15 from the Skills Map's data download
+        (nces.ed.gov/surveys/piaac/skillsmap), saved unchanged as
+        SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx. Read through
+        seeds/crosswalks/literacy/piaac_skills_map.yml.
+      downloaded: "2026-11-15"
+    cache: {path: .data/SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx, refresh_policy: manual}
+    provenance: {source: National Center for Education Statistics (U.S. PIAAC Skills Map), published_by: nces_piaac}
+    quality:
+      known_issues:
+        - Sheets County (92 columns), State (77), Nation (67) and Variable List; the State sheet carries fewer flag columns than the County sheet.
+        - The file writes Lit_P1 where NCES's user guide writes LIT_P1.
+        - Maine holds 176 county rows, 16 counties by 11 groups; no Maine county carries a quality flag for Lit_P1.
+        - Pooled PIAAC 2012/2014/2017 with ACS 2013-2017; no 2023-cycle county estimates exist (P-7, D-265).
+        - sha256 of the copy read on 2026-11-15 is b6745055199c100581c90b34617aa5148f9b7c524c136264822e46e7a9e434b5.

@@ -29,7 +29,8 @@ def test_an_indicator_resolves_to_its_parsed_declaration():
     d = resolver().resolve_param_value("$indicators.cii_broadband")
     assert d["id"] == "cii_broadband"
     assert d["derivation"] == {"kind": "ratio", "numerator": ["B28002_004E"],
-                               "denominator": "B28002_001E", "scale": 100.0}
+                               "denominator": "B28002_001E", "scale": 100.0,
+                               "relation": "proportion"}
     assert d["moe_variables"] == ["B28002_004M", "B28002_001M"]
     assert d["declared_in"] == "indicators/cii_2026.yml"
     assert len(d["declaration_sha256"]) == 64

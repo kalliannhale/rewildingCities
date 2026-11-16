@@ -232,7 +232,7 @@ def test_the_telling_says_each_town_its_value_and_what_the_range_rests_on(tmp_pa
     said = say_place(read_place(opened(tmp_path), *DISTRICT, root=REPO))
     assert "State House District 9 (2024); Maine" in said
     assert "not of this place's people" in said
-    assert "this place: 79.0, margin not derived (D-18), the publisher's own estimate" in said
+    assert "this place: 79.0, margin not derived (D-259), the publisher's own estimate" in said
     assert "~ Beta town: 88.0, on 40 households, a small sample; 35.0% of its households here" in said
     assert ("range: 70.0 (Alpha town) to 88.0 (Beta town, 35.0% of its 40 households here, "
             "a small sample), across 4 of 7 towns") in said

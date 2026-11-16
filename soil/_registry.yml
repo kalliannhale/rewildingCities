@@ -816,19 +816,21 @@ primitives:
     # its name is unchanged, so provenance_contains: derive_indicator
     # (standardize_indicator's precondition) still matches.
     path: transform/derive_indicator.R
-    version: 0.2.0
+    version: 0.3.0
     description: >
       Indicator values from raw published counts, by declaration. Each
       indicator arrives as `$indicators.<id>`, resolved by the orchestrator
       from seeds/indicators/, so the primitive does only the arithmetic it is
       told: a ratio of summed numerators over a denominator at a declared
-      scale, or a published column passed through. Long-form output, one row
+      scale, a count of cells added and subtracted, or a published column
+      passed through. Long-form output, one row
       per unit and indicator, carrying (unit, indicator, value, published_by,
       method, time). A unit is an (authority, code) pair: the caller declares
       whose codes name the units, and the declaration is on every row and in
-      every measurement_id, indicator:authority:code (D-131, D-132). Ratio
-      rows carry no derived margin of error; a passthrough carries its
-      published one.
+      every measurement_id, indicator:authority:code (D-131, D-132). A
+      passthrough carries its published margin; a ratio's margin is derived
+      by its declared relation and a count's by the sum formula, each marked
+      derived with moe_formula (D-258 to D-260).
     inputs:
       - name: source
         semantic_types: [indicator_source]
@@ -1425,3 +1427,57 @@ primitives:
       town_field: {type: string, required: true}
       scope_field: {type: string, required: false}
       state_fips: {type: string, required: true}
+
+  prepare_section203:
+    path: transform/prepare_section203.py
+    version: 1.0.0
+    description: >
+      One state's Section 203 determinations read as published (D-263,
+      D-264): the state, each town named by our town code through its
+      five-digit MCD, and the American Indian areas overlapping its towns
+      under Census's own area code, by language minority group, every flag
+      copied, never recomputed. Read in the release's declared encoding,
+      strictly, by the columns and codes of the crosswalk
+      section203_puf_2021, passed whole as reading. An AIAN/MCD row is never
+      a town's value; only the overlap is kept. A town Census splits at a
+      county line is held whole under census_s203_mcd, attached to no piece
+      (D-267), as is a Census town matching none of ours, the file's towns
+      being of an older vintage. Refuses an undeclared code or summary
+      level and a header unlike the declared one; lists the state's towns
+      with no record.
+    inputs:
+      - {name: puf, semantic_types: [section203_public_use_file], required: true}
+      - {name: towns, semantic_types: [indicator_source], required: true}
+    outputs: {semantic_type: section203_records, data_category: tabular}
+    params:
+      encoding: {type: string, required: true}
+      member: {type: string, required: true}
+      determination_date: {type: string, required: true}
+      acs_basis: {type: string, required: true}
+      state_fips: {type: string, required: true}
+      reading: {type: object, required: true}
+    source_facts:
+      input: puf
+      params:
+        encoding: source.puf_encoding
+        member: source.puf_member
+        determination_date: source.determination_date
+        acs_basis: source.acs_basis
+
+  prepare_piaac_skills_map:
+    path: transform/prepare_piaac_skills_map.py
+    version: 1.0.0
+    description: >
+      Adult literacy at or below PIAAC Level 1 for one state and its
+      counties, from the Skills Map workbook (D-265): only the columns the
+      crosswalk piaac_skills_map declares, sheet by sheet, for its declared
+      group; the share with its 95 percent credible bounds, its CV and the
+      workbook's flags in its own words; left_out as the user guide computes
+      a total. Refuses a declared column a sheet lacks, an undefined flag
+      code and a share without both bounds.
+    inputs:
+      - {name: workbook, semantic_types: [piaac_skills_map_workbook], required: true}
+    outputs: {semantic_type: literacy_estimates, data_category: tabular}
+    params:
+      state_fips: {type: string, required: true}
+      reading: {type: object, required: true}

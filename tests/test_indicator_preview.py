@@ -123,11 +123,26 @@ def test_every_response_says_it_is_a_preview(repo):
     assert all(r["method"].startswith("preview:") for r in p["values"])
 
 
-def test_ratio_margin_is_not_derived(repo):
+def test_ratio_margin_is_derived_by_its_declared_relation(repo):
+    """D-259: Washington's proportion by the proportion formula; the
+    components are still served beside it."""
+    import math
+    row = by_code(ip.preview("test", "cii_broadband", unit_authority=GEOID))["23029"]
+    p = 500.0 / 600.0
+    assert row["moe"] == math.sqrt(40.0 * 40.0 - p * p * 30.0 * 30.0) / 600.0 * 100.0
+    assert row["moe_status"] == "derived"
+    assert row["moe_formula"] == "proportion"
+    assert row["components"]["B28002_004E"] == {"estimate": 500.0, "moe": 40.0}
+
+
+def test_a_negative_radicand_falls_back_to_the_ratio_formula(repo):
+    """Cumberland's radicand is zero on paper and -4.5e-13 in floating point:
+    the Census's instructions say to use the ratio formula, and the row says so."""
+    import math
     row = by_code(ip.preview("test", "cii_broadband", unit_authority=GEOID))["23005"]
-    assert row["moe"] is None
-    assert row["moe_status"] == "not_derived"
-    assert row["components"]["B28002_004E"] == {"estimate": 1000.0, "moe": 50.0}
+    p = 1000.0 / 1200.0
+    assert row["moe_formula"] == "ratio_fallback"
+    assert row["moe"] == math.sqrt(50.0 * 50.0 + p * p * 60.0 * 60.0) / 1200.0 * 100.0
 
 
 def test_zero_denominator_rests_empty_with_its_reason(repo):

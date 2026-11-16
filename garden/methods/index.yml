@@ -33,6 +33,10 @@ methods:
       path: information/governance_units_conformed.yml
     - id: health_center_carriers
       path: information/health_center_carriers.yml
+    - id: literacy_estimates
+      path: information/literacy_estimates.yml
+    - id: section203_determinations
+      path: information/section203_determinations.yml
     - id: clerk_office_carriers
       path: information/clerk_office_carriers.yml
     - id: indicator_values

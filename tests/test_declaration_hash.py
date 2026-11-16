@@ -25,7 +25,7 @@ SEEDS = Path(__file__).resolve().parents[1] / "seeds" / "indicators"
 A = {
     "name": "a", "defined_by": "test", "measures": "thing", "unit": "percent",
     "derivation": {"kind": "ratio", "numerator": ["A_001E"],
-                   "denominator": "A_002E", "scale": 100},
+                   "denominator": "A_002E", "scale": 100, "relation": "proportion"},
     "direction": "higher_is_better", "aggregation": "population_weighted_mean",
     "weight_by": "A_002E", "uncertainty": "acs_moe",
     "source": {"provider": "census_acs", "dataset": "acs/acs5"},

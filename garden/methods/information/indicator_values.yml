@@ -40,6 +40,7 @@ requires_data:
 choices:
   aggregation_unit_level:
     options:
+      state:
       county:
       county subdivision:
       tract:
@@ -69,8 +70,10 @@ produces:
 
 interpretation: >
   A value is a measurement of one thing, defined one way, at one vintage. A
-  ratio's margin of error is not yet derived and is marked so; read small
-  places with that in mind. A value says nothing about how a place compares
+  ratio's margin of error is derived by the formula its declared relation
+  names, and a count's by the sum formula, each the Census's approximation
+  and marked derived (D-258 to D-260); a proportion of exactly 1 is marked
+  not_derived. Read small places with their margins. A value says nothing about how a place compares
   with others, and nothing about whether it is enough.
 
 # a preparation is written by hand, not composed from a curiosity, so the

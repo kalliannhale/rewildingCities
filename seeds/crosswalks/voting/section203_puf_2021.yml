@@ -1,0 +1,114 @@
+# ============================================================================
+# seeds/crosswalks/voting/section203_puf_2021.yml
+# the Census's 2021 Section 203 public use files, as their documentation
+# describes them (D-263). read by soil/transform/prepare_section203.py,
+# passed whole as `reading`.
+# ============================================================================
+# source: "2021 Voting Rights Public Use File Technical Documentation",
+# Census Redistricting & Voting Rights Data Office, 2021-12-08, inside
+# Sec203_PUF_2021_12_01.zip. the file differs from it three ways, read
+# 2026-11-15: its bytes are cp1252 where it says ASCII (the encoding is the
+# release's own fact, in the manifest); its LANGUAGE text differs from the
+# documented labels ("Apache alone or in combination" for "American Indian
+# (Apache)"), so a row is keyed by LANCOUNT, never LANGUAGE, and both are
+# kept; and the nation's ILLRAT reads 1.3200 where the documentation's flag
+# rule says 1.31. the flags are the evidence: Census set them on unrounded,
+# unsuppressed data, so they are never recomputed from the rounded values.
+# ============================================================================
+
+documentation: "2021 Voting Rights Public Use File Technical Documentation (2021-12-08)"
+columns: [SUMLVL, LEVEL, S203_GEOID, AIAN, ANRC, ST, CNTY, MCD, NAMELSAD, LANCOUNT, LANGUAGE, POP, MPOP, VAPOP, MVAPOP, VACIT, MVACIT, VACLEP, MVACLEP, ILLIT, MILLIT, LEPPCT, MLEPPCT, ILLRAT, MILLRAT, FLAG10, FLAG5, FLAG_EDU, FLAG_ST, FLAG_JURIS, FLAG_AIAN, FLAG_ANRC, FLAG_COV]
+numeric: [POP, MPOP, VAPOP, MVAPOP, VACIT, MVACIT, VACLEP, MVACLEP, ILLIT, MILLIT, LEPPCT, MLEPPCT, ILLRAT, MILLRAT]
+flags: [FLAG10, FLAG5, FLAG_EDU, FLAG_ST, FLAG_JURIS, FLAG_AIAN, FLAG_ANRC, FLAG_COV]
+# the documentation's Table 2 codes; SUMLVL is read as text
+summary_levels:
+  "010": nation
+  "040": state
+  "050": county
+  "060": mcd
+  "230": anrc
+  "231": anrc_county
+  "250": aian
+  "270": aian_county
+  "271": aian_mcd
+# the national illiteracy rate the documentation's FLAG_EDU rule names
+documented_national_illiteracy_rate: 1.31
+# Table 4. 55 is no longer used and is refused if met. class says which of
+# the four groups Section 203 covers a code belongs to, or that it is a total
+# (the documentation writes a dash in 46, 53, 54 and 76; written here as a comma)
+lancount:
+  "01": {label: "Total Population", class: total}
+  "02": {label: "Hispanic", class: hispanic}
+  "03": {label: "American Indian alone or in combination", class: total}
+  "04": {label: "American Indian (Apache)", class: american_indian_alaska_native}
+  "05": {label: "American Indian (Arapaho)", class: american_indian_alaska_native}
+  "06": {label: "American Indian (Blackfeet)", class: american_indian_alaska_native}
+  "07": {label: "American Indian (Canadian and French American Indian)", class: american_indian_alaska_native}
+  "08": {label: "American Indian (Central American Indian)", class: american_indian_alaska_native}
+  "09": {label: "American Indian (Cherokee)", class: american_indian_alaska_native}
+  "10": {label: "American Indian (Cheyenne)", class: american_indian_alaska_native}
+  "11": {label: "American Indian (Chickasaw)", class: american_indian_alaska_native}
+  "12": {label: "American Indian (Chippewa)", class: american_indian_alaska_native}
+  "13": {label: "American Indian (Choctaw)", class: american_indian_alaska_native}
+  "14": {label: "American Indian (Colville)", class: american_indian_alaska_native}
+  "15": {label: "American Indian (Comanche)", class: american_indian_alaska_native}
+  "16": {label: "American Indian (Cree)", class: american_indian_alaska_native}
+  "17": {label: "American Indian (Creek)", class: american_indian_alaska_native}
+  "18": {label: "American Indian (Crow)", class: american_indian_alaska_native}
+  "19": {label: "American Indian (Delaware)", class: american_indian_alaska_native}
+  "20": {label: "American Indian (Hopi)", class: american_indian_alaska_native}
+  "21": {label: "American Indian (Houma)", class: american_indian_alaska_native}
+  "22": {label: "American Indian (Iroquois)", class: american_indian_alaska_native}
+  "23": {label: "American Indian (Kiowa)", class: american_indian_alaska_native}
+  "24": {label: "American Indian (Lumbee)", class: american_indian_alaska_native}
+  "25": {label: "American Indian (Menominee)", class: american_indian_alaska_native}
+  "26": {label: "American Indian (Mexican American Indian)", class: american_indian_alaska_native}
+  "27": {label: "American Indian (Navajo)", class: american_indian_alaska_native}
+  "28": {label: "American Indian (Osage)", class: american_indian_alaska_native}
+  "29": {label: "American Indian (Ottawa)", class: american_indian_alaska_native}
+  "30": {label: "American Indian (Paiute)", class: american_indian_alaska_native}
+  "31": {label: "American Indian (Pima)", class: american_indian_alaska_native}
+  "32": {label: "American Indian (Potawatomi)", class: american_indian_alaska_native}
+  "33": {label: "American Indian (Pueblo)", class: american_indian_alaska_native}
+  "34": {label: "American Indian (Puget Sound Salish)", class: american_indian_alaska_native}
+  "35": {label: "American Indian (Seminole)", class: american_indian_alaska_native}
+  "36": {label: "American Indian (Shoshone)", class: american_indian_alaska_native}
+  "37": {label: "American Indian (Sioux)", class: american_indian_alaska_native}
+  "38": {label: "American Indian (South American Indian)", class: american_indian_alaska_native}
+  "39": {label: "American Indian (Spanish American Indian)", class: american_indian_alaska_native}
+  "40": {label: "American Indian (Tohono O'Odham)", class: american_indian_alaska_native}
+  "41": {label: "American Indian (Ute)", class: american_indian_alaska_native}
+  "42": {label: "American Indian (Yakama)", class: american_indian_alaska_native}
+  "43": {label: "American Indian (Yaqui)", class: american_indian_alaska_native}
+  "44": {label: "American Indian (Yuma)", class: american_indian_alaska_native}
+  "45": {label: "American Indian (All other American Indian Tribes)", class: american_indian_alaska_native}
+  "46": {label: "American Indian, Tribe not Specified", class: american_indian_alaska_native}
+  "47": {label: "Alaskan Athabascan", class: american_indian_alaska_native}
+  "48": {label: "Aleut", class: american_indian_alaska_native}
+  "49": {label: "Inupiat", class: american_indian_alaska_native}
+  "50": {label: "Tlingit-Haida", class: american_indian_alaska_native}
+  "51": {label: "Tsimshian", class: american_indian_alaska_native}
+  "52": {label: "Yup'ik", class: american_indian_alaska_native}
+  "53": {label: "Alaska Native Tribe, Tribe not Specified", class: american_indian_alaska_native}
+  "54": {label: "American Indian (American Indian or Alaska Native, Not Specified)", class: american_indian_alaska_native}
+  "56": {label: "Asian Indian", class: asian}
+  "57": {label: "Bangladeshi", class: asian}
+  "58": {label: "Bhutanese", class: asian}
+  "59": {label: "Burmese", class: asian}
+  "60": {label: "Cambodian", class: asian}
+  "61": {label: "Chinese (including Taiwanese)", class: asian}
+  "62": {label: "Filipino", class: asian}
+  "63": {label: "Hmong", class: asian}
+  "64": {label: "Indonesian", class: asian}
+  "65": {label: "Japanese", class: asian}
+  "66": {label: "Korean", class: asian}
+  "67": {label: "Laotian", class: asian}
+  "68": {label: "Malaysian", class: asian}
+  "69": {label: "Mongolian", class: asian}
+  "70": {label: "Nepalese", class: asian}
+  "71": {label: "Okinawan", class: asian}
+  "72": {label: "Pakistani", class: asian}
+  "73": {label: "Sri Lankan", class: asian}
+  "74": {label: "Thai", class: asian}
+  "75": {label: "Vietnamese", class: asian}
+  "76": {label: "Other Asian, Not specified", class: asian}

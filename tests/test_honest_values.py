@@ -153,8 +153,13 @@ def test_the_count_rule_fires_below_its_floor_and_says_so():
     assert by["2300100001"]["reliability_note"] is None
     note = by["2300100002"]["reliability_note"]
     assert note.startswith("read with care") and "30 households" in note and "50" in note
-    # a ratio has no derived margin (D-18), so no CV and no CV test
-    assert by["2300100002"]["cv"] is None and "coefficient" not in note
+    # a ratio's margin is derived (D-258, the proportion formula), so it has a
+    # CV; this one is under the rule's ceiling, so the note names the count only
+    import math
+    p = 20.0 / 30.0
+    moe = math.sqrt(9.0 * 9.0 - p * p * 8.0 * 8.0) / 30.0 * 100.0
+    assert by["2300100002"]["cv"] == pytest.approx((moe / 1.645) / (p * 100.0))
+    assert by["2300100002"]["cv"] < RULE["max_cv"] and "coefficient" not in note
 
 
 def test_the_cv_rule_fires_where_a_margin_is_published():

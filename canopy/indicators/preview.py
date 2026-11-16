@@ -11,12 +11,13 @@ why build it anyway
     independent implementations of one declaration that must agree to the last
     decimal. a disagreement is then a finding about one of them.
 
+margins (D-258, D-259, D-260): a passthrough's margin is the published one.
+a ratio's is derived by the formula its declared relation names, and a
+count's by the sum formula (canopy/indicators/margins.py, the arithmetic's
+one Python home), each marked derived with moe_formula saying which, and
+each an approximation. a proportion of exactly 1 is not_derived.
+
 what it deliberately does not do
-  ~ derive a margin of error for a ratio. the registry cannot yet say whether a
-    ratio is a proportion (numerator inside the denominator), and the Census
-    formulas differ. a margin computed with the wrong one is a plausible wrong
-    number, so a ratio row carries its component margins and no derived one. a
-    passthrough's margin is the published one, and is served as is.
   ~ round. replication is checked at full precision.
   ~ guess why a value is empty. the provider empties Census annotations; since
     ACS-7 it keeps each code in a <variable>_annotation column, and the one
@@ -50,6 +51,7 @@ from pathlib import Path
 
 import yaml
 
+from . import margins
 from .registry import Indicator, IndicatorRegistry
 from canopy.paths import project_root
 
@@ -461,9 +463,14 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
     method = f"{STATUS}:{d.kind}"
     if d.kind == "ratio":
         notes.append(
-            "margin of error not derived for ratios: the registry cannot yet say "
-            "whether this ratio is a proportion, and the Census formulas differ. "
-            "component margins are served instead.")
+            f"margin of error derived by the Census's {d.relation} formula (2025 "
+            f"statistical testing instructions, D-259): an approximation that "
+            f"leaves out the correlation between estimates. component margins "
+            f"are served beside it.")
+    elif d.kind == "count":
+        notes.append(
+            "a count of published cells; with more than one cell, its margin is "
+            "the Census's sum formula, an approximation (D-260).")
 
     # the margin's annotation column, named as derive_indicator.R names it
     ann_col = (re.sub(r"E$", "M", d.column) + "_annotation"
@@ -484,6 +491,16 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
                        "moe": _number(r[m]) if m and m in frame.columns else None}
 
         value, moe, moe_status, reason, bound = None, None, None, None, None
+        formula = None
+
+        def part(v):
+            m = moes.get(v)
+            if not m:
+                return None
+            ann = f"{m}_annotation"
+            return margins.part_margin(comp[v]["moe"], _annotation(r[ann])
+                                       if ann in frame.columns else None)
+
         if d.kind == "passthrough":
             value = comp[d.column]["estimate"]
             moe = comp[d.column]["moe"]
@@ -499,8 +516,28 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
                 bound = _bound_label(value, d.open_ended)
                 value, moe = None, None
                 reason = f"open-ended median: {bound}"
+        elif d.kind == "count":
+            cells = (*d.numerator, *d.subtract)
+            moe_status = "absent"
+            empty = [v for v in cells if comp[v]["estimate"] is None]
+            if empty:
+                reason = f"source value empty: {', '.join(empty)}"
+            else:
+                acc = 0.0
+                for v in d.numerator:
+                    acc = acc + comp[v]["estimate"]
+                for v in d.subtract:
+                    acc = acc - comp[v]["estimate"]
+                value = acc
+                parts = [part(v) for v in cells]
+                if all(m is not None for m in parts):
+                    if len(cells) == 1:
+                        moe, moe_status = parts[0], "published"
+                    else:
+                        moe = margins.sum_margin(parts)
+                        moe_status, formula = "derived", margins.SUM
         else:
-            moe_status = "not_derived"
+            moe_status = "absent"
             empty = [v for v in (*d.numerator, d.denominator) if comp[v]["estimate"] is None]
             if empty:
                 reason = f"source value empty: {', '.join(empty)}"
@@ -511,10 +548,19 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
                     reason = "zero denominator"
                 else:
                     value = (num / den) * d.scale
+                    parts = [part(v) for v in (*d.numerator, d.denominator)]
+                    if all(m is not None for m in parts):
+                        q, formula = margins.quotient_margin(
+                            num, margins.sum_margin(parts[:-1]), den, parts[-1], d.relation)
+                        if q is None:
+                            moe_status = "not_derived"
+                        else:
+                            moe, moe_status = q * d.scale, "derived"
 
         households, households_reason = _rests_on(ind, r)
         cv = None
-        if value is not None and moe is not None and moe_status == "published" and value != 0:
+        if (value is not None and moe is not None and value != 0
+                and moe_status in ("published", "derived")):
             cv = (moe / 1.645) / abs(value)
         note = _reliability_note(value, households, ind.rests_on.counts, cv, reliability)
 
@@ -525,6 +571,7 @@ def derive(frame, ind: Indicator, *, unit_authority: str, published_by: str | No
             "value": value,
             "moe": moe,
             "moe_status": moe_status,
+            "moe_formula": formula,
             "bound": bound,
             "empty_reason": reason,
             "households": households,

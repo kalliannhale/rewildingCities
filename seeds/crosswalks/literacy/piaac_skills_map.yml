@@ -1,0 +1,56 @@
+# ============================================================================
+# seeds/crosswalks/literacy/piaac_skills_map.yml
+# the U.S. PIAAC Skills Map's downloadable workbook, as read 2026-11-15
+# (D-265). read by soil/transform/prepare_piaac_skills_map.py, whole, as
+# `reading`.
+# ============================================================================
+# the workbook's own Variable List is the source for every name and code
+# here. NCES's user guide writes LIT_P1; the file writes Lit_P1: the file's
+# spelling is declared, and any other is refused. each sheet declares its own
+# columns, since the State sheet carries fewer flag columns than the County
+# sheet. only the columns named here are read.
+# ============================================================================
+
+group_column: grpName
+group: all                       # adults 16 to 74; the age and education groups wait
+measure: literacy_at_or_below_level_1
+confidence: 0.95                  # credible intervals at 95 percent (NCES SAE user guide)
+period: "PIAAC 2012/2014/2017, modelled with ACS 2013-2017"
+sheets:
+  county:
+    sheet: County
+    key: FIPS_code
+    key_width: 5
+    name: County
+    columns:
+      share: Lit_P1
+      lower: Lit_P1_CI_L
+      upper: Lit_P1_CI_U
+      cv: Lit_P1_CV
+      share_flag: Lit_P1_indicator
+      lower_flag: Lit_P1_CI_L_indicator
+      upper_flag: Lit_P1_CI_U_indicator
+      cv_flag: Lit_P1_CV_indicator
+      population: POP_DOMAIN
+  state:
+    sheet: State
+    key: FIPS_code
+    key_width: 2
+    name: State
+    columns:
+      share: Lit_P1
+      lower: Lit_P1_CI_L
+      upper: Lit_P1_CI_U
+      cv: Lit_P1_CV
+      lower_flag: Lit_P1_CI_L_indicator
+      cv_flag: Lit_P1_CV_indicator
+      population: POP_DOMAIN
+# the Variable List's codes, in its words
+flag_codes:
+  out_of_bound:
+    1: rounded to 0
+    2: negative and set to 0
+    3: greater than 1
+  cv:
+    1: coefficient of variation 0.3 to 0.5
+    2: coefficient of variation greater than 0.5

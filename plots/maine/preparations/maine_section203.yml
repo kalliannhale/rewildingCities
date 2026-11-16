@@ -1,0 +1,27 @@
+id: maine_section203
+name: "Maine's Section 203 records, read as published"
+kind: preparation
+description: >
+  Reads the 2021 Section 203 determinations for Maine, its towns and the
+  American Indian areas overlapping its towns (D-263, D-264).
+method:
+  ref: $methods/information/section203_determinations
+city: maine
+manifest: ../manifest.yml
+choices: {}
+parameters: {}
+steps:
+  - id: section203_records
+    primitive: soil/prepare_section203
+    inputs:
+      puf: $manifest.census_section203_puf_2021
+      towns: $manifest.acs_cousub_2024
+    outputs:
+      records: section203_records
+    params:
+      encoding: cp1252
+      member: sect203_All_Areas.csv
+      determination_date: "2021-12-08"
+      acs_basis: "2015-2019"
+      state_fips: "23"
+      reading: $crosswalks.section203_puf_2021

@@ -1,0 +1,22 @@
+id: maine_literacy
+name: "Adult literacy for Maine and its counties"
+kind: preparation
+description: >
+  Reads the share of adults at or below PIAAC Level 1 for Maine and its
+  sixteen counties from the Skills Map workbook (D-265).
+method:
+  ref: $methods/information/literacy_estimates
+city: maine
+manifest: ../manifest.yml
+choices: {}
+parameters: {}
+steps:
+  - id: literacy_estimates
+    primitive: soil/prepare_piaac_skills_map
+    inputs:
+      workbook: $manifest.piaac_skills_map_20261115
+    outputs:
+      estimates: literacy_estimates
+    params:
+      state_fips: "23"
+      reading: $crosswalks.piaac_skills_map

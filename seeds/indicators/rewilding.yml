@@ -15,6 +15,7 @@ indicators:
     unit: percent_of_households
     derivation:
       kind: ratio
+      relation: proportion
       numerator: [C16002_004E, C16002_007E, C16002_010E, C16002_013E]
       denominator: C16002_001E
       scale: 100
@@ -38,4 +39,32 @@ indicators:
       information is available in the languages people speak, puts the
       obligation on institutions and has no existing indicator. C16002
       collapses French into "Other Indo-European", which in Aroostook is
-      nearly all of it; a B16002 variant naming French should follow.
+      nearly all of it. B16002 is not published for towns since 2016, so the
+      persons-level C16001 family in language.yml, whose French, Haitian or
+      Cajun group stands apart, is where French is read (D-261).
+  households_without_broadband:
+    name: Households without broadband of any type
+    defined_by: rewildingcities
+    measures: households_without_broadband
+    role: barrier
+    rests_on: {add: [B28002_001E], counts: households}
+    unit: households
+    derivation:
+      kind: count
+      add: [B28002_001E]
+      subtract: [B28002_004E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The households cii_broadband leaves out, counted: every household less
+      those with broadband of any type, so the count beside the rate is the
+      rate's own complement and its left_out under a universal threshold
+      (D-262). It counts dial-up-only households, households with access but
+      no subscription, and households with no access at all together; B28002
+      keeps the three apart for any later question that needs them. Its
+      margin is the Census's sum formula over two cells, an approximation
+      (D-260).

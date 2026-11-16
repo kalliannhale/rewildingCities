@@ -1,0 +1,35 @@
+id: literacy_estimates
+domain: information
+kind: preparation
+name: "Adult Literacy at or Below Level 1, from the PIAAC Skills Map"
+answers_question_types: [literacy, preparation]
+description: >
+  Reads the share of adults 16 to 74 at or below Level 1 in PIAAC literacy
+  for one state and its counties from the U.S. PIAAC Skills Map workbook,
+  with its 95 percent credible interval, its CV, the workbook's quality flags
+  in their own words, and left_out: the population times the share and its
+  bounds, as NCES's user guide computes a total (D-265).
+  Level 2 is UNESCO's fixed level of proficiency for SDG indicator 4.6.1, so
+  at or below Level 1 is below it. The estimates are model-based: NCES
+  predicted each county's share from ACS covariates, among them the shares of
+  Black and of Hispanic residents, poverty and education. They are not a test
+  of the people living there, and are never combined with their own
+  predictors. They pool PIAAC 2012, 2014 and 2017 with ACS 2013-2017; no
+  later county estimates exist.
+requires_data:
+  - {name: workbook, type: tabular, semantic_types: [piaac_skills_map_workbook], critical: true, as_acquired: true,
+     role: "The Skills Map's downloadable workbook.",
+     uncertainty_without: "No literacy estimate can be read."}
+choices: {}
+requires_primitives:
+  - soil/prepare_piaac_skills_map
+produces:
+  - semantic_type: literacy_estimates
+    data_category: tabular
+    description: One row per place, the share with its interval, flags and left_out.
+interpretation: >
+  A county's share is a model's prediction with a 95 percent credible
+  interval, always reported together. left_out's interval is narrower than
+  the truth, because the population's own sampling error is not counted. A
+  town has no estimate of its own; a county's, shown on a town, is the
+  county's (Contract 4, borrowed_from).

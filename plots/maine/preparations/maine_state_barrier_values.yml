@@ -1,0 +1,74 @@
+id: maine_state_barrier_values
+name: "Barrier measures for Maine as a whole"
+description: >
+  Households without broadband and the C16001 language family for the state, from ACS 2020-2024 (D-261, D-262). The API serves every state at this level; only Maine's rows attach to a place.
+kind: preparation
+method:
+  ref: $methods/information/indicator_values
+city: maine
+manifest: ../manifest.yml
+choices:
+  aggregation_unit_level: state
+parameters: {}
+steps:
+  - id: state_count_derive
+    primitive: soil/derive_indicator
+    description: "Households without broadband, by state"
+    inputs:
+      source: $manifest.acs_state_2024
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.households_without_broadband
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      published_by: us_census_acs
+      unit_authority: us_census_geoid
+      unit_column: GEOID
+      name_column: NAME
+      joins_to: governance_unit
+      reliability: $reliability.acs_small_sample
+  - id: state_language_derive
+    primitive: soil/derive_indicator
+    description: "The language family, by state"
+    inputs:
+      source: $manifest.acs_state_2024_language
+    outputs:
+      values: indicator_values
+    params:
+      indicators:
+        - $indicators.limited_english_persons
+        - $indicators.limited_english_persons_share
+        - $indicators.limited_english_spanish
+        - $indicators.limited_english_spanish_share
+        - $indicators.limited_english_french_haitian_cajun
+        - $indicators.limited_english_french_haitian_cajun_share
+        - $indicators.limited_english_west_germanic
+        - $indicators.limited_english_west_germanic_share
+        - $indicators.limited_english_slavic
+        - $indicators.limited_english_slavic_share
+        - $indicators.limited_english_other_indo_european
+        - $indicators.limited_english_other_indo_european_share
+        - $indicators.limited_english_korean
+        - $indicators.limited_english_korean_share
+        - $indicators.limited_english_chinese
+        - $indicators.limited_english_chinese_share
+        - $indicators.limited_english_vietnamese
+        - $indicators.limited_english_vietnamese_share
+        - $indicators.limited_english_tagalog
+        - $indicators.limited_english_tagalog_share
+        - $indicators.limited_english_other_asian_pacific
+        - $indicators.limited_english_other_asian_pacific_share
+        - $indicators.limited_english_arabic
+        - $indicators.limited_english_arabic_share
+        - $indicators.limited_english_other_unspecified
+        - $indicators.limited_english_other_unspecified_share
+      spatial_unit: $choices.aggregation_unit_level
+      time: 2020-2024 (5-year estimates)
+      published_by: us_census_acs
+      unit_authority: us_census_geoid
+      unit_column: GEOID
+      name_column: NAME
+      joins_to: governance_unit
+      reliability: $reliability.acs_small_sample

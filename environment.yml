@@ -15,6 +15,7 @@ dependencies:
   - pandas
   - scipy                # used in a metrics primitive
   - pyarrow              # every to_parquet / read_parquet needs an engine
+  - openpyxl             # reads the PIAAC Skills Map workbook (D-265)
 
   # --- geospatial (conda-forge pulls the shared GDAL / GEOS / PROJ) ---
   - rasterio

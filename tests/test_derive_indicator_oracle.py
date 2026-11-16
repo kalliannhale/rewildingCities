@@ -27,7 +27,7 @@ from canopy.indicators import IndicatorRegistry
 ROOT = Path(__file__).resolve().parents[1]
 PRIMITIVE = ROOT / "soil" / "transform" / "derive_indicator.R"
 SEEDS = ROOT / "seeds" / "indicators"
-IDS = ["cii_broadband", "cii_rent_burden", "cii_no_vehicle"]
+IDS = ["cii_broadband", "cii_rent_burden", "cii_no_vehicle", "households_without_broadband"]
 # a small-sample rule both halves apply (D-106); its numbers are a fixture,
 # not the declared rule
 RULE = {"min_households": 1000, "max_cv": 0.02}
@@ -121,7 +121,7 @@ def test_r_agrees_with_the_preview_exactly(tmp_path, fixture_source):
             assert r["unit_authority"] == py["unit"]["authority"] == GEOID
             # D-132: the id carries the authority between indicator and code
             assert r["measurement_id"] == f"{ind_id}:{GEOID}:{py['unit']['code']}"
-            for field in ("value", "moe", "moe_status", "bound", "empty_reason",
+            for field in ("value", "moe", "moe_status", "moe_formula", "bound", "empty_reason",
                           "households", "households_counts", "households_reason",
                           "cv", "reliability_note"):
                 rv = r[field]
@@ -165,7 +165,7 @@ def test_the_envelope_metadata_is_what_the_schema_expects(tmp_path, fixture_sour
     assert "crs" in response and response["crs"] is None
     for field in ("row_count", "variables", "id_field", "spatial_unit"):
         assert field in response, field
-    assert response["row_count"] == 9
+    assert response["row_count"] == 3 * len(IDS)
     assert response["id_field"] == "measurement_id"
     assert response["joins_to"] == "governance_unit"
     assert response["indicators"] == IDS

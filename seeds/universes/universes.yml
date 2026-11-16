@@ -47,3 +47,12 @@ universes:
       so the household share is never shown as a renter share. A renter
       share would need a renter weight on the edges, built from tenure
       counts by block; which 2020 table carries them is not yet checked.
+
+  persons 5 years and over:
+    weight: weight_population
+    relation: contains
+    reason: >
+      The ACS asks the language questions of persons 5 years and over, a
+      subset of a town's residents. A town with none of its persons in a
+      place has none of these there; the population share is never shown as
+      theirs (D-261).

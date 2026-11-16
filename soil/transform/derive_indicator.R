@@ -21,12 +21,13 @@
 # are, from Contract 3, section 1, with no default, and the declaration is
 # written on every row and into every measurement_id (D-131, D-132).
 #
+# Margins (D-258, D-259, D-260): a passthrough's margin is the published
+# one. A ratio's is derived by the formula its declared relation names and
+# a count's by the sum formula, each marked derived with moe_formula saying
+# which, each the Census's approximation. A proportion of exactly 1 says
+# not_derived: its special-case formula was not read for this build.
+#
 # What it deliberately does not do:
-#   ~ derive a margin of error for a ratio. The registry cannot yet
-#     say whether a ratio is a proportion, and the Census formulas
-#     differ; a margin from the wrong one is a plausible wrong number.
-#     Ratio rows say `not_derived`. A passthrough's margin is the
-#     published one. D-18, IND-3.
 #   ~ round. Replication is checked at full precision.
 #   ~ guess why a value is empty. Since ACS-7 the provider keeps each
 #     Census code it emptied in a <variable>_annotation column. The one
@@ -213,6 +214,38 @@ KNOWN_UNIT_AUTHORITIES <- c("us_census_geoid", "us_census_sldl", "us_census_sldu
 # in the lowest or highest category. preview.py holds the same constant.
 OPEN_ENDED <- -333333333
 
+# D-258, D-259, D-260. The Census's approximations for a derived estimate's
+# margin, from its 2025 "Instructions for Applying Statistical Testing to
+# American Community Survey Data": a sum by the root of summed squares; a
+# proportion by the root of MOE(A)^2 - P^2 MOE(B)^2 over B, falling back to
+# the ratio formula when the value under the root is negative; a ratio by
+# the root of MOE(A)^2 + P^2 MOE(B)^2 over B. A controlled estimate's margin
+# (-555555555) is 0. canopy/indicators/margins.py holds the same arithmetic
+# in the same order; the oracle test holds the two to each other exactly.
+CONTROLLED <- -555555555
+
+# One estimate's margin on every row: its own, 0 where the Census marks it
+# controlled, otherwise NA (never a guess).
+.part_margin <- function(df, v) {
+  m <- sub("E$", "M", v)
+  moe <- if (m %in% names(df)) as.numeric(df[[m]]) else rep(NA_real_, nrow(df))
+  ann <- paste0(m, "_annotation")
+  if (ann %in% names(df)) {
+    code <- suppressWarnings(as.numeric(as.character(df[[ann]])))
+    ctrl <- is.na(moe) & !is.na(code) & code == CONTROLLED
+    moe[ctrl] <- 0
+  }
+  moe
+}
+
+# The root of the sum of squares, accumulated one square at a time in the
+# order the cells are declared, as margins.sum_margin does.
+.sum_margin <- function(parts) {
+  acc <- rep(0, length(parts[[1]]))
+  for (m in parts) acc <- acc + m * m
+  sqrt(acc)
+}
+
 # What an open-ended median claims, in words. preview._bound_label writes
 # the same strings; the oracle test holds the two to each other.
 .bound_label <- function(v, edges) {
@@ -287,14 +320,19 @@ with_primitive_error_handling({
       numerator   <- unlist(.field(der, "numerator"))
       denominator <- .field(der, "denominator")
       scale       <- as.numeric(.field(der, "scale"))
+      relation    <- .field(der, "relation")
       needed      <- c(numerator, denominator)
+    } else if (kind == "count") {
+      add_cells   <- unlist(.field(der, "add"))
+      sub_cells   <- unlist(der$subtract)
+      needed      <- c(add_cells, sub_cells)
     } else if (kind == "passthrough") {
       column <- .field(der, "column")
       needed <- column
     } else {
       primitive_failure(
         "Unknown derivation kind",
-        sprintf("Indicator '%s' declares kind '%s'; this primitive knows ratio and passthrough.",
+        sprintf("Indicator '%s' declares kind '%s'; this primitive knows ratio, count and passthrough.",
                 id, kind),
         warnings = w)
     }
@@ -313,10 +351,11 @@ with_primitive_error_handling({
 
     # the value's own emptiness is judged on what derives it, not on the
     # count it rests on; an empty count is reported in households_reason.
-    value_vars <- if (kind == "ratio") c(numerator, denominator) else column
+    value_vars <- if (kind == "ratio") c(numerator, denominator) else if (kind == "count") c(add_cells, sub_cells) else column
     reason <- .empty_reason(df, value_vars)
     moe <- rep(NA_real_, nrow(df))
     bound <- rep(NA_character_, nrow(df))
+    formula <- rep(NA_character_, nrow(df))
 
     if (kind == "ratio") {
       n_ratio <- n_ratio + 1
@@ -327,7 +366,50 @@ with_primitive_error_handling({
       value[zero] <- NA_real_
       reason[zero] <- "zero denominator"
       value[!is.na(reason)] <- NA_real_
-      moe_status <- rep("not_derived", nrow(df))
+      moe_status <- rep("absent", nrow(df))
+      parts <- lapply(c(numerator, denominator), function(v) .part_margin(df, v))
+      have <- !is.na(value) & Reduce(`&`, lapply(parts, function(m) !is.na(m)))
+      if (any(have)) {
+        nm  <- .sum_margin(parts[seq_along(numerator)])
+        dm  <- parts[[length(parts)]]
+        p   <- num / den
+        rad <- rep(NA_real_, nrow(df))
+        f   <- rep(NA_character_, nrow(df))
+        if (relation == "proportion") {
+          one <- have & p == 1
+          moe_status[one] <- "not_derived"
+          ok <- have & !one
+          rad[ok] <- nm[ok] * nm[ok] - p[ok] * p[ok] * dm[ok] * dm[ok]
+          f[ok] <- "proportion"
+          neg <- ok & rad < 0
+          rad[neg] <- nm[neg] * nm[neg] + p[neg] * p[neg] * dm[neg] * dm[neg]
+          f[neg] <- "ratio_fallback"
+        } else {
+          ok <- have
+          rad[ok] <- nm[ok] * nm[ok] + p[ok] * p[ok] * dm[ok] * dm[ok]
+          f[ok] <- "ratio"
+        }
+        moe[ok] <- sqrt(rad[ok]) / den[ok] * scale
+        moe_status[ok] <- "derived"
+        formula[ok] <- f[ok]
+      }
+    } else if (kind == "count") {
+      acc <- rep(0, nrow(df))
+      for (v in add_cells) acc <- acc + as.numeric(df[[v]])
+      for (v in sub_cells) acc <- acc - as.numeric(df[[v]])
+      value <- acc
+      value[!is.na(reason)] <- NA_real_
+      moe_status <- rep("absent", nrow(df))
+      parts <- lapply(c(add_cells, sub_cells), function(v) .part_margin(df, v))
+      have <- !is.na(value) & Reduce(`&`, lapply(parts, function(m) !is.na(m)))
+      if (length(c(add_cells, sub_cells)) == 1) {
+        moe[have] <- parts[[1]][have]
+        moe_status[have] <- "published"
+      } else {
+        moe[have] <- .sum_margin(parts)[have]
+        moe_status[have] <- "derived"
+        formula[have] <- "sum"
+      }
     } else {
       value <- as.numeric(df[[column]])
       moe_col <- sub("E$", "M", column)
@@ -366,7 +448,7 @@ with_primitive_error_handling({
 
     rest <- .rests_on(df, ro)
     cv <- rep(NA_real_, nrow(df))
-    has_cv <- !is.na(value) & !is.na(moe) & moe_status == "published" & value != 0
+    has_cv <- !is.na(value) & !is.na(moe) & moe_status %in% c("published", "derived") & value != 0
     cv[has_cv] <- (moe[has_cv] / 1.645) / abs(value[has_cv])
     note <- .reliability_note(value, rest$count, ro$counts, cv, reliability)
 
@@ -388,6 +470,7 @@ with_primitive_error_handling({
       value          = value,
       moe            = moe,
       moe_status     = moe_status,
+      moe_formula    = formula,
       bound          = bound,
       empty_reason   = reason,
       households     = rest$count,
@@ -406,8 +489,8 @@ with_primitive_error_handling({
 
   if (n_ratio > 0) {
     w$info(paste0(
-      sprintf("%d ratio indicator(s): margin of error not derived. ", n_ratio),
-      "The registry cannot yet say whether a ratio is a proportion, and the Census formulas differ (D-18, IND-3)."))
+      sprintf("%d ratio indicator(s): margins derived by each one's declared relation (D-259). ", n_ratio),
+      "Every derived margin is the Census's approximation, without the correlation between estimates."))
   }
   w$info(sprintf("Derived %d indicator(s) for %d %s unit(s): %s.",
                  length(ids), nrow(df), spatial_unit, paste(ids, collapse = ", ")))
@@ -421,7 +504,7 @@ with_primitive_error_handling({
   md$interpretation_notes <- as.list(c(
     "Long-form: one row per unit and indicator. Pivot on `indicator` to map one.",
     "Values are at full precision; nothing is rounded.",
-    if (n_ratio > 0) "Ratio rows carry no derived margin of error (moe_status not_derived)."
+    if (n_ratio > 0) "A ratio's margin is derived (moe_status derived, moe_formula naming the formula): an approximation that leaves out the correlation between estimates. A proportion of exactly 1 is not_derived."
   ))
   if (!is.null(joins_to)) md$joins_to <- joins_to
 

@@ -1,0 +1,561 @@
+# ============================================================================
+# seeds/indicators/language.yml ~ not in the right language (D-261)
+# ============================================================================
+# persons 5 years and over who speak English less than "very well", by the
+# twelve language groups of ACS table C16001, the finest the Census publishes
+# below the state since 2016 (B16001 is state and nation only). each group's
+# count and its share of persons 5 and over, and the total of all twelve.
+# group names are the Census's own words, from the 2024 groups API, read
+# 2026-11-15: a group is never stated as a single language ("French,
+# Haitian, or Cajun" is one group). these are measures of residents; whether
+# information reaches them in their language is the carriers' question.
+# ============================================================================
+
+indicators:
+  limited_english_persons:
+    name: Persons 5 and over who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_005E, C16001_008E, C16001_011E, C16001_014E, C16001_017E, C16001_020E, C16001_023E, C16001_026E, C16001_029E, C16001_032E, C16001_035E, C16001_038E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The twelve C16001 groups' "less than very well" cells added. Its
+      margin is the Census's sum formula over twelve cells, an approximation
+      that widens as cells are added (D-260).
+  limited_english_persons_share:
+    name: Share of persons 5 and over who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_005E, C16001_008E, C16001_011E, C16001_014E, C16001_017E, C16001_020E, C16001_023E, C16001_026E, C16001_029E, C16001_032E, C16001_035E, C16001_038E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The total over persons 5 and over; a proportion, since every person
+      counted above is among them (D-259).
+  limited_english_spanish:
+    name: Persons 5 and over speaking Spanish who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_spanish
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_005E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Spanish" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_spanish_share:
+    name: Share of persons 5 and over speaking Spanish who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_spanish_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_005E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_french_haitian_cajun:
+    name: Persons 5 and over speaking French, Haitian, or Cajun who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_french_haitian_cajun
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_008E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "French, Haitian, or Cajun" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_french_haitian_cajun_share:
+    name: Share of persons 5 and over speaking French, Haitian, or Cajun who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_french_haitian_cajun_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_008E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_west_germanic:
+    name: Persons 5 and over speaking German or other West Germanic languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_west_germanic
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_011E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "German or other West Germanic languages" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_west_germanic_share:
+    name: Share of persons 5 and over speaking German or other West Germanic languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_west_germanic_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_011E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_slavic:
+    name: Persons 5 and over speaking Russian, Polish, or other Slavic languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_slavic
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_014E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Russian, Polish, or other Slavic languages" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_slavic_share:
+    name: Share of persons 5 and over speaking Russian, Polish, or other Slavic languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_slavic_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_014E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_other_indo_european:
+    name: Persons 5 and over speaking Other Indo-European languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_indo_european
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_017E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Other Indo-European languages" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_other_indo_european_share:
+    name: Share of persons 5 and over speaking Other Indo-European languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_indo_european_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_017E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_korean:
+    name: Persons 5 and over speaking Korean who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_korean
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_020E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Korean" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_korean_share:
+    name: Share of persons 5 and over speaking Korean who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_korean_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_020E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_chinese:
+    name: Persons 5 and over speaking Chinese (incl. Mandarin, Cantonese) who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_chinese
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_023E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Chinese (incl. Mandarin, Cantonese)" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_chinese_share:
+    name: Share of persons 5 and over speaking Chinese (incl. Mandarin, Cantonese) who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_chinese_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_023E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_vietnamese:
+    name: Persons 5 and over speaking Vietnamese who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_vietnamese
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_026E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Vietnamese" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_vietnamese_share:
+    name: Share of persons 5 and over speaking Vietnamese who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_vietnamese_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_026E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_tagalog:
+    name: Persons 5 and over speaking Tagalog (incl. Filipino) who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_tagalog
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_029E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Tagalog (incl. Filipino)" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_tagalog_share:
+    name: Share of persons 5 and over speaking Tagalog (incl. Filipino) who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_tagalog_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_029E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_other_asian_pacific:
+    name: Persons 5 and over speaking Other Asian and Pacific Island languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_asian_pacific
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_032E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Other Asian and Pacific Island languages" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_other_asian_pacific_share:
+    name: Share of persons 5 and over speaking Other Asian and Pacific Island languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_asian_pacific_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_032E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_arabic:
+    name: Persons 5 and over speaking Arabic who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_arabic
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_035E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Arabic" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_arabic_share:
+    name: Share of persons 5 and over speaking Arabic who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_arabic_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_035E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).
+  limited_english_other_unspecified:
+    name: Persons 5 and over speaking Other and unspecified languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_unspecified
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: persons
+    derivation:
+      kind: count
+      add: [C16001_038E]
+    direction: higher_is_worse
+    aggregation: sum
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      C16001's group "Other and unspecified languages" as the Census names it. One published
+      cell, so its margin is the published one.
+  limited_english_other_unspecified_share:
+    name: Share of persons 5 and over speaking Other and unspecified languages who speak English less than very well
+    defined_by: rewildingcities
+    measures: limited_english_persons_other_unspecified_share
+    role: barrier
+    rests_on: {add: [C16001_001E], counts: persons 5 years and over}
+    unit: percent_of_persons_5_and_over
+    derivation:
+      kind: ratio
+      relation: proportion
+      numerator: [C16001_038E]
+      denominator: C16001_001E
+      scale: 100
+    direction: higher_is_worse
+    aggregation: population_weighted_mean
+    weight_by: C16001_001E
+    uncertainty: acs_moe
+    source:
+      provider: census_acs
+      dataset: acs/acs5
+    rationale: >
+      The group's count over persons 5 and over, the share a trigger such
+      as a 5 percent line reads (P-1, zip 2).

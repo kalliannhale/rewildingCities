@@ -33,6 +33,7 @@ indicators:
     unit: percent_of_households
     derivation:
       kind: ratio
+      relation: proportion
       numerator: [B28002_004E]
       denominator: B28002_001E
       scale: 100
@@ -120,6 +121,7 @@ indicators:
     unit: percent_of_households
     derivation:
       kind: ratio
+      relation: proportion
       numerator: [B08201_002E]
       denominator: B08201_001E
       scale: 100

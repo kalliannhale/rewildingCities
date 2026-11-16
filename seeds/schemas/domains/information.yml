@@ -299,3 +299,43 @@ types:
       cutoff and its sha256; read only by declared layer, CRS and fields.
       It holds home addresses: only points a method matches ever leave it.
     # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  section203_public_use_file:
+    category: tabular
+    format: zip
+    description: >
+      The Census's Section 203 public use files as released: one zip of CSVs
+      and their documentation, every jurisdiction by language minority group
+      with the flags that decided coverage. A release, declared by its sha256;
+      read only by declared member, encoding and columns.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  section203_records:
+    category: tabular
+    format: csv
+    description: >
+      One state's Section 203 records, read as published: the state, each
+      town under our town code, and the American Indian areas overlapping its
+      towns under Census's own area code, by language minority group, with
+      Census's flags copied (D-263, D-264). Published determinations, never
+      recomputed.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  piaac_skills_map_workbook:
+    category: tabular
+    format: xlsx
+    description: >
+      The U.S. PIAAC Skills Map's downloadable workbook: model-based state
+      and county estimates of adult literacy and numeracy with credible
+      intervals and quality flags. Declared by its download day and sha256.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+
+  literacy_estimates:
+    category: tabular
+    format: csv
+    description: >
+      Adult literacy at or below PIAAC Level 1 for one state and its
+      counties: the share, its 95 percent credible bounds, the workbook's
+      flags and left_out, the population times the share and its bounds
+      (D-265). Model-based; never combined with its own predictors.
+    # no resolution_tier yet: Kalli declares it. until then it fails closed.

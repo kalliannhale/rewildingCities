@@ -1,0 +1,44 @@
+id: section203_determinations
+domain: information
+kind: preparation
+name: "Section 203 Determinations, Read as Published"
+answers_question_types: [language, voting, section 203, preparation]
+description: >
+  Reads one state's rows of the Census's Section 203 public use file: the
+  state, each town and the American Indian areas overlapping its towns, by
+  language minority group, with the flags that decided whether each was
+  covered for language assistance in elections (D-263, D-264).
+  Section 203 is the Voting Rights Act's language provision. The Census
+  determines coverage every five years from modelled ACS estimates, and
+  covers four groups only: American Indian, Alaska Native, Asian American
+  and Spanish heritage. A place with no coverage may still hold large
+  communities who speak English less than very well in other languages;
+  this method never reads absence of coverage as absence of need.
+  The flags are the evidence. Census set them on unrounded, unsuppressed
+  estimates and published rounded, partly suppressed ones, so coverage is
+  copied, never recomputed. A town is named by our own town code, matched
+  through its five-digit MCD code; the file writes county 000 on every town.
+  An AIAN/MCD row gives the whole American Indian area's estimates, so it is
+  never a town's value; an American Indian area keeps Census's own area
+  code, spans reservation and trust land together, and is none of our places
+  on its own. Whether and how those rows are shown is the nations' to say
+  (P-8).
+requires_data:
+  - {name: puf, type: tabular, semantic_types: [section203_public_use_file], critical: true, as_acquired: true,
+     role: "The Census's Section 203 public use files as released.",
+     uncertainty_without: "No determination can be read."}
+  - {name: towns, type: tabular, semantic_types: [indicator_source], critical: true, as_acquired: true,
+     role: "An acquisition naming the state's towns by GEOID, to name each Census town by our code.",
+     uncertainty_without: "No town row can be named."}
+choices: {}
+requires_primitives:
+  - soil/prepare_section203
+produces:
+  - semantic_type: section203_records
+    data_category: tabular
+    description: One row per place and language minority group, Census's flags copied.
+interpretation: >
+  A row says what the Census determined in its release, from ACS data of the
+  years it names, never what holds today. Its margins state no confidence
+  level, so no verdict rests on them. Coverage is a legal determination for
+  four groups; it is not a measure of language need.

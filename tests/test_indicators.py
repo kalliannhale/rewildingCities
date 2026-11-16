@@ -18,7 +18,7 @@ INDICATORS = REPO / "seeds" / "indicators"
 GOOD = {
     "name": "x", "defined_by": "test", "measures": "thing", "unit": "percent",
     "derivation": {"kind": "ratio", "numerator": ["A_001E"],
-                   "denominator": "A_002E", "scale": 100},
+                   "denominator": "A_002E", "scale": 100, "relation": "proportion"},
     "direction": "higher_is_better", "aggregation": "population_weighted_mean",
     "weight_by": "A_002E", "uncertainty": "acs_moe",
     "source": {"provider": "census_acs", "dataset": "acs/acs5"},
@@ -71,7 +71,17 @@ def test_collision_across_files_refused(tmp_path):
     ({"derivation": {"kind": "ratio", "numerator": ["A_001E"],
                      "denominator": "A_002E"}}, "positive numeric scale"),
     ({"derivation": {"kind": "ratio", "numerator": ["A_001"],
-                     "denominator": "A_002E", "scale": 100}}, "ending in E"),
+                     "denominator": "A_002E", "scale": 100,
+                     "relation": "proportion"}}, "ending in E"),
+    ({"derivation": {"kind": "ratio", "numerator": ["A_001E"],
+                     "denominator": "A_002E", "scale": 100}}, "needs relation"),
+    ({"derivation": {"kind": "ratio", "numerator": ["A_001E"], "denominator": "A_002E",
+                     "scale": 100, "relation": "share"}}, "needs relation"),
+    ({"derivation": {"kind": "count", "add": "A_001E"}}, "non-empty list of cells"),
+    ({"derivation": {"kind": "count", "add": ["A_001E"],
+                     "subtract": ["A_001E"]}}, "adds and subtracts"),
+    ({"derivation": {"kind": "count", "add": ["A_001E"], "scale": 100}},
+     "unknown derivation field"),
     ({"replicates": {"publisher": "cii"}}, "must say exactly which"),
 ])
 def test_refusals(tmp_path, change, message):

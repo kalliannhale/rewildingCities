@@ -28,6 +28,8 @@ ACS_2024 = "2020-2024 (5-year estimates)"
 CHAMBERS = {
     "$manifest.acs_sldl_2024": "us_census_sldl",
     "$manifest.acs_sldu_2024": "us_census_sldu",
+    "$manifest.acs_sldl_2024_language": "us_census_sldl",
+    "$manifest.acs_sldu_2024_language": "us_census_sldu",
 }
 
 
