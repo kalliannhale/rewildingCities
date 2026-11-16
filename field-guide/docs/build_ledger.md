@@ -1461,3 +1461,37 @@ Commits: the outlet tree (D-247 to D-252, state.md back from PATH), and the hand
 - A test that never crosses the file the run crosses cannot fail the way the run fails.
 - A list's membership is stronger evidence than a database's label.
 - Count before closing a fork: Turner reopened one that looked done.
+
+## Sprint 06, session 12 (2026-11-15): the outlet carrier's last door
+
+Commits: 3b79798 (D-253 to D-256), then the reviews commit (D-257, OUTREV-1). Correction: session 11's build commit (a40a57e) landed after its hand-off (6683421); state.md's line putting the outlet tree first is fixed at this hand-off.
+
+Decided:
+- D-253: a trailing ", The" is a name written inverted, so the name key drops it (a rule).
+- D-254: one source's records alike in name key, url key and office address are one record written twice; they join first, their key held once, same_record_as on each copy (a rule). office_key has one home, group_outlet_records; prepare_news_outlets imports it.
+- D-255: a reviewed merge may hold one source twice only when it says editions in words; editions where no source is twice refuses. A review names a record written twice once.
+- D-256: office_reads (keep, town, state, list with a reason) for an outlet placed by its office town alone, refused otherwise; an unread one stays placed, flagged office_town_unread.
+- D-257: a town review may say state: true in place of a town_code, never both.
+- Every reading places an outlet where its newsroom, office or broadcast license is; the towns it covers stay SERVES-1's.
+
+Found:
+- Lincoln County News stood as six groups: Cision's copies held its name key twice, so the key joined nothing for anyone (D-202).
+- Cision writes names inverted ("Star-Herald, The"); most of the groups that joined this session joined through D-253.
+- Three papers were on the map more than once: the Press Herald (Portland twice), the Castine Patriot (Blue Hill and Castine), the Boothbay Register / Wiscasset Newspaper (three towns).
+- Cision lists papers that no longer stand apart: The County combined four Aroostook weeklies (January 2025); the Coastal Journal went into The Forecaster; The Free Press went into the Midcoast Villager (September 2024).
+- Maine: 97 placed, 4 edition merges, 12 office reads, 4 office towns unread, 4 outlets with no town, no towns disagreeing; Portland 19.
+
+Wrong hypotheses:
+- That merges ran after the shared-office count: prepare already merged first.
+- That the poisoned key was the main leak: the inverted ", The" joined far more.
+- That Portland would read 17: two outlets placed there by review were forgotten.
+- That the Wiscasset Newspaper is a Wiscasset outlet: it is made with the Boothbay Register as one paper.
+- Session 12's first read helper looked for listed outlets in the csv; they live in the receipt.
+
+Lessons:
+- A missing review kind shows only when the real queue is read (state: true).
+- Read a merge's neighbours: each double count found led to another.
+- A review records who read what, where: Claude's readings cite pages and say so in read_by.
+
+Closed: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257 and the reviews seed).
+Opened: OUTCONF-1: before publishing, Kalli confirms the Claude-read reviews (read_by) and decides: student papers listed; the Castine Patriot and Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Kennebunk Post, South Portland Sentry and Peaks Islander still publish; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Unread office towns: The Cryer, USM's Free Press, Rolling Thunder Express, Twin City Times. Listed with no reading: The Local News Online, The Rising Tide, two records naming several outlets.
