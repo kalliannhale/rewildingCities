@@ -199,3 +199,15 @@ def test_with_no_point_on_any_tribal_area_the_zeros_sit_on_its_places_vintage():
 def test_a_note_with_no_tribal_level_is_refused():
     with pytest.raises(cl.CountRefused, match="no tribal level"):
         cl.count(EDGES, SPINE, PLACES, IND, LEVELS, "FY 2024", "rewildingcities", "x")
+
+
+# ── the receipt says which notes its rows carry (rule 9, D-156, D-291) ─────
+def test_a_counts_receipt_names_the_notes_its_rows_carry():
+    meta = cl.output_metadata(_tribal().reset_index(), "libs")
+    assert meta["row_context_notes"] == ["carrier_unseen_on_nations_land"]
+    assert meta["context_notes"] == meta["row_context_notes"]
+
+
+def test_a_count_with_no_tribal_row_says_its_rows_carry_none():
+    meta = cl.output_metadata(_count().reset_index())
+    assert meta["row_context_notes"] == [] and meta["context_notes"] == []

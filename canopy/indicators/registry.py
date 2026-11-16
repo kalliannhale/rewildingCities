@@ -48,6 +48,11 @@ import yaml
 DIRECTIONS = ("higher_is_better", "higher_is_worse")
 AGGREGATIONS = ("sum", "population_weighted_mean", "none", "profile", "recompute")
 UNCERTAINTIES = ("acs_moe", "published_interval", "none")
+# D-277: the confidence a declared uncertainty states, held once here. the
+# ACS publishes its margins at 90 percent. a row that carries its own
+# confidence (literacy's 0.95) wins; published_interval states its own on
+# every row, and none states nothing.
+UNCERTAINTY_CONFIDENCE = {"acs_moe": 0.90}
 # located_count (D-209): a count of located_in edges per place, over the
 # place's own persons. it reads no published table, so it adds nothing to an
 # acquisition and never reaches derive_indicator.R. it names the type of the

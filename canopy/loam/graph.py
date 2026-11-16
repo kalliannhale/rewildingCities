@@ -81,6 +81,18 @@ and where carriers stand (CMAP-1, D-225):
                   a layer placed by town (a table, never GeoJSON) is left out
                   by name too: it has no point to draw, and its count stands
                   on its places (D-246)
+
+and the records a profile reads that are not indicator values (D-275):
+
+  ~ literacy_estimates    every tended literacy_estimates receipt's rows,
+  ~ section203_records    every tended section203_records receipt's rows,
+                  each keyed by (unit_authority, unit_code) and naming the
+                  receipt it was read from (record_receipt). never through
+                  place_values: a model's share with its credible bounds and
+                  a published determination are not indicator values (D-268,
+                  D-263), and the boundary rule that attaches a value is not
+                  theirs to pass. a record_id two receipts both give means no
+                  view, naming them, since which one is a choice (D-163)
 """
 
 from __future__ import annotations
@@ -97,6 +109,9 @@ GRAPH_VIEWS = {"places": "places", "edges": "place_edges"}
 EDGE_KEY = ["from_authority", "from_code", "to_authority", "to_code"]
 LOCATED_TYPE = "located_in_edges"
 INDICATORS = Path("seeds") / "indicators"
+
+RECORD_VIEWS = ("literacy_estimates", "section203_records")
+RECORD_KEY = ["unit_authority", "unit_code"]
 
 VALUE_TYPE = "indicator_values"
 VALUE_KEY = ["unit_authority", "unit_code", "indicator", "time"]
@@ -623,6 +638,58 @@ def _plant_carriers(loam, plot: str, root: Path, edges: list[dict], report: dict
                           **({"left_out": left_out} if left_out else {})}
 
 
+def _plant_records(loam, plot: str, root: Path, report: dict, semantic_type: str) -> None:
+    """one view over every tended or gathered receipt of `semantic_type`
+    whose file carries the record key and its own id field (D-275)."""
+    view = semantic_type
+    loam.con.execute(f"DROP VIEW IF EXISTS {view}")
+    rows = [r for tier in CONFORMED_TIERS
+            for r in loam.find(semantic_type=semantic_type, plot=plot, tier=tier)]
+    if not rows:
+        report[view] = {"made": False, "why": f"no run in plot '{plot}' has made {semantic_type}"}
+        return
+    included, left_out = [], []
+    for row in sorted(rows, key=lambda r: r["receipt_path"] or ""):
+        receipt = Path(row["receipt_path"] or "?").name
+        path = _on_disk(root, row["data_path"])
+        if not path.is_file():
+            left_out.append(f"{receipt}: {row['data_path']} is not on disk")
+            continue
+        # these receipts name one key (metadata.id_field), never a composite
+        id_field = row.get("id_field") or None
+        columns = [d[0] for d in loam.con.execute(
+            f"SELECT * FROM {_reader(path)} LIMIT 0").description]
+        missing = [k for k in RECORD_KEY + ([id_field] if id_field else []) if k not in columns]
+        if not id_field:
+            left_out.append(f"{receipt} declares no id field, so a record cannot be named")
+            continue
+        if missing:
+            left_out.append(f"{receipt}: its file has no {', '.join(missing)}")
+            continue
+        included.append((receipt, path, id_field))
+    if not included:
+        report[view] = {"made": False, "left_out": left_out,
+                        "why": f"no {semantic_type} receipt carries the record key"}
+        return
+    union = " UNION ALL BY NAME ".join(
+        f"SELECT * REPLACE (CAST(unit_code AS VARCHAR) AS unit_code), "
+        f"CAST({id_field} AS VARCHAR) AS record_key, {_sql_text(receipt)} AS record_receipt "
+        f"FROM {_reader(path)}" for receipt, path, id_field in included)
+    loam.con.execute(f"CREATE VIEW {view} AS {union}")
+    twice = loam.con.execute(
+        f"SELECT record_key, list_sort(list(DISTINCT record_receipt)) FROM {view} "
+        f"GROUP BY record_key HAVING COUNT(DISTINCT record_receipt) > 1 LIMIT 1").fetchall()
+    if twice:
+        loam.con.execute(f"DROP VIEW {view}")
+        report[view] = {"made": False, "left_out": left_out,
+                        "why": (f"the record {twice[0][0]} is in {', '.join(twice[0][1])}; "
+                                f"which one stands is a choice, not a lookup (D-163)")}
+        return
+    count = loam.con.execute(f"SELECT COUNT(*) FROM {view}").fetchone()[0]
+    report[view] = {"made": True, "receipts": [r for r, _, _ in included], "key": RECORD_KEY,
+                    "rows": count, **({"left_out": left_out} if left_out else {})}
+
+
 def plant_graph(loam, plot: str, root: str | Path, declared_places=None) -> dict:
     """make the plot's graph views in its bed; returns, per view, whether it
     was made and from what, or why not. `declared_places` is the manifest's
@@ -675,4 +742,6 @@ def plant_graph(loam, plot: str, root: str | Path, declared_places=None) -> dict
     _plant_plot_places(loam, declared_places, report)
     edges = _plant_located_in(loam, plot, root, report)
     _plant_carriers(loam, plot, root, edges, report)
+    for semantic_type in RECORD_VIEWS:
+        _plant_records(loam, plot, root, report, semantic_type)
     return report

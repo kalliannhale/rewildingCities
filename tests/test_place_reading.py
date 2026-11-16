@@ -159,13 +159,13 @@ def test_a_town_with_none_of_its_households_here_is_listed_and_kept_out(tmp_path
     reading = read_place(opened(tmp_path), *DISTRICT, root=REPO)
     dune = next(t for t in reading.towns if t.name == "Dune gore")
     assert dune.residents_here is False and "D-180" in dune.note
-    out = {t.name: t.out_why for t in indicator(reading, "cii_broadband").left_out}
+    out = {t.name: t.out_why for t in indicator(reading, "cii_broadband").out_of_range}
     assert "D-180" in out["Dune gore"]
 
 
 def test_a_value_on_other_boundaries_stays_out_and_says_why(tmp_path):
     out = {t.name: t.out_why for t in
-           indicator(read_place(opened(tmp_path), *DISTRICT, root=REPO), "cii_broadband").left_out}
+           indicator(read_place(opened(tmp_path), *DISTRICT, root=REPO), "cii_broadband").out_of_range}
     assert "2023 boundaries" in out["Echo plantation"]
 
 

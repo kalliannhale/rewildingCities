@@ -8,6 +8,7 @@ packaged; see the note in setup_guide.md.)
   init    <plot> [name]          found a plot for a new community
   wonder  <plot> ["question"]    what can this ground wonder about?
   sows    <experiment.yml>       run a composed experiment
+  profile <plot> [--place K]     every place's profile (Contract 4)
 
 Each command is its own module exposing register(subparsers). Add a command by
 writing canopy/cli/<name>.py with a register() that calls set_defaults(func=...),
@@ -20,7 +21,7 @@ from __future__ import annotations
 import argparse
 import importlib
 
-_COMMANDS = ("init", "wonder", "sows", "map", "acquire")
+_COMMANDS = ("init", "wonder", "sows", "map", "acquire", "profile")
 
 
 def build_parser() -> argparse.ArgumentParser:

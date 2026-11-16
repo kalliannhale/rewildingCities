@@ -459,7 +459,7 @@ indicators:
     name: Percent of income spent on rent
     defined_by: cii_2026
     measures: median_rent_burden
-    role: barrier
+    role: need
     rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:
@@ -499,7 +499,7 @@ indicators:
     name: Percent with no vehicle available
     defined_by: cii_2026
     measures: households_without_vehicle
-    role: barrier
+    role: need
     rests_on: {not_published: "CII publishes the value without the count it rests on"}
     unit: percent
     derivation:

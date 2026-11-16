@@ -63,7 +63,7 @@ indicators:
     name: Median gross rent as a percentage of household income
     defined_by: cii_2026
     measures: median_rent_burden
-    role: barrier
+    role: need
     # a median's count is its universe, not its denominator: renter
     # households for whom gross rent as a share of income is computed,
     # B25070's total less its "Not computed" line (verified against the
@@ -116,7 +116,7 @@ indicators:
     name: Households with no vehicle available
     defined_by: cii_2026
     measures: households_without_vehicle
-    role: barrier
+    role: need
     rests_on: {add: [B08201_001E], counts: households}
     unit: percent_of_households
     derivation:

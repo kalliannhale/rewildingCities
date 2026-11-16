@@ -6,7 +6,10 @@ vocabulary, the plot's manifest datasets, its consent records, the license
 list, the context notes) so every exit asks the same question the same way:
 
   check_envelope(envelope, plot=..., target=..., sharing_level=...)
-  read_exposure(plot)   every receipt in the plot, judged at `public`
+  judge_receipts(plot)  every receipt in the plot, with the gate's whole
+                        answer: the allow record, or every refusal record
+                        with its type, tier and ancestor (rule 7)
+  read_exposure(plot)   the same judging, said briefly, at `public`
 
 read_exposure is what PlotReading.exposure carries and `wonder` shows: what
 this plot holds that may leave, and for what is withheld, why, and what
@@ -54,23 +57,26 @@ def check_envelope(envelope: dict, *, plot: str, target: str, sharing_level: str
                   licenses=licenses, notes=notes, consents=consents)
 
 
-def read_exposure(plot: str, *, root: str | Path | None = None,
-                  sharing_level: str = "public", target: str = "public") -> list[dict]:
-    """one entry per receipt: may it leave at this level, and if not, why."""
+def judge_receipts(plot: str, *, root: str | Path | None = None,
+                   sharing_level: str = "public", target: str = "public") -> dict[str, dict]:
+    """every receipt in the plot, judged once: artifact name (the file's name
+    less .envelope.json) to {"semantic_type", "result"}, where result is
+    decide()'s whole answer. a receipt that cannot be read, or a declaration
+    error (rule 1), is a refusal that says so, never an exception. ~"""
     base = Path(root) if root else _root()
     envelopes = base / "plots" / plot / ".envelopes"
     if not envelopes.is_dir():
-        return []
+        return {}
     vocab, datasets, consents, licenses, notes = _context(base / "plots" / plot, base)
-    out = []
+    out: dict[str, dict] = {}
     for p in sorted(envelopes.glob("*.envelope.json")):
+        artifact = p.name[:-len(".envelope.json")]
         try:
             env = json.loads(p.read_text())
         except (OSError, ValueError):
-            out.append({"artifact": p.name[:-len(".envelope.json")], "semantic_type": None,
-                        "may_leave": False, "withheld": [{"rule": None,
-                        "reason": "the receipt could not be read", "would_admit": "re-run it"}],
-                        "caveats": []})
+            out[artifact] = {"semantic_type": None, "result": {"decision": "refuse", "refusals": [
+                {"rule": None, "reason": "the receipt could not be read",
+                 "would_admit": "re-run it"}]}}
             continue
         try:
             res = decide(env, target=target, sharing_level=sharing_level, vocabulary=vocab,
@@ -79,13 +85,21 @@ def read_exposure(plot: str, *, root: str | Path | None = None,
         except ValueError as e:          # rule 1: a declaration error, said plainly
             res = {"decision": "refuse", "refusals": [
                 {"rule": 1, "reason": str(e), "would_admit": "correct the declaration"}]}
-        out.append({
-            "artifact": p.name[:-len(".envelope.json")],
-            "semantic_type": (env.get("metadata") or {}).get("semantic_type"),
-            "may_leave": res["decision"] == "allow",
-            "withheld": [{"rule": r.get("rule"), "reason": r.get("reason"),
-                          "would_admit": r.get("would_admit")}
-                         for r in res.get("refusals", [])],
-            "caveats": (res.get("record") or {}).get("caveats", []),
-        })
+        out[artifact] = {"semantic_type": (env.get("metadata") or {}).get("semantic_type"),
+                         "result": res}
     return out
+
+
+def read_exposure(plot: str, *, root: str | Path | None = None,
+                  sharing_level: str = "public", target: str = "public") -> list[dict]:
+    """one entry per receipt: may it leave at this level, and if not, why."""
+    judged = judge_receipts(plot, root=root, sharing_level=sharing_level, target=target)
+    return [{
+        "artifact": artifact,
+        "semantic_type": j["semantic_type"],
+        "may_leave": j["result"]["decision"] == "allow",
+        "withheld": [{"rule": r.get("rule"), "reason": r.get("reason"),
+                      "would_admit": r.get("would_admit")}
+                     for r in j["result"].get("refusals", [])],
+        "caveats": (j["result"].get("record") or {}).get("caveats", []),
+    } for artifact, j in judged.items()]

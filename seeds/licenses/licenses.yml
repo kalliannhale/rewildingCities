@@ -42,6 +42,26 @@ terms:
       been read and recorded here, so this term permits nothing beyond
       private until it is.
 
+  maine_geolibrary_public:
+    name: Data made available through the Maine Library of Geographic Information
+    permits: [private, organization, public]
+    attribution: required
+    verified: true
+    basis: >
+      5 M.R.S.A. section 2005: the GeoLibrary board and data custodians may not
+      fix copyright or licensing restrictions on information made available
+      through the Maine Library of Geographic Information; fees may cover
+      electronic copies only. Section 2004: neither the board nor anyone
+      submitting data for public use is liable for any use of it. The
+      GeoLibrary's layer metadata asks that the source be credited when data
+      is transferred or printed, so attribution is a condition here. Section
+      1995 (licensing agreements for GIS data) sits in the subchapter on the
+      Office of GIS and reads as governing its services to state agencies;
+      that reading is Kalli's (session 15, D-290), and the GeoLibrary Board
+      (GeolibraryBoard.OIT@maine.gov) is the authority to ask. Read
+      2026-11-16 at legislature.maine.gov; the boundary layers' own item
+      metadata is not yet read (LIC-2).
+
   terms_unknown:
     name: Terms unknown
     permits: [private]

@@ -6,8 +6,10 @@ import sys
 
 from ._common import find_root
 
-# the graph's views, in the order a reader meets them (D-168 to D-175)
-GRAPH_ORDER = ("places", "edges", "indicator_values", "place_values", "plot_places")
+# the graph's views, in the order a reader meets them (D-168 to D-175), and
+# the records a profile reads beside them (D-275)
+GRAPH_ORDER = ("places", "edges", "indicator_values", "place_values", "plot_places",
+               "literacy_estimates", "section203_records")
 
 
 def register(subparsers) -> None:

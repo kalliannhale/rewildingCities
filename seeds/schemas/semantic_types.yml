@@ -386,5 +386,18 @@ types:
       loam makes the edges view from exactly one place_edges artifact and a
       second would leave a plot with no edges view at all (D-207). One
       artifact per layer; several are expected.
-    # no resolution_tier yet: Person 3 declares it. a point layer's tier is
-    # its own, and the edges should carry it, not a default.
+    resolution_tier: public   # Kalli, session 15 (D-283): adds no limit of its own; each layer's points bind through lineage (D-101)
+
+  place_profile:
+    category: tabular
+    format: json
+    description: >
+      Every place's profile (Contract 4): one structured object per place, in
+      six parts, which every product renders and none recomputes. Built by
+      the profile command from the plot's receipts, never a sows run (D-274);
+      its receipt lists every receipt it read and every one the gate
+      withheld, whose values never enter the file (D-284).
+    resolution_tier: public   # Kalli (D-274); the gate binds its whole lineage
+    # tribal areas are profiled as a qualified Census view, as places are
+    required_context:
+      - id: census_tribal_places

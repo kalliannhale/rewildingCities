@@ -193,9 +193,20 @@ def counted_layer(edges: pd.DataFrame) -> str:
     return str(edges["from_authority"].astype(str).iloc[0])
 
 
+def row_notes(out: pd.DataFrame) -> list[str]:
+    """every note a row carries (a tribal area's, D-233), once each. a blank
+    or missing note is none, judged one value at a time."""
+    return sorted({n for n in out["context_note"] if isinstance(n, str) and n.strip()})
+
+
 def output_metadata(out: pd.DataFrame, layer: str | None = None) -> dict:
+    """the receipt says which notes its rows carry, so the gate binds exactly
+    those and nothing more from its lineage (Contract 1 rule 9, D-156,
+    D-291). a count with no tribal level carries none, and says so."""
+    notes = row_notes(out)
     meta = {"data_category": "tabular", "crs": None, "row_count": len(out),
-            "variables": COLUMNS, "id_fields": KEY, "spatial_unit": "place_value"}
+            "variables": COLUMNS, "id_fields": KEY, "spatial_unit": "place_value",
+            "row_context_notes": notes, "context_notes": notes}
     if layer is not None:
         meta["counted_layer"] = layer
     return meta

@@ -1,0 +1,351 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/standards/information_barriers.yml ~ the standard (D-270, D-271)
+# ═══════════════════════════════════════════════════════════════════════════════
+# what every person in a place is owed, barrier by barrier, in the
+# Information Futures Lab's words, and which measures judge it. its shape is
+# seeds/schemas/standard.schema.yml; canopy.standards.load_standard reads it.
+#
+# a universal side is judged once, on its count of people short of the line
+# against zero (D-272): below when the count less its margin is above zero,
+# within_margin otherwise. meets is unreachable for an estimate, and the
+# profile says so. a trigger side is judged per group, margin-aware (D-273);
+# a publisher's own determination is reported as_published. a side of kind
+# none judges nothing and says so.
+#
+# full citations for every source below are in the build ledger under the
+# decision each one names (decided_in); a source's words are never ours.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+standard:
+  id: information_barriers
+  version: "1.0"
+  name: Barriers to information, judged against what everyone is owed
+  declared_by: rewildingcities
+  framework:
+    name: Information Futures Lab, barriers to information access
+    role: principle
+  decided_in: [D-199, D-200, D-270, D-271, D-272, D-273, D-282]
+
+measures:
+  # ----- not in the right language -----
+  limited_english_persons: {indicator: limited_english_persons, status: acquired}
+  limited_english_persons_share: {indicator: limited_english_persons_share, status: acquired}
+  limited_english_spanish: {indicator: limited_english_spanish, status: acquired}
+  limited_english_spanish_share: {indicator: limited_english_spanish_share, status: acquired}
+  limited_english_french_haitian_cajun: {indicator: limited_english_french_haitian_cajun, status: acquired}
+  limited_english_french_haitian_cajun_share: {indicator: limited_english_french_haitian_cajun_share, status: acquired}
+  limited_english_west_germanic: {indicator: limited_english_west_germanic, status: acquired}
+  limited_english_west_germanic_share: {indicator: limited_english_west_germanic_share, status: acquired}
+  limited_english_slavic: {indicator: limited_english_slavic, status: acquired}
+  limited_english_slavic_share: {indicator: limited_english_slavic_share, status: acquired}
+  limited_english_other_indo_european: {indicator: limited_english_other_indo_european, status: acquired}
+  limited_english_other_indo_european_share: {indicator: limited_english_other_indo_european_share, status: acquired}
+  limited_english_korean: {indicator: limited_english_korean, status: acquired}
+  limited_english_korean_share: {indicator: limited_english_korean_share, status: acquired}
+  limited_english_chinese: {indicator: limited_english_chinese, status: acquired}
+  limited_english_chinese_share: {indicator: limited_english_chinese_share, status: acquired}
+  limited_english_vietnamese: {indicator: limited_english_vietnamese, status: acquired}
+  limited_english_vietnamese_share: {indicator: limited_english_vietnamese_share, status: acquired}
+  limited_english_tagalog: {indicator: limited_english_tagalog, status: acquired}
+  limited_english_tagalog_share: {indicator: limited_english_tagalog_share, status: acquired}
+  limited_english_other_asian_pacific: {indicator: limited_english_other_asian_pacific, status: acquired}
+  limited_english_other_asian_pacific_share: {indicator: limited_english_other_asian_pacific_share, status: acquired}
+  limited_english_arabic: {indicator: limited_english_arabic, status: acquired}
+  limited_english_arabic_share: {indicator: limited_english_arabic_share, status: acquired}
+  limited_english_other_unspecified: {indicator: limited_english_other_unspecified, status: acquired}
+  limited_english_other_unspecified_share: {indicator: limited_english_other_unspecified_share, status: acquired}
+  limited_english_households: {indicator: limited_english_households, status: acquired}
+  section_203_determinations:
+    artifact: section203_records
+    status: acquired
+    estimate_kind: published_determination
+    note: Census section 203 determinations, 2021, read as published (D-263)
+
+  # ----- requires digital access -----
+  households_without_broadband: {indicator: households_without_broadband, status: acquired}
+  cii_broadband: {indicator: cii_broadband, status: acquired}
+  cii_pub_broadband:
+    indicator: cii_pub_broadband
+    status: acquired
+    estimate_kind: computed
+    method: the Civic Information Index 2026's published value; its method is the index's own
+  fcc_served_100_20:
+    status: acquirable
+    source: FCC National Broadband Map
+    needs: step 7b, the FCC map read at 100/20 terrestrial (P-6)
+
+  # ----- at the wrong literacy level -----
+  literacy_at_or_below_level_1:
+    artifact: literacy_estimates
+    measure: literacy_at_or_below_level_1
+    status: acquired
+    estimate_kind: model_based
+    unit: share_of_adults_16_to_74
+    note: NCES PIAAC Skills Map, pooled 2012/2014/2017, modelled partly from race, poverty and education; never combined with its predictors (D-265)
+  cii_pub_literacy:
+    indicator: cii_pub_literacy
+    status: acquired
+    estimate_kind: computed
+    method: the Civic Information Index 2026's published average score; a different measure from the share at or below Level 1, shown beside it, never as a disagreement (D-282)
+
+  # ----- lacking cultural cues -----
+  carrier_languages_published:
+    status: needs_our_model
+    source: our own observation of what languages carriers publish in
+    needs: OBS-1; no listing carries language of publication (P-9)
+
+  # ----- behind a paywall -----
+  free_local_outlets_share:
+    status: needs_our_model
+    source: our own observation of outlets
+    needs: OBS-1 and P-3, what counts as a free outlet; no listing carries paywall status
+
+  # ----- outdated -----
+  outlet_publishing_frequency:
+    status: acquirable
+    source: the outlet listings' publishing frequency (Cision, the Maine Media Ecosystem file, Easton)
+    needs: a preparation reading frequency from the stack, after SRC-4
+  outlet_last_post:
+    status: acquirable
+    source: Cision's Still Operates? column
+    needs: a preparation reading the last post, after SRC-4
+
+  # ----- not where people look -----
+  library_outlets_per_1000: {indicator: library_outlets_per_1000, status: acquired}
+  public_schools_per_1000: {indicator: public_schools_per_1000, status: acquired}
+  health_center_sites_per_1000: {indicator: health_center_sites_per_1000, status: acquired}
+  clerk_offices_per_1000: {indicator: clerk_offices_per_1000, status: acquired}
+  news_outlets_per_1000: {indicator: news_outlets_per_1000, status: acquired}
+
+  # ----- not from a trusted source -----
+  relational_hubs:
+    status: needs_consent
+    source: relational hubs, aggregate-only, as consented
+    needs: Sprint 16's consent records
+
+barriers:
+
+  not_in_the_right_language:
+    words: not in the right language
+    measures:
+      - limited_english_persons
+      - limited_english_persons_share
+      - limited_english_spanish
+      - limited_english_spanish_share
+      - limited_english_french_haitian_cajun
+      - limited_english_french_haitian_cajun_share
+      - limited_english_west_germanic
+      - limited_english_west_germanic_share
+      - limited_english_slavic
+      - limited_english_slavic_share
+      - limited_english_other_indo_european
+      - limited_english_other_indo_european_share
+      - limited_english_korean
+      - limited_english_korean_share
+      - limited_english_chinese
+      - limited_english_chinese_share
+      - limited_english_vietnamese
+      - limited_english_vietnamese_share
+      - limited_english_tagalog
+      - limited_english_tagalog_share
+      - limited_english_other_asian_pacific
+      - limited_english_other_asian_pacific_share
+      - limited_english_arabic
+      - limited_english_arabic_share
+      - limited_english_other_unspecified
+      - limited_english_other_unspecified_share
+      - limited_english_households
+      - section_203_determinations
+    sides:
+      - id: every_limited_english_resident
+        kind: universal
+        statement: >
+          Every resident 5 and over who speaks English less than very well
+          can get information in a language they read. Anyone short of this
+          is counted.
+        source:
+          name: UNESCO Recommendation concerning the Promotion and Use of Multilingualism and Universal Access to Cyberspace
+          published: "2003"
+          role: principle
+          decided_in: D-271
+        declared_by: rewildingcities
+        judges: limited_english_persons
+      - id: doj_safe_harbor
+        kind: trigger
+        statement: >
+          Per language group, among residents 5 and over who speak English
+          less than very well: written translation where a group numbers
+          1,000 or more, or is 5 percent or more and numbers 50 or more;
+          written notice of free interpretation where it is 5 percent or more
+          and numbers under 50.
+        source:
+          name: U.S. Department of Justice, LEP guidance to federal financial assistance recipients, the safe harbor for written translation
+          published: "2002"
+          status: rescinded 2025-03-21; kept here as rewildingcities' own line
+          role: line
+          decided_in: D-271
+        declared_by: rewildingcities
+        groups:
+          - group: Spanish
+            quantities: {persons: limited_english_spanish, share: limited_english_spanish_share}
+          - group: French, Haitian, or Cajun
+            quantities: {persons: limited_english_french_haitian_cajun, share: limited_english_french_haitian_cajun_share}
+          - group: German or other West Germanic languages
+            quantities: {persons: limited_english_west_germanic, share: limited_english_west_germanic_share}
+          - group: Russian, Polish, or other Slavic languages
+            quantities: {persons: limited_english_slavic, share: limited_english_slavic_share}
+          - group: Other Indo-European languages
+            quantities: {persons: limited_english_other_indo_european, share: limited_english_other_indo_european_share}
+          - group: Korean
+            quantities: {persons: limited_english_korean, share: limited_english_korean_share}
+          - group: Chinese (incl. Mandarin, Cantonese)
+            quantities: {persons: limited_english_chinese, share: limited_english_chinese_share}
+          - group: Vietnamese
+            quantities: {persons: limited_english_vietnamese, share: limited_english_vietnamese_share}
+          - group: Tagalog (incl. Filipino)
+            quantities: {persons: limited_english_tagalog, share: limited_english_tagalog_share}
+          - group: Other Asian and Pacific Island languages
+            quantities: {persons: limited_english_other_asian_pacific, share: limited_english_other_asian_pacific_share}
+          - group: Arabic
+            quantities: {persons: limited_english_arabic, share: limited_english_arabic_share}
+          - group: Other and unspecified languages
+            quantities: {persons: limited_english_other_unspecified, share: limited_english_other_unspecified_share}
+        tiers:
+          - id: translate
+            says: written translation
+            when_any:
+              - {persons: 1000}
+              - {share: 5, persons: 50}
+          - id: written_notice
+            says: written notice of free interpretation
+            when_any:
+              - {share: 5}
+        below_every_tier: nothing written is asked
+        limits: >
+          The safe harbor counted persons eligible to be served; we count
+          residents 5 and over by the Census's twelve language groups, and a
+          group is never one language.
+      - id: section_203
+        kind: trigger
+        statement: >
+          Where the Census Bureau determines a language minority group is
+          covered under section 203 of the Voting Rights Act, election
+          materials are provided in that language. We report the
+          determination; we never judge it.
+        source:
+          name: U.S. Census Bureau, Voting Rights Act section 203 determinations
+          published: "2021-12"
+          role: determination
+          decided_in: D-271
+        declared_by: us_census_bureau
+        as_published: section_203_determinations
+        limits: >
+          Section 203 covers only four groups (American Indian, Alaska
+          Native, Asian American and Spanish heritage); every other language
+          is outside it.
+
+  requires_digital_access:
+    words: requires digital access
+    measures:
+      - households_without_broadband
+      - cii_broadband
+      - cii_pub_broadband
+      - fcc_served_100_20
+    sides:
+      - id: every_household_connected
+        kind: universal
+        statement: >
+          Every household has an internet subscription. Households without
+          one are counted. A subscription is not the same as access: this
+          counts who pays for a connection, not who could have one.
+        source:
+          name: ITU and the UN Secretary-General's Envoy on Technology, universal meaningful connectivity targets for 2030, the household target
+          role: principle
+          decided_in: D-271
+        declared_by: rewildingcities
+        judges: households_without_broadband
+      - id: fcc_100_20
+        kind: universal
+        statement: >
+          Every location is served at 100/20 Mbps by a terrestrial
+          connection. Not yet acquired.
+        source:
+          name: FCC National Broadband Map, 100/20 Mbps terrestrial
+          role: line
+          decided_in: D-271
+        declared_by: rewildingcities
+        judges: fcc_served_100_20
+
+  at_the_wrong_literacy_level:
+    words: at the wrong literacy level
+    measures:
+      - literacy_at_or_below_level_1
+      - cii_pub_literacy
+    sides:
+      - id: every_adult_at_level_2
+        kind: universal
+        statement: >
+          Every adult 16 to 74 reads at PIAAC Level 2 or above. Adults at or
+          below Level 1 are counted. This line is ours; it goes beyond the
+          words of SDG target 4.6.
+        source:
+          name: UNESCO Institute for Statistics, the proficiency level used for SDG indicator 4.6.1
+          role: principle
+          decided_in: D-271
+        declared_by: rewildingcities
+        judges: literacy_at_or_below_level_1
+
+  lacking_cultural_cues:
+    words: lacking cultural cues
+    measures: [carrier_languages_published]
+    sides:
+      - id: no_threshold
+        kind: none
+        statement: No threshold is declared for this barrier.
+        source: {name: rewildingcities, decided_in: D-271}
+        declared_by: rewildingcities
+
+  behind_a_paywall:
+    words: behind a paywall
+    measures: [free_local_outlets_share]
+    sides:
+      - id: no_threshold
+        kind: none
+        statement: No threshold is declared for this barrier.
+        source: {name: rewildingcities, decided_in: D-271}
+        declared_by: rewildingcities
+
+  outdated:
+    words: outdated
+    measures: [outlet_publishing_frequency, outlet_last_post]
+    sides:
+      - id: no_threshold
+        kind: none
+        statement: No threshold is declared for this barrier.
+        source: {name: rewildingcities, decided_in: D-271}
+        declared_by: rewildingcities
+
+  not_where_people_look:
+    words: not where people look
+    measures:
+      - library_outlets_per_1000
+      - public_schools_per_1000
+      - health_center_sites_per_1000
+      - clerk_offices_per_1000
+      - news_outlets_per_1000
+    sides:
+      - id: no_threshold
+        kind: none
+        statement: No threshold is declared for this barrier.
+        source: {name: rewildingcities, decided_in: D-271}
+        declared_by: rewildingcities
+
+  not_from_a_trusted_source:
+    words: not from a trusted source
+    measures: [relational_hubs]
+    sides:
+      - id: no_threshold
+        kind: none
+        statement: No threshold is declared for this barrier.
+        source: {name: rewildingcities, decided_in: D-271}
+        declared_by: rewildingcities

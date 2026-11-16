@@ -49,8 +49,8 @@ datasets:
     available: true
     description: Maine county boundaries ~ the regional grain for media markets
     semantic_type: governance_unit
-    license: terms_unknown   # D-116
-    license_note: Maine GeoLibrary / MEGIS terms not yet read and recorded
+    license: maine_geolibrary_public   # D-116, D-290
+    license_note: made available through the Maine GeoLibrary; 5 M.R.S.A. sections 2004 and 2005, credit the source (seeds/licenses)
     format: geojson
     source:
       type: api
@@ -93,8 +93,8 @@ datasets:
     available: true
     description: Maine municipal boundaries ~ the finer, noisier grain
     semantic_type: governance_unit
-    license: terms_unknown   # D-116
-    license_note: Maine GeoLibrary / MEGIS terms not yet read and recorded
+    license: maine_geolibrary_public   # D-116, D-290
+    license_note: made available through the Maine GeoLibrary; 5 M.R.S.A. sections 2004 and 2005, credit the source (seeds/licenses)
     format: geojson
     source:
       type: api

@@ -173,7 +173,10 @@ class IndicatorReading:
         return [t for t in self.towns if t.in_range and not t.whole]
 
     @property
-    def left_out(self) -> list[TownValue]:
+    def out_of_range(self) -> list[TownValue]:
+        """towns this place touches whose values stay out of the range, each
+        with why. never `left_out`, which means people short of a universal
+        line everywhere a reader sees it (D-278)."""
         return [t for t in self.towns if not t.in_range]
 
 

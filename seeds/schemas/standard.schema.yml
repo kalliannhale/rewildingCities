@@ -1,0 +1,158 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# STANDARD SCHEMA v1.0
+# seeds/schemas/standard.schema.yml
+#
+# A standard says what every person in a place is owed, barrier by barrier,
+# and which measures judge it (D-270). It is generic: the information domain
+# declares seeds/standards/information_barriers.yml, and another domain may
+# declare its own in the same shape. This file is the one home of a
+# standard's shape; canopy.standards.load_standard refuses a standard it does
+# not describe, then checks what a schema cannot say (every name resolves,
+# every barrier indicator has one home), naming every problem at once.
+#
+# Barrier membership lives in the standard; the indicator registry keeps
+# only role (D-270). A side's kind is universal, trigger or none (D-199).
+# A trigger's tiers use only at-least conditions, so a tier changes only
+# where a quantity passes one of its numbers, and a margin can be judged
+# exactly by its ends and those numbers (D-273).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://rewilding.city/schemas/standard.schema.json"
+title: "Standard"
+type: object
+required: [standard, measures, barriers]
+additionalProperties: false
+
+$defs:
+  id:
+    type: string
+    pattern: "^[a-z0-9_]+$"
+  words:
+    type: string
+    minLength: 1
+  source:
+    type: object
+    required: [name]
+    additionalProperties: false
+    properties:
+      name: {$ref: "#/$defs/words"}
+      published: {type: string}
+      status: {type: string, description: "in force, rescinded on a date, a principle"}
+      role: {type: string, enum: [line, principle, determination]}
+      decided_in: {type: string, pattern: "^D-[0-9]+$"}
+  condition:
+    description: "every named quantity at least its number; all must hold"
+    type: object
+    minProperties: 1
+    additionalProperties: {type: number, minimum: 0}
+
+  side:
+    type: object
+    required: [id, kind, statement, source, declared_by]
+    additionalProperties: false
+    properties:
+      id: {$ref: "#/$defs/id"}
+      kind: {type: string, enum: [universal, trigger, none]}
+      statement: {$ref: "#/$defs/words"}
+      source: {$ref: "#/$defs/source"}
+      declared_by: {$ref: "#/$defs/id"}
+      judges:
+        description: "universal: the one count measure judged against zero (D-272)"
+        $ref: "#/$defs/id"
+      groups:
+        description: "trigger: each group judged alone, by its named quantities"
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [group, quantities]
+          additionalProperties: false
+          properties:
+            group: {$ref: "#/$defs/words"}
+            quantities:
+              type: object
+              minProperties: 1
+              additionalProperties: {$ref: "#/$defs/id"}
+      tiers:
+        description: "trigger: highest first; the first tier any of whose conditions holds"
+        type: array
+        minItems: 1
+        items:
+          type: object
+          required: [id, says, when_any]
+          additionalProperties: false
+          properties:
+            id: {$ref: "#/$defs/id"}
+            says: {$ref: "#/$defs/words"}
+            when_any:
+              type: array
+              minItems: 1
+              items: {$ref: "#/$defs/condition"}
+      below_every_tier:
+        description: "trigger: what the source asks when no tier is reached"
+        $ref: "#/$defs/words"
+      as_published:
+        description: "trigger: a publisher's own determination, reported, never judged by us (D-273)"
+        $ref: "#/$defs/id"
+      limits:
+        description: "what the line or determination cannot see, in words"
+        $ref: "#/$defs/words"
+
+properties:
+  standard:
+    type: object
+    required: [id, version, name, declared_by, framework]
+    additionalProperties: false
+    properties:
+      id: {$ref: "#/$defs/id"}
+      version: {type: string, pattern: "^[0-9]+\\.[0-9]+$"}
+      name: {$ref: "#/$defs/words"}
+      declared_by: {$ref: "#/$defs/id"}
+      framework: {$ref: "#/$defs/source"}
+      decided_in:
+        type: array
+        items: {type: string, pattern: "^D-[0-9]+$"}
+
+  measures:
+    description: >
+      every measure the standard judges or carries, declared once. a measure
+      is a registered indicator, a measure inside an artifact, or a measure
+      not yet held, with its status (D-200)
+    type: object
+    minProperties: 1
+    additionalProperties:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        indicator: {$ref: "#/$defs/id"}
+        artifact: {$ref: "#/$defs/id"}
+        measure: {$ref: "#/$defs/id"}
+        status: {type: string, enum: [acquired, acquirable, needs_our_model, needs_consent]}
+        estimate_kind:
+          type: string
+          enum: [survey, model_based, administrative, inventory, published_determination, computed]
+        method: {$ref: "#/$defs/words"}
+        source: {$ref: "#/$defs/words"}
+        needs: {$ref: "#/$defs/words"}
+        unit: {$ref: "#/$defs/id"}
+        note: {$ref: "#/$defs/words"}
+
+  barriers:
+    type: object
+    minProperties: 1
+    additionalProperties:
+      type: object
+      required: [words, measures, sides]
+      additionalProperties: false
+      properties:
+        words: {$ref: "#/$defs/words"}
+        measures:
+          type: array
+          minItems: 1
+          items: {$ref: "#/$defs/id"}
+        sides:
+          type: array
+          minItems: 1
+          items: {$ref: "#/$defs/side"}

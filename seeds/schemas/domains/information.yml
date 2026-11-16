@@ -110,7 +110,7 @@ types:
       geocode release, keyed by NCESSCH. Which schools are placed, and why,
       is the school_carriers method's to say (D-212). Each carrier kind is
       its own type (D-218); private schools would be another.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, NCES EDGE public-use points
 
   health_center_site:
     category: vector
@@ -121,7 +121,7 @@ types:
       Assigned Number. Which sites are placed, and why, is the
       health_center_carriers method's to say (D-212). Each carrier kind is
       its own type (D-218).
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, HRSA's public sites file
 
   municipal_clerk_office:
     category: vector
@@ -265,7 +265,7 @@ types:
       table, SAS), one row per CCD public school with NCESSCH, reported
       address, operating state and coordinates. Read only by declared member
       and encoding.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, as public_school
 
   health_center_sites_snapshot:
     category: tabular
@@ -276,7 +276,7 @@ types:
       site and location types, setting, status and HRSA's geocode. A daily
       snapshot, not a release, so a copy is declared by its day and its
       sha256. Read only by declared columns and encoding.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, as health_center_site
 
   municipal_clerk_list:
     category: tabular
@@ -308,7 +308,7 @@ types:
       and their documentation, every jurisdiction by language minority group
       with the flags that decided coverage. A release, declared by its sha256;
       read only by declared member, encoding and columns.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, the Census Bureau's public use file
 
   section203_records:
     category: tabular
@@ -319,7 +319,7 @@ types:
       towns under Census's own area code, by language minority group, with
       Census's flags copied (D-263, D-264). Published determinations, never
       recomputed.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work; its tribal rows attach to no place (D-264)
 
   piaac_skills_map_workbook:
     category: tabular
@@ -328,7 +328,7 @@ types:
       The U.S. PIAAC Skills Map's downloadable workbook: model-based state
       and county estimates of adult literacy and numeracy with credible
       intervals and quality flags. Declared by its download day and sha256.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, NCES's published workbook
 
   literacy_estimates:
     category: tabular
@@ -338,4 +338,4 @@ types:
       counties: the share, its 95 percent credible bounds, the workbook's
       flags and left_out, the population times the share and its bounds
       (D-265). Model-based; never combined with its own predictors.
-    # no resolution_tier yet: Kalli declares it. until then it fails closed.
+    resolution_tier: public   # Kalli, session 15 (D-283): a U.S. government work, read from NCES's Skills Map
