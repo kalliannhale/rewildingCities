@@ -47,7 +47,8 @@ asks it of each outlet:
   ~ a review (seeds/crosswalks/outlets/outlet_reviews.yml) is a person's
     reading, keyed by source and name as written: a merge joins groups, a
     town names the code a person read for an outlet the run would list for
-    its town. it refuses when no record gives it, when the run no longer
+    its town, or says state: true for an outlet that serves the state with
+    no town (D-257). it refuses when no record gives it, when the run no longer
     needs it, and when the outlet is listed as ceased or for its medium
     (D-240's rule). a merge may hold one source twice only when it says,
     in words, what the person read the records as (editions, D-255): the
@@ -638,14 +639,18 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
         where = f"town review {n}"
         _review_fields(entry, where)
         code = _text(entry.get("town_code"))
-        if code not in towns.name_of:
+        state_alone = entry.get("state") is True
+        if state_alone and code:
+            raise OutletsRefused(f"{where}: a town review names a town_code or says state: "
+                                 f"true, never both (D-257)")
+        if not state_alone and code not in towns.name_of:
             raise OutletsRefused(f"{where}: {code!r} is not a town of state {state_fips} "
                                  f"in the places table")
         gid = grouped.loc[_record(grouped, entry.get("source"), entry.get("name"), where),
                           "group_id"]
         if gid in town_reviews:
             raise OutletsRefused(f"{where}: its outlet already has a town review")
-        town_reviews[gid] = (where, code, entry)
+        town_reviews[gid] = (where, None if state_alone else code, entry)
 
     office_reads = {}
     for n, entry in enumerate(reviews.get("office_reads") or [], start=1):
@@ -747,10 +752,17 @@ def prepare(grouped: pd.DataFrame, places: pd.DataFrame, sources: dict, names: d
             if "code" in placed or placed.get("scope") == "state":
                 raise OutletsRefused(f"{where}: the run places this outlet on its own; a "
                                      f"review the run no longer needs refuses (D-240)")
-            placed = {"scope": "town", "code": code, "placed_by": "reviewed",
-                      "town_as_written": _text(entry.get("name")),
-                      "town_from": _text(entry.get("source")),
-                      "flags": [f"review_settled:{placed['reason']}"]}
+            settled = f"review_settled:{placed['reason']}"
+            if code is None:
+                placed = {"scope": "state", "placed_by": "reviewed",
+                          "town_as_written": _text(entry.get("name")),
+                          "town_from": _text(entry.get("source")),
+                          "flags": [settled, "placed_in_state_only"]}
+            else:
+                placed = {"scope": "town", "code": code, "placed_by": "reviewed",
+                          "town_as_written": _text(entry.get("name")),
+                          "town_from": _text(entry.get("source")),
+                          "flags": [settled]}
             review = entry
         if "reason" in placed:
             listed.append(listing(placed["reason"], placed["detail"]))

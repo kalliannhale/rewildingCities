@@ -22,7 +22,9 @@
 #           is twice refuses. a record a source wrote twice alike (name,
 #           url, office address) is already one record (D-254)
 #   towns   name the town (its ten-digit county subdivision code) a person
-#           read for one record's outlet, only when the run would otherwise
+#           read for one record's outlet, or say state: true when the person
+#           read it as serving the whole state with no town (D-257), only
+#           when the run would otherwise
 #           list it as towns_disagree, no_town_match, ambiguous_town,
 #           no_town_given or office_shared. refused when the run places it
 #           on its own (in a town or the state), when it is listed as ceased
@@ -76,6 +78,365 @@
 from: "Maine outlet listing records that exact keys and declared names cannot decide"
 to: "rewildingCities: the merge or town a person read, with the evidence"
 
-merges: []
-towns: []
-office_reads: []
+# read 2026-11-15 (Sprint 06, session 12). every place below is where the
+# outlet's newsroom, office or broadcast license is, never the towns it
+# covers (SERVES-1's). each evidence names the page read. read_by says who
+# read: Claude read these pages; Kalli confirms or changes each before
+# publishing.
+
+merges:
+  - records:
+      - {source: cision, name: "Portland Press Herald"}
+      - {source: local_news_catalyst, name: "Portland Press Herald/Maine Sunday Telegram"}
+      - {source: cision, name: "Portland Press Herald Online"}
+      - {source: easton, name: "Press Herald (MTLN)"}
+    editions: "the daily, its Sunday edition (the Maine Sunday Telegram) and its website: one newsroom"
+    evidence: >
+      pressherald.com is one newsroom publishing the daily and the Maine
+      Sunday Telegram, owned by the Maine Trust for Local News; the four
+      records share its url or its name. Before this merge Portland counted
+      the Press Herald twice.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - records:
+      - {source: local_news_catalyst, name: "The County"}
+      - {source: maine_media_ecosystem, name: "Star Herald"}
+    editions: "The Star-Herald, folded into the combined weekly The County in January 2025"
+    evidence: >
+      The County is the combined home of the Aroostook Republican & News,
+      Houlton Pioneer Times, St. John Valley Times and The Star-Herald, first
+      printed as one paper on Jan. 15, 2025, offices in Presque Isle (260
+      Missile Street), Houlton and Madawaska (fiddleheadfocus.com/contact-us;
+      rebuild.observer-me.com/?p=287774, "Combined paper will keep same
+      County coverage").
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - records:
+      - {source: local_news_catalyst, name: "Castine Patriot"}
+      - {source: maine_media_ecosystem, name: "Castine Patriot"}
+    evidence: >
+      One paper the two lists each name; their records stood apart only
+      because Cision's raw pull lists it twice at two addresses, which kept
+      the name key from joining (D-202), so the map counted it twice, in
+      Blue Hill and in Castine. Penobscot Bay Press publishes it.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - records:
+      - {source: maine_media_ecosystem, name: "Maine Wire"}
+      - {source: maine_media_ecosystem, name: "The Maine Wire"}
+    editions: "one outlet the ecosystem file lists twice, with and without The"
+    evidence: >
+      The two rows name one outlet; the ecosystem file gives no town for
+      either. Read as one so it is counted once.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+
+  - records:
+      - {source: local_news_catalyst, name: "Boothbay Register/Wiscasset Newspaper"}
+      - {source: maine_media_ecosystem, name: "Boothbay Register"}
+      - {source: cision, name: "Wiscasset Newspaper"}
+    editions: "the Boothbay Register and the Wiscasset Newspaper, sold and subscribed as one paper from one office"
+    evidence: >
+      Subscriptions and newsstand pages name one paper, Boothbay Register /
+      Wiscasset Newspaper, at 97 Townsend Ave., Boothbay Harbor 04538
+      (admin.wiscassetnewspaper.com/subscriptions; boothbayregister.com/where-buy-paper);
+      the Wiscasset Newspaper has been made in the Register's building since
+      its start (wiscassetnewspaper.com/node/144073). The map held it three
+      times: Boothbay Harbor, Boothbay and Wiscasset.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+
+towns:
+  - source: local_news_catalyst
+    name: "Mount Desert Islander"
+    town_code: "2300902865"
+    evidence: >
+      Bar Harbor town. Founded in Bar Harbor in 2001 (mdislander.com/the_newspaper);
+      office 310 Main St, Bar Harbor 04609 (bbb.org newspaper listing). The
+      ecosystem file's Mount Desert is a town it covers.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "Saco Bay News"
+    town_code: "2303155085"
+    evidence: >
+      Old Orchard Beach town. Online-only, launched 2020, covering Saco, Old
+      Orchard Beach and Biddeford; its founder and publisher works from Old
+      Orchard Beach (sacobaynews.com about page). No office address is given,
+      so this is where it is made.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "The County"
+    town_code: "2300360825"
+    evidence: >
+      Presque Isle city: The County's Presque Isle office, 260 Missile Street,
+      is the first of its three (fiddleheadfocus.com/contact-us). St. John,
+      the ecosystem file's town, is in the valley it covers.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "Peaks Islander"
+    town_code: "2300560545"
+    evidence: >
+      Portland city: Peaks Island is part of Portland (islandinstitute.org/?p=39743).
+      The paper publishing there now is Peaks Island News (founded 2023, PO
+      Box, Peaks Island 04108); whether the ecosystem file's Peaks Islander is
+      that paper was not confirmed.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "Sanford Springvale News"
+    town_code: "2303165725"
+    evidence: >
+      Sanford city: PO Box 958, Sanford 04073, covering Sanford and
+      Springvale, a village of Sanford (sanfordspringvalenews.com/about-us).
+      Volunteer-run and weekly again since 2023.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "Town Line"
+    town_code: "2301112735"
+    evidence: >
+      China town: 575 Lakeview Drive, next to the China Town Office, South
+      China, a village of China (townline.org/about-us).
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "WEBB 98.5 FM"
+    town_code: "2301180740"
+    evidence: >
+      Waterville city: licensed to Waterville, FCC facility 52608
+      (radiolineup.com/stations/WEBB-FM; en.wikipedia.org/wiki/WEBB). Its
+      studios are in Augusta; a station is placed by its license.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "Lincoln News"
+    town_code: "2301939475"
+    evidence: >
+      Lincoln town, Penobscot County: 78 W Broadway, Lincoln 04457
+      (lincnews.com), not Lincoln plantation in Oxford County.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "Rangeley Highlander"
+    town_code: "2300761840"
+    evidence: >
+      Rangeley town: 2579 Main Street, Rangeley 04970 (newsjunkie.net entity
+      page citing the Maine State Library); a Maine Trust for Local News
+      western weekly (sunjournal.com/?p=9892974). Not Rangeley plantation.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "Castine Patriot"
+    town_code: "2300905700"
+    evidence: >
+      Blue Hill town, where it is made: Cision gives its office as 13 Main
+      Street, Blue Hill 04614, a Penobscot Bay Press office. Castine is the
+      community it is named for and covers. A choice to confirm: placed by
+      newsroom, Castine counts no paper of its own.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Rumford Falls Times"
+    town_code: "2301764290"
+    evidence: >
+      Rumford town: one of the Maine Trust for Local News' western Maine
+      weeklies, named for Rumford Falls (sunjournal.com/?p=9892974 lists its
+      ePaper). Its listed office is the publisher's shared South Portland
+      address. Placed by its name and publisher's page, no local office read.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: local_news_catalyst
+    name: "Boothbay Register/Wiscasset Newspaper"
+    town_code: "2301506120"
+    evidence: >
+      Boothbay Harbor town: its office is 97 Townsend Ave., Boothbay Harbor
+      (boothbayregister.com contact page, on wiscassetnewspaper.com/node/130).
+      A choice to confirm: placed by newsroom, Wiscasset counts no paper of
+      its own.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "Gorham Times"
+    town_code: "2300528240"
+    evidence: "Gorham town, by its name; no page read. Kalli to confirm."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "Islesboro Island News"
+    town_code: "2302735240"
+    evidence: "Islesboro town, by its name; no page read. Kalli to confirm."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "Waterboro Reporter"
+    town_code: "2303180530"
+    evidence: >
+      Waterboro town: the Reporter covers Waterboro, Alfred, Lyman, Newfield,
+      Limerick and Shapleigh (pressherald.com/?p=2702052). No office read.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "The West End News"
+    town_code: "2300560545"
+    evidence: >
+      Portland city: the paper of Portland's West End neighborhood, still
+      publishing in 2026 (a February 2026 item quoted at
+      freeportfunfacts.blogspot.com). No office read.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "The Irregular"
+    town_code: "2300737025"
+    evidence: "Kingfield town, from what Claude knows of the paper; no page read. Kalli to confirm."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "WEGP 1390 Am"
+    town_code: "2300360825"
+    evidence: >
+      Presque Isle city: licensed to Presque Isle (list of Maine radio
+      stations, citing the FCC). Its format is now a religious network; it
+      counts here on the ecosystem file's say (D-247).
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "WERU"
+    town_code: "2300905700"
+    evidence: >
+      Blue Hill town: WERU-FM is licensed to Blue Hill, FCC facility 58726
+      (FCC license BLED-20081106AFA; radiolineup.com/stations/WERU-FM);
+      studios in East Orland.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "WMPG"
+    town_code: "2300528240"
+    evidence: >
+      Gorham town: WMPG 90.9 is licensed to Gorham, University of Maine
+      System (list of Maine radio stations, citing the FCC; first aired 1973
+      from Gorham). Its studios are in Portland.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "Maine Biz"
+    state: true
+    evidence: "Statewide business news (mainebiz.biz), no town of its own. Kalli to confirm."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: easton
+    name: "Maine Public"
+    state: true
+    evidence: "Maine's statewide public radio and television network, many licenses across the state."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "Maine Wire"
+    state: true
+    evidence: "A statewide news site; the ecosystem file names no town. Kalli to confirm."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+
+office_reads:
+  - source: cision
+    name: "Associated Press - Augusta Bureau"
+    verdict: list
+    reason: "a wire service's statehouse bureau: its stories reach readers through other outlets"
+    evidence: "Cision's own name for it, and apnews.com/hub/augusta, its url."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Bangor Daily News - Ellsworth Bureau"
+    verdict: list
+    reason: "a bureau of the Bangor Daily News, which is placed in Bangor"
+    evidence: "Cision's own name for it; the Bangor Daily News is placed in Bangor city on four listings' say."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Coastal Journal, The"
+    verdict: list
+    reason: "consolidated into an edition of The Forecaster by its owner"
+    evidence: >
+      Masthead Maine consolidated the Coastal Journal of Bath into one of The
+      Forecaster's editions (pressherald.com/?p=3934194).
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Free Press, The"
+    verdict: list
+    reason: "merged into the Midcoast Villager in September 2024"
+    evidence: >
+      The Villager, founded September 2024, merged The Republican Journal,
+      The Courier-Gazette, Camden Herald and The Free Press
+      (midcoastvillager.com/site/about.html).
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Kennebunk Post"
+    verdict: town
+    town_code: "2303136535"
+    evidence: >
+      Kennebunk town: news of Kennebunk, Kennebunkport and Arundel from
+      Mainely Media, whose office is a Biddeford PO box
+      (pressherald.com/mainely-media/kennebunk-post). Newest pages read are
+      from 2024; whether it prints in 2026 was not confirmed.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "South Portland - Cape Elizabeth Sentry"
+    verdict: town
+    town_code: "2300571990"
+    evidence: >
+      South Portland city: a Mainely Media weekly for South Portland and Cape
+      Elizabeth (pressherald.com Kennebunk Post page links the South Portland
+      Sentry), placed by Cision at its publisher's Biddeford box. Whether it
+      prints in 2026 was not confirmed.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "Maine Morning Star"
+    verdict: state
+    evidence: "A statewide nonprofit newsroom covering Maine government (mainemorningstar.com); Augusta is its office, not its audience."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Penobscot Bay Press"
+    verdict: list
+    reason: "the publisher of the Castine Patriot, Island Ad-Vantages and The Weekly Packet, each listed apart"
+    evidence: >
+      Cision lists the Castine Patriot and Island Ad-Vantages at Penobscot
+      Bay Press addresses; The Weekly Packet is placed in Blue Hill.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: maine_media_ecosystem
+    name: "The Working Waterfront"
+    verdict: keep
+    evidence: >
+      Published by the Island Institute, 386 Main St., Rockland
+      (islandinstitute.org); it covers Maine's islands and coast, and is
+      kept where it is made.
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Bates Student, Bates College, The"
+    verdict: list
+    reason: "a college student newspaper: campus press, on no local news list"
+    evidence: "Cision's own name for it. A choice to confirm: student papers are listed, never counted."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Bowdoin Orient, Bowdoin College, The"
+    verdict: list
+    reason: "a college student newspaper: campus press, on no local news list"
+    evidence: "Cision's own name for it. A choice to confirm: student papers are listed, never counted."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"
+  - source: cision
+    name: "Colby Echo, Colby College, The"
+    verdict: list
+    reason: "a college student newspaper: campus press, on no local news list"
+    evidence: "Cision's own name for it. A choice to confirm: student papers are listed, never counted."
+    read_on: "2026-11-15"
+    read_by: "Claude, from the cited pages; Kalli A. Hale to confirm"

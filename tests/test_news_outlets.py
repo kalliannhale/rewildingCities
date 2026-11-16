@@ -764,3 +764,26 @@ def test_a_review_names_a_record_written_twice_once():
     df.loc[0, "group_id"] = "g9"
     p = run(df, reviews={"merges": [merge]})
     assert len(p.outlets) == 1 and p.outlets.iloc[0].records.count("cision_raw") == 2
+
+
+# ── a town review may place an outlet in the state alone (D-257) ──────────
+
+def test_a_town_review_may_place_a_listed_outlet_in_the_state_alone():
+    df = grouped(("g1", "easton", 3, "Statewide Radio", None, None, None, None))
+    assert listed(run(df)) == {"Statewide Radio": "no_town_given"}
+    town = {"source": "easton", "name": "Statewide Radio", "state": True, **REVIEW}
+    p = run(df, reviews={"towns": [town]})
+    r = p.outlets.iloc[0]
+    assert r.scope == "state" and pd.isna(r.town_code) and r.placed_by == "reviewed"
+    assert "review_settled:no_town_given" in r["flags"] and "placed_in_state_only" in r["flags"]
+
+
+def test_a_town_review_says_a_town_or_the_state_never_both():
+    df = grouped(("g1", "easton", 3, "Statewide Radio", None, None, None, None))
+    both = {"source": "easton", "name": "Statewide Radio", "state": True,
+            "town_code": "2300560545", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="never both"):
+        run(df, reviews={"towns": [both]})
+    neither = {"source": "easton", "name": "Statewide Radio", "state": "yes", **REVIEW}
+    with pytest.raises(pno.OutletsRefused, match="not a town"):
+        run(df, reviews={"towns": [neither]})
