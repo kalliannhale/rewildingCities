@@ -1,6 +1,6 @@
 # Sprint 06 ~ the place profile and the standard: progress report
 
-**Open.** Domain: information. Contract: 4, draft 0.3. Tests: 643 passed at session 1's hand-off. Decisions so far: D-197 to D-209.
+**Closed** in session 16 (2026-11-16), by Kalli. Domain: information. Contract: 4, draft 0.4. Tests: 1,247 passed at the close (643 at session 1's hand-off). Decisions: D-197 to D-300. Carried forward, not done: step 7b, the FCC map (P-6); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check. The close is at the end of this report.
 
 ## Session 1: P-9, located_in, the outlet stack, and the first carrier
 
@@ -350,3 +350,78 @@ Read before deciding: Contract 4, state.md, the ACS provider, the indicator regi
 ### Carried forward
 
 Zip 2: build_profile, P-1 and P-2, every place's profile. Zip 3: CARRY-1, the publish door, the Docker build. KEY-1 (the key's replacement), OUTCONF-1, SRC-4, E911-1, TRIBE-4 and SEN-1 (on or after 2026-12-02), P-8, and the tier declarations, as in state.md.
+
+## Session 14: zip 2's consultation, the standard
+
+Decisions: D-270 to D-282. Commit: cd67559 (its ledger and state, no code).
+
+Done:
+- The standard's shape and its one home, seeds/standards/information_barriers.yml, generic so another domain can declare its own (D-270).
+- P-1, row by row, and P-5: the language trigger (the DOJ 2002 safe harbor as our own line, rescinded 2025-03-21), the universal lines for language, digital access and literacy, each with its source and who declared it (D-271).
+- How a universal side and a trigger are judged, margin-aware, and what a published determination is (D-272, D-273); the profile as a canopy command with its own receipt (D-274); the record views (D-275); borrowed values (D-276); confidences held once (D-277); left_out's one meaning (D-278); the need role (D-279); part 1's population (D-280); Contract 4 to 0.4 (D-281); part 4 pairs one measure only (D-282).
+
+Closed: P-1, P-5.
+
+## Session 15: zips 2 and 2b, the standard built and every place profiled
+
+Decisions: D-283 to D-293. Commits: b3426b1 (27 files), 825e32e (its ledger block and state, committed at session 16's start).
+
+Done:
+- The standard schema and seed (8 barriers, 44 measures), canopy/standards.py, the margin-aware verdicts (canopy/wonder/verdicts.py), canopy/wonder/profile.py and the profile command, loam's literacy and section 203 views, the tiers for the U.S. government works (D-283), the gate asked first (D-284), the GeoLibrary license for Maine's boundaries (D-290), counts that name their notes (D-291), every level profiled (D-292).
+- 1,663 places profiled in about five minutes. Verdicts: 351 below, 2,081 within_margin, 10 crosses, 7,607 does_not_cross, 516 as_published, 16,630 no_threshold, 17,706 cannot_judge.
+- 36 of 58 receipts could leave at public, up from 21 once the boundaries' license was read; withheld from profiles, the outlet and clerk counts only.
+
+Found: a long, silent build read as a hang; one license held the whole graph back; a trigger's two margin ends do not bound its tiers (D-289).
+
+## Session 16 (2026-11-16): zip 3a, counts go public; Sprint 06 closed
+
+Decisions: D-294 to D-300. Commits: 825e32e (session 15's hand-off), 1497bfa (zip 3a and two review fixes, 17 files, with its ledger block), then the closing state and this report. Tests: 1,247 passed.
+
+### Consultation
+
+Read before deciding: state.md, the Master Plan, the gate's decide(), the information types, the license list, the manifest's outlet and clerk entries, the outlet preparation and its reviews, the stack and outlet primitives and every test naming what changed. Researched with sources: Local News Catalyst's terms (one search, none found); S3's account-regional bucket names, for Sprint 07's audit.
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| 1497bfa | Cision as commercial_outlet_listing, excluded, left out of the stack by name (use); database_alone none, town_fallback none; aggregate-only for the outlet types and the lists; aggregates: true on indicator_values and place_profile; public for the clerk types; three license terms (factual_directory, factual_compilation_counts with requires_tier, project_own_work); requires_tier in rule 10 and at load; the manifest's types and terms; the reviews without Cision; tests/test_tiers_and_terms.py and new tests in five files |
+
+### Found
+
+- Three locks, not one, kept outlet counts home: no type declared aggregates: true, so rule 5's way out was unreachable; outlet_listing was excluded, which stops every descendant; and Cision had to leave the stack itself, not only the choices, or rule 10 would still see it.
+- The stack refused any declared source with no input, so a run now names the sources it uses.
+- Without Cision: 90 outlets placed (was 97), 12 listed, 10 with no town and 2 ceased (was 405).
+- The County's merge still needs editions; the Castine Patriot's two list records join on their own now. The Press Herald and Boothbay merges hold.
+- The outlet counts, the clerk counts, the clerk office points and the profile all judge allow; the profile withholds nothing at public.
+- Two manifest provenance mappings held unquoted commas; the information types' header still called tiers advisory.
+
+### Wrong hypotheses
+
+- That Cision alone made The County's merge need editions.
+- That named outlets would be one tier change: every outlet type in the lineage binds.
+- That a read after a failed run shows the new run.
+
+### Lessons
+
+- A read reports whatever ran last: check the receipt's time against the run.
+- Keep a merge whose need is in doubt; it refuses loudly when no longer needed.
+- Read a gate's code for why something is withheld before deciding how to let it out.
+
+### Carried forward
+
+OUTCONF-1 and the lists' makers' word for named outlets; WATERFRONT-1; the courtesy asks to the GeoLibrary, Jo Easton and Dr. Mittal in the wrap-up; CARRY-1 and EDGE-NOTE-1 with the door (Sprint 08); TRIBE-4 and SEN-1 (on or after 2026-12-02); P-8 and TRIBE-7 on the nations' terms; KEY-1.
+
+## The close
+
+Goal, as set: every Maine place has a six-part profile, its carriers are on the map, and every barrier is judged against a stated, absolute standard.
+
+| Part of the goal | At the close |
+| --- | --- |
+| Every place profiled, six parts | done: 1,663 places at every level, part 6 present and empty until P-2 (D-285) |
+| Barriers judged against a stated standard | done for language, digital access and literacy (D-270 to D-273, D-289); cultural cues, paywall and outdated have no line by design (D-271); trusted source waits for consent (Sprint 16) |
+| Carriers counted | done: libraries 261, schools 598, health centers 168, clerks' offices 392, outlets 90 |
+| Carriers on the map | not yet: the map is the door's (Sprint 08), with CARRY-1 and EDGE-NOTE-1; what may leave is decided (D-283, D-297) |
+| What may leave | decided and tested: every carrier count and the profile at public; clerk offices as points; named outlets after OUTCONF-1 |
+
+Sixteen sessions, D-197 to D-300, 643 to 1,247 tests. Next: Sprint 07, storage outside AGOL, then Sprint 08, the door.
