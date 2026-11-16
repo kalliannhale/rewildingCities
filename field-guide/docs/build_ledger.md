@@ -1611,3 +1611,46 @@ Lessons:
 
 Closed: P-1, P-5 (D-271).
 Owed before code: P-2's cited research, if part 6 is to be filled; part 6 may ship present but empty, its reason said (Kalli's cut).
+
+## Sprint 06, session 15 (2026-11-16): zips 2 and 2b built, the standard
+
+Decided:
+- D-283: tiers, Kalli's: public for public_school, health_center_site, school_geocode_release, health_center_sites_snapshot, section203_public_use_file, section203_records, piaac_skills_map_workbook and literacy_estimates (U.S. government works), and for located_in_edges (it adds no limit of its own; each layer's points bind through lineage, D-101). news_outlet, the clerk types and the outlet working types stay undeclared: SRC-4 and E911-1 decide them.
+- D-284: the gate first. Every receipt a value would come from is judged at public before its value enters a profile; a withheld receipt's values never enter, its refusal does (rules 7 and 8), and the receipt's inputs are exactly the receipts whose values entered. One home for judging a plot's receipts: canopy.expose.check.judge_receipts, which read_exposure now calls.
+- D-285: part 6 ships present and empty until the pairing table (P-2) is written (Kalli's cut).
+- D-286: part 1's households are the ACS's, the denominator of households_without_broadband; the values file does not carry that count's margin, and the profile says so.
+- D-287: a small sample does not stop a verdict: the margin decides, and the reliability note travels beside the value. Contract 4 0.3 listed it as a cannot_judge reason; 0.4 does not.
+- D-288: part 4 takes a difference when two values' units match, or both are percents of the one measure; any other pair is shown with no difference and says why.
+- D-289: a trigger is judged over every value its margins allow (canopy/wonder/verdicts.tiers_within): the margins' ends and every tier number between them, in every combination. One tier reachable, crosses or does_not_cross; several, within_margin naming each.
+- D-290: Maine's town and county boundaries take maine_geolibrary_public (seeds/licenses): 5 M.R.S.A. section 2005 forbids copyright or licensing restrictions on data made available through the GeoLibrary, section 2004 removes liability, and the GeoLibrary's layer metadata asks that the source be credited, so attribution is required. Section 1995 (licensing agreements) sits in the Office of GIS subchapter and reads as its services to state agencies: Kalli's reading; the GeoLibrary Board is the authority to ask. Read 2026-11-16 at legislature.maine.gov.
+- D-291: count_located's receipt names the notes its rows carry (row_context_notes, context_notes), so rule 9 binds exactly those.
+- D-292: every level of the graph is profiled, Contract 4's six first, then any other (Maine's 923 MEGIS civil divisions), each saying in place.level_note that it is groundwork for later analyses (Kalli).
+- D-293: the places and edges receipts are inputs of every profile, whatever the gate says of them; when withheld, the command says the whole file cannot leave.
+
+Built (b3426b1, 27 files): seeds/schemas/standard.schema.yml and seeds/standards/information_barriers.yml (8 barriers, 44 measures); canopy/standards.py (shape by schema, then names: every barrier indicator one home); canopy/wonder/verdicts.py (every rule as a function of numbers); canopy/wonder/profile.py and the profile command; loam's literacy_estimates and section203_records views; the ACS confidence held once in the registry; out_of_range (D-278); the role change (D-279); the tiers; the GeoLibrary term; Contract 4 draft 0.4. Tests: 1,221 passed at zip 2; zip 2b's run passed, its count not recorded.
+
+Found:
+- The first full build profiled 1,663 places over several minutes and printed nothing until the end; it was read as a hang.
+- Only 21 of 58 receipts could leave: graph_places and graph_edges were refused under rule 10, since governance_unit_town and governance_unit_county were terms_unknown, so no profile could leave at all. After D-290 and D-291 and the five count reruns, 36 of 58.
+- Every carrier count failed rule 9: count_located wrote each tribal row's note but never listed them in the receipt.
+- The profile read places and edges for every name, contents list, overlap and borrowed share without listing them as inputs.
+- The section 203 records file holds the whole nation, 38,962 rows; about 74 per Maine town.
+- Profiled now: 1,663 places in 303s (state, counties and towns in 27s; each district, tribal area and MEGIS division about 0.24s, nearly all in read_place). Verdicts: 351 below, 2,081 within_margin, 10 crosses, 7,607 does_not_cross, 516 as_published, 16,630 no_threshold, 17,706 cannot_judge. Withheld: the outlet counts and the clerk counts only.
+- Aroostook's own literacy and its tribal note travel; its population read null until the counts could leave.
+
+Wrong hypotheses:
+- That the full build hung: it was slow and silent.
+- That place_values, a view, made each place's values read slow: the read showed 0.0s.
+- That a trigger's two margin ends bound its tiers: 950 plus or minus 100 at a 1% share reached written notice, which needs 5% (D-289).
+- That only the outlets would be withheld: the graph itself was, by one license.
+- That profiling Contract 4's levels needed no filter: the MEGIS divisions came along, which Kalli then chose to keep (D-292).
+
+Lessons:
+- A long command prints its progress, or its silence will be read as a hang.
+- A bound taken from the ends of a box holds only when every value between lands in a tier the ends reach; check the box's own corners and the thresholds inside it.
+- What a file's structure rests on is lineage too: an input is anything the file holds, names and shares included.
+- Read the law's own text for a license, and name the reading as a reading.
+
+Closed: SRC terms for the boundaries (D-290); the rule 9 gap on counts (D-291).
+Opened: LIC-2, the boundary layers' own item metadata, unread. GAPS-1, part 5's gaps in the method authors' own words from readiness and possibility. EDGE-NOTE-1, located_in_edges receipts do not name their rows' notes, so the libraries', schools' and health centers' edges fail rule 9 (the carriers map, zip 3). NOTHR-1, a no_threshold verdict says "this value is shown" when the entry is empty or withheld. PROF-1, read_place loads the registry three times a call, most of a build's time.
+Still open: zip 3, the door.
