@@ -5,17 +5,19 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-15, at the hand-off closing Sprint 06's twelfth build session.
+**Updated:** 2026-11-16, at the hand-off closing Sprint 06's thirteenth session (zip 1's consultation and build).
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 12's commits: 3b79798 (outlet records read whole, D-253 to D-256), c8e9a2d (the reviews, D-257, OUTREV-1), 3bb6ad4 (the ledger), and this hand-off (progress report, state). Session 11's build commit, a40a57e, landed after its hand-off, 6683421; the ledger records the correction.
-- Tests: `python -m pytest -q -rs | tail -3`. 1111 passed, no skips, at c8e9a2d (session 12: tests/test_outlet_groups.py 10 to 16, tests/test_news_outlets.py 58 to 72; tests/test_outlet_carriers_preparation.py's empty-reviews test became every review keyed by the words and naming its reading). The 2 warnings are Starlette and FastAPI test-client deprecations (httpx, anyio) in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed; `-rs` names a skip, since a skip proves nothing.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 13's commits: ca48e63 (the consultation's ledger, D-258 to D-266), c70bee0 (zip 1, 38 files), ee3f3a5 (the build ledger, D-267 to D-269), the ACS fetch's manifest and changelog, and this hand-off (progress report, state).
+- Tests: `python -m pytest -q -rs | tail -3`. 1166 passed, no skips, at c70bee0 (session 13: tests/test_derived_margins.py, test_section203.py and test_piaac_skills_map.py new; test_indicators, test_indicator_preview, test_derive_indicator_oracle, test_declaration_hash, test_indicator_references, test_place_reading, test_district_values and test_honest_values moved with D-258 to D-262). The full suite runs about two minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Its tab is updated at Sprint 06's close.
-- Next decision ID: D-258. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Next decision ID: D-270. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 06 is open**, across several sessions, in the order below. Progress: field-guide/docs/progress/information/sprint-06.md.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
+- The Section 203 release lives at plots/maine/.data/sec203_puf_2021_12_01.zip (sha256 2d6b21e9...22d6, cp1252 though documented as ASCII) and the PIAAC Skills Map workbook at plots/maine/.data/SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx (sha256 b6745055...34b5, downloaded 2026-11-15). Both are U.S. government works.
+- The Census key is set in the rewilding env (`conda env config vars`), loaded on activate; it was pasted into chat and shell history on 2026-11-16, so it is replaced (KEY-1).
 - The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Both are terms_unknown: nothing derived is published until E911-1 and the list's terms are read. The 911 file holds home addresses; it never leaves .data.
 
 ## Sprint 06 ~ the place profile and the standard
@@ -24,7 +26,7 @@ is fixed.
 
 **Decided in the design pass:** D-197 (build_profile wraps read_place), D-198 (margin-aware verdicts, derive_margins), D-199 (universal, trigger, none thresholds), D-200 (each barrier a family of registered indicators with a status).
 
-**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257, below.
+**Decided in session 1:** D-201 to D-209. **In session 2:** D-210 to D-212. **In session 3:** D-213 to D-217. **In session 4:** D-218 to D-222. **In session 5:** D-223 to D-226. **In session 6:** D-227 to D-229. **In session 7:** D-230. **In session 8:** D-231 to D-233. **In session 9:** D-234 to D-239. **In session 10:** D-240 to D-246. **In session 11:** D-247 to D-252. **In session 12:** D-253 to D-257. **In session 13:** D-258 to D-269, below.
 
 **Order of work, and where each step stands:**
 
@@ -48,10 +50,13 @@ is fixed.
         closed, local news, where             done      D-247 to D-252: 90 placed, 435 listed
         read whole, reviewed with sources     done      D-253 to D-257: 97 placed, 405 listed;
                                                         OUTCONF-1 before publishing
- 4  derive_margins (D-198)                    not yet
- 5  language: ACS, safe harbor, section 203   not yet
- 6  literacy: PIAAC county estimates (P-7)    not yet
- 7  digital access counts + FCC map (P-6)     not yet
+ 4  derive_margins (D-198)                    done      D-258 to D-260: inside derive_indicator,
+                                                        R and Python, oracle-held; the count kind
+ 5  language: ACS, safe harbor, section 203   done      D-261, D-263, D-264, D-267: C16001 at five
+                                                        levels; section 203 read as published
+ 6  literacy: PIAAC county estimates (P-7)    done      D-265, D-268: Skills Map, 17 rows
+ 7  digital access counts + FCC map (P-6)     7a done   D-262: the rate's own complement;
+                                                        7b (FCC) not yet, the first cut
  8  outlets reconciled                        mostly    stacked, grouped, reviewed (D-253 to D-257);
                                                         ownership concentration exists (Kalli,
                                                         session 12); check OWN-1 in the ledger
@@ -73,6 +78,8 @@ is fixed.
 
 **Outlets read whole and reviewed (session 12, D-253 to D-257).** group_outlet_records now reads a trailing ", The" as the name written inverted (D-253: Cision's "Star-Herald, The"), and joins one source's records alike in name key, url key and office address as one record written twice, its key held once, every copy saying same_record_as (D-254). The office address comparison has one home, group_outlet_records.office_key, which prepare_news_outlets imports. Before D-254, Lincoln County News stood as six groups: Cision's copies held its key twice, so the key joined nothing for anyone (D-202). A reviewed merge may hold one source twice only when it says editions, in words (D-255); a review names a record written twice once. office_reads (keep, town, state, list with a reason) read an outlet placed by its office town alone; an unread one stays placed, flagged office_town_unread (D-256). A town review may say state: true in place of a town_code (D-257). seeds/crosswalks/outlets/outlet_reviews.yml holds 5 merges (the Press Herald with its Sunday edition and site; The County with the Star-Herald, folded in January 2025; the Castine Patriot's two list records; Maine Wire twice; the Boothbay Register / Wiscasset Newspaper, one paper from 97 Townsend Ave.), 23 towns and 12 office reads. Claude read them from cited pages; read_by says so, and Kalli confirms each (OUTCONF-1). Every reading places an outlet where its newsroom, office or broadcast license is; the towns it covers stay SERVES-1's. Three papers had been on the map more than once (the Press Herald, the Castine Patriot, the Boothbay Register in three towns), and Cision lists papers that no longer stand apart (the Coastal Journal, into The Forecaster; The Free Press, into the Midcoast Villager). Maine: 97 placed (65 named_town, 26 reviewed, 5 office_town, 1 named_state), 405 listed (326 medium_not_counted, 23 ceased, 23 medium_unknown, 21 office_shared, 8 office_read_listed, 4 no_town_given); 4 edition merges; 4 office towns unread (The Cryer, USM's Free Press, Rolling Thunder Express, Twin City Times); no towns disagreeing. Portland counts 19.
 
+**Zip 1, the measures (session 13, D-258 to D-269).** Ratio margins are derived inside derive_indicator, in R and in preview.py, the arithmetic's one Python home canopy/indicators/margins.py, held equal by the oracle (D-258): never as a second indicator_values artifact, which loam would refuse (D-172). Every ratio declares relation: proportion or ratio (D-259), by the Census's 2025 statistical testing instructions: ratio fallback flagged in moe_formula, sums by root-sum-of-squares, a controlled part's margin 0; a proportion of exactly 1 is not_derived (D-269). A count kind adds and subtracts cells (D-260). The language family is C16001 at state, county, cousub and both chambers, 26 indicators in seeds/indicators/language.yml (D-261); households_without_broadband is cii_broadband's own complement (D-262). Section 203's 2021 public use file is read as published into section203_records (D-263): 516 Census towns matched, 12 of ours without a record, Penobscot Indian Island (57936) held whole across its county line, and six Census towns no longer ours (Atkinson, Bancroft, Cary, Codyville, Drew, Magalloway: deorganization between the maps) held under census_s203_mcd (D-267); five tribal areas under Census's own codes, attached to no place (D-264); 0 covered. Literacy is literacy_estimates from the Skills Map workbook (D-265, D-268): 17 rows, none flagged, left_out as NCES computes it, modelled partly from race, poverty and education, never combined with its predictors. First read: Aroostook's French, Haitian or Cajun share is 2.29% plus or minus 0.40 of persons 5 and over, about 85% of its limited English and about 1,465 persons; Androscoggin's limited English is 3.35%, two thirds in other groups.
+
 **Tribal areas, counted beside a note (session 8, D-233).** All three carriers count the 8 Census tribal areas, each row carrying context_note: carrier_unseen_on_nations_land (libraries, health centers: all zeros) or carrier_seen_on_nations_land (schools: Indian Township, Pleasant Point and Penobscot each count 1). The notes' words are Kalli's DRAFT in seeds/notes/notes.yml, waiting on the nations' terms (P-8). Four trust lands hold 4 to 202 persons, so their rates are unstable; the count and persons travel with each rate.
 
 **The barriers, their indicators, and where the data is** (as decided in the design pass; P-9 has changed three rows' status):
@@ -88,7 +95,7 @@ is fixed.
 | Not where people look | carriers per 1,000 by type | IMLS, NCES EDGE, HRSA, the Secretary of State's clerk list through Maine's 911 points, the outlet listings by town (done) | every level; outlets at town, county and state | libraries, schools, health centers, clerks' offices counted (D-209, D-230, D-232, D-239, D-240), outlets by town (D-246), tribal areas beside a note (D-233); on the map as loam's carriers view (D-225), adjectives and notes not yet carried (CARRY-1) |
 | Not from a trusted source | relational hubs, aggregate-only | consent-governed | as consented | needs_consent (Sprint 16) |
 
-**Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-7 (PIAAC 2023?), P-8 (section 203 on Wabanaki places; on the nations' terms). P-9 is closed.
+**Still open in Contract 4:** P-1 (each threshold, row by row), P-2 (pairing table), P-3 (free outlet), P-5 (a universal side for language; lean yes), P-6 (FCC benchmark), P-8 (section 203 on Wabanaki places; on the nations' terms). P-7 and P-9 are closed.
 
 ## Decided in session 1
 
@@ -207,6 +214,23 @@ is fixed.
 | D-256 | office_reads keep, move to a town or the state, or list (reason in words) an outlet placed by its office town alone; refused otherwise; unread ones stay placed, flagged office_town_unread |
 | D-257 | A town review names a town_code or says state: true, never both |
 
+## Decided in session 13
+
+| ID | One line |
+| --- | --- |
+| D-258 | Ratio margins computed inside derive_indicator (R and Python, oracle-held), never a second values artifact; supersedes D-198's own step, its verdict rule stands |
+| D-259 | Every ratio declares relation: proportion or ratio; Census 2025 formulas; fallback flagged; controlled margin 0; every derived margin an approximation; no zero-estimate rule |
+| D-260 | A count kind: cells added and subtracted, the sum formula; a one-cell count carries its published margin |
+| D-261 | Language from C16001 at five levels, 26 indicators, groups in Census's words; B16001 a named gap |
+| D-262 | The digital count is B28002_001 minus _004, the rate's own complement |
+| D-263 | Section 203 read as published: cp1252, keyed by LANCOUNT, flags as evidence, towns by five-digit MCD; its own artifact; no stated confidence, so cannot_judge |
+| D-264 | Section 203 tribal rows never a town's value, attached to no place, shown on the nations' terms (P-8) |
+| D-265 | Literacy from the Skills Map workbook, grpName all, 95% credible bounds and flags, left_out by NCES's recipe; modelled from race, poverty and education, never combined with its predictors; P-7 closed |
+| D-266 | The ACS pinned at 2020-2024 |
+| D-267 | A Census town split at a county line, or no longer ours, is held whole under census_s203_mcd and attached to nothing; both listed |
+| D-268 | Literacy is its own artifact, literacy_estimates, read by zip 2's profile |
+| D-269 | A proportion of exactly 1 is not_derived |
+
 ## Contracts
 
 field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.3.
@@ -286,10 +310,17 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | An office read applies only to an outlet placed by its office town; an unread one says so | prepare_news_outlets; tests/test_news_outlets.py (D-256) |
 | A town review names a town or the state, never both | prepare_news_outlets; tests/test_news_outlets.py (D-257) |
 | Every review is keyed by source and name as written and names its evidence, day and reader | tests/test_outlet_carriers_preparation.py |
+| Every ratio declares its relation; a count adds and subtracts declared cells | registry; tests/test_indicators.py, tests/test_derived_margins.py (D-259, D-260) |
+| R and Python derive the same margins to the last bit | margins.py, derive_indicator.R; tests/test_derive_indicator_oracle.py (D-258) |
+| A negative radicand takes the ratio formula and says so | tests/test_indicator_preview.py (D-259) |
+| The language family is 26 indicators, the "less than very well" cells, under the API's 50 | tests/test_derived_margins.py (D-261) |
+| Section 203 is read in its declared encoding, keyed by LANCOUNT, flags copied; an AIAN/MCD row is never a town's value | prepare_section203; tests/test_section203.py (D-263, D-264) |
+| A split or vanished Census town is held whole, attached to nothing | prepare_section203; tests/test_section203.py (D-267) |
+| A literacy share never travels without its bounds; no index or model takes literacy_estimates | prepare_piaac_skills_map; tests/test_piaac_skills_map.py (D-265) |
 
 ## Open items
 
-Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** the Maine product by 2026-12-01 to 12-11: every place's profile, all five carriers on the map with their toggles and notes (town offices and outlets included, so a geocoder is in scope), the barriers judged against the standard, the publish door, the Docker build. Claude's honest note at session 12's hand-off: step 3 is done, outlets through OUTREV-1; steps 4 to 11 and the door remain, with 16 to 26 days to the window. Kalli's shape (session 12): three zips, each designed in a short consultation, then built whole (see Starting the next session). Step 8's ownership concentration exists (Kalli); the FCC measure (step 7b) is the first cut if the window tightens. The cut is Kalli's to make.
+Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** the Maine product by 2026-12-01 to 12-11: every place's profile, all five carriers on the map with their toggles and notes (town offices and outlets included, so a geocoder is in scope), the barriers judged against the standard, the publish door, the Docker build. Claude's honest note at session 12's hand-off: step 3 is done, outlets through OUTREV-1; steps 4 to 11 and the door remain, with 16 to 26 days to the window. Kalli's shape (session 12): three zips, each designed in a short consultation, then built whole (see Starting the next session). Step 8's ownership concentration exists (Kalli); the FCC measure (step 7b) is the first cut if the window tightens. The cut is Kalli's to make. Session 13: zip 1 built and run (steps 4, 5, 6, 7a); zips 2 and 3 remain.
 
 ### Blocks delivery
 
@@ -300,7 +331,7 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
 | OWN-1, SRC-4 | OWN-1: ownership concentration exists (Kalli, session 12); confirm against the ledger's OWN-1 and close it. SRC-4: every outlet source's terms read before outlets publish. Kalli (session 12) accepts leaving out anything Cision-derived: then database_alone none, town_fallback none, and the reviews resting on Cision records revisited (office reads and Rumford Falls Times would refuse; merges keep their list records) |
 | P-1, P-2 | The standard itself: each threshold, row by row, and the pairing table |
-| P-5, P-6, P-7 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
+| P-5, P-6 | A universal side for language (lean yes); the FCC benchmark; PIAAC 2023 or the pooled map |
 | CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
 | Tiers | Kalli's tier declarations: public_school, school_geocode_release, health_center_site, health_center_sites_snapshot have none and fail closed, as do session 4's types and the outlet and located_in types; with NOTE-3, D-173's review and TIERREAD-1 (get_tier reads `tier`, domain files declare resolution_tier) |
 | FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
@@ -344,9 +375,13 @@ Closed in session 11: MEDIUM-1 (D-247, D-248), OFFTOWN-1 (D-250), UNDATED-1 (D-2
 
 Closed in session 12: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257, the reviews seed). Opened: OUTCONF-1.
 
+Closed in session 13: P-7 (D-265). KEY-1 now carries the key's replacement.
+
 ## Working agreement, as it stands
 
+- Never build against a schema or part of the codebase not yet read (Kalli, session 13): before any code, Claude lists every contract it must satisfy (envelope and metadata schemas, method, experiment and manifest schemas, registries, the readers downstream of what it writes), reads each as it is in the repo, reads every test and caller of what it changes, and says in the consultation what it read and what it could not see.
 - Design before code, nothing chosen silently. Small choices: Claude takes the lean and says so.
+- Small fixes come inline as guarded helpers in _sprint06/; zips are for builds (session 13).
 - Sessions are consultations for a zip (Kalli, session 12): a short consultation per step (what the zip holds, forks with leans, what only Kalli or her machine supplies), then one ambitious zip that builds it all on her go. A zip can hold any amount of code; it cannot hold data her machine must fetch, her decisions, or terms not yet read, and each consultation names those three.
 - Claude may read public sources and draft reviews from them (session 12): each cites the page read, read_by says Claude read it, and Kalli confirms before publishing. Claude's guesses are never evidence; a page read and cited is.
 - Four forks to a decision tree (Kalli, session 10): Claude reads what the forks rest on first, lays out the tree with a lean, the problems and how to make each better, workshops it with what the reads show, then drafts one holistic zip that fixes everything found, on Kalli's go. A fork that rests on data waits for its read. The guards stay: diff-stat counts, guarded helpers, a receipt read after every real run.
@@ -443,6 +478,14 @@ Closed in session 12: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257, the reviews s
 - A read of the outlet csv taken before a sows run reads the old run: the review checker's watch list did, and showed the Boothbay paper twice after it was merged.
 - A review names a record by source and name as written; a name a source writes twice alike (same_record_as) is named once, and a name the run shows is its first member's by source_order (local_news_catalyst, then maine_media_ecosystem, before cision).
 
+- Every receipt's metadata carries crs (null for a table): the envelope schema requires it, and fixture tests never see it (SCHEMA-1).
+- R's derive_indicator grows `needed` with the rests_on cells partway through its loop: a count's margin and emptiness read the count's own cells only.
+- Section 203's town rows write county 000: towns join by the five-digit MCD; its map is 2019-era, so towns since deorganized appear under old codes.
+- The Skills Map file writes Lit_P1, not LIT_P1; its State sheet carries fewer flag columns than its County sheet.
+- acs_state_2024 and acs_state_2024_language hold all 52 states: the API's state level cannot be narrowed; only Maine's row attaches.
+- macOS sed edits in place with `sed -i ''`.
+- A shell export pasted across two lines exports a different name: check with `python -c "import os; print(bool(os.environ.get('CENSUS_API_KEY')))"`.
+
 ## People
 
 Kalli delivers the whole product: every sprint, the publish route (Sprint 08) and the infrastructure (Sprints 07 and 10) included. The people once named here work on other things (Kalli, session 5). bash-win and Jessica Pham are helpers Kalli recruited, who join her weekly lab sessions; their commits on 2026-11-14 brought staging Terraform, API load tests and plot locks, the Docker image and NYC fetch dates. DEPS-1 likely came with their locust tests (7afefd1); whether DEPS-1, KIT-1 or OUT-REG-1 move to them is Kalli's to say, and until she does they stay hers. Items that were theirs are hers now: LAYER-1, GJSON-1 and D-157's required notes argument for the publish door; DEPS-1, KIT-1 and OUT-REG-1 for the Docker build; the tier declarations, note wording, NOTE-3 and D-173's review. P-8 and TRIBE-7's wording wait on the Wabanaki nations' terms (open items).
@@ -451,24 +494,20 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and asks for exactly what the next consultation needs.
 
-**Next: zip 1's consultation, the measures.** The rest of the build is three zips, each designed in one short consultation and then built whole:
+**Next: zip 2's consultation, the standard.** Read first, per the session 13 rule: Contract 4 whole; canopy/wonder/place.py whole; loam's place_values and indicator_values views (canopy/loam/graph.py); the section203_records and literacy_estimates receipts and files; the envelope, method and experiment schemas; the seeds/ layout for a new standard seed; and every test touching read_place.
 
 ```
- zip 1  the measures   step 4 derive_margins (D-198); step 5 language (ACS
-                       limited-English persons by language, the DOJ safe harbor
-                       as a trigger, section 203 coverage); step 7a digital
-                       access counts beside the acquired rate; step 6 literacy
-                       (PIAAC county estimates, borrowed on towns)
- zip 2  the standard   step 9 build_profile, six parts and Contract 4's tests;
-                       the standard seed (P-1, Kalli's table); step 10 the
-                       pairing table (P-2); step 11 every place's profile
+ zip 2  the standard   step 9 build_profile (D-197), six parts and Contract 4's tests,
+                       reading loam's values, section203_records and literacy_estimates;
+                       the standard seed (P-1, Kalli's table); step 10 the pairing
+                       table (P-2); step 11 every place's profile
  zip 3  the door       CARRY-1 (toggles and notes on the map), the publish door
                        (D-157, LAYER-1, GJSON-1), the Docker build (DEPS-1,
-                       OUT-REG-1); OUTCONF-1 and SRC-4 before anything
-                       outlet-shaped publishes
+                       OUT-REG-1); OUTCONF-1 and SRC-4 before anything outlet-shaped
+                       publishes
  later                 step 7b, the FCC map (P-6), if the window allows
 ```
 
-Claude's leans going in, each to be read before it is decided: the Census proportion formula with its ratio fallback for derive_margins (a rule, cited from the ACS handbook of the vintage used); the finest language table published at cousub (B16001 or C16001, read first); P-5 yes, kept apart; section 203 on Wabanaki places computed and shown beside the tribal note, Kalli's call (P-8); P-7 checked before the pooled PIAAC map is used. While Kalli runs zip 1's acquisitions on her machine, Claude researches each P-1 threshold with its source and kind, so zip 2's one human decision is ready: a row Kalli leaves open ships as kind none, verdict no_threshold.
+P-1, researched in session 13, each row with its kind and source: language trigger, the rescinded 2002 DOJ safe harbor (5 percent or 1,000, rescinded 2025-03-21) only as rewildingcities' own declared line, never as law, and its universe (persons 5 and over) said; section 203 as published, its four-group limit in words, new determinations expected December 2026; language universal side (P-5), every limited-English person counted, no numeric source; digital access universal, every household online (ITU and the UN Envoy on Technology's 2030 targets); FCC 100/20 retained in FCC 26-55 with the long-term goal dropped, terrestrial only a declared choice (7b); literacy universal, every adult at PIAAC Level 2, UNESCO's fixed level for SDG 4.6.1, the target's own words promising all youth and a substantial proportion of adults; cultural cues, paywall, outdated, where people look and trusted source: none for now. Against a universal line every Maine county reads below, so left_out leads (literacy: about 9,800 to 30,000 adults per county). Aroostook's French group, about 1,465 persons, crosses the safe harbor's 1,000 and never section 203.
 
-What zip 1's consultation will ask for: the ACS provider and loam files it touches (Claude names them), the indicator seeds, and Kalli's ACS runs. Keys stay in her environment (KEY-1).
+Upload this file only, with a first message like the one in the hand-off. Claude reads it, confirms, and names the one zip of reads the consultation needs.

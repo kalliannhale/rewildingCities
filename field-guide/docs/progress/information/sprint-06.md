@@ -306,3 +306,47 @@ Done:
 Decided for the rest of Sprint 06 (Kalli): three zips, each designed in a short consultation and built whole: the measures (steps 4 to 7a), the standard (steps 9 to 11), the door (CARRY-1, publish, Docker). Ownership concentration exists; anything Cision-derived may be left out if its terms say no.
 
 Next: zip 1's consultation, the measures.
+
+## Session 13: zip 1, the measures
+
+Tests: 1166 passed, no skips. Decisions: D-258 to D-269. Commits: ca48e63, c70bee0, ee3f3a5, the ACS fetch, the hand-off.
+
+### Consultation
+
+Read before deciding: Contract 4, state.md, the ACS provider, the indicator registry, derive_indicator.R and preview.py, loam's values view, the Maine ACS preparations. Researched with sources: the ACS release schedule (2021-2025 is TBD); C16001 and B16001's geographies; the DOJ safe harbor (rescinded 2025-03-21); Section 203 (four groups, next determinations December 2026); the PIAAC Skills Map (no 2023-cycle county estimates); the FCC's 2026 Section 706 report (100/20 retained); SDG 4.6.1 (PIAAC Level 2); the ITU's 2030 connectivity targets; the Census's 2025 statistical testing instructions. Read on Kalli's machine: C16001's codes from the 2024 API; the Section 203 release, its documentation and Maine's rows; the Skills Map workbook's sheets and Variable List.
+
+### Built
+
+| Commit | What |
+| --- | --- |
+| ca48e63 | the consultation's ledger, D-258 to D-266 |
+| c70bee0 | zip 1: margins.py; registry relation and count; derive_indicator.R and preview.py derive margins; language.yml and households_without_broadband; prepare_section203 and prepare_piaac_skills_map with their crosswalks, methods, types and registry entries; eight manifest entries; four preparations new or extended; openpyxl declared |
+| ee3f3a5 | the build ledger, D-267 to D-269 |
+
+### Found
+
+- loam would have refused the whole values view had margins come from a second artifact (D-172), which moved margins inside derive_indicator (D-258).
+- Cumberland's broadband radicand is zero on paper and negative in floating point; the ratio fallback applies, as the Census says.
+- Aroostook's French, Haitian or Cajun group is about 85 percent of its limited English: 2.29 percent plus or minus 0.40 of persons 5 and over, about 1,465 persons.
+- Section 203: 516 towns matched, Penobscot Indian Island held whole across its county line, six Census towns no longer ours (deorganization), 12 of ours without a record, five tribal areas, 0 covered.
+- Literacy: 17 rows, none flagged; every Maine county's lower bound is above zero.
+- The release's documentation and file disagreed three times; the Skills Map's guide and file once.
+
+### Wrong hypotheses
+
+- That D-198's own step could write indicator_values.
+- That the safe harbor is live federal guidance.
+- That B16001 serves towns.
+- That Section 203's town key is ST, CNTY and MCD.
+- That R's needed held only a derivation's cells.
+- That a ratio had no CV (test_honest_values held D-18's premise).
+
+### Lessons
+
+- Never build against a schema or part of the codebase not yet read (Kalli). Three of five round trips after the zip were preventable by it: a test's stale count, R's growing list, the envelope's crs. Two were real data only a run could show.
+- Count first, then list: a read's head(20) cut off its own answer.
+- Small fixes inline as guarded helpers; zips for builds.
+
+### Carried forward
+
+Zip 2: build_profile, P-1 and P-2, every place's profile. Zip 3: CARRY-1, the publish door, the Docker build. KEY-1 (the key's replacement), OUTCONF-1, SRC-4, E911-1, TRIBE-4 and SEN-1 (on or after 2026-12-02), P-8, and the tier declarations, as in state.md.
