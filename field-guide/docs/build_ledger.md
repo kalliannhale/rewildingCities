@@ -1691,3 +1691,44 @@ Closed: Tiers (D-297); E911-1 for publishing (D-298), the courtesy ask kept for 
 Narrowed: SRC-4, to named outlets (D-299, D-300); OUTCONF-1, Cision's reads gone.
 Opened: WATERFRONT-1, The Working Waterfront's reading (Rockland, the Island Institute's) waits for a town review naming Rockland's code; until then it is listed no_town_given.
 Still open: zip 3b, the door (Sprint 08), with CARRY-1 and EDGE-NOTE-1.
+
+## Sprint 07, session 1: zip 7a, the stack
+
+- D-301: Sprint 07 runs on Kalli's own AWS account, applied fresh, and is handed to the library as code (MP-70 as amended in Sprint 06's session 16); state local on her machine. The account is a new-experience project, so its region is the project's assigned one, us-east-2, set in her local kalli.auto.tfvars; the committed default stays us-east-1 for the handover. The account's id stays out of the repo.
+- D-302: O-1 closed. CloudFront with origin access control in front of a private bucket; Block Public Access declared on in code, not left to S3's defaults; the bucket policy lets the distribution read harvests/* alone.
+- D-303: O-2 closed. GeoParquet canonical, GeoJSON display copies, GeoPackage only on request.
+- D-304: O-3 closed. Referenced GeoJSON layers for December; a Parquet feature layer is a recorded read after.
+- D-305: The canonical write's tests reach S3 through an injected fake client, no moto; boto3 joins environment.yml (zip 7b). Old harvests are regenerated through the canonical write, never moved.
+- D-306: One stack, canopy/terraform/ (infrastructure D-3): staging/ moved up and renamed canonical, environment production; canopy/terraform/storage.tf (the per-city cache bucket) deleted; the December 2025 terraform/ stack (AWS Academy's LabRole, force_destroy true, versioning off) recorded here as an experiment and removed. Git history keeps all three.
+- D-307: Noncurrent versions are kept. Only a current pointer is ever overwritten, so expiring noncurrent versions would erase the history of pointer moves; multipart cleanup stays.
+- D-308: The canonical write assumes the role rewilding-canonical-writer through an AWS profile: put, get and list under harvests/, every delete denied, no access key. The deployer is an IAM user with AdministratorAccess on Kalli's account, its key retired after delivery (DEPLOY-1).
+- D-309: The bucket policy is the overwrite lock, for every principal: a put to harvests/*/versions/* without If-None-Match is refused, and a put to harvests/*/current without If-None-Match or If-Match is refused. Copies into harvests/ are refused with it; nothing copies.
+- D-310: CORS for any origin, reads only (GET, HEAD, OPTIONS), range headers exposed for DuckDB; S3 answers preflights, CloudFront's response headers policy sets the origin header on every response. Versions cache long; current is never cached.
+- D-311: create_budget switches the budget. Kalli's account keeps its console budget (false); the handover sets true with an alert address. Where a budget is made, it is applied first. The email check is a precondition on the budget, so a budget never made is never checked.
+
+Built (zip 7a, 12 files): canopy/terraform/ (versions, providers, variables, bucket, access_logging, budget, cloudfront, writer, outputs, the provider lock, README with the handover addendum); Contract 2 at draft 0.2. Two inline fixes after the first plan: variables.tf and budget.tf (the precondition); the README after the apply, delivered as a file. Applied on Kalli's account: 20 resources, 3 in a first apply refused partway, 17 in the second. Committed as 7dcd3f0 (the stack) and a000d62 (the old stacks' removal; its message names this block, which lands in the commit after it).
+
+Found:
+- The account is a member of an organization AWS made through its new sign-up experience, owned by Kalli's own management login. Two service control policies bind it: one keeps it in the US East regions (us-west-1 and us-west-2 refused a log group), the other refused S3 CreateBucket and KMS TagResource in us-east-1. In us-east-2 every resource was made.
+- Global resources (the writer role, the origin access control, the response headers policy) were made in us-east-1's refused apply; regional ones were refused. The second apply made the other 17 and left those three as they were.
+- conda stored TF_VAR_create_budget (its name is in the env's list) and never exported it on activate; the setting moved to kalli.auto.tfvars, ignored by **/*.tfvars.
+- A resource that fails its precondition drops out of the plan's count: 20 to add was the stack without the budget, not a budget turned off.
+- CloudFront's distribution took about three minutes.
+- The acceptance reads passed as the writer: put under harvests/; read through CloudFront, 200 with access-control-allow-origin *; a version put without If-None-Match refused by the bucket policy; with it, made once and refused the second time (PreconditionFailed); delete refused by the role's own policy. Two small files stay under harvests/_read/. The re-plan read No changes.
+
+Wrong hypotheses:
+- That Kalli's account was a standalone account.
+- That 20 to add meant create_budget had reached the plan as false.
+- That the variable validation misjudged create_budget: the variable had never loaded.
+- That a project's assigned region is the only region open: us-east-1 allowed a log group and refused a bucket.
+
+Lessons:
+- An explicit deny in a service control policy names its policy and organization: ask whose organization first (aws organizations describe-organization works from a member account).
+- A region is read with a free write that cleans up after itself, one region at a time, before planning against it.
+- Read the screen as well as the file: a plan's error goes to the screen, its plan to the file.
+- A file holding its own code fence is delivered as a download, never pasted from chat: the chat's fence closes at the inner one and the heredoc arrives cut.
+- A commit's message is read against its stat before pushing: a000d62 names a ledger block it does not hold.
+
+Closed: O-1, O-2, O-3 (D-302 to D-304); Sprint 07's audit rows for the write identity, one stack, lifecycle and public reach.
+Opened: DEPLOY-1, retire the deployer IAM user's access key after delivery, and deploy from expiring logins after.
+Still open: zip 7b, the canonical write (canopy/aws/s3.py and its four tests), after rereading canopy/envelope.py and canopy/expose/check.py.
