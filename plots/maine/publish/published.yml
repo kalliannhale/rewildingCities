@@ -1,7 +1,138 @@
 # written by the publish door (canopy/expose/publish.py); edited by
 # nothing else. each entry mirrors the bucket's `current` pointer (D-327).
 targets:
+  library:
+    broadband_standardize_standings/outline_counties_outline/cii_broadband:
+      allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+      description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
+      display: outline_counties_outline_ee88e4f41db3_web_25m
+      door_version: 1.0.0
+      folder: press-forward
+      gate:
+        context_notes:
+        - contains_census_tribal_area
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: organization
+        target: library
+      groups: []
+      indicator: cii_broadband
+      item_id: 2ebb4f3e97bc4f86ad9af43f016cacc5
+      kind: arcgis_webmap
+      layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
+      markers: false
+      moved_at: '2026-11-17T09:02:26.793882+00:00'
+      moved_by: Kalli A. Hale
+      outline:
+        allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+        harvest: outline_counties_outline
+        sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      owner: RDS_NU
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: broadband's county standing as a choropleth
+      renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
+      rest_version: '2026.3'
+      sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
+      sharing: organization
+      url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/broadband_standardize_standings/versions/fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880/display/outline_counties_outline_ee88e4f41db3_web_25m.geojson
+    clerk_offices_points_points:
+      allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
+      description_sha256: 986f5f770ef9e0ce9cb60b45ab100475de29a5d0c5503ccf4e64a2ac9ae54411
+      display: web
+      door_version: 1.0.0
+      folder: press-forward
+      gate:
+        context_notes: []
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: organization
+        target: library
+      groups: []
+      item_id: cac536bb95a2415086ea53f4dbe52af3
+      kind: arcgis_webmap
+      layer_id: rewilding-clerk_offices_points_points
+      moved_at: '2026-11-17T09:03:01.340200+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the clerk offices for the library's org
+      rest_version: '2026.3'
+      sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
+      sharing: organization
+      url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/clerk_offices_points_points/versions/0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1/display/web.geojson
   test:
+    broadband_standardize_standings/outline_counties_outline/cii_broadband:
+      allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+      description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
+      display: outline_counties_outline_ee88e4f41db3_web_25m
+      door_version: 1.0.0
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - contains_census_tribal_area
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      indicator: cii_broadband
+      item_id: dd56fefa89444eca927a718095145a79
+      kind: arcgis_webmap
+      layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
+      markers: false
+      moved_at: '2026-11-17T09:02:26.793882+00:00'
+      moved_by: Kalli A. Hale
+      outline:
+        allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+        harvest: outline_counties_outline
+        sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      owner: RDS_NU
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: broadband's county standing as a choropleth
+      renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
+      rest_version: '2026.3'
+      sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
+      sharing: private
+      url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/broadband_standardize_standings/versions/fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880/display/outline_counties_outline_ee88e4f41db3_web_25m.geojson
+    carriers_counts_values/outline_towns_outline/news_outlets_per_1000:
+      allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+      description_sha256: 906d87c6d58f1764faaf5c8d5490b14d93178b539facf491e169a0c5179ab048
+      display: outline_towns_outline_eda591d0d3ba_markers
+      door_version: 1.0.0
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - census_tribal_area
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      indicator: news_outlets_per_1000
+      item_id: d4f7c29e7c5f40fd9b2e5bfb97b0a22b
+      kind: arcgis_webmap
+      layer_id: rewilding-carriers_counts_values-outline_towns_outline-news_outlets_per_1000
+      markers: true
+      moved_at: '2026-11-17T09:02:46.098450+00:00'
+      moved_by: Kalli A. Hale
+      outline:
+        allow: a19b45afae024ee736c45d3b31116a1c0776e2e4799f6e03e035e67c49dca070
+        harvest: outline_towns_outline
+        sha256: eda591d0d3baf0d9dac6197f39a4aa1558f84f8c10b1b61a5162c251871bd285
+      owner: RDS_NU
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: local news outlets by town, as markers
+      renderer_sha256: 98c3d50fc3ef6181db8781c3553637d18eb2cd19fd92ef72496fe7bfd22f358b
+      rest_version: '2026.3'
+      sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
+      sharing: private
+      url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/carriers_counts_values/versions/33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83/display/outline_towns_outline_eda591d0d3ba_markers.geojson
     clerk_offices_points_points:
       allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
       description_sha256: 986f5f770ef9e0ce9cb60b45ab100475de29a5d0c5503ccf4e64a2ac9ae54411
