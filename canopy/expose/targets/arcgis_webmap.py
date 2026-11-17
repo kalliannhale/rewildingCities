@@ -19,6 +19,15 @@ Viewer typed review_read_on as a date and every number as a double, and the
 data holds neither (D-333). __OBJECTID is the field Map Viewer adds for a
 GeoJSON layer; the door declares it the same way.
 
+a choropleth (D-331) is a table drawn on an outline, and its renderer is the
+door's, since its legend is a claim: a standing is coloured in fixed fifths of
+its reference population, higher always the better standing, named in the
+layer's title; a count is drawn as markers sized in equal steps, zero its own
+class; any other value in equal steps, said so. a place with no value is
+hatched (esriSFSBackwardDiagonal) or crossed, and labelled. its popup shows
+the place and the one indicator mapped; the other indicators' fields stay in
+the layer, hidden.
+
 REST calls, as Esri documents them (cited in the ledger, Sprint 08 session 1):
 generateToken for a token from a username and password, over HTTPS only;
 addItem with the item's JSON as text, which makes the folder's owner the
@@ -194,9 +203,131 @@ def extent_of(bbox) -> dict | None:
             "xmax": x1 + pad_x, "ymax": y1 + pad_y}
 
 
+# a sequential ramp, light to dark, each step distinct to colour-blind
+# readers (ColorBrewer YlGnBu, five classes): darker is a better standing
+RAMP = ([255, 255, 204], [161, 218, 180], [65, 182, 196], [44, 127, 184], [37, 52, 148])
+NO_VALUE_FILL = {"type": "esriSFS", "style": "esriSFSBackwardDiagonal",
+                 "color": [110, 110, 110, 255],
+                 "outline": {"type": "esriSLS", "style": "esriSLSSolid",
+                             "color": [110, 110, 110, 255], "width": 0.75}}
+NO_VALUE_MARK = {"type": "esriSMS", "style": "esriSMSX", "color": [110, 110, 110, 255],
+                 "size": 7, "outline": {"type": "esriSLS", "style": "esriSLSSolid",
+                                        "color": [110, 110, 110, 255], "width": 1}}
+_NUMERIC = ("esriFieldTypeInteger", "esriFieldTypeDouble")
+
+
+def _fill(rgb) -> dict:
+    return {"type": "esriSFS", "style": "esriSFSSolid", "color": list(rgb) + [217],
+            "outline": {"type": "esriSLS", "style": "esriSLSSolid",
+                        "color": [255, 255, 255, 255], "width": 0.75}}
+
+
+def _mark(size: float, hollow: bool = False) -> dict:
+    return {"type": "esriSMS", "style": "esriSMSCircle",
+            "color": [0, 0, 0, 0] if hollow else [37, 52, 148, 200], "size": size,
+            "outline": {"type": "esriSLS", "style": "esriSLSSolid",
+                        "color": [80, 80, 80, 255] if hollow else [255, 255, 255, 255],
+                        "width": 1}}
+
+
+def _number(x: float) -> str:
+    return f"{x:,.0f}" if float(x).is_integer() else f"{x:,.2f}"
+
+
+def choropleth_of(copy: dict, fields: list[dict]) -> tuple[dict, str, str]:
+    """(renderer, colour field, legend title) for a joined copy's indicator.
+    refuses a field that holds no number, since a renderer on it draws nothing."""
+    from canopy.choropleth import ChoroplethRefusal, colour_field, column_name
+    meta = copy["display_env"].get("metadata") or {}
+    join = meta.get("join") or {}
+    ind, markers = copy["indicator"], bool(copy.get("markers"))
+    try:
+        field = colour_field(ind, join.get("columns") or {}, markers=markers)
+    except ChoroplethRefusal as e:
+        raise PublishRefusal(e.reason, e.would_admit) from None
+    kind = {f["name"]: f["type"] for f in fields}.get(field)
+    if kind not in _NUMERIC:
+        raise PublishRefusal(f"'{field}' holds no number in this copy, so a renderer on it "
+                             f"would draw nothing", "map an indicator with values here")
+    values = [v for v in ((f.get("properties") or {}).get(field)
+                          for f in copy["geojson"].get("features") or [])
+              if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    level = (meta.get("joined_to") or {}).get("level") or "place"
+    empty = f"no value here; its {column_name(ind, 'empty_reason')} says why, where it is given"
+
+    if field == column_name(ind, "percentile"):
+        ref = (((meta.get("reference_population") or {}).get("per_indicator") or {})
+               .get(ind) or {}).get("n")
+        if not ref:
+            raise PublishRefusal(f"the standing of {ind} names no reference population, so its "
+                                 f"fifths cannot be said", "a standings table names it")
+        names = ("lowest", "second", "middle", "fourth", "highest")
+        infos = [{"classMaxValue": 20 * (i + 1), "symbol": _fill(RAMP[i]),
+                  "label": f"{names[i]} fifth ({'0' if i == 0 else f'above {20 * i}'} "
+                           f"to {20 * (i + 1)})"} for i in range(5)]
+        renderer = {"type": "classBreaks", "field": field, "minValue": 0,
+                    "classBreakInfos": infos, "defaultSymbol": NO_VALUE_FILL,
+                    "defaultLabel": empty}
+        title = (f"{ind} by {level}: standing in fifths of the {int(ref):,} places with a "
+                 f"value, higher is better ({copy['plot']})")
+        return renderer, field, title
+
+    if not values:
+        raise PublishRefusal(f"'{field}' holds no value in any place of this copy",
+                             "map an indicator with values here")
+    if markers:
+        top = max(values)
+        infos = []
+        if min(values) <= 0:
+            infos.append({"classMaxValue": 0, "symbol": _mark(5, hollow=True),
+                          "label": "none listed"})
+        if top > 0:
+            k = int(min(4, top)) if float(top).is_integer() else 4
+            step = top / k
+            lo = 0.0
+            for i in range(k):
+                hi = top if i == k - 1 else (round(step * (i + 1)) if float(top).is_integer()
+                                             else step * (i + 1))
+                first = (int(lo) + 1) if float(top).is_integer() else lo
+                label = (_number(hi) if first == hi else f"{_number(first)} to {_number(hi)}")
+                infos.append({"classMaxValue": hi, "symbol": _mark(8 + 4 * i), "label": label})
+                lo = hi
+        renderer = {"type": "classBreaks", "field": field, "minValue": 0,
+                    "classBreakInfos": infos, "defaultSymbol": NO_VALUE_MARK,
+                    "defaultLabel": empty}
+        title = (f"{ind} by {level}, one marker per place, sized in equal steps from 1 to "
+                 f"{_number(top)}; none listed is its own class ({copy['plot']})")
+        return renderer, field, title
+
+    lo, hi = min(values), max(values)
+    span = (hi - lo) or 1.0
+    infos = [{"classMaxValue": hi if i == 4 else lo + span * (i + 1) / 5,
+              "symbol": _fill(RAMP[i]),
+              "label": f"{_number(lo + span * i / 5)} to {_number(hi if i == 4 else lo + span * (i + 1) / 5)}"}
+             for i in range(5)]
+    renderer = {"type": "classBreaks", "field": field, "minValue": lo,
+                "classBreakInfos": infos, "defaultSymbol": NO_VALUE_FILL, "defaultLabel": empty}
+    title = (f"{ind} by {level}, in five equal steps from {_number(lo)} to {_number(hi)}, "
+             f"not a standard ({copy['plot']})")
+    return renderer, field, title
+
+
+def _visible(copy: dict, name: str) -> bool:
+    """in a choropleth's popup: the place's own fields and the one indicator mapped."""
+    if name in (OBJECTID, "joined"):
+        return False
+    if not copy.get("outline"):
+        return True
+    if "__" not in name:
+        return True
+    return name.startswith(copy["indicator"] + "__")
+
+
 def layer_of(copy: dict, layer_id: str, fields: list[dict]) -> dict:
     names = [f["name"] for f in fields]
     title_field = "name" if "name" in names else None
+    if copy.get("outline"):
+        return _choropleth_layer(copy, layer_id, fields, names, title_field)
     return {
         "id": layer_id,
         "title": copy["title"],
@@ -213,6 +344,31 @@ def layer_of(copy: dict, layer_id: str, fields: list[dict]) -> dict:
                             "visible": n != OBJECTID} for n in names],
         },
     }
+
+
+def _choropleth_layer(copy, layer_id, fields, names, title_field) -> dict:
+    renderer, field, title = choropleth_of(copy, fields)
+    return {
+        "id": layer_id,
+        "title": title[:256],
+        "url": copy["url"],
+        "layerType": "GeoJSON",
+        "visibility": True,
+        "opacity": 1,
+        "layerDefinition": {"fields": fields, "objectIdField": OBJECTID,
+                            "drawingInfo": {"renderer": renderer}},
+        "popupInfo": {
+            "title": "{" + title_field + "}" if title_field else title[:256],
+            "popupElements": [{"type": "fields"}],
+            "showAttachments": False,
+            "fieldInfos": [{"fieldName": n, "label": n, "isEditable": False,
+                            "visible": _visible(copy, n)} for n in names],
+        },
+    }
+
+
+def renderer_sha256_of(renderer: dict | None) -> str | None:
+    return None if renderer is None else sha256_text(json.dumps(renderer, sort_keys=True))
 
 
 def webmap_of(copy: dict, layer_id: str, version: str) -> dict:
@@ -246,21 +402,28 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
     licenses = copy.get("licenses") or {}
     base = copy["version_url"]
 
-    notes = gate.get("context_text") or {}
-    terms, credits = [], []
-    for row in gate.get("license") or []:
+    outline = copy.get("outline")
+    gates = [gate] + ([outline["allow_doc"].get("gate") or {}] if outline else [])
+    notes: dict = {}
+    for g in gates:
+        notes.update(g.get("context_text") or {})
+    terms, credits, seen = [], [], set()
+    for row in [r for g in gates for r in g.get("license") or []]:
+        if (row.get("dataset"), row.get("term")) in seen:
+            continue
+        seen.add((row.get("dataset"), row.get("term")))
         term = licenses.get(row.get("term")) or {}
         label = term.get("name") or row.get("term")
         terms.append(f"{e(str(row.get('dataset')))}: {e(str(label))} ({e(str(row.get('term')))})")
         if term.get("attribution") == "required":
             credits.append(str(label))
     steps = [f"{e(str(s.get('step')))}: {e(str(s.get('detail')))}"
-             for s in (gate.get("publication_steps") or [])]
+             for g in gates for s in (g.get("publication_steps") or [])]
     own = (copy["display_env"].get("provenance") or [{}])[-1]
     steps += [f"{e(str(s.get('step')))}: {e(str(s.get('detail')))}"
               for s in (own.get("publication") or [])]
     warnings = [e(str(w.get("message") or w)) for w in copy["display_env"].get("warnings") or []]
-    caveats = [e(str(c)) for c in gate.get("caveats") or []]
+    caveats = [e(str(c)) for g in gates for c in g.get("caveats") or []]
 
     parts = [
         f"<p><b>{e(str(meta.get('semantic_type') or copy['artifact']))}</b> for the "
@@ -268,6 +431,7 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
         f"drawn from canonical version <code>{copy['sha256']}</code>.</p>",
         "<p><b>This layer reads a public URL.</b> This item's sharing decides who finds "
         "the map, not who can read the data.</p>",
+        *(_drawn_on(copy, meta) if outline else []),
         "<h3>Context notes</h3>",
         _li([f"<b>{e(k)}</b>: {e(str(v))}" for k, v in sorted(notes.items())]),
         "<h3>Where its truth lives</h3>",
@@ -286,10 +450,36 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
     ]
     description = "\n".join(parts)
     license_info = "; ".join(sorted({str((licenses.get(r.get("term")) or {}).get("name")
-                                          or r.get("term")) for r in gate.get("license") or []}))
+                                          or r.get("term"))
+                                     for g in gates for r in g.get("license") or []}))
     access = "; ".join(sorted(set(credits))) + ("; " if credits else "") + \
         "rewildingCities canonical store"
     return description, license_info, access
+
+
+def _drawn_on(copy: dict, meta: dict) -> list[str]:
+    """what a choropleth's description adds: the outline it is drawn on, the
+    join's counts, and what its colours mean."""
+    e = html.escape
+    o, join = copy["outline"], meta.get("join") or {}
+    c = join.get("counts") or {}
+    ref = meta.get("reference_population") or {}
+    lines = [
+        f"<p><b>{e(copy['indicator'])}</b>, one indicator of this copy, drawn on "
+        f"<b>{e(o['harvest'])}</b> version <code>{o['sha256']}</code>, allow record "
+        f"<code>{o['allow']}</code>, joined on its authority and code.</p>",
+        _li([f"{c.get('places', 0) - c.get('places_without_row', 0)} of {c.get('places', 0)} "
+             f"places with a row; {c.get('places_without_row', 0)} drawn with no value",
+             f"{c.get('rows_outside_outline', 0)} of the table's rows belong to places outside "
+             f"this map, {c.get('rows_other_level', 0)} to another level, "
+             f"{c.get('rows_other_authority', 0)} to another authority",
+             f"the outline's version: <code>{e(o['version_url'])}/</code>"]),
+    ]
+    if ref.get("rule"):
+        lines.append(f"<p>A standing compares each place with its reference population "
+                     f"({e(str(ref.get('rule')))}); it says how a place compares, never "
+                     f"whether its value is enough.</p>")
+    return lines
 
 
 # --- the kind ----------------------------------------------------------------
@@ -302,16 +492,22 @@ class ArcGISWebMap(TargetKind):
         self.version = version
 
     def build(self, target: Target, copy: dict) -> Built:
-        layer_id = f"rewilding-{copy['artifact']}"
+        layer_id = "rewilding-" + str(copy.get("key") or copy["artifact"]).replace("/", "-")
         description, license_info, access = description_of(copy, self.version)
         meta = copy["display_env"].get("metadata") or {}
         snippet = (f"{meta.get('semantic_type') or copy['artifact']} from rewildingCities, "
                    f"version {copy['sha256'][:12]}, read by URL from the canonical store")[:250]
+        data = webmap_of(copy, layer_id, self.version)
+        tags = ["rewildingCities", copy["plot"], copy["artifact"]]
+        extra = {}
+        if copy.get("outline"):
+            tags += [copy["outline"]["harvest"], copy["indicator"]]
+            layer = data["operationalLayers"][0]
+            extra["renderer_sha256"] = renderer_sha256_of(
+                layer["layerDefinition"]["drawingInfo"]["renderer"])
         return Built(title=copy["title"][:256], snippet=snippet, description=description,
-                     tags=["rewildingCities", copy["plot"], copy["artifact"]],
-                     license_info=license_info, access_information=access,
-                     data=webmap_of(copy, layer_id, self.version), layer_id=layer_id,
-                     url=copy["url"])
+                     tags=tags, license_info=license_info, access_information=access,
+                     data=data, layer_id=layer_id, url=copy["url"], extra=extra)
 
     def sign_in(self, target: Target, password: str):
         portal = Portal(target.portal, self.http)
@@ -383,9 +579,20 @@ class ArcGISWebMap(TargetKind):
                 ld = layer.setdefault("layerDefinition", {})
                 ld["fields"] = ours["layerDefinition"]["fields"]
                 ld["objectIdField"] = OBJECTID
+                if built.extra.get("renderer_sha256"):
+                    ld["drawingInfo"] = _copy.deepcopy(ours["layerDefinition"]["drawingInfo"])
+                    layer["title"] = ours["title"]
                 return new
         raise PublishRefusal(f"the item holds no layer '{layer_id}'",
                              "the record and the item disagree; read both before going on")
+
+    def renderer_sha256(self, data: dict, layer_id: str) -> str | None:
+        """the hash of the renderer a layer draws with, as it stands."""
+        for layer in self._layers(data):
+            if layer.get("id") == layer_id:
+                return renderer_sha256_of(((layer.get("layerDefinition") or {})
+                                           .get("drawingInfo") or {}).get("renderer"))
+        return None
 
     def adoptable_layer(self, data: dict, url_prefix: str) -> tuple[str, str] | None:
         hits = [(l.get("id"), l.get("url")) for l in self._layers(data)

@@ -80,9 +80,16 @@ def cannot_judge(reason: str) -> Verdict:
     return Verdict("cannot_judge", f"this cannot be judged here: {reason}", reason=reason)
 
 
-def no_threshold() -> Verdict:
-    return Verdict("no_threshold", "no threshold is declared for this barrier, so this "
-                                   "value is shown and never judged")
+def no_threshold(shown: bool = True, why: str = "") -> Verdict:
+    """a barrier with no threshold: its value is shown, never judged. when the
+    entry holds no value (not acquired, withheld, absent), it says that, never
+    that a value is shown (NOTHR-1)."""
+    if shown:
+        return Verdict("no_threshold", "no threshold is declared for this barrier, so this "
+                                       "value is shown and never judged")
+    said = f": {why}" if why else ""
+    return Verdict("no_threshold", f"no threshold is declared for this barrier, and there "
+                                   f"is no value here to show{said}", reason=why)
 
 
 def _people(n: float) -> str:

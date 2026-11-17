@@ -10,9 +10,15 @@ The door does not lock on seeing.
 Two refusals, added in Civic Sprint 2b. When more than one envelope could be the
 result or the layer, map refuses and names them rather than taking the first by
 filename; --result and --layer choose (MAP-1). And a long-form indicator_values
-table holds many indicators in one `value` column, so --indicator picks one, and
-it joins on its declared key: `unit_code`, a Census GEOID, to the layer's GEOID.
-A layer without a GEOID is refused by name, never matched on a county name.
+table holds many indicators in one `value` column, so --indicator picks one.
+
+A long-form table joins by its declared authority (LAYER-1, zip 8b): its
+(unit_authority, unit_code) to the layer's (authority, code), in
+canopy/choropleth.py, the one home of that join, which the joined display copy
+uses too. A county and a House district can share a code, so a code alone
+never joins. A layer whose places carry no authority and code is refused by
+name, never matched on a name. A wide result (NYC's parks) still joins on a
+shared id column, as before.
 
 map draws locally and offline, always, and reaches no network. Publishing is
 the publish door's alone (`python -m canopy.cli publish`, D-326): it reads a
@@ -34,7 +40,8 @@ _KEY_CANDIDATES = ("feature_id", "park_id", "id", "OBJECTID", "gid")
 # a long-form indicator_values table names its unit by (unit_authority,
 # unit_code). for us_census_geoid the layer must carry the same code as GEOID.
 _LONG_FORM_COLUMNS = {"indicator", "unit_code", "value"}
-_UNIT_KEYS = {"us_census_geoid": "GEOID"}
+# a long-form table joins by (authority, code), never by a column it happens to share
+KEYED = ("authority", "code")
 _EMPTY_FILL = "#d9d9d9"
 
 
@@ -89,8 +96,10 @@ def is_long_form(df) -> bool:
 def long_form_view(df, indicator):
     """one indicator out of a long-form table, keyed for its layer.
 
-    returns (frame, key, color_by). refuses when no indicator is named, when it
-    is not in the table, or when the unit authority has no known layer key. ~"""
+    returns (frame, key, color_by): the frame still long-form, the key KEYED,
+    since it joins by (unit_authority, unit_code) to (authority, code). refuses
+    when no indicator is named, when it is not in the table, or when its units
+    are named by no one authority. ~"""
     available = sorted(df["indicator"].dropna().unique().tolist())
     if not indicator:
         raise MapRefusal(
@@ -103,16 +112,58 @@ def long_form_view(df, indicator):
     one = df[df["indicator"] == indicator].copy()
     authorities = sorted(one["unit_authority"].dropna().unique().tolist()) \
         if "unit_authority" in one.columns else []
-    if len(authorities) != 1 or authorities[0] not in _UNIT_KEYS:
+    if len(authorities) != 1:
         raise MapRefusal(
-            f"units are named by {authorities or 'no declared authority'}; map knows "
-            f"how to join {', '.join(_UNIT_KEYS)} only.")
-    key = _UNIT_KEYS[authorities[0]]
-    one = one.rename(columns={"unit_code": key})
+            f"units are named by {authorities or 'no declared authority'}; a map joins "
+            f"one authority's units to its places, by authority and code (LAYER-1).")
     # a standings table carries the raw value beside the percentile; it is the
     # standing that table exists to show, so it is what the map colors by.
     color_by = "percentile" if "percentile" in one.columns else "value"
-    return one, key, color_by
+    return one, KEYED, color_by
+
+
+def keyed_join(one, features, *, level: str, widths: dict, color_by: str, indicator: str,
+               meta: dict, layer: str, plot: str, envelope=None, result_name=None) -> dict:
+    """one indicator of a long-form table joined onto a layer's places by
+    (authority, code), through canopy/choropleth.py, and coloured locally."""
+    from canopy import choropleth
+    places = [dict(f.get("properties") or {}) for f in features]
+    try:
+        joined = choropleth.join(one, places, level=level, widths=widths)
+    except choropleth.ChoroplethRefusal as e:
+        raise MapRefusal(f"{e.reason}. {e.would_admit}") from None
+    field = choropleth.column_name(indicator, color_by)
+    out = [{"type": "Feature", "properties": props, "geometry": f.get("geometry")}
+           for props, f in zip(joined["properties"], features)]
+    vals = [f["properties"].get(field) for f in out]
+    present = [v for v in vals if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    n_empty = 0
+    ramp = iter(_color_ramp(present)) if present else iter(())
+    for f, v in zip(out, vals):
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            f["properties"]["fill"] = next(ramp)
+            f["properties"]["fill-opacity"] = 0.7
+        else:
+            # an empty value is drawn as empty, never as the low end of the ramp
+            f["properties"]["fill"] = _EMPTY_FILL
+            f["properties"]["fill-opacity"] = 0.4
+            n_empty += 1
+    c = joined["counts"]
+    return {
+        "type": "FeatureCollection", "features": out,
+        "rewilding:map": {
+            "layer": layer, "join_on": "unit_authority, unit_code to authority, code",
+            "color_by": field, "semantic_type": meta.get("semantic_type"),
+            "caption": " ".join(meta.get("interpretation_notes") or []).strip(),
+            **c, "empty_values": n_empty, "indicator": indicator,
+        },
+        "rewilding:provenance": {
+            "result_semantic_type": meta.get("semantic_type"), "result_envelope": result_name,
+            "joined_to": layer, "lineage": meta.get("lineage"), "plot": plot,
+            "chain": (envelope or {}).get("provenance") or [],
+            "warnings": (envelope or {}).get("warnings") or [],
+        },
+    }
 
 
 def _join_and_color(df, features, meta, layer, plot, key=None, color_by=None,
@@ -259,7 +310,7 @@ def resolve_layer(meta: dict, by_name: dict, layer_arg: str | None = None):
 
 
 def _choropleth(result_env, by_name, out_dir, plot, indicator=None, layer_arg=None,
-                result_name=None):
+                result_name=None, root=None):
     """find the vector layer this tabular result draws on, read the result, join
     and color. returns a summary dict, or None when there is nothing to draw on. ~"""
     meta = result_env.get("metadata") or {}
@@ -286,6 +337,25 @@ def _choropleth(result_env, by_name, out_dir, plot, indicator=None, layer_arg=No
         df, key, color_by = long_form_view(df, indicator)
     elif indicator:
         raise MapRefusal("--indicator applies to long-form indicator tables only.")
+
+    if key == KEYED:
+        level = (layer_env.get("metadata") or {}).get("level")
+        if not level:
+            raise MapRefusal(f"{layer_name} names no level, so rows of other levels cannot be "
+                             f"told apart; draw on a place outline (LAYER-1)")
+        from canopy import choropleth
+        fc = keyed_join(df, features, level=level, widths=choropleth.load_widths(root or find_root()),
+                        color_by=color_by, indicator=indicator, meta=meta, layer=layer_name,
+                        plot=plot, envelope=result_env, result_name=result_name)
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        path = Path(out_dir) / f"map_{indicator}__{layer_name}.geojson"
+        path.write_text(json.dumps(fc, indent=2))
+        m = fc["rewilding:map"]
+        return {"path": str(path), "key": m["join_on"], "color_by": m["color_by"],
+                "layer": layer_name, "n": len(fc["features"]), "empty": m["empty_values"],
+                "unjoined": m["rows_outside_outline"] + m["rows_other_level"]
+                + m["rows_other_authority"], "outside": m["rows_outside_outline"],
+                "unmatched": 0, "without_row": m["places_without_row"]}
 
     fc = _join_and_color(df, features, meta, layer_name, plot, key=key, color_by=color_by,
                          envelope=result_env, result_name=result_name)
@@ -387,7 +457,7 @@ def run(args) -> int:
         if cat == "tabular":
             cho = _choropleth(env, by_name, out_dir, plot,
                               indicator=indicator, layer_arg=getattr(args, "layer", None),
-                              result_name=result_name)
+                              result_name=result_name, root=root)
             if cho:
                 what = indicator or target
                 print(f"🗺  mapped {what} as a choropleth")

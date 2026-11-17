@@ -1,6 +1,6 @@
 # Contract 2 ~ Canonical objects
 
-**Status:** draft 0.4, 2026-11-17, for review (0.4 carries zip 8a's publish door, D-326 to D-332; 0.2 earlier on 2026-11-16, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
+**Status:** draft 0.5, 2026-11-17, for review (0.5 carries zip 8b: joined copies, markers, local dry runs and the two guards on what may be written, D-335 to D-341; 0.4 carries zip 8a's publish door, D-326 to D-332; 0.2 earlier on 2026-11-16, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
 Kalli. **Built in:** Sprint 07 (the stack, on bash-win's staging rails; the
 canonical write), Sprint 08 (the publish door). **Read by:** the publish
 route, the explorer, the community kit, the grove. **Rests on:** MP-68 (two
@@ -151,6 +151,46 @@ second truth (D-321):
   hand-made `__public` and `__upload` files of October are what this rule
   exists to end (CII-20, D-94).
 - GeoPackage copies are made only on request (D-303).
+
+## 4a. Joined copies (D-331, D-339 to D-341)
+
+A choropleth's copy is a long-form table drawn on an outline. It has two
+parents, and says so:
+
+- It is drawn by `canonical <plot> <table> --display --join <outline>` from
+  both current versions' own bytes, each checked against its sha256. The join
+  is canopy/choropleth.py's: (unit_authority, unit_code) to (authority, code),
+  never a name or a code alone (LAYER-1). One feature per place of the
+  outline, every indicator's columns beside it as `<indicator>__<column>`; a
+  place with no row stays, its columns empty and `joined` false. Every row is
+  counted: in the outline, outside it at its level, at another level, under
+  another authority, by the widths seeds/authorities declares.
+- It lives under the **table's** version, named for the outline's version:
+  `versions/<table sha>/display/<outline>_<outline sha12>_web_<n>m.geojson`,
+  or `..._markers.geojson`. A new outline version is a new copy and never new
+  bytes under one name (D-322).
+- Its envelope records `derived_from: <table sha>` and `joined_to`: the
+  outline's harvest, version, allow record, authority, level and lineage. Both
+  chains are inherited, under the branches `table` and `outline`; its own entry
+  names both inputs by sha256 and holds every change, `joined` among them. Its
+  `row_context_notes` are the notes its drawn places carry (Contract 1, 0.8).
+- **Markers** are one point on each place's own surface (shapely's
+  `point_on_surface` in EPSG:26919), simplifying nothing, recorded as `marked`.
+  So a coverage that is not valid (COVER-1) never stops them.
+- **A local dry run**, `--display --local`, draws a copy from the exact bytes a
+  write would send, from the plot's own files. It needs no AWS and can never be
+  written. It prints the copy's sha256, which the copy drawn from the bucket
+  must print before it is written, so nothing permanent happens before the
+  whole copy has been drawn, joined and judged once.
+
+## 4b. What may be written at all (D-335, D-337)
+
+- A receipt that names its run is written only if that run still declares the
+  step and output that make its name. A receipt left behind by a renamed step
+  is an orphan and is refused. A test holds that no two runs of a plot write one
+  receipt name, the known pairs named with their reasons.
+- A receipt's data file is never a manifest dataset's cached file: a source the
+  plot fetched never reaches the bucket by being named in a receipt (D-297).
 
 ## 5. The bucket
 

@@ -652,7 +652,9 @@ def _judge_barrier(ctx: ProfileContext, barrier, entries: dict) -> list[dict]:
         s = side.as_dict()
         if side.kind == "none":
             for e in entries.values():
-                e["verdict"] = dict(no_threshold().as_dict(), side=side.id)
+                shown = e.get("value") is not None
+                v = no_threshold(shown, "" if shown else _why_unjudged(e))
+                e["verdict"] = dict(v.as_dict(), side=side.id)
         elif side.kind == "universal":
             e = entries[side.judges]
             v = _universal(ctx, side, e)

@@ -4,6 +4,12 @@
 # limits can be discovered through honest provenance, not refused.
 # Steps are a composed draft; the orchestrator validates them.
 # Readiness: ready
+#
+# zip 8b: the steps are named broadband_derive and broadband_standardize, not
+# the recipe's derive and standardize, because a receipt is named by step and
+# output alone, and a harvest by its receipt, forever (D-318). the recipe's
+# names would make this table public as standardize_standings, which every
+# experiment composed from cii_indicator_values would also write.
 # ════════════════════════════════════════════════════════════
 
 id: maine_broadband_access_subscription__cii_indicator_values_91b5c0
@@ -25,7 +31,7 @@ choices:
 parameters:
   target_crs: EPSG:4326
 steps:
-- id: derive
+- id: broadband_derive
   primitive: soil/derive_indicator
   description: Indicator values from the source, one declaration at a time
   inputs:
@@ -42,11 +48,11 @@ steps:
     unit_column: GEOID
     name_column: NAME
     joins_to: governance_unit
-- id: standardize
+- id: broadband_standardize
   primitive: roots/standardize_indicator
   description: Each unit placed among the source's reference population
   inputs:
-    values: $steps.derive.values
+    values: $steps.broadband_derive.values
   outputs:
     standings: indicator_standings
   params:

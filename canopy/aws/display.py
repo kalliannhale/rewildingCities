@@ -24,6 +24,19 @@ refused rather than drawn: a coverage that is not valid (its towns overlap or
 leave gaps before anything is simplified), a geometry left empty by
 simplification (a town vanished from the map), mixed or unknown geometry.
 
+a joined copy (D-331, zip 8b) is a long-form table drawn on an outline version:
+one wide GeoJSON, every place of the outline and every indicator's columns
+beside it, keyed by (authority, code) in canopy/choropleth.py. it lives under
+the TABLE's version, named for the outline's version, so it has two parents
+and says so: derived_from the table, joined_to the outline (its version, allow
+record and lineage), both provenance chains under the branches `table` and
+`outline`. polygons are simplified as one coverage, as above; markers are one
+point on each place's own surface, simplifying nothing, so a broken coverage
+never stops them.
+
+  versions/<table sha>/display/<outline>_<outline sha12>_web_<n>m.geojson
+  versions/<table sha>/display/<outline>_<outline sha12>_markers.geojson
+
 the copy carries no note text inside it. its envelope keeps the version's
 lineage and notes, so the gate judges it as it judged the version, and it
 names the allow record current when it was drawn; a note settled later moves
@@ -69,78 +82,101 @@ def display_name(kind: str, tolerance_m: int) -> str:
     return f"web_{tolerance_m}m"
 
 
-def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
-         id_field: str | None = None) -> dict:
-    """a GeoParquet version drawn as a web GeoJSON. returns the bytes, the
-    publication records (step, detail, count), the copy's kind and what its
-    metadata should say."""
+def _read_frame(parquet_bytes: bytes):
     import geopandas
-    import numpy
-    import pyproj
-    import shapely
-
     with tempfile.TemporaryDirectory(prefix="display-") as tmp:
         path = Path(tmp) / "version.parquet"
         path.write_bytes(parquet_bytes)
-        frame = geopandas.read_parquet(path)
-    if frame.crs is None:
-        raise _refusal("the version's GeoParquet declares no crs", "rewrite it with its crs")
-    source_crs = frame.crs.to_string()
+        return geopandas.read_parquet(path)
+
+
+def _kind_of(frame) -> tuple[str, set]:
+    import numpy
+    import shapely
     geoms = numpy.asarray(frame.geometry)
     if bool(numpy.any(shapely.is_missing(geoms) | shapely.is_empty(geoms))):
         raise _refusal("the version holds an empty geometry", "repair it upstream")
     names = set(frame.geom_type.tolist())
     if names <= _POINTS:
-        kind = "points"
-    elif names <= _POLYGONS:
-        kind = "polygons"
-    else:
-        raise _refusal(f"a display copy draws points or polygons, one kind; this holds "
-                       f"{', '.join(sorted(names))}", "split it upstream")
-    name = display_name(kind, tolerance_m)
-    vertices_before = int(shapely.get_num_coordinates(geoms).sum())
-    steps: list[dict] = []
+        return "points", names
+    if names <= _POLYGONS:
+        return "polygons", names
+    raise _refusal(f"a display copy draws points or polygons, one kind; this holds "
+                   f"{', '.join(sorted(names))}", "split it upstream")
 
-    if kind == "polygons":
-        projected = frame.to_crs(PROJECTED)
-        coverage = numpy.asarray(projected.geometry)
-        if not bool(shapely.coverage_is_valid(coverage)):
-            bad = shapely.coverage_invalid_edges(coverage)
-            n_bad = int((~shapely.is_empty(bad)).sum())
-            raise _refusal(
-                f"the polygons are not a valid coverage: {n_bad} of them overlap a "
-                f"neighbour or leave a gap, so simplifying them as one would draw cracks",
-                "repair the coverage upstream, then write a new version")
-        simple = shapely.coverage_simplify(coverage, tolerance_m)
-        gone = shapely.is_empty(simple)
-        if bool(numpy.any(gone)):
-            ids = (frame[id_field].astype(str)[gone].tolist() if id_field in frame.columns
-                   else [str(i) for i in frame.index[gone]])
-            raise _refusal(
-                f"simplifying at {tolerance_m} m left {len(ids)} geometry empty "
-                f"({', '.join(ids[:5])}): it would vanish from the map",
-                "a smaller --tolerance")
-        projected = projected.set_geometry(
-            geopandas.GeoSeries(simple, index=projected.index, crs=PROJECTED))
-        frame = projected.to_crs(WEB)
-        vertices_simple = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
-        steps.append({"step": "simplified", "count": int(len(frame)), "detail": (
-            f"polygons simplified as one coverage (shapely {shapely.__version__} "
-            f"coverage_simplify, GEOS {shapely.geos_version_string}), so neighbours keep "
-            f"one shared edge; tolerance {tolerance_m} m in {PROJECTED}, roughly the square "
-            f"root of the area of each triangle removed; vertices {vertices_before:,} to "
-            f"{vertices_simple:,}")})
-    else:
-        frame = frame.to_crs(WEB) if source_crs != WEB else frame
-        steps.append({"step": "simplified", "count": 0,
-                      "detail": "points: nothing to simplify"})
 
+def _simplify_coverage(frame, tolerance_m: int, id_field: str | None, vertices_before: int):
+    """polygons simplified as one coverage in PROJECTED, back in WEB, and the
+    publication record that says so."""
+    import geopandas
+    import numpy
+    import shapely
+    projected = frame.to_crs(PROJECTED)
+    coverage = numpy.asarray(projected.geometry)
+    if not bool(shapely.coverage_is_valid(coverage)):
+        bad = shapely.coverage_invalid_edges(coverage)
+        n_bad = int((~shapely.is_empty(bad)).sum())
+        raise _refusal(
+            f"the polygons are not a valid coverage: {n_bad} of them overlap a "
+            f"neighbour or leave a gap, so simplifying them as one would draw cracks",
+            "repair the coverage upstream, then write a new version")
+    simple = shapely.coverage_simplify(coverage, tolerance_m)
+    gone = shapely.is_empty(simple)
+    if bool(numpy.any(gone)):
+        ids = (frame[id_field].astype(str)[gone].tolist() if id_field in frame.columns
+               else [str(i) for i in frame.index[gone]])
+        raise _refusal(
+            f"simplifying at {tolerance_m} m left {len(ids)} geometry empty "
+            f"({', '.join(ids[:5])}): it would vanish from the map",
+            "a smaller --tolerance")
+    projected = projected.set_geometry(
+        geopandas.GeoSeries(simple, index=projected.index, crs=PROJECTED))
+    frame = projected.to_crs(WEB)
+    vertices_simple = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
+    step = {"step": "simplified", "count": int(len(frame)), "detail": (
+        f"polygons simplified as one coverage (shapely {shapely.__version__} "
+        f"coverage_simplify, GEOS {shapely.geos_version_string}), so neighbours keep "
+        f"one shared edge; tolerance {tolerance_m} m in {PROJECTED}, roughly the square "
+        f"root of the area of each triangle removed; vertices {vertices_before:,} to "
+        f"{vertices_simple:,}")}
+    return frame, step
+
+
+def _markers(frame, id_field: str | None):
+    """each polygon as one point on its own surface, found in PROJECTED, so a
+    marker always stands inside its place. nothing is simplified."""
+    import geopandas
+    import numpy
+    import shapely
+    projected = frame.to_crs(PROJECTED)
+    points = shapely.point_on_surface(numpy.asarray(projected.geometry))
+    gone = shapely.is_empty(points)
+    if bool(numpy.any(gone)):
+        ids = (frame[id_field].astype(str)[gone].tolist() if id_field in frame.columns
+               else [str(i) for i in frame.index[gone]])
+        raise _refusal(f"{len(ids)} place(s) have no point on their surface "
+                       f"({', '.join(ids[:5])})", "repair the outline upstream")
+    projected = projected.set_geometry(
+        geopandas.GeoSeries(points, index=projected.index, crs=PROJECTED))
+    step = {"step": "marked", "count": int(len(frame)), "detail": (
+        f"each place drawn as one marker, a point on its own surface (shapely "
+        f"{shapely.__version__} point_on_surface in {PROJECTED}), so it stands inside its "
+        f"place; its outline is not drawn and nothing is simplified")}
+    return projected.to_crs(WEB), step
+
+
+def _round(frame) -> tuple:
+    import geopandas
+    import numpy
+    import shapely
     rounded = shapely.transform(numpy.asarray(frame.geometry),
                                 lambda c: numpy.round(c, DECIMALS))
     frame = frame.set_geometry(geopandas.GeoSeries(rounded, index=frame.index, crs=WEB))
-    steps.append({"step": "rounded", "count": int(len(frame)), "detail": (
-        f"coordinates rounded to {DECIMALS} decimal places of a degree, about 10 cm")})
+    return frame, {"step": "rounded", "count": int(len(frame)), "detail": (
+        f"coordinates rounded to {DECIMALS} decimal places of a degree, about 10 cm")}
 
+
+def _dates_as_text(frame) -> list[str]:
     as_text = []
     for col in [c for c in frame.columns if c != frame.geometry.name]:
         if str(frame[col].dtype).startswith("datetime64"):
@@ -149,19 +185,28 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
         elif frame[col].dtype == object and any(hasattr(v, "isoformat") for v in frame[col]):
             frame[col] = [v.isoformat() if hasattr(v, "isoformat") else v for v in frame[col]]
             as_text.append(col)
+    return as_text
+
+
+def _format_step(frame, source_crs: str, as_text: list[str]) -> dict:
+    import pyproj
     operation = ("no reprojection" if source_crs == WEB else
                  pyproj.Transformer.from_crs(source_crs, WEB, always_xy=True).description)
     dates = (f"; dates and times written as ISO 8601 text, a missing one as null "
              f"({', '.join(as_text)})" if as_text else "")
-    steps.append({"step": "format_changed", "count": int(len(frame)), "detail": (
+    return {"step": "format_changed", "count": int(len(frame)), "detail": (
         f"GeoParquet to GeoJSON (RFC 7946) in {WEB}, from {source_crs} by {operation}; "
-        f"every property kept{dates}")})
+        f"every property kept{dates}")}
 
-    body = frame.to_json(drop_id=True).encode("utf-8")
+
+def _stats(frame, kind: str, names: set, vertices_before: int, body: bytes,
+           source_crs: str) -> dict:
+    import numpy
+    import shapely
     final = numpy.asarray(frame.geometry)
-    stats = {
+    return {
         "feature_count": int(len(frame)),
-        "geometry_type": "Point" if kind == "points" else "MultiPolygon"
+        "geometry_type": "Point" if kind in ("points", "markers") else "MultiPolygon"
         if "MultiPolygon" in names else "Polygon",
         "bbox": [round(float(v), DECIMALS) for v in frame.total_bounds],
         "vertex_count": int(shapely.get_num_coordinates(final).sum()),
@@ -170,7 +215,119 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
         "attribute_fields": [c for c in frame.columns if c != frame.geometry.name],
         "source_crs": source_crs,
     }
+
+
+def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
+         id_field: str | None = None) -> dict:
+    """a GeoParquet version drawn as a web GeoJSON. returns the bytes, the
+    publication records (step, detail, count), the copy's kind and what its
+    metadata should say."""
+    import numpy
+    import shapely
+
+    frame = _read_frame(parquet_bytes)
+    if frame.crs is None:
+        raise _refusal("the version's GeoParquet declares no crs", "rewrite it with its crs")
+    source_crs = frame.crs.to_string()
+    kind, names = _kind_of(frame)
+    name = display_name(kind, tolerance_m)
+    vertices_before = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
+    steps: list[dict] = []
+
+    if kind == "polygons":
+        frame, step = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
+        steps.append(step)
+    else:
+        frame = frame.to_crs(WEB) if source_crs != WEB else frame
+        steps.append({"step": "simplified", "count": 0,
+                      "detail": "points: nothing to simplify"})
+
+    frame, step = _round(frame)
+    steps.append(step)
+    as_text = _dates_as_text(frame)
+    steps.append(_format_step(frame, source_crs, as_text))
+
+    body = frame.to_json(drop_id=True).encode("utf-8")
+    stats = _stats(frame, kind, names, vertices_before, body, source_crs)
     return {"bytes": body, "steps": steps, "kind": kind, "name": name, "stats": stats}
+
+
+# -- joined copies (D-331) ----------------------------------------------------
+
+def joined_name(outline_harvest: str, outline_sha256: str, *, markers: bool = False,
+                tolerance_m: int = DEFAULT_TOLERANCE_M) -> str:
+    """a joined copy is named for the outline version it is drawn on, so a new
+    outline version is a new copy and never new bytes under one name (D-322)."""
+    stem = f"{outline_harvest}_{outline_sha256[:12]}"
+    return f"{stem}_markers" if markers else f"{stem}_{display_name('polygons', tolerance_m)}"
+
+
+def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: str,
+                outline_sha256: str, level: str, widths: dict, markers: bool = False,
+                tolerance_m: int = DEFAULT_TOLERANCE_M, id_field: str | None = None) -> dict:
+    """a long-form table joined onto an outline version and drawn as one wide
+    web GeoJSON: every place of the outline, every indicator's columns beside
+    it, keyed by (authority, code). polygons are simplified as one coverage,
+    as any polygon copy is; markers are one point on each place's surface."""
+    import io
+
+    import geopandas
+    import numpy
+    import pandas
+    import shapely
+
+    from canopy import choropleth
+
+    table = pandas.read_parquet(io.BytesIO(table_bytes))
+    table_dates = [c for c in table.columns if str(table[c].dtype).startswith("datetime64")]
+    frame = _read_frame(outline_bytes)
+    if frame.crs is None:
+        raise _refusal("the outline's GeoParquet declares no crs", "rewrite it with its crs")
+    source_crs = frame.crs.to_string()
+    kind, names = _kind_of(frame)
+    if kind != "polygons":
+        raise _refusal(f"a table is joined onto an outline of polygons; this one holds "
+                       f"{', '.join(sorted(names))}", "join onto a place outline")
+    vertices_before = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
+    steps: list[dict] = []
+    if markers:
+        frame, step = _markers(frame, id_field)
+        kind = "markers"
+    else:
+        frame, step = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
+    steps.append(step)
+    frame, step = _round(frame)
+    steps.append(step)
+    as_text = _dates_as_text(frame)
+
+    places = [{k: choropleth.plain(v) for k, v in row.items()}
+              for row in frame.drop(columns=[frame.geometry.name]).to_dict(orient="records")]
+    try:
+        joined = choropleth.join(table, places, level=level, widths=widths)
+    except choropleth.ChoroplethRefusal as e:
+        raise _refusal(e.reason, e.would_admit) from None
+    props = pandas.DataFrame(joined["properties"])
+    out = geopandas.GeoDataFrame(props, geometry=numpy.asarray(frame.geometry), crs=WEB)
+    c = joined["counts"]
+    steps.append({"step": "joined", "count": c["places"], "detail": (
+        f"the table joined onto {outline_harvest} version {outline_sha256[:12]} on "
+        f"(unit_authority, unit_code) to (authority, code), {joined['authority']} at level "
+        f"{level}: {c['places'] - c['places_without_row']} of {c['places']} places with a row, "
+        f"{c['places_without_row']} kept with empty columns; of the table's rows, "
+        f"{c['rows_outside_outline']} belong to places outside this outline, "
+        f"{c['rows_other_level']} to another level and {c['rows_other_authority']} to "
+        f"another authority; each indicator's columns named <indicator>__<column>")})
+    as_text += [choropleth.column_name(ind, col) for ind in joined["indicators"]
+                for col in table_dates]
+    steps.append(_format_step(out, source_crs, as_text))
+
+    body = out.to_json(drop_id=True).encode("utf-8")
+    stats = _stats(out, kind, names, vertices_before, body, source_crs)
+    name = joined_name(outline_harvest, outline_sha256, markers=markers, tolerance_m=tolerance_m)
+    return {"bytes": body, "steps": steps, "kind": kind, "name": name, "stats": stats,
+            "join": {"counts": c, "indicators": joined["indicators"],
+                     "columns": joined["columns"], "authority": joined["authority"],
+                     "level": level, "row_notes": choropleth.row_notes(joined["properties"])}}
 
 
 def display_envelope(receipt: dict, *, display_key: str, data_url: str, sha256: str,
@@ -207,6 +364,74 @@ def display_envelope(receipt: dict, *, display_key: str, data_url: str, sha256: 
     return {"data": {"path": display_key, "format": "geojson", "secondary": {}},
             "metadata": meta, "provenance": inherited + [own],
             "warnings": list(receipt.get("warnings") or [])}
+
+
+def _branch(entries, name: str) -> list[dict]:
+    out = []
+    for entry in entries or []:
+        e = dict(entry)
+        if e.get("lineage_branch") is None:
+            e["lineage_branch"] = name
+        out.append(e)
+    return out
+
+
+# a table's own description of its rows, which a drawn copy of places no longer is
+_TABULAR_META = ("row_count", "column_count", "variables", "id_fields", "data_quality",
+                 "row_context_notes", "context_notes")
+
+
+def joined_envelope(table_receipt: dict, outline_receipt: dict, *, display_key: str,
+                    table_url: str, outline_url: str, table_sha256: str, table_allow: str,
+                    outline_harvest: str, outline_sha256: str, outline_allow: str,
+                    harvest: str, drawn: dict, params: dict, duration_seconds: float,
+                    now: datetime | None = None) -> dict:
+    """a joined copy's envelope: the table's metadata and lineage, the outline
+    named whole in joined_to (its version, allow record and lineage, which the
+    gate reads for rule 10), both provenance chains under the branches
+    `table` and `outline`, and this drawing's entry. its rows are places, so
+    row_context_notes are the notes the drawn features carry (D-156)."""
+    at = (now or datetime.now(timezone.utc)).isoformat()
+    tmeta = table_receipt.get("metadata") or {}
+    ometa = outline_receipt.get("metadata") or {}
+    meta = {k: v for k, v in tmeta.items() if k not in _STALE_META + _TABULAR_META}
+    stats, join = drawn["stats"], drawn["join"]
+    carried = sorted(set(join["row_notes"]) |
+                     {n for n in (tmeta.get("context_notes") or []) if isinstance(n, str)})
+    meta.update({
+        "data_category": "vector", "crs": WEB,
+        "feature_count": stats["feature_count"], "geometry_type": stats["geometry_type"],
+        "bbox": stats["bbox"], "vertex_count": stats["vertex_count"],
+        "size_bytes": stats["size_bytes"], "attribute_fields": stats["attribute_fields"],
+        "id_field": ometa.get("id_field") or "code",
+        "spatial_unit": ometa.get("spatial_unit") or join["level"],
+        "derived_from": table_sha256, "allow": table_allow, "display_of": harvest,
+        "display_name": drawn["name"], "display_kind": drawn["kind"],
+        "joined_to": {"harvest": outline_harvest, "sha256": outline_sha256,
+                      "allow": outline_allow, "semantic_type": ometa.get("semantic_type"),
+                      "authority": join["authority"], "level": join["level"],
+                      "lineage": ometa.get("lineage")},
+        "join": {"counts": join["counts"], "indicators": join["indicators"],
+                 "columns": join["columns"]},
+        "row_context_notes": list(join["row_notes"]),
+        "context_notes": carried,
+    })
+    own = {
+        "primitive": PRIMITIVE, "version": VERSION, "timestamp": at, "params": params,
+        "inputs": [
+            {"name": "table", "semantic_type": tmeta.get("semantic_type"), "path": table_url,
+             "hash": {"value": table_sha256, "method": "full_file", "algorithm": "sha256"}},
+            {"name": "outline", "semantic_type": ometa.get("semantic_type"), "path": outline_url,
+             "hash": {"value": outline_sha256, "method": "full_file", "algorithm": "sha256"}}],
+        "duration_seconds": round(float(duration_seconds), 3), "lineage_branch": None,
+        "publication": [dict(s, by=PRIMITIVE, at=at) for s in drawn["steps"]],
+    }
+    provenance = (_branch(table_receipt.get("provenance"), "table")
+                  + _branch(outline_receipt.get("provenance"), "outline") + [own])
+    return {"data": {"path": display_key, "format": "geojson", "secondary": {}},
+            "metadata": meta, "provenance": provenance,
+            "warnings": list(table_receipt.get("warnings") or [])
+            + list(outline_receipt.get("warnings") or [])}
 
 
 def timed(fn, *args, **kwargs):

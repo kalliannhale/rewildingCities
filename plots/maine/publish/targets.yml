@@ -21,3 +21,11 @@ targets:
     folder: rewildingCities test
     sharing: private
     groups: []
+  library:
+    kind: arcgis_webmap
+    portal: https://nu.maps.arcgis.com
+    owner: RDS_NU
+    owner_kind: institutional
+    folder: press-forward
+    sharing: organization
+    groups: []

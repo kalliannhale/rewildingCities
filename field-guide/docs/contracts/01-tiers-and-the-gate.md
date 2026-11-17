@@ -1,6 +1,6 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.7, 2026-11-17, for review (0.7: the publish door as the exit to ArcGIS, D-326 to D-330, and E-3 to E-5 recorded as built, D-115, D-116, GATE-1; 0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.8, 2026-11-17, for review (0.8: a joined copy's second parent binds rule 10 as its first does, D-342, and the door checks notes and credits against both parents' allow records, D-343; 0.7: the publish door as the exit to ArcGIS, D-326 to D-330, and E-3 to E-5 recorded as built, D-115, D-116, GATE-1; 0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
 **Rests on:** MP-67 (publishing is opt-in; its `map --publish` is superseded by the publish door, D-326), MP-72 (Wabanaki places as a
@@ -177,6 +177,24 @@ so the gate can read it (Open, E-4). An undeclared license fails closed at the
 `public` level, as an undeclared tier does. CII's published file has no
 published terms yet (CII-19), so anything carrying CII's own values is refused
 at `public` until it does.
+
+### A copy with two parents (D-342, zip 8b)
+
+A joined display copy (Contract 2, section 4a) is a table drawn on an outline.
+Its `metadata.lineage` is the table's; its `metadata.joined_to.lineage` is the
+outline's, and rule 10 reads both, so the outline's datasets (the boundaries
+and their attribution) bind as the table's do. Both provenance chains travel,
+under the branches `table` and `outline`, so rules 1 to 6 bind every type in
+either. Rule 9 reads the copy's own `row_context_notes`: the notes its drawn
+places carry, never the notes of a national table's other rows. Nothing
+without `joined_to` is judged differently, so the gate's version is unchanged
+and no allow record moves.
+
+The door holds a map to both parents: every note the gate binds must read in
+one of the two canonical allow records as it reads in seeds/notes, the two may
+not word one note differently, the item's credits come from both, and a
+dataset the gate names at the target that neither record holds is refused
+(D-343).
 
 ## 8. The publication record (rule 11)
 

@@ -42,6 +42,11 @@ dependencies:
   - fastapi
   - uvicorn
 
+  # --- testing (DEPS-1): the suite, FastAPI's test client, the API load test ---
+  - pytest
+  - httpx
+  - locust
+
   # --- R runtime + spatial stack (shares the same GDAL/GEOS/PROJ as rasterio) ---
   - r-base
   - r-sf

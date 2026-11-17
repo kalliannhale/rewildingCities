@@ -39,6 +39,18 @@ a lineage that holds a `custom` tier is refused here even when the gate
 allows it: a version stays readable forever, so a consent withdrawn later
 could not be honoured until Contract 2 says how a version is withdrawn (O-6).
 
+two guards hold what may be written at all (zip 8b): a receipt that names its
+run is written only if that run still declares the step and output that name
+it, so a receipt left behind by a renamed step is an orphan and never leaves
+(RECNAME); and a receipt's data file is never a manifest dataset's cached file,
+so a source the plot fetched (the 911 address points among them) can never
+reach the bucket by being named in a receipt (D-297).
+
+display copies are drawn here too: from the current version's own bytes in
+the bucket, or, as a local dry run, from the exact bytes a write would send,
+which needs no AWS and writes nothing. a joined copy (D-331) draws a table's
+version on an outline's version and lives under the table's version.
+
 the client is passed in (D-305): boto3's in a real write, a fake in tests. ~
 """
 
@@ -213,7 +225,71 @@ def source_file(root: Path, plot: str, envelope: dict) -> Path:
     if not path.is_file():
         raise CanonicalRefusal(f"the receipt's data file is missing: {given}",
                                "re-run the step that wrote it")
+    fetched = manifest_dataset_at(root, plot, path)
+    if fetched:
+        raise CanonicalRefusal(
+            f"the receipt's data file is the manifest dataset '{fetched}', a source this "
+            f"plot fetched: the step passed its input through and wrote no bytes of its "
+            f"own, so what would leave is the source itself (D-297, D-337)",
+            "write a result a later step made from it; a fetched source never leaves "
+            "through a receipt")
     return path
+
+
+def manifest_dataset_at(root: Path, plot: str, path: Path) -> str | None:
+    """the manifest dataset whose cached file this is, if any: by its resolved
+    path, or by its file name inside the plot's .data."""
+    import yaml
+    manifest = Path(root) / "plots" / plot / "manifest.yml"
+    if not manifest.is_file():
+        return None
+    doc = yaml.safe_load(manifest.read_text()) or {}
+    target = Path(path).resolve()
+    for name, d in (doc.get("datasets") or {}).items():
+        cache = str(((d or {}).get("cache") or {}).get("path") or "").strip()
+        if not cache:
+            continue
+        for base in (Path(root), Path(root) / "plots" / plot):
+            if (base / cache).resolve() == target:
+                return name
+        if Path(cache).name == target.name and target.parent.name == ".data":
+            return name
+    return None
+
+
+def held_to_run(root: Path, plot: str, artifact: str, envelope: dict) -> None:
+    """a receipt that names its run is written only if that run still declares
+    a step and output that make the receipt's name. a receipt naming no run
+    is left to the gate, whose rule 4 refuses a receipt with no lineage."""
+    import yaml
+    own = [e for e in envelope.get("provenance") or [] if e.get("lineage_branch") is None]
+    run = (own[-1].get("run") if own else None) or \
+        ((envelope.get("metadata") or {}).get("lineage") or {}).get("run")
+    step = own[-1].get("step") if own else None
+    if not run or not step:
+        return
+    folder = Path(root) / "plots" / plot
+    for sub in ("preparations", "experiments"):
+        for path in sorted((folder / sub).glob("*.yml")):
+            try:
+                doc = yaml.safe_load(path.read_text()) or {}
+            except Exception:
+                continue
+            if not isinstance(doc, dict) or doc.get("id") != run:
+                continue
+            for s in doc.get("steps") or []:
+                if isinstance(s, dict) and s.get("id") == step:
+                    outputs = s.get("outputs") or {}
+                    if any(f"{step}_{o}" == artifact for o in outputs):
+                        return
+            raise CanonicalRefusal(
+                f"an orphan: '{artifact}' was written by step {step} of {run}, and "
+                f"{path.relative_to(Path(root)).as_posix()} no longer declares a step and "
+                f"output that make this name",
+                f"rerun {run}; the receipt it writes now is the one that leaves")
+    raise CanonicalRefusal(
+        f"an orphan: '{artifact}' names the run {run}, which plots/{plot} no longer declares",
+        "write the receipt of a run this plot declares")
 
 
 # ── the gate ─────────────────────────────────────────────────────────────
@@ -301,6 +377,7 @@ def prepare(plot: str, artifact: str, *, root: Path, judge=default_judge,
     validate_artifact(artifact)
     root = Path(root)
     receipt_bytes, envelope = read_receipt(root, plot, artifact)
+    held_to_run(root, plot, artifact, envelope)
     src = source_file(root, plot, envelope)
     record = _judge(judge, envelope, plot, root / "plots" / plot)
 
@@ -479,6 +556,10 @@ class PreparedDisplay:
     envelope: dict
     stats: dict
     keys: dict = field(default_factory=dict)
+    local: bool = False
+    copy_sha256: str = ""
+    joined_to: dict | None = None
+    join: dict | None = None
 
 
 def display_keys(plot: str, harvest: str, sha256: str, name: str) -> dict:
@@ -495,16 +576,9 @@ def _get_bytes(client, bucket: str, key: str) -> bytes | None:
         raise
 
 
-def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: str,
-                    root: Path, tolerance_m: int | None = None, judge=default_judge,
-                    drawer=None, validate=None, now: datetime | None = None) -> PreparedDisplay:
-    """read the current version back from the bucket, check its bytes against
-    its name, draw the copy, build its envelope, and ask the gate. sends
-    nothing; a dry run is this alone."""
-    from canopy.aws import display
-    validate_plot(plot)
-    validate_artifact(artifact)
-    tolerance_m = display.DEFAULT_TOLERANCE_M if tolerance_m is None else tolerance_m
+def _bucket_version(client, bucket: str, plot: str, artifact: str) -> dict:
+    """the current version of a harvest as the bucket holds it, its bytes
+    checked against their name."""
     pointer, _ = read_pointer(client, bucket, pointer_key(plot, artifact))
     if pointer is None:
         raise CanonicalRefusal(f"'{artifact}' has no canonical version yet",
@@ -522,11 +596,41 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
     if sha256_of(data) != sha:
         raise CanonicalRefusal(f"the bytes at version {sha[:12]} do not hash to its name",
                                "stop and read the bucket's history before anything else")
-    receipt = json.loads(receipt_raw)
-    drawer = drawer or display.draw
-    id_field = (receipt.get("metadata") or {}).get("id_field")
+    return {"sha256": sha, "allow": allow_sha, "data": data, "receipt": json.loads(receipt_raw),
+            "prefix": prefix}
+
+
+def _local_version(root: Path, plot: str, artifact: str, judge) -> dict:
+    """the version a write would send, made from the plot's own files: the
+    same bytes, the same sha256, the same allow record. sends nothing."""
+    p = prepare(plot, artifact, root=root, judge=judge)
+    if p.data_name != "data.parquet":
+        raise CanonicalRefusal(f"'{artifact}' would be a {p.data_name} document; a display "
+                               f"copy is drawn from features", "draw a features version")
+    return {"sha256": p.sha256, "allow": p.allow_sha256, "data": p.data_bytes,
+            "receipt": json.loads(p.receipt_bytes), "prefix": version_prefix(plot, artifact, p.sha256)}
+
+
+def _version(plot, artifact, *, local, client, bucket, root, judge) -> dict:
+    if local:
+        return _local_version(root, plot, artifact, judge)
+    return _bucket_version(client, bucket, plot, artifact)
+
+
+def _validator(validate, root):
+    if validate is not None:
+        return validate
+    from canopy.envelope import validate_envelope
+
+    def check(e):
+        return validate_envelope(e, Path(root))
+    return check
+
+
+def _drawn(drawer, *args, **kwargs):
+    from canopy.aws import display
     try:
-        drawn, seconds = display.timed(drawer, data, tolerance_m=tolerance_m, id_field=id_field)
+        return display.timed(drawer, *args, **kwargs)
     except CanonicalRefusal:
         raise
     except Exception as e:               # a drawing's error is a refusal, never a crash
@@ -534,28 +638,88 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
         raise CanonicalRefusal(f"drawing the copy failed: {type(e).__name__}: {said}",
                                "read the error; the version may hold a type GeoJSON "
                                "cannot carry") from None
-    keys = display_keys(plot, artifact, sha, drawn["name"])
-    data_url = f"https://{domain}/{prefix}/data.parquet"
-    params = {"tolerance_m": tolerance_m if drawn["kind"] == "polygons" else None,
-              "projected": display.PROJECTED, "web": display.WEB,
-              "decimals": display.DECIMALS, "name": drawn["name"]}
-    env = display.display_envelope(receipt, display_key=keys["geojson"], data_url=data_url,
-                                   sha256=sha, allow_sha256=allow_sha, harvest=artifact,
-                                   drawn=drawn, params=params, duration_seconds=seconds,
-                                   now=now)
-    if validate is None:
-        from canopy.envelope import validate_envelope
-        def validate(e):
-            return validate_envelope(e, Path(root))
-    errors = validate(env)
+
+
+def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: str,
+                    root: Path, tolerance_m: int | None = None, judge=default_judge,
+                    drawer=None, validate=None, now: datetime | None = None,
+                    join: str | None = None, markers: bool = False,
+                    local: bool = False) -> PreparedDisplay:
+    """read the current version back from the bucket (or, local, make it from
+    the plot's files), check its bytes against its name, draw the copy, build
+    its envelope, and ask the gate. sends nothing; a dry run is this alone.
+    with join, the version is a table drawn on that outline's current version."""
+    from canopy.aws import display
+    validate_plot(plot)
+    validate_artifact(artifact)
+    if join:
+        validate_artifact(join)
+    if markers and not join:
+        raise CanonicalRefusal("markers are drawn for a table joined onto an outline",
+                               "give --join <outline>")
+    tolerance_m = display.DEFAULT_TOLERANCE_M if tolerance_m is None else tolerance_m
+    root = Path(root)
+    base = f"https://{domain}" if domain else "local:"
+    v = _version(plot, artifact, local=local, client=client, bucket=bucket, root=root,
+                 judge=judge)
+    receipt = v["receipt"]
+    data_url = f"{base}/{v['prefix']}/data.parquet"
+
+    if not join:
+        drawer = drawer or display.draw
+        id_field = (receipt.get("metadata") or {}).get("id_field")
+        drawn, seconds = _drawn(drawer, v["data"], tolerance_m=tolerance_m, id_field=id_field)
+        keys = display_keys(plot, artifact, v["sha256"], drawn["name"])
+        params = {"tolerance_m": tolerance_m if drawn["kind"] == "polygons" else None,
+                  "projected": display.PROJECTED, "web": display.WEB,
+                  "decimals": display.DECIMALS, "name": drawn["name"]}
+        env = display.display_envelope(receipt, display_key=keys["geojson"], data_url=data_url,
+                                       sha256=v["sha256"], allow_sha256=v["allow"],
+                                       harvest=artifact, drawn=drawn, params=params,
+                                       duration_seconds=seconds, now=now)
+        joined_to = None
+    else:
+        tmeta = receipt.get("metadata") or {}
+        if tmeta.get("data_category") != "tabular":
+            raise CanonicalRefusal(f"--join draws a table on an outline; '{artifact}' is "
+                                   f"{tmeta.get('data_category')}", "join a table of values")
+        o = _version(plot, join, local=local, client=client, bucket=bucket, root=root,
+                     judge=judge)
+        ometa = o["receipt"].get("metadata") or {}
+        level = ometa.get("level")
+        if ometa.get("data_category") != "vector" or not level or not ometa.get("authority"):
+            raise CanonicalRefusal(
+                f"'{join}' is not a place outline: it names no authority and level",
+                "join onto a place_outline, which names both")
+        from canopy import choropleth
+        drawer = drawer or display.draw_joined
+        drawn, seconds = _drawn(drawer, v["data"], o["data"], outline_harvest=join,
+                                outline_sha256=o["sha256"], level=level,
+                                widths=choropleth.load_widths(root), markers=markers,
+                                tolerance_m=tolerance_m, id_field=ometa.get("id_field"))
+        keys = display_keys(plot, artifact, v["sha256"], drawn["name"])
+        params = {"tolerance_m": None if markers else tolerance_m, "markers": markers,
+                  "projected": display.PROJECTED, "web": display.WEB,
+                  "decimals": display.DECIMALS, "name": drawn["name"], "join": join}
+        env = display.joined_envelope(
+            receipt, o["receipt"], display_key=keys["geojson"], table_url=data_url,
+            outline_url=f"{base}/{o['prefix']}/data.parquet", table_sha256=v["sha256"],
+            table_allow=v["allow"], outline_harvest=join, outline_sha256=o["sha256"],
+            outline_allow=o["allow"], harvest=artifact, drawn=drawn, params=params,
+            duration_seconds=seconds, now=now)
+        joined_to = {"harvest": join, "sha256": o["sha256"], "allow": o["allow"]}
+
+    errors = _validator(validate, root)(env)
     if errors:
         raise CanonicalRefusal("the copy's envelope does not match the envelope schema: "
                                + "; ".join(str(x) for x in errors[:3]),
                                "fix the envelope's shape in canopy/aws/display.py")
-    _judge(judge, env, plot, Path(root) / "plots" / plot)
-    return PreparedDisplay(plot=plot, harvest=artifact, sha256=sha, allow_sha256=allow_sha,
-                           name=drawn["name"], body=drawn["bytes"], envelope=env,
-                           stats=drawn["stats"], keys=keys)
+    _judge(judge, env, plot, root / "plots" / plot)
+    return PreparedDisplay(plot=plot, harvest=artifact, sha256=v["sha256"],
+                           allow_sha256=v["allow"], name=drawn["name"], body=drawn["bytes"],
+                           envelope=env, stats=drawn["stats"], keys=keys, local=local,
+                           copy_sha256=sha256_of(drawn["bytes"]), joined_to=joined_to,
+                           join=drawn.get("join"))
 
 
 def write_display(prepared: PreparedDisplay, *, client, bucket: str) -> dict:
@@ -563,6 +727,10 @@ def write_display(prepared: PreparedDisplay, *, client, bucket: str) -> dict:
     copy already there with these bytes writes nothing; one there with other
     bytes is refused, never replaced."""
     from canopy.aws.display import GEOJSON_TYPE, envelope_bytes
+    if prepared.local:
+        raise CanonicalRefusal("a local copy is drawn from the plot's own files and is a dry "
+                               "run only; the copy that is written is drawn from the bucket",
+                               "write the versions, then draw it without --local")
     keys = prepared.keys
     there = _get_bytes(client, bucket, keys["geojson"])
     if there is not None:

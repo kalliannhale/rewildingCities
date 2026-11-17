@@ -24,6 +24,20 @@
       simplification in meters (25 by default). needs the same environment as
       a write, since it reads the bucket
 
+  python -m canopy.cli canonical maine broadband_standardize_standings --display \\
+      --join outline_counties_outline
+      draws the table's current version on the outline's current version: one
+      wide copy, every indicator's columns, keyed by (authority, code), living
+      under the table's version and named for the outline's (D-331). --markers
+      draws each place as a point on its surface instead of its outline, which
+      simplifies nothing. a dry run unless --write
+
+  python -m canopy.cli canonical maine outline_counties_outline --display --local
+      draws a copy from the exact bytes a write would send, from the plot's own
+      files: needs no AWS and can never write. its sha256 is the one the copy
+      drawn from the bucket must print, so nothing permanent happens before the
+      whole copy has been drawn, joined and judged once
+
 exit codes: 0 written, already current, or a dry run read through; 1 refused,
 or a dry run with a receipt it could not judge; 2 asked wrongly. ~
 """
@@ -53,6 +67,12 @@ def register(subparsers) -> None:
                    help="draw the current version's display copy for web maps")
     p.add_argument("--tolerance", type=int, default=None,
                    help="with --display: polygon simplification in meters (default 25)")
+    p.add_argument("--join", default=None, metavar="OUTLINE",
+                   help="with --display: draw this table on an outline harvest (D-331)")
+    p.add_argument("--markers", action="store_true",
+                   help="with --join: each place as one point on its surface")
+    p.add_argument("--local", action="store_true",
+                   help="with --display: draw from the plot's own files; a dry run, no AWS")
     p.set_defaults(func=run)
 
 
@@ -67,6 +87,15 @@ def _asked_wrongly(args) -> str | None:
         return "--display takes one artifact at a time"
     if getattr(args, "tolerance", None) is not None and not getattr(args, "display", False):
         return "--tolerance goes with --display"
+    display = getattr(args, "display", False)
+    if (getattr(args, "join", None) or getattr(args, "local", False)) and not display:
+        return "--join and --local go with --display"
+    if getattr(args, "markers", False) and not getattr(args, "join", None):
+        return "--markers goes with --join"
+    if getattr(args, "markers", False) and getattr(args, "tolerance", None) is not None:
+        return "--markers simplifies nothing, so it takes no --tolerance"
+    if getattr(args, "local", False) and args.write:
+        return "--local draws from your own files and never writes; drop --write"
     if getattr(args, "display", False):
         return None                      # a display copy moves no pointer: no --by or --reason
     if args.write and not ((args.by or "").strip() and (args.reason or "").strip()):
@@ -87,7 +116,8 @@ def run(args) -> int:
         return 2
     bucket = os.environ.get(s3.BUCKET_ENV)
     domain = os.environ.get(s3.DOMAIN_ENV)
-    if (args.write or getattr(args, "display", False)) and not (bucket and domain):
+    local = getattr(args, "local", False)
+    if (args.write or getattr(args, "display", False)) and not local and not (bucket and domain):
         print(f"refused: set {s3.BUCKET_ENV} and {s3.DOMAIN_ENV} first "
               f"(conda env config vars set, then reactivate the env)", file=sys.stderr)
         return 2
@@ -182,11 +212,16 @@ def _say_written(p, result, domain: str) -> None:
 
 
 def _display(s3, root, args, bucket: str, domain: str) -> int:
-    profile = os.environ.get(s3.PROFILE_ENV) or s3.DEFAULT_PROFILE
-    client = s3.make_client(profile)
+    local = getattr(args, "local", False)
+    client = None
+    if not local:
+        profile = os.environ.get(s3.PROFILE_ENV) or s3.DEFAULT_PROFILE
+        client = s3.make_client(profile)
     try:
         p = s3.prepare_display(args.plot, args.artifact, client=client, bucket=bucket,
-                               domain=domain, root=root, tolerance_m=args.tolerance)
+                               domain=domain, root=root, tolerance_m=args.tolerance,
+                               join=getattr(args, "join", None),
+                               markers=getattr(args, "markers", False), local=local)
         result = s3.write_display(p, client=client, bucket=bucket) if args.write else None
     except s3.CanonicalRefusal as e:
         _say_refusal(args.artifact, e)
@@ -196,8 +231,19 @@ def _display(s3, root, args, bucket: str, domain: str) -> int:
           f"allow record {p.allow_sha256[:12]}")
     print(f"   {st['feature_count']:,} features, {st['vertices_before']:,} vertices to "
           f"{st['vertex_count']:,}, {st['size_bytes'] / 1_000_000:.1f} MB of GeoJSON")
+    if p.joined_to:
+        print(f"   drawn on {p.joined_to['harvest']} version {p.joined_to['sha256'][:12]}, "
+              f"allow record {p.joined_to['allow'][:12]}")
     for step in p.envelope["provenance"][-1]["publication"]:
         print(f"   {step['step']}: {step['detail']}")
+    notes = p.envelope["metadata"].get("context_notes") or []
+    print(f"   gate: may leave at public; carries {', '.join(notes) if notes else 'no notes'}")
+    print(f"   copy sha256 {p.copy_sha256}")
+    if p.local:
+        print(f"\n   a local dry run, from your own files: nothing sent, and nothing can be. "
+              f"the copy drawn from the bucket must print this same sha256 before its write. "
+              f"it would be {p.keys['geojson']}")
+        return 0
     url = f"https://{domain}/{p.keys['geojson']}"
     if result is None:
         print(f"\n   a dry run: nothing sent. would write {p.keys['geojson']}")

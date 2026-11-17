@@ -1,9 +1,11 @@
 """
 tests/test_map_indicators.py
 
-map draws one indicator out of a long-form table, joins on a declared key,
-draws an empty value as empty, and refuses a choice it would otherwise make
-silently (MAP-1).
+map draws one indicator out of a long-form table, joins it by its declared
+authority (LAYER-1: unit_authority and unit_code to a place's authority and
+code, through canopy/choropleth.py), draws an empty value as empty, and
+refuses a choice it would otherwise make silently (MAP-1). a wide result
+(NYC's parks) still joins on a shared column.
 """
 
 import pandas as pd
@@ -24,15 +26,26 @@ def long_table():
     return pd.DataFrame(rows)
 
 
-def counties(with_geoid=True):
+WIDTHS = {"us_census_geoid": {"state": 2, "county": 5, "cousub": 10}}
+
+
+def counties(with_geoid=True, with_key=True):
     out = []
     for code, name in [("23005", "Cumberland"), ("23029", "Washington"), ("23031", "York")]:
         props = {"COUNTY": name, "CNTYCODE": code[2:]}
         if with_geoid:
             props["GEOID"] = code
+        if with_key:
+            props.update(authority="us_census_geoid", code=code)
         out.append({"type": "Feature", "properties": props,
                     "geometry": {"type": "Point", "coordinates": [0, 0]}})
     return out
+
+
+def keyed(one, layer, color_by, indicator):
+    return m.keyed_join(one, layer, level="county", widths=WIDTHS, color_by=color_by,
+                        indicator=indicator, meta={"semantic_type": "indicator_values"},
+                        layer="counties", plot="maine")
 
 
 def env(st, cat, fmt, joins_to=None, path="x"):
@@ -54,39 +67,37 @@ def test_an_unknown_indicator_is_refused():
         m.long_form_view(long_table(), "cii_nope")
 
 
-def test_one_indicator_is_keyed_by_geoid_and_colored_by_value():
+def test_one_indicator_is_keyed_by_its_authority_and_colored_by_value():
     one, key, color_by = m.long_form_view(long_table(), "cii_rent_burden")
-    assert (key, color_by) == ("GEOID", "value")
-    assert list(one["GEOID"]) == ["23005", "23029", "23031"]
+    assert (key, color_by) == (m.KEYED, "value")
+    assert list(one["unit_code"]) == ["23005", "23029", "23031"]
     assert set(one["indicator"]) == {"cii_rent_burden"}
 
 
 # ── the join ──────────────────────────────────────────────────────────────
-def test_the_join_uses_the_declared_key_and_keeps_empty_as_empty():
-    one, key, color_by = m.long_form_view(long_table(), "cii_broadband")
-    fc = m._join_and_color(one, counties(), {"semantic_type": "indicator_values"},
-                           "counties", "maine", key=key, color_by=color_by)
-    by = {f["properties"]["GEOID"]: f["properties"] for f in fc["features"]}
-    assert by["23031"]["value"] is None
+def test_the_join_uses_the_declared_authority_and_keeps_empty_as_empty():
+    one, _, color_by = m.long_form_view(long_table(), "cii_broadband")
+    fc = keyed(one, counties(), color_by, "cii_broadband")
+    by = {f["properties"]["code"]: f["properties"] for f in fc["features"]}
+    assert by["23031"]["cii_broadband__value"] is None
     assert by["23031"]["fill"] == m._EMPTY_FILL
     assert by["23005"]["fill"] != m._EMPTY_FILL
     assert fc["rewilding:map"]["empty_values"] == 1
-    assert fc["rewilding:map"]["join_on"] == "GEOID"
+    assert fc["rewilding:map"]["color_by"] == "cii_broadband__value"
 
 
-def test_a_layer_without_the_key_is_refused_never_name_matched():
-    one, key, color_by = m.long_form_view(long_table(), "cii_broadband")
+def test_a_layer_without_authority_and_code_is_refused_never_geoid_matched():
+    one, _, color_by = m.long_form_view(long_table(), "cii_broadband")
     with pytest.raises(m.MapRefusal) as e:
-        m._join_and_color(one, counties(with_geoid=False), {}, "counties", "maine",
-                          key=key, color_by=color_by)
-    assert "GEOID" in str(e.value) and "CNTYCODE" in str(e.value)
+        keyed(one, counties(with_key=False), color_by, "cii_broadband")
+    assert "authority and code" in str(e.value) and "GEOID" in str(e.value)
 
 
 def test_unjoined_rows_are_counted():
-    one, key, color_by = m.long_form_view(long_table(), "cii_rent_burden")
-    fc = m._join_and_color(one, counties()[:2], {}, "counties", "maine",
-                           key=key, color_by=color_by)
-    assert fc["rewilding:map"]["unjoined_rows"] == 1
+    one, _, color_by = m.long_form_view(long_table(), "cii_rent_burden")
+    fc = keyed(one, counties()[:2], color_by, "cii_rent_burden")
+    assert fc["rewilding:map"]["rows_outside_outline"] == 1
+    assert fc["rewilding:map"]["places_without_row"] == 0
 
 
 def test_a_wide_result_still_joins_the_old_way():
@@ -138,4 +149,4 @@ def test_a_standings_table_is_colored_by_percentile():
     df = long_table()
     df["percentile"] = [90.0, 10.0, None, 50.0, 20.0, 80.0]
     _, key, color_by = m.long_form_view(df, "cii_broadband")
-    assert (key, color_by) == ("GEOID", "percentile")
+    assert (key, color_by) == (m.KEYED, "percentile")

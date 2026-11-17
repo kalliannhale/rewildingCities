@@ -115,13 +115,18 @@ def publication_steps(envelope: dict) -> list[dict]:
 
 def lineage_datasets(envelope: dict, manifest_datasets: dict) -> list[str]:
     """the manifest datasets an artifact came from: those its run's resolution
-    report names, and any provenance input whose file is a dataset's cache."""
+    report names, those of the outline a joined copy is drawn on (its
+    joined_to lineage, D-331), and any provenance input whose file is a
+    dataset's cache. a joined copy's second parent binds as its first does."""
     names: list[str] = []
-    res = ((envelope.get("metadata") or {}).get("lineage") or {}).get("data_resolution") or {}
-    for key in ("datasets_available", "datasets_acquired"):
-        for n in res.get(key) or []:
-            if n in manifest_datasets and n not in names:
-                names.append(n)
+    meta = envelope.get("metadata") or {}
+    lineages = [meta.get("lineage") or {}, ((meta.get("joined_to") or {}).get("lineage") or {})]
+    for lineage in lineages:
+        res = (lineage if isinstance(lineage, dict) else {}).get("data_resolution") or {}
+        for key in ("datasets_available", "datasets_acquired"):
+            for n in res.get(key) or []:
+                if n in manifest_datasets and n not in names:
+                    names.append(n)
     by_file = {}
     for n, d in manifest_datasets.items():
         cache = ((d.get("cache") or {}).get("path") or "")
