@@ -1,9 +1,9 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.6, 2026-11-16, for review (0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.7, 2026-11-17, for review (0.7: the publish door as the exit to ArcGIS, D-326 to D-330, and E-3 to E-5 recorded as built, D-115, D-116, GATE-1; 0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
-**Rests on:** MP-67 (publishing is opt-in), MP-72 (Wabanaki places as a
+**Rests on:** MP-67 (publishing is opt-in; its `map --publish` is superseded by the publish door, D-326), MP-72 (Wabanaki places as a
 qualified Census view), D-31 (CII's terms), D-98 (preparations).
 
 The system may compute with anything. What leaves it is governed here, by one
@@ -17,11 +17,19 @@ or shown to anyone who is not running the plot. Today and planned:
 
 | Exit | Where | Status |
 | --- | --- | --- |
-| `map --publish` | `canopy/cli/map.py` to ArcGIS Online | built (MP-67); gate wired in Sprint 03 |
-| The publish door | `canopy/expose/publish.py` | Sprint 08 |
+| `map --publish` | `canopy/cli/map.py` | retired: `map` draws locally and `--publish` names the door (D-326) |
+| The publish door | `canopy/expose/publish.py`, run as `python -m canopy.cli publish`, to each target a plot declares | built in Sprint 08 (zip 8a, D-326 to D-330) |
 | The canonical write | `canopy/aws/s3.py` (Contract 2), target `canonical` at `public` | built in Sprint 07 (zip 7b, D-315) |
 | The explorer's layers and profiles | read from canonical files | Sprints 06, 09 |
 | Exports from the community kit | the kit's local page | Sprint 10 |
+
+A layer an ArcGIS item reads by URL left at the canonical write, which judged
+it at `public`: an item's sharing decides who finds the map, never who can read
+the data. So at the door the gate judges what can differ by target: the
+license at the item's sharing level (rule 10), consent named for that target
+(rule 6), and the notes that must travel (rule 9), each of whose text must
+match the canonical allow record's, so a map never says what the bucket does
+not (D-328).
 
 Writing to the plot's own `.data/`, `.envelopes/` and `harvest/` is not
 leaving. Committing to git is leaving, which is why harvests are out of git
@@ -206,13 +214,13 @@ conversion in the version's allow record (D-314, D-320).
 | E-1 | Rule 3 is a conjunction, not a ranking: `aggregate-only` limits form and `custom` limits permission, so neither outranks the other and both bind (D-101) |
 | E-2 | An experiment with an empty curiosity passes rule 4: its method, choices and run make it traceable, and its missing question is carried as a caveat rather than blocking it (D-102) |
 | E-7 | Rule 11's records live in the provenance entry of the step that made them; the builder stamps `by` and `at`; the schema holds the closed set; the gate gathers them through the chain (D-143) |
+| E-3 | Consent records live one file each in `plots/<plot>/consent/` (D-115) |
+| E-4 | Licenses are a short controlled list in `seeds/licenses/licenses.yml` that the gate reads; an unverified term permits `private` only (D-116) |
+| E-5 | The gate reads `resolution_tier` through its own reader, apart from `get_tier()` (GATE-1) |
 | E-8 | Rule 9 binds by row when the artifact lists `row_context_notes`, and by lineage when it does not; every note's text lives in `seeds/notes/notes.yml` and leaves in the allow record (D-156, D-157) |
 
 ## Open
 
 | ID | Question | Decided in |
 | --- | --- | --- |
-| E-3 | Where consent records live: a folder in each plot, or a block in the manifest | Sprint 03 |
-| E-4 | How licenses are declared: free text checked by a person, or a short controlled list the gate can read. This contract assumes the list | Sprint 03 |
-| E-5 | The gate's own reader for `resolution_tier`, and what becomes of `get_tier()` (GATE-1) | Sprint 03 |
 | E-6 | The empty-curiosity warning is printed by `validate()` but not written into receipts, so today it would not reach the gate. Write it into the envelope's warnings when the receipt is written, so the caveat in rule 4 has something to carry | Sprint 03 |

@@ -14,10 +14,11 @@ table holds many indicators in one `value` column, so --indicator picks one, and
 it joins on its declared key: `unit_code`, a Census GEOID, to the layer's GEOID.
 A layer without a GEOID is refused by name, never matched on a county name.
 
-Publishing is asked for, never assumed (EXP-1): only --publish reaches ArcGIS,
-and only through the descriptor path. A choropleth given --publish is written
-locally, says it was not published, and exits 1, because a publish that was
-asked for and did not happen is a failure, never a quiet success. ~
+map draws locally and offline, always, and reaches no network. Publishing is
+the publish door's alone (`python -m canopy.cli publish`, D-326): it reads a
+canonical display copy by URL, never a map written here. --publish stays as a
+signpost: it says where publishing went and exits 2, drawing nothing, so a
+script that asks for a publish can never mistake a local map for one. ~
 """
 
 from __future__ import annotations
@@ -43,8 +44,8 @@ class MapRefusal(Exception):
 
 def register(subparsers) -> None:
     p = subparsers.add_parser(
-        "map", help="render a result to a map (parks colored by the result; geojson, "
-                    "plus ArcGIS only with --publish)")
+        "map", help="render a result to a local map (parks colored by the result; "
+                    "geojson, offline). publishing is `publish` (D-326)")
     p.add_argument("plot", help="the plot name, e.g. nyc")
     p.add_argument("semantic_type", nargs="?", default="",
                    help="the result type to map, e.g. pci_results")
@@ -55,8 +56,7 @@ def register(subparsers) -> None:
     p.add_argument("--result", default=None,
                    help="the result envelope, by name, when more than one has this type")
     p.add_argument("--publish", action="store_true",
-                   help="also publish the map to ArcGIS Online. off by default; "
-                        "needs the network and ArcGIS credentials (EXP-1)")
+                   help="moved: publishing is python -m canopy.cli publish (D-326)")
     p.set_defaults(func=run)
 
 
@@ -350,6 +350,11 @@ def resolve_result(by_name: dict, target: str, result_arg: str | None = None):
 
 
 def run(args) -> int:
+    if getattr(args, "publish", False):
+        print("asked wrongly: map draws locally and publishes nothing. publishing is "
+              "the publish door: python -m canopy.cli publish <plot> <artifact> --to "
+              "<target> (a dry run unless --write; D-326)", file=sys.stderr)
+        return 2
     root = find_root()
     plot = args.plot
     envelopes_dir = root / "plots" / plot / ".envelopes"
@@ -397,53 +402,14 @@ def run(args) -> int:
                 if cho["without_row"]:
                     print(f"   {cho['without_row']} feature(s) have no row in the result, drawn as empty")
                 print(f"   {cho['path']}")
-                if getattr(args, "publish", False):
-                    # EXP-1 follow-up: this used to print a note and exit 0, so
-                    # a script asking for a publish could not tell that none
-                    # happened. same words and exit code as the descriptor path.
-                    print("not published: map does not publish choropleths; "
-                          "--publish reaches ArcGIS through descriptor maps only",
-                          file=sys.stderr)
-                    print(f"   the map was still written locally: {cho['path']}",
-                          file=sys.stderr)
-                    return 1
                 return 0
             print(f"   (no geometry to join {target} to ~ writing a descriptor instead)")
     except MapRefusal as e:
         print(f"refused: {e}", file=sys.stderr)
         return 1
 
-    from canopy.visuals import PublishError, render
-    publish = getattr(args, "publish", False)
-    if publish:
-        # Sprint 03: the one gate decides first, before anything signs in.
-        # an ArcGIS item is created private to its owner, so that is the
-        # level judged. a refusal writes the map locally and exits 1, with
-        # every reason and what would admit it (Contract 1, rule 7).
-        from canopy.expose.check import check_envelope
-        decision = check_envelope(env, plot=plot, target="arcgis_online",
-                                  sharing_level="private",
-                                  plot_dir=root / "plots" / plot)
-        if decision["decision"] == "refuse":
-            local = render(env, out_dir, plot=plot, publish=False)
-            print("not published: the exposure gate refused it", file=sys.stderr)
-            for r in decision["refusals"]:
-                print(f"   rule {r['rule']}: {r['reason']}", file=sys.stderr)
-                print(f"     would admit it: {r['would_admit']}", file=sys.stderr)
-            print(f"   the map was still written locally: {local.geojson_path}",
-                  file=sys.stderr)
-            return 1
-        gate_record = Path(out_dir) / "map.gate.json"
-        Path(out_dir).mkdir(parents=True, exist_ok=True)
-        gate_record.write_text(json.dumps(decision["record"], indent=2))
-    try:
-        result = render(env, out_dir, plot=plot, publish=publish)
-    except PublishError as e:
-        print(f"not published: {e}", file=sys.stderr)
-        if e.geojson_path:
-            print(f"   the map was still written locally: {e.geojson_path}",
-                  file=sys.stderr)
-        return 1
+    from canopy.visuals import render
+    result = render(env, out_dir, plot=plot)
     spec = result.spec
     try:
         n = len(json.loads(Path(result.geojson_path).read_text()).get("features", []))
@@ -458,6 +424,4 @@ def run(args) -> int:
     print(f"🗺  mapped {target}")
     print("   " + ", ".join(bits))
     print(f"   {result.geojson_path}")
-    if result.arcgis_url:
-        print(f"   published: {result.arcgis_url}")
     return 0

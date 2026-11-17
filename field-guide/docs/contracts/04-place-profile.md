@@ -1,6 +1,6 @@
 # Contract 4 ~ The place profile
 
-**Status:** draft 0.4, 2026-11-16 (D-258, D-263, D-270 to D-282 and D-283 to
+**Status:** draft 0.5, 2026-11-17 (0.5: the `gate` row names the canonical write, drift found in Sprint 08; 0.4, 2026-11-16: D-258, D-263, D-270 to D-282 and D-283 to
 D-293, built in zips 2 and 2b; 0.3 was D-197 to D-200). **Owner:** Kalli. **Built in:**
 Sprint 06 (`canopy/wonder/profile.py`, `canopy/wonder/verdicts.py`,
 `canopy/standards.py`; the command `python -m canopy.cli profile <plot>`).
@@ -30,7 +30,7 @@ gate is asked first (D-284).** Every receipt a value would come from is
 judged at `public` before its value enters. A withheld receipt's values never
 enter the file; its refusal does, in part 5, saying the data exists and why
 it stays (Contract 1, rules 7 and 8). The receipt's inputs are exactly the
-receipts whose values entered, so the door's gate binds exactly what the file
+receipts whose values entered, so the gate at the canonical write binds exactly what the file
 holds; every withheld receipt is named in its params, never an input. The
 one exception is the graph itself: every profile's names, contents, overlaps
 and borrowed shares come from the places and edges receipts, so they are
@@ -47,7 +47,7 @@ so it can be read and tested without a bed.
 | `place` | the place's key, `(authority, code)`, and its `level`, `name`, `vintage` (Contract 3) |
 | `flags`, `context_note` | from the places table, shown first, never hidden behind a click |
 | `built_at`, `built_by` | when, and which profile version built it |
-| `gate` | `record: null` with why: the allow record is decided at the publish door, never written inside the file it judges (D-274) |
+| `gate` | `record: null` with why: the allow record is decided at the canonical write and kept beside the file, never inside the one it judges (D-274, D-313, D-320). A profile is a document, so the publish door makes no ArcGIS item of it; the explorer reads it by URL (D-326) |
 
 ## 1. Who is represented
 

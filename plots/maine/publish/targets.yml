@@ -1,0 +1,23 @@
+# ============================================================================
+# plots/maine/publish/targets.yml ~ where the Maine plot publishes (D-327)
+# ============================================================================
+# each target names the portal, the account that owns what the door makes,
+# whether that account is an institution's or a person's (R7), the folder,
+# the sharing level (private, organization, public) and the groups to share
+# with, by group id. a password never lives here: the door asks for it when it
+# writes and keeps the token for that run only (D-329). Kalli has explicit
+# permission to publish as RDS_NU for this project (Sprint 08, session 1).
+#
+# a layer read by URL is public whatever its item's sharing: sharing decides
+# who finds the map, not who can read the data (Contract 1, section 1).
+# ============================================================================
+
+targets:
+  test:
+    kind: arcgis_webmap
+    portal: https://nu.maps.arcgis.com
+    owner: RDS_NU
+    owner_kind: institutional
+    folder: rewildingCities test
+    sharing: private
+    groups: []

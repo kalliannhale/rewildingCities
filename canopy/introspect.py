@@ -77,8 +77,9 @@ def is_online(timeout: float = 1.5) -> bool:
 # where each kind of credential honestly lives: environment variables (any
 # present counts) and/or files (any existing counts). best-effort per provider,
 # named not guessed; an unknown kind returns False. extend as providers are
-# added. NOTE: arcgis also supports stored profiles; env is the portable,
-# unambiguous signal, so that is what we assert on until visuals needs more.
+# added. ArcGIS has no row: its old one checked ARCGIS_API_KEY and
+# ARCGIS_USERNAME while the login read neither (F4). the publish door signs in
+# per target, typed at a prompt, and asks the portal who it is (D-329).
 _CREDENTIALS = {
     "aws": {
         "env": ("AWS_ACCESS_KEY_ID",),
@@ -87,10 +88,6 @@ _CREDENTIALS = {
     "earthengine": {
         "env": ("EARTHENGINE_TOKEN",),
         "files": ("~/.config/earthengine/credentials",),
-    },
-    "arcgis": {
-        "env": ("ARCGIS_API_KEY", "ARCGIS_USERNAME"),
-        "files": (),
     },
 }
 

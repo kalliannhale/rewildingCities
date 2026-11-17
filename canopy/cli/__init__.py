@@ -9,8 +9,14 @@ packaged; see the note in setup_guide.md.)
   wonder  <plot> ["question"]    what can this ground wonder about?
   sows    <experiment.yml>       run a composed experiment
   profile <plot> [--place K]     every place's profile (Contract 4)
+  map     <plot> ...             draw a result as a local map (geojson, offline)
+  acquire ...                    fetch what the plot's manifest declares
+                                 (each command's --help says the rest)
   canonical <plot> <artifact>    write a receipt as a canonical object
                                  (a dry run unless --write; Contract 2)
+  publish <plot> <artifact> --to <target>
+                                 make or move a web map item that reads a
+                                 display copy by URL (a dry run unless --write)
 
 Each command is its own module exposing register(subparsers). Add a command by
 writing canopy/cli/<name>.py with a register() that calls set_defaults(func=...),
@@ -23,7 +29,8 @@ from __future__ import annotations
 import argparse
 import importlib
 
-_COMMANDS = ("init", "wonder", "sows", "map", "acquire", "profile", "canonical")
+_COMMANDS = ("init", "wonder", "sows", "map", "acquire", "profile", "canonical",
+             "publish")
 
 
 def build_parser() -> argparse.ArgumentParser:

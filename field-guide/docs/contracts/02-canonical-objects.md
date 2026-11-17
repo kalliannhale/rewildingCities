@@ -1,6 +1,6 @@
 # Contract 2 ~ Canonical objects
 
-**Status:** draft 0.3, 2026-11-16, for review (0.2 earlier the same day, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
+**Status:** draft 0.4, 2026-11-17, for review (0.4 carries zip 8a's publish door, D-326 to D-332; 0.2 earlier on 2026-11-16, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
 Kalli. **Built in:** Sprint 07 (the stack, on bash-win's staging rails; the
 canonical write), Sprint 08 (the publish door). **Read by:** the publish
 route, the explorer, the community kit, the grove. **Rests on:** MP-68 (two
@@ -145,7 +145,8 @@ second truth (D-321):
   (Maine's outlines are NAD83). Every property is kept (D-324).
 - The copy carries no note text inside it. A note settled later moves the
   allow record (D-320) without a new copy; the notes reach a map through its
-  item's description (Sprint 08).
+  item's description, which the publish door rewrites when the allow record
+  moves (D-328).
 - It is regenerable from its source version and is never edited by hand. The
   hand-made `__public` and `__upload` files of October are what this rule
   exists to end (CII-20, D-94).
@@ -179,7 +180,7 @@ second truth (D-321):
 | --- | --- |
 | The canonical write (`canopy/aws/s3.py`, run as `python -m canopy.cli canonical`), as the role `rewilding-canonical-writer` | write a version and move `current`, only after the gate allows at target `canonical`, sharing level `public`, because CloudFront makes `harvests/` readable by anyone (D-315); never delete (D-308). A dry run is the default and touches no AWS; `--write` takes one artifact at a time, with `--by` and `--reason` (D-316). A lineage holding a `custom` tier is refused until O-6 |
 | The canonical command's `--display`, as the same role | write display copies under a version, only after the gate allows (D-321) |
-| The publish door | push or reference display copies in ArcGIS (Sprint 08) |
+| The publish door (`canopy/expose/publish.py`, `python -m canopy.cli publish`) | reference display copies in ArcGIS by URL, reading the bucket only through CloudFront, so it needs no AWS credentials; never write the bucket (D-326). Pushing features into ArcGIS is not built |
 | ArcGIS, the explorer, DuckDB, the community kit | read by URL through CloudFront, from any origin; never write (D-310) |
 
 A write the gate has not allowed is refused by the writer itself, not by
@@ -192,6 +193,6 @@ convention (Sprint 07 test). An overwrite is refused by the bucket itself.
 | O-1 | How the public reaches files | Decided: CloudFront in front of a private bucket (D-302) |
 | O-2 | GeoParquet alone, or with GeoPackage copies | Decided: GeoParquet canonical, GeoJSON display copies, GeoPackage on request (D-303) |
 | O-3 | Referenced GeoJSON layers or Parquet feature layers for the explorer | Decided: referenced GeoJSON layers for December; a Parquet feature layer is a recorded read after (D-304) |
-| O-4 | Where the per-target identity record lives (manifest, a sidecar in the plot, or loam) | Sprint 08 |
-| O-5 | How an ArcGIS layer is updated in place: overwrite the source, or truncate and append | Sprint 08 |
+| O-4 | Where the per-target identity record lives | Decided: `plots/<plot>/publish/published.yml`, written by the door alone, each item naming the `sha256` and `allow` it shows, as `current` does; the targets beside it in `targets.yml` (D-327) |
+| O-5 | How an ArcGIS layer is updated in place | Decided: no features are updated, because none are stored. The door owns web map items: a new version moves the layer's URL and the description, a new allow record the description alone, each only from the state the record names (D-328) |
 | O-6 | How a version is withdrawn. A version stays readable forever and the writer can never remove one, yet Contract 1 says a withdrawn consent admits nothing from the day it is withdrawn. Withdrawal would need a person's own removal of the version, a tombstone at its key, and a CloudFront invalidation, recorded and done on the terms of the people the data describes (CARE, OCAP). Until it is decided, the write refuses any lineage holding a `custom` tier (D-315) | After delivery |
