@@ -192,6 +192,9 @@ def _format_step(frame, source_crs: str, as_text: list[str]) -> dict:
     import pyproj
     operation = ("no reprojection" if source_crs == WEB else
                  pyproj.Transformer.from_crs(source_crs, WEB, always_xy=True).description)
+    if "unavailable" in operation:
+        operation = (f"the operation pyproj {pyproj.__version__} chooses when it runs, "
+                     f"which it does not name beforehand")
     dates = (f"; dates and times written as ISO 8601 text, a missing one as null "
              f"({', '.join(as_text)})" if as_text else "")
     return {"step": "format_changed", "count": int(len(frame)), "detail": (
