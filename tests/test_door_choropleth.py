@@ -376,3 +376,79 @@ def test_the_command_refuses_a_choropleth_or_check_asked_wrongly(argv, said):
     parser = argparse.ArgumentParser()
     cli.register(parser.add_subparsers())
     assert said in cli._asked_wrongly(parser.parse_args(argv))
+
+
+# ── a portal that rewrites what it stores (D-349) ────────────────────────
+class SanitizingPortal(fakes.FakePortal):
+    """ArcGIS Online as read 2026-11-17: an item's description is stored with
+    the entities html.escape wrote decoded, &#x27; as '."""
+
+    def post(self, url, data=None, headers=None, timeout=None):
+        data = dict(data or {})
+        if "description" in data:
+            data["description"] = data["description"].replace("&#x27;", "'")
+        return super().post(url, data=data, headers=headers, timeout=timeout)
+
+
+def points(root, bucket, portal, **kw):
+    return fakes.run(root, bucket, portal, **kw)
+
+
+def test_the_door_records_the_description_as_the_portal_stores_it(tmp_path):
+    root, portal = fakes.garden(tmp_path), SanitizingPortal()
+    points(root, fakes.bucket(), portal)
+    entry = fakes.record(root)["targets"]["test"][fakes.ART]
+    stored = next(iter(portal.items.values()))["description"]
+    assert entry["description_seen_sha256"] == door.sha256_text(stored)
+    assert entry["description_seen_sha256"] != entry["description_sha256"]
+    [o] = points(root, fakes.bucket(), portal)
+    assert o.outcome == "unchanged"
+    [o] = points(root, fakes.bucket(sha=fakes.SHA2), portal)
+    assert o.outcome == "updated"
+    [o] = check(root, portal)
+    assert o.outcome == "as recorded"
+
+
+def _before_the_read_back(root):
+    import yaml
+    path = root / "plots" / PLOT / "publish" / "published.yml"
+    doc = yaml.safe_load(path.read_text())
+    for entries in doc["targets"].values():
+        for entry in entries.values():
+            entry.pop("description_seen_sha256", None)
+    path.write_text(yaml.safe_dump(doc))
+
+
+def test_an_item_written_before_the_read_back_is_checked_then_recorded(tmp_path):
+    root, portal = fakes.garden(tmp_path), SanitizingPortal()
+    points(root, fakes.bucket(), portal)
+    _before_the_read_back(root)
+    [o] = check(root, portal)
+    assert o.outcome == "differs" and any("not yet recorded" in line for line in o.lines)
+    [o] = points(root, fakes.bucket(), portal, write=False)
+    assert o.outcome == "would update" and any("as ArcGIS stores it" in line for line in o.lines)
+    before = len(portal.posts("/update")) + len(portal.posts("/share"))
+    [o] = points(root, fakes.bucket(), portal)
+    assert o.outcome == "updated"
+    assert len(portal.posts("/update")) + len(portal.posts("/share")) == before
+    assert fakes.record(root)["targets"]["test"][fakes.ART]["description_seen_sha256"]
+    [o] = check(root, portal)
+    assert o.outcome == "as recorded"
+
+
+def test_a_real_hand_edit_is_never_recorded_as_the_doors(tmp_path):
+    root, portal = fakes.garden(tmp_path), SanitizingPortal()
+    points(root, fakes.bucket(), portal)
+    _before_the_read_back(root)
+    next(iter(portal.items.values()))["description"] += "<p>someone's own words</p>"
+    [o] = points(root, fakes.bucket(), portal)
+    assert o.outcome == "refused" and any("changed by hand" in line for line in o.lines)
+    assert "description_seen_sha256" not in fakes.record(root)["targets"]["test"][fakes.ART]
+
+
+def test_an_old_item_that_owes_a_move_waits_for_its_record(tmp_path):
+    root, portal = fakes.garden(tmp_path), SanitizingPortal()
+    points(root, fakes.bucket(), portal)
+    _before_the_read_back(root)
+    [o] = points(root, fakes.bucket(sha=fakes.SHA2), portal)
+    assert o.outcome == "refused" and any("D-349" in line for line in o.lines)

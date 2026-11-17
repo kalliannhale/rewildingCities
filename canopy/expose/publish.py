@@ -46,6 +46,7 @@ when nothing is owed (DOORCHECK-1). ~
 
 from __future__ import annotations
 
+import html
 import json
 import os
 import tempfile
@@ -306,6 +307,8 @@ def owed(entry: dict | None, copy: dict, built, target, adopt: str | None) -> st
         return "describe"
     if entry.get("sharing") != target.sharing or list(entry.get("groups") or []) != list(target.groups):
         return "share"
+    if not entry.get("description_seen_sha256"):
+        return "reseen"
     return "unchanged"
 
 
@@ -316,6 +319,7 @@ _SAY = {"create": "owed: a new web map in folder '{folder}'",
         "move": "owed: the layer moved from {old} to {new}, and the description",
         "describe": "owed: the description alone (a new allow record or new words)",
         "share": "owed: sharing at {sharing}",
+        "reseen": "owed: recording the description as ArcGIS stores it, which it rewrites (D-349)",
         "unchanged": "nothing owed"}
 
 
@@ -329,7 +333,32 @@ def _versions(entry: dict | None, copy: dict) -> tuple[str, str]:
             say(copy["sha256"], copy.get("outline")))
 
 
-def _check_live(kind, session, target, entry: dict, replace: bool) -> str | None:
+def described_as_recorded(stored: str, entry: dict, built=None) -> bool:
+    """whether an item's description is the one the door wrote (D-349).
+    ArcGIS Online rewrites a description as it saves it: every &#x27; that
+    html.escape wrote came back as ' (read 2026-11-17), so the text it stores is
+    not the bytes the door sent. so the door reads each description back after
+    it writes and records that hash, description_seen_sha256, and compares to
+    it. an item written before the read-back has only the sent hash: it is as
+    recorded when its stored text is the sent text, or when `built` (the door's
+    description rebuilt from the same records) hashes to what was sent and
+    differs from the stored text only in how characters are written."""
+    seen = entry.get("description_seen_sha256")
+    if seen:
+        return sha256_text(stored) == seen
+    if sha256_text(stored) == entry.get("description_sha256"):
+        return True
+    return (built is not None and sha256_text(built.description) == entry.get("description_sha256")
+            and html.unescape(stored) == html.unescape(built.description))
+
+
+def _seen(kind, session, item_id: str) -> str | None:
+    """the hash of the description as the portal stores it, read back."""
+    state = kind.read(session, item_id)
+    return sha256_text(state["description"]) if state else None
+
+
+def _check_live(kind, session, target, entry: dict, replace: bool, built=None) -> str | None:
     """the item as it stands, against the record. returns 'create' when a missing
     item is to be replaced, None when the item is as the door left it."""
     state = kind.read(session, entry["item_id"])
@@ -345,7 +374,13 @@ def _check_live(kind, session, target, entry: dict, replace: bool) -> str | None
     if live != entry["url"]:
         raise PublishRefusal(f"the item's layer was changed by hand: it reads {live}",
                              "set it back, or adopt the item again")
-    if sha256_text(state["description"]) != entry["description_sha256"]:
+    if not described_as_recorded(state["description"], entry, built):
+        if not entry.get("description_seen_sha256") and built is None:
+            raise PublishRefusal(
+                "the item was written before the door read descriptions back, and its "
+                "stored description cannot be told from the sent one now that the records "
+                "have moved", "publish it with --write once at the version it shows, which "
+                "records how ArcGIS stores it (D-349); or undo any edit, then publish")
         raise PublishRefusal("the item's description was changed by hand; it is the "
                              "door's, because it carries the notes (D-328)",
                              "undo the edit in ArcGIS, then publish again")
@@ -463,7 +498,8 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
 
             layer_id = built.layer_id
             if entry is not None:
-                if _check_live(kind, session, target, entry, replace) == "create":
+                if _check_live(kind, session, target, entry, replace,
+                               built if due in ("reseen", "share") else None) == "create":
                     due, entry_prior = "create", entry
                     o.lines.append(f"item {entry['item_id']} is gone; making a new one (--replace)")
                 else:
@@ -481,6 +517,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
                 record["targets"].setdefault(tid, {})[key] = provisional
                 write_record(plot_dir, record)
                 kind.share(session, target, item_id)
+                seen = _seen(kind, session, item_id)
                 o.outcome = "published"
             elif due == "adopt":
                 state = kind.read(session, adopt)
@@ -499,6 +536,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
                             data=kind.moved(state["data"], layer_id, built))
                 kind.share(session, target, adopt)
                 item_id = adopt
+                seen = _seen(kind, session, item_id)
                 o.outcome = "published"
             else:
                 item_id = entry["item_id"]
@@ -513,13 +551,16 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
                                 data=kind.moved(state["data"], layer_id, built))
                 elif due == "describe":
                     kind.update(session, target, item_id, built, data=None)
-                kind.share(session, target, item_id)
+                if due != "reseen":
+                    kind.share(session, target, item_id)
+                seen = _seen(kind, session, item_id)
                 o.outcome = "updated"
 
             rest = kind.rest_version(session) if hasattr(kind, "rest_version") else None
-            record["targets"].setdefault(tid, {})[key] = _entry(
-                copy, target, built, item_id, layer_id, gate_record, by, reason,
-                entry_prior, rest, when)
+            final = _entry(copy, target, built, item_id, layer_id, gate_record, by, reason,
+                           entry_prior, rest, when)
+            final["description_seen_sha256"] = seen
+            record["targets"].setdefault(tid, {})[key] = final
             write_record(plot_dir, record)
             o.lines.append(f"item {item_id}: {target.portal}/home/item.html?id={item_id}")
         except PublishRefusal as e:
@@ -584,8 +625,13 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                     live = kind.layer_url(state["data"], entry["layer_id"])
                     if live != entry["url"]:
                         found.append(f"its layer reads {live}, not the recorded {entry['url']}")
-                    if sha256_text(state["description"]) != entry.get("description_sha256"):
-                        found.append("its description was changed by hand")
+                    if not described_as_recorded(state["description"], entry):
+                        found.append(
+                            "its description was changed by hand" if entry.get("description_seen_sha256")
+                            else "its description as ArcGIS stores it is not yet recorded (it was "
+                                 "written before the door read descriptions back): publish it with "
+                                 "--write once, which checks it against the door's own text and "
+                                 "records it (D-349)")
                     shared = _access_of(entry.get("sharing"))
                     if state.get("access") != shared:
                         found.append(f"it is shared '{state.get('access')}', the record says "
