@@ -4,6 +4,7 @@ targets:
   library:
     broadband_standardize_standings/outline_counties_outline/cii_broadband:
       allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+      description_seen_sha256: 27c2cbb5f509200b810a5b9df4bd49f22ebae568ff10d4ec613deb9a0008512c
       description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
       display: outline_counties_outline_ee88e4f41db3_web_25m
       door_version: 1.0.0
@@ -21,7 +22,7 @@ targets:
       kind: arcgis_webmap
       layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
       markers: false
-      moved_at: '2026-11-17T09:02:26.793882+00:00'
+      moved_at: '2026-11-17T09:23:57.456417+00:00'
       moved_by: Kalli A. Hale
       outline:
         allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
@@ -29,8 +30,14 @@ targets:
         sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
       owner: RDS_NU
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: broadband's county standing as a choropleth
+      previous:
+        allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+        outline:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+        sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
+      reason: record how ArcGIS stores its description (D-349)
       renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
       rest_version: '2026.3'
       sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
@@ -38,6 +45,7 @@ targets:
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/broadband_standardize_standings/versions/fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880/display/outline_counties_outline_ee88e4f41db3_web_25m.geojson
     clerk_offices_points_points:
       allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
+      description_seen_sha256: 383dd4fda7846fd0198afb4dd176dc0fbdf7869f14c41d30db0e0f594b5813b3
       description_sha256: 986f5f770ef9e0ce9cb60b45ab100475de29a5d0c5503ccf4e64a2ac9ae54411
       display: web
       door_version: 1.0.0
@@ -52,12 +60,14 @@ targets:
       item_id: cac536bb95a2415086ea53f4dbe52af3
       kind: arcgis_webmap
       layer_id: rewilding-clerk_offices_points_points
-      moved_at: '2026-11-17T09:03:01.340200+00:00'
+      moved_at: '2026-11-17T09:24:28.173603+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the clerk offices for the library's org
+      previous:
+        allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
+        sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
+      reason: record how ArcGIS stores its description (D-349)
       rest_version: '2026.3'
       sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
       sharing: organization
@@ -65,6 +75,7 @@ targets:
   test:
     broadband_standardize_standings/outline_counties_outline/cii_broadband:
       allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+      description_seen_sha256: 27c2cbb5f509200b810a5b9df4bd49f22ebae568ff10d4ec613deb9a0008512c
       description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
       display: outline_counties_outline_ee88e4f41db3_web_25m
       door_version: 1.0.0
@@ -78,11 +89,11 @@ targets:
         target: test
       groups: []
       indicator: cii_broadband
-      item_id: dd56fefa89444eca927a718095145a79
+      item_id: 8bc720015fc5458e91c05cd899be8ff9
       kind: arcgis_webmap
       layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
       markers: false
-      moved_at: '2026-11-17T09:02:26.793882+00:00'
+      moved_at: '2026-11-17T09:21:31.628046+00:00'
       moved_by: Kalli A. Hale
       outline:
         allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
@@ -90,8 +101,14 @@ targets:
         sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
       owner: RDS_NU
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: broadband's county standing as a choropleth
+      previous:
+        allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
+        outline:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+        sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
+      reason: remade after it was deleted
       renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
       rest_version: '2026.3'
       sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
@@ -99,6 +116,7 @@ targets:
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/broadband_standardize_standings/versions/fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880/display/outline_counties_outline_ee88e4f41db3_web_25m.geojson
     carriers_counts_values/outline_towns_outline/news_outlets_per_1000:
       allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+      description_seen_sha256: 4bd353a6bbe04c272e0e33f7b06972d41e5cbe3a71277efd07d84c93d65e51c1
       description_sha256: 906d87c6d58f1764faaf5c8d5490b14d93178b539facf491e169a0c5179ab048
       display: outline_towns_outline_eda591d0d3ba_markers
       door_version: 1.0.0
@@ -118,7 +136,7 @@ targets:
       kind: arcgis_webmap
       layer_id: rewilding-carriers_counts_values-outline_towns_outline-news_outlets_per_1000
       markers: true
-      moved_at: '2026-11-17T09:02:46.098450+00:00'
+      moved_at: '2026-11-17T09:24:13.288009+00:00'
       moved_by: Kalli A. Hale
       outline:
         allow: a19b45afae024ee736c45d3b31116a1c0776e2e4799f6e03e035e67c49dca070
@@ -126,8 +144,14 @@ targets:
         sha256: eda591d0d3baf0d9dac6197f39a4aa1558f84f8c10b1b61a5162c251871bd285
       owner: RDS_NU
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: local news outlets by town, as markers
+      previous:
+        allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+        outline:
+          allow: a19b45afae024ee736c45d3b31116a1c0776e2e4799f6e03e035e67c49dca070
+          harvest: outline_towns_outline
+          sha256: eda591d0d3baf0d9dac6197f39a4aa1558f84f8c10b1b61a5162c251871bd285
+        sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
+      reason: record how ArcGIS stores its description (D-349)
       renderer_sha256: 98c3d50fc3ef6181db8781c3553637d18eb2cd19fd92ef72496fe7bfd22f358b
       rest_version: '2026.3'
       sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
@@ -135,6 +159,7 @@ targets:
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/carriers_counts_values/versions/33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83/display/outline_towns_outline_eda591d0d3ba_markers.geojson
     clerk_offices_points_points:
       allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
+      description_seen_sha256: 383dd4fda7846fd0198afb4dd176dc0fbdf7869f14c41d30db0e0f594b5813b3
       description_sha256: 986f5f770ef9e0ce9cb60b45ab100475de29a5d0c5503ccf4e64a2ac9ae54411
       display: web
       door_version: 1.0.0
@@ -146,15 +171,17 @@ targets:
         sharing_level: private
         target: test
       groups: []
-      item_id: 143923c7e8174f709a87425f02c43f82
+      item_id: 0c0a156a19424f5387407f7b0a31360e
       kind: arcgis_webmap
       layer_id: rewilding-clerk_offices_points_points
-      moved_at: '2026-11-17T07:37:18.281868+00:00'
+      moved_at: '2026-11-17T09:21:20.863413+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the door's first item
+      previous:
+        allow: 33ce1ddb61dc53f17dbc8b6ba975fbad8779676390427c4b79f7a2067e5ecb19
+        sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
+      reason: remade after it was deleted
       rest_version: '2026.3'
       sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
       sharing: private
