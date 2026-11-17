@@ -5,39 +5,61 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-17, at Sprint 08's first hand-off. Session 1 held the door's consultation and zip 8a: the publish door is built and run, and its first item is a web map owned by RDS_NU that reads the clerk offices' display copy by URL. A second push owed nothing. Sprint 08 stays open: its choropleth half, a second target, and zip 3b's list are zip 8b's. The plan is in Starting the next session.
+**Updated:** 2026-11-17, at Sprint 08's close. Session 2 built and ran zip 8b with three fixes (8b2, 8c and two inline): the choropleth, joined copies, markers, local dry runs, two guards on what may be written, the door with two parents, `publish --check`, and the door reading descriptions back. Sprint 08 is closed against its own tab's done-when: broadband pushed twice to test left one layer, one layer each in test and library, each naming its canonical hash; the check reads 5 of 5 items as recorded. Next is Sprint 09, the explorer: see Starting the next session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Sprint 08's: c67a67a (zip 8a, the publish door, D-326 to D-334), then this hand-off's commit. Sprint 07's commits: 7dcd3f0 (zip 7a, the stack), a000d62 (the old stacks removed; its message names a ledger block it does not hold), 7158e6f (7a's ledger block), then session 2's one commit: zip 7b with zip7b2 and zip7b3, its ledger block, this page and Sprint 07's progress report. Sprint 06's last: 1497bfa, 106f721, 02e9b87.
-- Tests: `python -m pytest -q -rs | tail -3`. 1,332 passed at zip 8a: 1,313 less the retired tests/test_publish_latch.py's 15, plus tests/test_publish_door.py (22, a fake portal that keeps items in memory and records every call), tests/test_webmap_json.py (7) and tests/test_map_stays_local.py (5). New in Sprint 07: tests/test_canonical_write.py (42 tests, a fake client that keeps the bucket's overwrite lock and fails on any removal; one test converts a real GeoJSON with geopandas) and tests/test_display_copy.py (24 tests, five drawing real geometry: two NAD83 towns keep one shared edge, the same bytes twice, overlapping towns refused, points simplify nothing, dates written as text). `-q` prints a dot per test; `-rs` lists skips only, with reasons. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
-- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes, a progress line every 50, into plots/maine/.data/place_profile_profiles.json and its receipt; `--place AUTHORITY:CODE` prints one and writes nothing. The build reads 21 receipts and withholds none at public (session 16); the outlet counts, the clerk counts, the clerk office points and place_profile_profiles all judge allow.
-- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table points to the ledger. Its Sprint 08 tab predates D-301 to D-334 and cites D-67 and D-71 where it means MP-67 and MP-71; this page's Sprint 08 section says what is true. Check its claims against this page and the code.
-- Next decision ID: D-335. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
-- **Sprint 07 is closed** (session 2, after a reopening): the stack (zip 7a, D-301 to D-311), the canonical write (zip 7b, D-312 to D-320) and display copies (zip 7c, D-321 to D-325). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
-- **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo, since the bucket's name holds the account id; the write assumes rewilding-canonical-writer through the rewilding-writer profile in ~/.aws/config. CloudFront: dvk5mp17wovwb.cloudfront.net. `terraform output` in canopy/terraform prints the rest.
-- **Canonical objects written:** clerk_offices_points_points, version 0b91cb0caae7, allow record 33ce1ddb61dc, 392 offices, with its display copy `web` (2026-11-17); outline_towns_outline, version eda591d0d3ba, allow record a19b45afae02, 528 towns, its display copy refused until COVER-1. The dry run judges 37 of Maine's 58 receipts may leave. Every write is public and permanent: dry-run first, write one artifact at a time, read the pointer and the data back after.
-- **The first web map** (Kalli's ArcGIS Online, 2026-11-17): item 5fcd410b007a49aaa279e6a2b548f507, made by hand in Map Viewer by Add layer from URL (D-325). It sits outside the door's record: the door made its own (ADOPT-1, answered). Experience Builder is untried.
-- **The door's first item** (2026-11-17): 143923c7e8174f709a87425f02c43f82 in nu.maps.arcgis.com, owned by RDS_NU, folder rewildingCities test, private, reading clerk_offices_points_points at version 0b91cb0caae7 by URL; recorded in plots/maine/publish/published.yml. Kalli has explicit permission to publish as RDS_NU for this project; its password is typed at the door's prompt and never stored, logged or committed.
-- **Sprint 06 is closed** (Kalli, session 16), its order below. Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check. Progress: field-guide/docs/progress/information/sprint-06.md.
-- **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code; the library's account is set aside.
-- On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
-- HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
-- The Section 203 release lives at plots/maine/.data/sec203_puf_2021_12_01.zip (sha256 2d6b21e9...22d6, cp1252 though documented as ASCII) and the PIAAC Skills Map workbook at plots/maine/.data/SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx (sha256 b6745055...34b5, downloaded 2026-11-15). Both are U.S. government works.
-- The Census key is set in the rewilding env (`conda env config vars`), loaded on activate; it was pasted into chat and shell history on 2026-11-16, so it is replaced (KEY-1).
-- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Since D-298 and D-299 the list is factual_directory and the 911 file maine_geolibrary_public, both public; the courtesy ask to the GeoLibrary goes in the wrap-up. The 911 file holds home addresses; it never leaves .data, and the door publishes canonical harvests only, never a manifest dataset (a test to write in zip 8b).
+- Branch main, pushed. Confirm with `git log --oneline -15` and `git status -sb`. Sprint 08's commits: c67a67a (zip 8a, D-326 to D-334), 060bcdd (its hand-off), then session 2's: 1ba3098 (zip 8b and 8b2, D-335 to D-347), fc773e3 (rule 11 gains joined and marked, D-348), 2ba91e7 (pyproj's unnamed operation said in words), 07111bf (the run's record), 98e4295 (zip 8c, D-349), d87f324 (the record agrees with ArcGIS), then this hand-off's commit. Sprint 07's last: 481263c; Sprint 06's last: 1497bfa, 106f721, 02e9b87.
+- Tests: `python -m pytest -q -rs | tail -3`. **1,415 passed** at zip 8c: zip 8a's 1,332, plus tests/test_choropleth.py (15), test_joined_copy.py (24, 3 drawing real geometry), test_door_choropleth.py (32, a fake portal that rewrites descriptions as ArcGIS does), test_receipt_names.py (10), test_no_threshold.py (2); test_map_indicators.py rewritten for the keyed join. The full suite runs about three minutes; a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations, not ours.
+- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes into plots/maine/.data/place_profile_profiles.json. NOTHR-1's fix changes what a no-threshold entry with no value says, so the profiles are **rebuilt before they are written canonically** (Sprint 09).
+- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its Sprint 08 tab is marked done at this hand-off. Check its claims against this page and the code.
+- Next decision ID: **D-350**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
+- **Sprint 08 is closed** (session 2). Progress: field-guide/docs/progress/infrastructure/sprint-08.md. **Sprint 07 is closed** (session 2 of Sprint 07). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
+- **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo; the write assumes rewilding-canonical-writer through the rewilding-writer profile. CloudFront: dvk5mp17wovwb.cloudfront.net.
+- **Canonical objects written** (every write public and permanent; dry-run first, one artifact at a time, read the pointer and data back after):
 
-## Sprint 08 ~ the publish door (open)
+| Harvest | Version | Allow record | Rows | Display copies |
+| --- | --- | --- | --- | --- |
+| clerk_offices_points_points | 0b91cb0caae7 | 33ce1ddb61dc | 392 | `web` |
+| outline_towns_outline | eda591d0d3ba | a19b45afae02 | 528 | none of its own (COVER-1) |
+| broadband_standardize_standings | fd9fdf0a4a0a | a5f55ad0b26b | 3,222 | `outline_counties_outline_ee88e4f41db3_web_25m` (sha 10e23ac0..., 8.6 MB) |
+| outline_counties_outline | ee88e4f41db3 | 513d0d01678e | 16 | none of its own |
+| county_count_derive_values | fe7922079828 | f278d116b315 | 16 | none (no honest map yet, D-347) |
+| carriers_counts_values | 33d9b4d7b9b5 | 45a517f1117a | 546 | `outline_towns_outline_eda591d0d3ba_markers` (sha c8b87ff3..., 0.6 MB) |
+
+- **The door's items** (nu.maps.arcgis.com, owned by RDS_NU; recorded in plots/maine/publish/published.yml; `publish maine --check` read 5 of 5 as recorded on 2026-11-17):
+
+| Target | Record key | Item | Sharing |
+| --- | --- | --- | --- |
+| test (folder rewildingCities test) | clerk_offices_points_points | 0c0a156a19424f5387407f7b0a31360e | private |
+| test | broadband_standardize_standings/outline_counties_outline/cii_broadband | 8bc720015fc5458e91c05cd899be8ff9 | private |
+| test | carriers_counts_values/outline_towns_outline/news_outlets_per_1000 | d4f7c29e7c5f40fd9b2e5bfb97b0a22b | private |
+| library (folder press-forward) | broadband_standardize_standings/outline_counties_outline/cii_broadband | 2ebb4f3e97bc4f86ad9af43f016cacc5 | organization |
+| library | clerk_offices_points_points | cac536bb95a2415086ea53f4dbe52af3 | organization |
+
+  The door's first item, 143923c7 (zip 8a), and broadband's first test item, dd56fefa, were found deleted in ArcGIS by the first `--check` (who deleted them is not recorded; Kalli went ahead with `--replace`) and remade; each new entry keeps the old in `previous`. **An item id is what an Experience Builder app holds, so a door item is never deleted by hand once anything is built on it** (Sprint 09).
+- The hand-made web map 5fcd410b007a49aaa279e6a2b548f507 (D-325) sits outside the door's record. Experience Builder is untried.
+- Kalli has explicit permission to publish as RDS_NU for this project; its password is typed at the door's prompt and never stored, logged or committed.
+- **Sprint 06 is closed** (Kalli, session 16). Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check.
+- **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code.
+- On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
+- HRSA's sites copy, the Section 203 release, the PIAAC workbook, the clerk list and the 911 file live in plots/maine/.data as before (sha256s in the manifest). The 911 file holds home addresses and never leaves .data; since D-337 the canonical write refuses any receipt whose data file is a manifest dataset's cache, and a test walks every plot.
+- Retired receipts: plots/maine/.data/retired/ holds derive_values and standardize_standings, the broadband experiment's receipts from before its steps were renamed (D-336). Moved, never deleted: loam unions every receipt left in .envelopes.
+- The Census key is set in the rewilding env and is replaced (KEY-1).
+
+## Sprint 08 ~ the publish door (closed in session 2)
 
 **Goal:** one door publishes every result: through the gate, from the canonical store, to each target a plot declares, updating in place and carrying its provenance.
 
-**Zip 8a, the door (session 1, D-326 to D-334).** `python -m canopy.cli publish <plot> <artifact> --to <target>`, a dry run unless `--write` with `--by` and `--reason`; `--to` repeats; `--adopt <item>`, `--replace`, `--display` (D-326). It reads the harvest's `current`, allow record, receipt and display copy through CloudFront and needs no AWS credentials. Targets are declared by each plot in plots/<plot>/publish/targets.yml, read loudly; the door alone writes published.yml beside it, each item naming the sha256 and allow record it shows (D-327). The door owns, in a web map item, only the layer's URL and fields, the description (the notes travel in it) and the credits; a person's style is kept on every move. A new version moves the URL and the description, a new allow record the description alone; a missing item waits for --replace, a hand-edited URL or description is refused; a new item is recorded unshared before it is shared (D-328). REST through requests, no Esri package; generateToken with a prompted password, then community/self must name the target's owner (D-329). Institutional owners; a personal one is warned about on every run (D-330). The web map follows the specification 2.38: fields typed from the copy's values, a plain popup, the copy's bbox as the extent; the description holds no time, so the same records write the same words (D-333). The publish route assignment's F3, F7, F8, R1 to R6 and R9 were not found and are not reconstructed (D-334). `map --publish` signposts the door and exits 2; visuals.py's upload latch and introspect's arcgis row are gone.
+**Done when, met (session 2):** broadband published twice to test left one layer (`unchanged`, no sign-in); one layer in each of test and library; each description names its canonical version's sha256. `publish maine --check` then read all five recorded items as recorded.
 
-**Decided, built in zip 8b (D-331):** choropleths by `canonical <plot> <table> --display --join <outline>` (not built yet), joining (unit_authority, unit_code) to (authority, code) in one canopy/choropleth.py that map.py imports; one wide copy per table version and outline version, every indicator's columns, empty kept empty, derived_from both, two lineage branches, the join's counts; the door colours one indicator per map with a classBreaks renderer: standings in fixed national quintiles, other values by a declared standard or in equal steps said so, no value hatched and labelled.
+**Zip 8a, the door (session 1, D-326 to D-334).** `python -m canopy.cli publish <plot> <artifact> --to <target>`, a dry run unless `--write` with `--by` and `--reason`; targets declared by each plot in plots/<plot>/publish/targets.yml; the record in published.yml beside it; REST through requests, no Esri package; generateToken with a prompted password, then community/self must name the owner; the door owns only the layer's URL and fields, the description and the credits.
 
-**The done-when, as it stands:** one item made by the door, naming its version, allow record and URL: done (143923c7). A second push leaves one item: done (unchanged, nothing owed, no sign-in). Two targets, one item each: waits on a `library` target (folder, sharing, groups). Broadband as a choropleth: zip 8b, then the canonical writes of county_standardize_standings (1b9c5a6e8d71), county_count_derive_values (fe7922079828) and outline_counties_outline (ee88e4f41db3), all three judged may-leave at public in session 1 and not yet written.
+**Zip 8b, the second half (session 2, D-335 to D-347, with 8b2).** canopy/choropleth.py holds the one keyed join, (unit_authority, unit_code) to (authority, code), which map.py imports (LAYER-1 closed). `canonical <plot> <table> --display --join <outline>` draws one wide copy under the table's version, named for the outline's version, with both parents in its envelope; `--markers` draws one point inside each place, so COVER-1 never binds markers; `--local` draws from the bytes a write would send, with no AWS, and its sha256 must match the bucket draw's. The gate reads the outline's lineage for rule 10. The door publishes a choropleth with `--join --indicator [--markers]`, keys its record `<table>/<outline>/<indicator>`, owes a move when either parent moves, checks notes and credits against both allow records, and owns the renderer (standings in fifths of the named reference population; counts as markers in equal steps with "none listed" its own class; no value hatched). Two guards on the canonical write: an orphan receipt is refused (D-335), and so is a receipt whose data file is a manifest dataset (D-337). The library target: press-forward, organization, no groups (D-346). DOORSAY-1 and DOORCHECK-1 closed.
 
-**Confirmed against a real portal (session 1):** generateToken, community/self, a user's folders, createFolder, addItem and Share. Update is not yet exercised; the first version move checks it.
+**Found while running (session 2):** state.md had labelled two county receipts wrongly (1b9c5a6e8d71 is rent burden and vehicle access; fe7922079828 is households without broadband); broadband's standing was `standardize_standings`, a name the method's recipe gives every composed experiment, so its steps were renamed (D-336) and two guards added. Rule 11's closed set lacked `joined` and `marked` (D-348). pyproj's placeholder "unavailable until proj_trans is called" was written into copies' records, now said in words. ArcGIS Online decodes `&#x27;` in stored descriptions, so the door's sent-text hash called every item hand-edited until zip 8c read descriptions back (D-349).
+
+**Not done, and why:** MCF and partner targets (build item 2): none declared, because neither has given a portal and an owning account; a target is a few lines of targets.yml when one does. F3, F7 and F8 of the publish route assignment were never found and are not reconstructed (D-334). A real `update` call has never been answered by ArcGIS: every item so far was made by addItem (UPDATE-1).
 
 ## Sprint 07 ~ storage outside AGOL (closed)
 
@@ -343,9 +365,38 @@ is fixed.
 | D-324 | Coverage simplification in EPSG:26919 (25 m default); invalid coverage or emptied geometry refused; points count 0; six decimals; EPSG:4326; dates as ISO text, named |
 | D-325 | In ArcGIS Online a copy is referenced by URL through Map Viewer and saved in a web map; the Content route imports and is not used |
 
+## Decided in Sprint 08
+
+| ID | One line |
+| --- | --- |
+| D-326 | One door, `python -m canopy.cli publish`, a dry run unless --write with --by and --reason; --to repeats; --adopt, --replace, --display; `map --publish` signposts it |
+| D-327 | Targets declared by each plot in plots/<plot>/publish/targets.yml, read loudly; the door alone writes published.yml beside it, each item naming the sha256 and allow record it shows |
+| D-328 | The door owns only the layer's URL and fields, the description (the notes travel in it) and the credits; a person's style kept; a missing item waits for --replace; a hand-edited URL or description refused |
+| D-329 | REST through requests, no Esri package; generateToken with a prompted password, then community/self must name the target's owner |
+| D-330 | Institutional owners; a personal one warned about on every run (R7) |
+| D-331 | Choropleths by `canonical --display --join <outline>`, one wide copy per table and outline version, coloured by the door's classBreaks renderer |
+| D-332 | (zip 8a; see the ledger) |
+| D-333 | The web map follows the specification 2.38; fields typed from the copy's values; the description holds no time, so the same records write the same words |
+| D-334 | F3, F7, F8 and R1 to R6, R9 of the publish route assignment were not found and are not reconstructed |
+| D-335 | A receipt that names its run is written only if that run declares the step and output naming it; a test holds one receipt name per run per plot, known pairs named |
+| D-336 | The broadband experiment's steps renamed; its harvest broadband_standardize_standings; the old receipts retired to .data/retired |
+| D-337 | The canonical write never sends a manifest dataset's cached file: a validate step's receipt is its fetched source (validate_counties_checked, validate_towns_checked) |
+| D-338 | canopy/choropleth.py: the keyed join, wide, every row counted by declared widths; map.py imports it; LAYER-1 closed |
+| D-339 | A joined copy lives under the table's version, named for the outline's; joined_to names the outline whole; both chains under branches table and outline; row notes from drawn places |
+| D-340 | Markers: one point on each place's surface in EPSG:26919, nothing simplified |
+| D-341 | `--local`: a copy from the bytes a write would send, no AWS, never written; its sha256 must equal the bucket draw's |
+| D-342 | Rule 10 reads joined_to.lineage; gate_version unchanged, no allow record moves; Contract 1 at 0.8 |
+| D-343 | The door's choropleth: two parents owed, notes checked and credits taken from both allow records, key <table>/<outline>/<indicator> |
+| D-344 | A choropleth's renderer is the door's: fifths, equal-step markers, hatched gaps; a hand restyle put back on a move and said |
+| D-345 | DOORSAY-1: plan lines read "owed: ..."; DOORCHECK-1: `publish <plot> --check` |
+| D-346 | The library target: press-forward, organization, no groups (Kalli) |
+| D-347 | 8b publishes broadband's standing only; the count waits for an honest map; zero towns drawn; CARRY-1 and EDGE-NOTE-1 to Sprint 09; OUT-REG-1 and PROF-1 after delivery |
+| D-348 | Rule 11's closed set gains joined and marked; a test holds every step display.py records to the schema's set |
+| D-349 | The door reads each item back after it writes and records description_seen_sha256; an older item owes "reseen", verified against the door's own rebuilt text |
+
 ## Contracts
 
-field-guide/docs/contracts/: 1 tiers and the gate 0.6 (the canonical write as an exit, D-314, D-315); 2 canonical objects 0.3 (D-312 to D-324; open: O-4, O-5 for Sprint 08, O-6 after delivery); 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.4 (D-281, carrying D-258, D-263, D-270 to D-293).
+field-guide/docs/contracts/: 1 tiers and the gate 0.8 (a copy with two parents, D-342, D-343); 2 canonical objects 0.5 (joined copies, markers, local dry runs, what may be written at all: sections 4a and 4b); 3 geography graph 1.0 (the grove teammate's review owed; CON3-2); 4 place profile 0.4.
 
 ## Where invariants are held
 
@@ -450,6 +501,16 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.6 (the canonical write as an
 | A display copy records every change, its points' simplification included, and the gate judges it | canopy/aws/display.py; tests/test_display_copy.py (D-323, D-324) |
 | Neighbouring polygons keep one shared edge; an invalid coverage or a vanished geometry is refused | display.draw; tests/test_display_copy.py (D-324) |
 | A display name never gets new bytes | s3.write_display; tests/test_display_copy.py (D-322) |
+| A long-form table joins a place only by (authority, code), every row counted, a duplicate, keyless place or clash refused | canopy/choropleth.py; tests/test_choropleth.py (D-338) |
+| A joined copy names both parents, lives under the table's version and is named for the outline's | display.joined_envelope, s3.prepare_display; tests/test_joined_copy.py (D-339) |
+| A local copy can never be written | s3.write_display; tests/test_joined_copy.py (D-341) |
+| Rule 10 binds a joined copy's outline as it binds its table | gate.lineage_datasets; tests/test_joined_copy.py (D-342) |
+| Every publication step a copy records is in rule 11's closed set | seeds/schemas/provenance.schema.json; tests/test_joined_copy.py (D-348) |
+| No two runs of a plot write one receipt name, but the named pairs; an orphan is never written | tests/test_receipt_names.py, s3.held_to_run (D-335) |
+| A fetched source never leaves through a receipt | s3.source_file, manifest_dataset_at; tests/test_receipt_names.py (D-337) |
+| The door owes a move when either parent moves; notes and credits come from both allow records | canopy/expose/publish.py; tests/test_door_choropleth.py (D-343) |
+| A description is compared as the portal stores it | publish.described_as_recorded; tests/test_door_choropleth.py (D-349) |
+| `--check` writes nothing | publish.check; tests/test_door_choropleth.py (D-345) |
 
 ## Open items
 
@@ -459,22 +520,21 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
-| COVER-1 | The towns outline is not a valid coverage: Gray (2300528870) and Windham (2300586025) disagree along about 75 m near 43.8457 N, 70.3746 W, neither overlapping, each valid alone. Hypothesis, not a finding: Little Sebago Lake's shore after water was clipped (D-142). Repair in build_place_outlines, then a new version of the towns; their display copy and every choropleth on them wait for it. Before Sprint 08's choropleths |
+| COVER-1 | The towns outline is not a valid coverage (Gray and Windham, about 75 m near 43.8457 N, 70.3746 W); the counties are (session 2). Blocks the explorer's town lens and any town choropleth; markers never need it. Repair in build_place_outlines, then a new towns version |
+| GJSON-1, D-157 | GJSON-1 still bounds any reader of the state outline; D-157's notes travel in the door's descriptions |
+| RAMP-1 | The Maine plan says darker always means harder access; the door's fifths draw darker as the better standing (D-344). Reverse the ramp before Sprint 09's maps, and make a renderer change owed, since owed() compares no renderer today |
+| UPDATE-1 | ArcGIS has never answered the door's update call: every item was made by addItem, and "reseen" wrote the record only. The first real move (a version, an allow record, RAMP-1) is its test |
+| SIZE-2 | broadband's counties copy is 8.6 MB (346,367 vertices, mostly coastline); Map Viewer draws it in the browser. If it loads slowly, `--tolerance 100` draws `..._web_100m` and `publish --display` points the map at it |
+| MANIFEST-2 | sows reports available_but_missing for cii_2026_published and county_locations_2024; nothing in 8b read them. Read whether they predate session 2 |
 | OUTCONF-1 | Before named outlets publish (counts already may): Kalli confirms the Claude-read reviews still in the seed (read_by): the Castine Patriot and the Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Peaks Islander still publishes; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Cision's reads left with Cision (D-294). With the makers' word on Easton's and LNC's lists, named outlets move their tiers and terms (D-297, D-299) |
 | WATERFRONT-1 | The Working Waterfront's reading (Rockland, where the Island Institute makes it) waits for a town review naming Rockland's code; until then it is listed no_town_given |
 | TRIBE-10 | The clerk note is carrier_seen_on_nations_land (Kalli's draft); the state names two nations' offices as voting districts, and the 911 file spells Passamaquoddy as Pasamaquoddy: both shown only on the nations' terms |
 | OWN-1, SRC-4 | OWN-1: ownership concentration exists (Kalli, session 12); confirm against the ledger's OWN-1 and close it. SRC-4 narrowed to named outlets (D-299, D-300): Jo Easton's and Local News Catalyst's word, asked in the wrap-up (to Molly Meller or with the professor's delivery package) |
 | P-6 | The FCC benchmark, with 7b: 100/20 terrestrial is declared (D-271); the values wait |
-| CARRY-1 | loam's carriers view carries only feature_id, name and coordinates (graph.py, _points_sql): a point's adjectives (seasonal, look_alike, setting, flags) and a count's context_note never reach the map. One generic pass-through, for the toggles and the notes |
 | Tiers | Declared in session 16 for the outlet and clerk types (D-297); still none: outlet_disagreements and owner_crosswalk, with NOTE-3, D-173's review and TIERREAD-1 |
-| EDGE-NOTE-1 | located_in_edges receipts do not name their rows' notes, so the libraries', schools' and health centers' edges fail rule 9: the carriers map cannot leave until build_located_in writes row_context_notes (D-291's twin) |
 | FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
 | SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration |
-| LAYER-1, GJSON-1, D-157 | LAYER-1 closes with D-331's keyed join (zip 8b); GJSON-1 still bounds any reader of the state outline; D-157's notes now travel in the door's descriptions |
-| DOORSAY-1 | After a write the door still prints its plan ("would create a web map") above the true outcome line; a finished write should say what it did. Zip 8b |
-| DOORCHECK-1 | `unchanged` means the record and the bucket agree; with nothing owed the door signs in nowhere, so a deleted or hand-edited item goes unseen until the next move. A `publish --check` that signs in, reads every recorded item and writes nothing. Zip 8b, if Kalli wants it |
 | NAMES-1 | placed_by and review_read_by put a reviewer's name on every public clerk row; Kalli decides before handover |
-| DEPS-1, OUT-REG-1 | The Docker build: locust not installed; stack_outlet_sources' registry entry names Maine's listings (Cision's two optional since D-294) |
 | RECEIPT-1 | Rerun maine_counties, maine_county_units, maine_governance_units if profiles read them through $loam. |
 | E911-1 | Publishing no longer waits on it (D-298); the courtesy ask to the GeoLibrary goes in the wrap-up package |
 | TRIBE-7 | The notes' wording is drafted (D-233); it is shown as a draft until the nations' terms settle it, never withheld for want of them |
@@ -483,12 +543,17 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
+| OUT-REG-1 | stack_outlet_sources' registry entry names Maine's listings in a shared file; doing it right needs the orchestrator's input checks read (D-347) |
+| RUNNAMES-1 | Two runs writing one receipt name, each receipt holding whichever ran last: maine_counties and maine_governance_units (validate_counties_checked, repair_counties_repaired, dissolve_counties_dissolved); nyc_thermal_landscape and nyc_park_cooling_pedestrian (validate_lst_checked, crop_lst_cropped). Named in tests/test_receipt_names.py |
+| STEPNAME-1 | wonder composes a method's recipe step ids verbatim, so every experiment from cii_indicator_values writes standardize_standings; the step-name test holds the line until wonder prefixes them |
+| DOORSAY-2 | After --replace finds an item gone, the plan line still names the step it first owed ("reseen"); restate the plan once the live check changes it |
+| SIGNIN-1 | A refused sign-in in --check reads like a problem with the item; say "the sign-in was refused, so this item was not read" |
+| INDIAN-1 | 2300357936, Penobscot Indian Island Reservation's Census code in Aroostook, has a row (count 0) and no land face, so the outlet markers leave it undrawn and say "1 row outside"; how it is shown is the nation's to decide (P-8) |
 | OAUTH-1 | An OAuth sign-in kind for ArcGIS Enterprise portals, where generateToken is no longer the default (D-329) |
 | CATALOG-1 | The open catalog target kind (DCAT or STAC) for the open data hub, Sprint 13 (D-326) |
 | O-6 | How a version is withdrawn: a person's own removal, a tombstone, a CloudFront invalidation, on the terms of the people the data describes. Until then the canonical write refuses custom tiers (D-315) |
 | DEPLOY-1 | Retire the deployer IAM user's access key; deploy from expiring logins after |
 | CANON-1 | The old outlets_* receipts (Cision in their lineage) and the eight receipts with no lineage sit in .data and .envelopes, withheld; rerun or remove them |
-| CLIDOC-1 | canopy/cli/__init__.py's docstring lists neither map nor acquire |
 | BCAST-1 | A media database's radio and television stations count only where a local news list holds them; an FCC authority could say which air local news. Said in the method's interpretation |
 | SRCFACT-2 | D-192 holds a run to one input's source facts; the outlet count's time is held to its five listings by a test until a many-input step can be held the same way |
 | JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
@@ -507,8 +572,14 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | P-2 | The pairing table: cited research, then Kalli's table; part 6 ships empty until then (D-285) |
 | LIC-2 | The boundary layers' own item metadata (METWP24P, CNTY24P) is unread; D-290 rests on the statute and another GeoLibrary layer's credit line |
 | GAPS-1 | Part 5's gaps in the method authors' own words, from readiness and possibility |
-| NOTHR-1 | A no_threshold verdict says "this value is shown" when the entry is empty or withheld |
 | PROF-1 | read_place loads the registry three times a call: most of a full build's five minutes |
+
+### Sprint 09 (the explorer)
+
+| ID | One line |
+| --- | --- |
+| CARRY-1 | loam's carriers view carries only id, name and coordinates. The door's points copies already carry every property, so the explorer may never need it: decide when the explorer's layers are drawn (D-347) |
+| EDGE-NOTE-1 | located_in_edges receipts name no row notes, so rule 9 withholds the five carriers' edges; two lines in build_located_in and five reruns, when the explorer needs split towns or edges in the bucket |
 
 ### Not yet sorted (look each up in the ledger)
 
@@ -531,6 +602,8 @@ Closed in session 14: P-1, P-5 (D-271).
 Closed in Sprint 08 session 1: CLIDOC-1, ADOPT-1 (the door made its own item), O-4 (D-327), O-5 (D-328), F1, F2, F4, F5, F6 in the shape the door has (D-326 to D-333; the joined copies' counts with D-331). Opened: OAUTH-1, CATALOG-1, NAMES-1, DOORSAY-1, DOORCHECK-1.
 
 Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-291); Tiers in part (D-283). Opened: LIC-2, GAPS-1, EDGE-NOTE-1, NOTHR-1, PROF-1.
+
+Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), DEPS-1, NOTHR-1. Opened: RAMP-1, UPDATE-1, SIZE-2, MANIFEST-2, RUNNAMES-1, STEPNAME-1, DOORSAY-2, SIGNIN-1, INDIAN-1.
 
 ## Working agreement, as it stands
 
@@ -561,6 +634,9 @@ Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-2
 - When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name). The zip is written to ~/Downloads, never the repo root: the repo is public, and session 10's two context zips sat untracked there until deleted.
 - A data check is a "read", never a "probe" (Kalli, session 8).
 - Every long paste runs alone, and after any heredoc append the expected line count is read in `git --no-pager diff --stat` before committing (session 9: one paste lost its middle, one landed twice).
+- A test that stubs a contract (`validate=lambda e: []`) has not read it: the joined copy passed every sandbox test and failed the real schema (session 2). Every schema a new output meets is read whole, and one test holds the new output to it unstubbed.
+- The ID grep comes before the append, and reads lines with `grep -n`, never only a count: a block's own line satisfies a later `grep -c` (session 2).
+- Run `publish <plot> --check` before committing a publish run's record, and after anything is done by hand in ArcGIS.
 
 ## Traps
 
@@ -657,6 +733,13 @@ Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-2
 - The profile command prints its progress to stderr and its summary to stdout; `> file` keeps only the summary. `--place` prints one profile's JSON and writes nothing.
 - The gate reads the manifest's licenses at judging time: a license change needs no rerun; a receipt's own metadata does.
 - A level outside Contract 4 is profiled with place.level_note (D-292); a test counting profiles counts every level.
+- A receipt is named `<step>_<output>` in one .envelopes per plot, and a harvest by its receipt forever (D-318): two runs sharing a step id and output overwrite one receipt, and the next canonical write would move a harvest to the other run's table. tests/test_receipt_names.py names the known pairs (RUNNAMES-1).
+- A validate step passes its input through: its receipt's data file is the fetched source (validate_counties_checked is MEGIS's own layer), and the canonical write refuses it (D-337).
+- ArcGIS Online rewrites an item's description as it saves it (`&#x27;` becomes `'`): compare what the portal stores, never the hash of what was sent (D-349).
+- A door item's id is what a web app holds. Deleting one in ArcGIS and remaking it with --replace gives a new id; anything built on the old id breaks.
+- A recorded console transcript (demo/index.html's figures) is history: never rename a line inside one.
+- After a renamed run, move its old receipts out of .envelopes (into .data/retired): loam unions every receipt there, and the old and new would carry one indicator twice.
+- `--local` copies need no AWS; every other `--display` needs the writer profile, even as a dry run.
 
 ## People
 
@@ -666,15 +749,24 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
 
-**Next: zip 8b, Sprint 08's second half.** One consultation, then one build:
+**Next: Sprint 09, the explorer** (the Master Plan's Sprint 09 tab). The Maine explorer in ArcGIS Experience Builder: search any place, open its profile, switch between district, county and town lenses, and see what is withheld and why. Done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer.
 
-- D-331's choropleth: canopy/choropleth.py (the join moved from map.py, keyed by declared authority, closing LAYER-1), `canonical --display --join`, the wide copy, and the door's classBreaks renderer. Then the three county receipts written canonically, their joined copy drawn, and broadband published to `test`.
-- A `library` target in plots/maine/publish/targets.yml: its folder, sharing level and groups are Kalli's to name; the owner is RDS_NU.
-- Zip 3b's list: CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the test that no manifest dataset reaches the door, DEPS-1, OUT-REG-1, NOTHR-1, PROF-1 if cheap.
-- DOORSAY-1, and DOORCHECK-1 if Kalli wants it.
-- COVER-1 before any town choropleth.
+**How Sprint 08 shapes it.** The explorer's maps are the door's items, and an Experience Builder app holds them by item id. The door moves an item in place when the truth moves, so an app built on it never needs rebuilding; an item deleted by hand breaks it, as today's two remakes would have. The explorer is therefore built only on items `publish --check` reads as recorded. Its layers are joined copies and markers drawn by `canonical --display --join`, from tables and outlines already in the bucket, so every map carries both parents' provenance and both credits by construction, and "referenced layers use no AGOL feature storage" is already true. Sprint 09 asks for three things the door does not yet do:
 
-**Zip 8b's consultation needs.** No zip command for zip 3b's reads was ever recorded (825e32e holds only the ledger and this page), so the list is built by `git --no-pager grep -l` on each identifier the change touches, never a keyword or two: `_points_sql` and canopy/loam/graph.py (CARRY-1); build_located_in and row_context_notes (EDGE-NOTE-1); the outlet counts and news_outlet (the outlet layer); Dockerfile, environment.yml and locust (DEPS-1); soil/_registry.yml's stack_outlet_sources (OUT-REG-1); no_threshold in canopy/wonder/verdicts.py (NOTHR-1); read_place in canopy/wonder/place.py (PROF-1); `_join_and_color`, `long_form_view` and `_UNIT_KEYS` (D-331); canopy/aws/display.py, canopy/aws/s3.py, canopy/cli/canonical.py and the door's files as they stand; seeds/standards/information_barriers.yml for the renderer's declared breaks.
+1. **Symbology from the Maine plan.** Darker always means harder access (RAMP-1: the door draws darker as the better standing today); towns show values, never standings; open-ended values are labelled. A renderer change must become something the door owes, and its first move is UPDATE-1's test against a real portal.
+2. **Every level as a lens.** Counties draw now. Towns wait on COVER-1, since a town choropleth simplifies the towns as one coverage; House, Senate and tribal outlines exist in the graph (outline_house, outline_senate, outline_tribal) and are not yet written canonically, nor read for coverage. Split towns need the edges' shares, which is where EDGE-NOTE-1 comes back.
+3. **The profile panel.** The profiles are a JSON document, which the door refuses by design ("the explorer reads documents by URL"); so the fork between a pop-up, a table widget and an embedded page from S3 rests on the canonical write of place_profile_profiles, rebuilt first for NOTHR-1, and on what Experience Builder can read by URL. The withheld layers and their reasons are the gate's own refusals (read_exposure), which can travel the same way.
+
+The credit line to Kalli A. Hale, a suggested citation and a link to the data guide are description and credits, the door's own fields, so they change every item at once and each owes a describe.
+
+**Sprint 09's consultation needs.** Before any lean, read Experience Builder's documentation for a web map's layers, search and a URL-embedded page, Kalli's current Experience Builder dashboard and its web maps (as their JSON), the Maine redesign's sections on commitments, products and the explorer, Contract 4, demo/index.html, and the reads zip built by `git --no-pager grep -l` on each identifier the change touches (the door's renderer and owed(), choropleth.py, display.py, s3.py, profile.py, check.py's read_exposure, build_place_outlines.R for COVER-1). Ask Kalli whether the repo is current first.
+
+## Sprint 08 session 2's notes (zip 8b, its fixes, the run, Sprint 08 closed)
+
+- What went right: three reads zips before any lean, a consultation iterated three times for failure modes and how the parts lock together; every guard built for this run fired on a real case before anything permanent (the receipt names, the manifest dataset, the schema, the local sha256 against the bucket's); the door's first `--check` found a bug zip 8a had hidden, before any move was refused for it.
+- Wrong hypotheses: that state.md's labels matched its hashes; that renaming one experiment cured the collision (the method's recipe makes it); that the orphan guard made old receipts harmless (loam still reads them); that a union of both parents' notes was right; that two readers of a second parent needed changing (the credits made three); that a manifest match would be a false positive; that the door's HTML held no literal quote; that the sandbox tests had read the schema (they stubbed it).
+- Lessons: read a receipt's own indicators before trusting its label; a name that goes public is forever, so read what makes it before the first write; every reader of a parent must learn about a second one, and the quiet failure (credits) outranks the loud one (notes); a stubbed contract is an unread one; a portal stores what it chooses, so compare what it stores.
+- Session shape: one long chat held the consultation, zip 8b, three fixes, the whole run, the check and this hand-off. The hand-off rule stands: Sprint 09 starts fresh from this page.
 
 ## Sprint 08 session 1's notes (the door's consultation; zip 8a built and run)
 
