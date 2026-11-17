@@ -330,6 +330,17 @@ def test_the_command_refuses_a_join_asked_wrongly(argv, said):
     assert said in cli._asked_wrongly(parser.parse_args(argv))
 
 
+
+def test_every_step_a_copy_records_is_in_rule_11s_closed_set():
+    """the schema names the publication steps; a copy recording a step it does
+    not name is refused by the real validator, which these tests stub (D-348)."""
+    import re
+    schema = json.loads((ROOT / "seeds" / "schemas" / "provenance.schema.json").read_text())
+    allowed = set(schema["properties"]["publication"]["items"]["properties"]["step"]["enum"])
+    source = (ROOT / "canopy" / "aws" / "display.py").read_text()
+    recorded = set(re.findall(r'"step": "([a-z_]+)"', source))
+    assert recorded and recorded <= allowed, sorted(recorded - allowed)
+
 # ── the real drawing, where geopandas is installed ───────────────────────
 def _real(tmp_path, *, markers=False):
     geopandas = pytest.importorskip("geopandas")

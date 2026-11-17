@@ -200,7 +200,7 @@ dataset the gate names at the target that neither record holds is refused
 
 | Field | Meaning |
 | --- | --- |
-| `step` | `held_out`, `field_dropped`, `renamed`, `rounded`, `format_changed`, `simplified`, `clipped` |
+| `step` | `held_out`, `field_dropped`, `renamed`, `rounded`, `format_changed`, `simplified`, `clipped`, `joined` (columns added from another table, D-339), `marked` (a place drawn as one point on its surface, D-340) |
 | `detail` | what exactly: which units, which field, to what precision, which tolerance |
 | `count` | how many units or fields it touched |
 | `by` | the primitive or the gate |
