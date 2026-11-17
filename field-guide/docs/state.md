@@ -5,26 +5,39 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-17, at the hand-off closing Sprint 07 for real in its second session. Commit d67ccb3 called it closed against this page's audit; the Master Plan's done-when, a Maine layer in a web map using no AGOL feature storage, was not yet met, so the sprint was reopened and zip 7c (display copies) met it: Maine's 392 clerk offices drawn in ArcGIS Online's Map Viewer from the canonical bucket by URL. Sprint 08, the publish door, is next; its audit is in Starting the next session.
+**Updated:** 2026-11-17, at Sprint 08's first hand-off. Session 1 held the door's consultation and zip 8a: the publish door is built and run, and its first item is a web map owned by RDS_NU that reads the clerk offices' display copy by URL. A second push owed nothing. Sprint 08 stays open: its choropleth half, a second target, and zip 3b's list are zip 8b's. The plan is in Starting the next session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Sprint 07's commits: 7dcd3f0 (zip 7a, the stack), a000d62 (the old stacks removed; its message names a ledger block it does not hold), 7158e6f (7a's ledger block), then session 2's one commit: zip 7b with zip7b2 and zip7b3, its ledger block, this page and Sprint 07's progress report. Sprint 06's last: 1497bfa, 106f721, 02e9b87.
-- Tests: `python -m pytest -q -rs | tail -3`. 1,313 passed at zip 7c. New in Sprint 07: tests/test_canonical_write.py (42 tests, a fake client that keeps the bucket's overwrite lock and fails on any removal; one test converts a real GeoJSON with geopandas) and tests/test_display_copy.py (24 tests, five drawing real geometry: two NAD83 towns keep one shared edge, the same bytes twice, overlapping towns refused, points simplify nothing, dates written as text). `-q` prints a dot per test; `-rs` lists skips only, with reasons. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Sprint 08's: c67a67a (zip 8a, the publish door, D-326 to D-334), then this hand-off's commit. Sprint 07's commits: 7dcd3f0 (zip 7a, the stack), a000d62 (the old stacks removed; its message names a ledger block it does not hold), 7158e6f (7a's ledger block), then session 2's one commit: zip 7b with zip7b2 and zip7b3, its ledger block, this page and Sprint 07's progress report. Sprint 06's last: 1497bfa, 106f721, 02e9b87.
+- Tests: `python -m pytest -q -rs | tail -3`. 1,332 passed at zip 8a: 1,313 less the retired tests/test_publish_latch.py's 15, plus tests/test_publish_door.py (22, a fake portal that keeps items in memory and records every call), tests/test_webmap_json.py (7) and tests/test_map_stays_local.py (5). New in Sprint 07: tests/test_canonical_write.py (42 tests, a fake client that keeps the bucket's overwrite lock and fails on any removal; one test converts a real GeoJSON with geopandas) and tests/test_display_copy.py (24 tests, five drawing real geometry: two NAD83 towns keep one shared edge, the same bytes twice, overlapping towns refused, points simplify nothing, dates written as text). `-q` prints a dot per test; `-rs` lists skips only, with reasons. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
 - Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes, a progress line every 50, into plots/maine/.data/place_profile_profiles.json and its receipt; `--place AUTHORITY:CODE` prints one and writes nothing. The build reads 21 receipts and withholds none at public (session 16); the outlet counts, the clerk counts, the clerk office points and place_profile_profiles all judge allow.
-- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table points to the ledger. Its Sprint 08 tab predates D-301 to D-320 and the delivery cut; this page's Sprint 08 audit says where it is out of date. Check its claims against this page and the code.
-- Next decision ID: D-326. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table points to the ledger. Its Sprint 08 tab predates D-301 to D-334 and cites D-67 and D-71 where it means MP-67 and MP-71; this page's Sprint 08 section says what is true. Check its claims against this page and the code.
+- Next decision ID: D-335. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
 - **Sprint 07 is closed** (session 2, after a reopening): the stack (zip 7a, D-301 to D-311), the canonical write (zip 7b, D-312 to D-320) and display copies (zip 7c, D-321 to D-325). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
 - **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo, since the bucket's name holds the account id; the write assumes rewilding-canonical-writer through the rewilding-writer profile in ~/.aws/config. CloudFront: dvk5mp17wovwb.cloudfront.net. `terraform output` in canopy/terraform prints the rest.
 - **Canonical objects written:** clerk_offices_points_points, version 0b91cb0caae7, allow record 33ce1ddb61dc, 392 offices, with its display copy `web` (2026-11-17); outline_towns_outline, version eda591d0d3ba, allow record a19b45afae02, 528 towns, its display copy refused until COVER-1. The dry run judges 37 of Maine's 58 receipts may leave. Every write is public and permanent: dry-run first, write one artifact at a time, read the pointer and the data back after.
-- **The first web map** (Kalli's ArcGIS Online, 2026-11-17): the clerk offices' display copy added in Map Viewer by Add layer from URL and saved in a web map, so the only item is the web map and the points are read from CloudFront each time (D-325). Experience Builder is untried.
+- **The first web map** (Kalli's ArcGIS Online, 2026-11-17): item 5fcd410b007a49aaa279e6a2b548f507, made by hand in Map Viewer by Add layer from URL (D-325). It sits outside the door's record: the door made its own (ADOPT-1, answered). Experience Builder is untried.
+- **The door's first item** (2026-11-17): 143923c7e8174f709a87425f02c43f82 in nu.maps.arcgis.com, owned by RDS_NU, folder rewildingCities test, private, reading clerk_offices_points_points at version 0b91cb0caae7 by URL; recorded in plots/maine/publish/published.yml. Kalli has explicit permission to publish as RDS_NU for this project; its password is typed at the door's prompt and never stored, logged or committed.
 - **Sprint 06 is closed** (Kalli, session 16), its order below. Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check. Progress: field-guide/docs/progress/information/sprint-06.md.
 - **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code; the library's account is set aside.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
 - HRSA's sites copy lives at plots/maine/.data/hrsa_health_center_sites_20261114.csv (ignored, sha256 08b01537...da436). A fresh copy is a new manifest entry named for its day, never an overwrite.
 - The Section 203 release lives at plots/maine/.data/sec203_puf_2021_12_01.zip (sha256 2d6b21e9...22d6, cp1252 though documented as ASCII) and the PIAAC Skills Map workbook at plots/maine/.data/SAE_website_dataset.c15d59a2d7e219fcb6d1.xlsx (sha256 b6745055...34b5, downloaded 2026-11-15). Both are U.S. government works.
 - The Census key is set in the rewilding env (`conda env config vars`), loaded on activate; it was pasted into chat and shell history on 2026-11-16, so it is replaced (KEY-1).
-- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Since D-298 and D-299 the list is factual_directory and the 911 file maine_geolibrary_public, both public; the courtesy ask to the GeoLibrary goes in the wrap-up. The 911 file holds home addresses; it never leaves .data, and the door publishes receipts' artifacts only, never a manifest dataset (a test to write with the door, Sprint 08).
+- The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Since D-298 and D-299 the list is factual_directory and the 911 file maine_geolibrary_public, both public; the courtesy ask to the GeoLibrary goes in the wrap-up. The 911 file holds home addresses; it never leaves .data, and the door publishes canonical harvests only, never a manifest dataset (a test to write in zip 8b).
+
+## Sprint 08 ~ the publish door (open)
+
+**Goal:** one door publishes every result: through the gate, from the canonical store, to each target a plot declares, updating in place and carrying its provenance.
+
+**Zip 8a, the door (session 1, D-326 to D-334).** `python -m canopy.cli publish <plot> <artifact> --to <target>`, a dry run unless `--write` with `--by` and `--reason`; `--to` repeats; `--adopt <item>`, `--replace`, `--display` (D-326). It reads the harvest's `current`, allow record, receipt and display copy through CloudFront and needs no AWS credentials. Targets are declared by each plot in plots/<plot>/publish/targets.yml, read loudly; the door alone writes published.yml beside it, each item naming the sha256 and allow record it shows (D-327). The door owns, in a web map item, only the layer's URL and fields, the description (the notes travel in it) and the credits; a person's style is kept on every move. A new version moves the URL and the description, a new allow record the description alone; a missing item waits for --replace, a hand-edited URL or description is refused; a new item is recorded unshared before it is shared (D-328). REST through requests, no Esri package; generateToken with a prompted password, then community/self must name the target's owner (D-329). Institutional owners; a personal one is warned about on every run (D-330). The web map follows the specification 2.38: fields typed from the copy's values, a plain popup, the copy's bbox as the extent; the description holds no time, so the same records write the same words (D-333). The publish route assignment's F3, F7, F8, R1 to R6 and R9 were not found and are not reconstructed (D-334). `map --publish` signposts the door and exits 2; visuals.py's upload latch and introspect's arcgis row are gone.
+
+**Decided, built in zip 8b (D-331):** choropleths by `canonical <plot> <table> --display --join <outline>` (not built yet), joining (unit_authority, unit_code) to (authority, code) in one canopy/choropleth.py that map.py imports; one wide copy per table version and outline version, every indicator's columns, empty kept empty, derived_from both, two lineage branches, the join's counts; the door colours one indicator per map with a classBreaks renderer: standings in fixed national quintiles, other values by a declared standard or in equal steps said so, no value hatched and labelled.
+
+**The done-when, as it stands:** one item made by the door, naming its version, allow record and URL: done (143923c7). A second push leaves one item: done (unchanged, nothing owed, no sign-in). Two targets, one item each: waits on a `library` target (folder, sharing, groups). Broadband as a choropleth: zip 8b, then the canonical writes of county_standardize_standings (1b9c5a6e8d71), county_count_derive_values (fe7922079828) and outline_counties_outline (ee88e4f41db3), all three judged may-leave at public in session 1 and not yet written.
+
+**Confirmed against a real portal (session 1):** generateToken, community/self, a user's folders, createFolder, addItem and Share. Update is not yet exercised; the first version move checks it.
 
 ## Sprint 07 ~ storage outside AGOL (closed)
 
@@ -457,7 +470,10 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | EDGE-NOTE-1 | located_in_edges receipts do not name their rows' notes, so the libraries', schools' and health centers' edges fail rule 9: the carriers map cannot leave until build_located_in writes row_context_notes (D-291's twin) |
 | FSCS-1 | A published library count's label: outlets of systems the survey does not count as public libraries |
 | SCALE-1 | place.py writes "per 1,000" while the scale lives in the declaration |
-| LAYER-1, GJSON-1, D-157 | The publish door's items |
+| LAYER-1, GJSON-1, D-157 | LAYER-1 closes with D-331's keyed join (zip 8b); GJSON-1 still bounds any reader of the state outline; D-157's notes now travel in the door's descriptions |
+| DOORSAY-1 | After a write the door still prints its plan ("would create a web map") above the true outcome line; a finished write should say what it did. Zip 8b |
+| DOORCHECK-1 | `unchanged` means the record and the bucket agree; with nothing owed the door signs in nowhere, so a deleted or hand-edited item goes unseen until the next move. A `publish --check` that signs in, reads every recorded item and writes nothing. Zip 8b, if Kalli wants it |
+| NAMES-1 | placed_by and review_read_by put a reviewer's name on every public clerk row; Kalli decides before handover |
 | DEPS-1, OUT-REG-1 | The Docker build: locust not installed; stack_outlet_sources' registry entry names Maine's listings (Cision's two optional since D-294) |
 | RECEIPT-1 | Rerun maine_counties, maine_county_units, maine_governance_units if profiles read them through $loam. |
 | E911-1 | Publishing no longer waits on it (D-298); the courtesy ask to the GeoLibrary goes in the wrap-up package |
@@ -467,6 +483,8 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
+| OAUTH-1 | An OAuth sign-in kind for ArcGIS Enterprise portals, where generateToken is no longer the default (D-329) |
+| CATALOG-1 | The open catalog target kind (DCAT or STAC) for the open data hub, Sprint 13 (D-326) |
 | O-6 | How a version is withdrawn: a person's own removal, a tombstone, a CloudFront invalidation, on the terms of the people the data describes. Until then the canonical write refuses custom tiers (D-315) |
 | DEPLOY-1 | Retire the deployer IAM user's access key; deploy from expiring logins after |
 | CANON-1 | The old outlets_* receipts (Cision in their lineage) and the eight receipts with no lineage sit in .data and .envelopes, withheld; rerun or remove them |
@@ -509,6 +527,8 @@ Closed in session 12: EDITION-1 (D-255), OUTREV-1 (D-253 to D-257, the reviews s
 Closed in session 13: P-7 (D-265). KEY-1 now carries the key's replacement.
 
 Closed in session 14: P-1, P-5 (D-271).
+
+Closed in Sprint 08 session 1: CLIDOC-1, ADOPT-1 (the door made its own item), O-4 (D-327), O-5 (D-328), F1, F2, F4, F5, F6 in the shape the door has (D-326 to D-333; the joined copies' counts with D-331). Opened: OAUTH-1, CATALOG-1, NAMES-1, DOORSAY-1, DOORCHECK-1.
 
 Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-291); Tiers in part (D-283). Opened: LIC-2, GAPS-1, EDGE-NOTE-1, NOTHR-1, PROF-1.
 
@@ -646,19 +666,22 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
 
-**Next: Sprint 08, the publish door.** The Master Plan's Sprint 08 tab, read against this page in Sprint 07's session 2, is out of date in six places:
+**Next: zip 8b, Sprint 08's second half.** One consultation, then one build:
 
-| The tab says | What is true now |
-| --- | --- |
-| The publish-route teammate leads | Kalli delivers the door (People, below) |
-| Reference targets are build item 10 | Referenced GeoJSON layers are December's road (D-304); uploading features is the exception, and O-5 (overwrite or truncate) mostly becomes: how a reference item moves to a new version's URL |
-| Nothing on display copies | Built in zip 7c: the canonical command draws them (D-321 to D-324) and the door references them; COVER-1 first for the towns |
-| A tabular result reaches the door | A choropleth joins two canonical versions (an indicator table and an outline), while Contract 2 says a display copy is derived_from one. A fork for the design pass |
-| Provenance on every item names its canonical hash | It can name the version, its allow record and its CloudFront URL (D-318, D-320) |
-| Nothing on reading by URL | Map Viewer reads a display copy by URL (D-325, the first web map); Experience Builder is untried; GeoJSON-by-URL layers may not allow hiding fields, which CARRY-1 meets by leaving them out of the copy |
-| The door publishes results | Zip 3b's list stands with it: CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the test that no manifest dataset is a publish target (the canonical write already takes receipts only, D-312), DEPS-1, OUT-REG-1, NOTHR-1, PROF-1 if cheap. D-274's allow record is answered (D-313, D-320) |
+- D-331's choropleth: canopy/choropleth.py (the join moved from map.py, keyed by declared authority, closing LAYER-1), `canonical --display --join`, the wide copy, and the door's classBreaks renderer. Then the three county receipts written canonically, their joined copy drawn, and broadband published to `test`.
+- A `library` target in plots/maine/publish/targets.yml: its folder, sharing level and groups are Kalli's to name; the owner is RDS_NU.
+- Zip 3b's list: CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the test that no manifest dataset reaches the door, DEPS-1, OUT-REG-1, NOTHR-1, PROF-1 if cheap.
+- DOORSAY-1, and DOORCHECK-1 if Kalli wants it.
+- COVER-1 before any town choropleth.
 
-**Sprint 08's first consultation needs:** the publish route assignment (F1 to F8, R1 to R11; ask Kalli where it lives), canopy/visuals.py, canopy/cli/map.py (read in session 2, reread if changed), tests/test_publish_latch.py, canopy/providers/arcgis.py, canopy/introspect.py, seeds/schemas/manifest.schema.yml, canopy/aws/s3.py and canopy/aws/display.py as they stand, and session 15's zip command for zip 3b's reads (the ledger's session 15 block, and 825e32e).
+**Zip 8b's consultation needs.** No zip command for zip 3b's reads was ever recorded (825e32e holds only the ledger and this page), so the list is built by `git --no-pager grep -l` on each identifier the change touches, never a keyword or two: `_points_sql` and canopy/loam/graph.py (CARRY-1); build_located_in and row_context_notes (EDGE-NOTE-1); the outlet counts and news_outlet (the outlet layer); Dockerfile, environment.yml and locust (DEPS-1); soil/_registry.yml's stack_outlet_sources (OUT-REG-1); no_threshold in canopy/wonder/verdicts.py (NOTHR-1); read_place in canopy/wonder/place.py (PROF-1); `_join_and_color`, `long_form_view` and `_UNIT_KEYS` (D-331); canopy/aws/display.py, canopy/aws/s3.py, canopy/cli/canonical.py and the door's files as they stand; seeds/standards/information_barriers.yml for the renderer's declared breaks.
+
+## Sprint 08 session 1's notes (the door's consultation; zip 8a built and run)
+
+- What went right: the reads came before every lean that rested on them (the code, the contracts, the ledger, the hand-made web map's own JSON, the dry runs, Esri's documentation); the door was tested against a fake portal before it met a real one, and the real one answered every call the way the fake did; the first write made one item and the second owed nothing.
+- Wrong hypotheses: that the door would use Esri's arcgis package; that it might own a layer item beside the web map; that targets belong at repo level; that the door's gate decides exposure; that Map Viewer's JSON was the shape to copy; that the P items needed a new prefix; that an unhosted layer could not be saved; that a flag not yet built could sit in a runnable block (`--join` was run and refused).
+- Lessons: label a command that is not built yet as after its zip and never draw it runnable; read the hand-made thing before writing its shape, and keep what a person chose; a referenced layer is as public as its URL; a broken button can be a stale page, so read the console first; a pointer that moves can be mirrored by every place that shows it, each mirror moving the same way.
+- Session shape: one long chat held the plan, three reads zips, the contracts, the ledger, the ArcGIS reads, the consultation, the build, the run and this hand-off. The hand-off rule stands: zip 8b starts fresh from this page.
 
 ## Sprint 07 session 2's notes (zips 7b and 7c built and run; the first canonical object; the first web map)
 

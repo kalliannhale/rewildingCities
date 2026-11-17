@@ -1857,3 +1857,16 @@ Lessons:
 
 Opened: OAUTH-1, an OAuth sign-in for ArcGIS Enterprise portals, the door's next piece. CATALOG-1, the open catalog target kind (DCAT or STAC), Sprint 13. NAMES-1, placed_by and review_read_by put a reviewer's name on every public clerk row: Kalli decides before handover. ADOPT-1, item 5fcd410b's owner: adopting it into `test` needs RDS_NU to own it.
 Still open: zip 8b (D-331's join and colours, CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, DEPS-1, OUT-REG-1, NOTHR-1, PROF-1), COVER-1 before town choropleths, Experience Builder by URL; O-6, DEPLOY-1, CANON-1 after delivery.
+
+Run (zip 8a, session 1, 2026-11-17): the reads found the old latch only in the three files zip 8a replaced or removed, and no new ID in use. Tests: 34 passed for the new files, 1,332 for the suite (1,313, less the latch's 15, plus 34). The dry run judged the clerk offices may leave at private, no notes binding them, and owed a new web map reading version 0b91cb0caae7's display copy. The write signed in as RDS_NU, made item 143923c7e8174f709a87425f02c43f82 in the folder rewildingCities test, shared it private and recorded it in plots/maine/publish/published.yml. A second push was unchanged: nothing owed, no sign-in. Committed c67a67a. Kalli read the item and found it fine.
+
+Found:
+- Against nu.maps.arcgis.com, generateToken, community/self, a user's folders, createFolder, addItem and Share answered as the fake portal does. Update is not yet exercised.
+- After a write the door still prints its plan ("would create a web map") above the outcome line, which says published (DOORSAY-1).
+- With nothing owed the door signs in nowhere, so `unchanged` cannot see a deleted or hand-edited item (DOORCHECK-1).
+- The clerk points bind no note.
+- Commit 825e32e holds only the ledger and state.md: no zip command for zip 3b's reads was ever recorded.
+
+Closed: CLIDOC-1; ADOPT-1 (the door made its own item; the hand-made map stays outside the record); F1, F2, F4, F5 and F6 in the shape this door has, F6's joined counts with D-331; R7, R8, R10 and R11; the done-when's first two parts.
+Opened: DOORSAY-1, DOORCHECK-1.
+Still open: zip 8b (D-331, a library target, zip 3b's list, DOORSAY-1, DOORCHECK-1 if wanted), COVER-1, Experience Builder by URL, OAUTH-1, CATALOG-1, NAMES-1; O-6, DEPLOY-1, CANON-1 after delivery.
