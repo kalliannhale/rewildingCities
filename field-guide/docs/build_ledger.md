@@ -1775,3 +1775,37 @@ Lessons:
 Closed: Sprint 07's audit rows for the canonical write, the four tests, DuckDB through CloudFront and batch.py; D-274's question of where the profile's allow record lives (beside it, D-313, D-320).
 Opened: O-6, how a version is withdrawn, on the terms of the people the data describes (Contract 2; after delivery). CANON-1, the old outlets_* receipts and the eight lineage-less receipts sit in .data and .envelopes, withheld; rerun or remove them after delivery. CLIDOC-1, canopy/cli/__init__.py's docstring lists neither map nor acquire.
 Still open: Sprint 08, the publish door, with display copies (Contract 2 section 4), reference layers by URL (D-304), CARRY-1 and EDGE-NOTE-1. DEPLOY-1 after delivery. Reading by URL in Map Viewer and Experience Builder, Kalli as the ArcGIS admin.
+
+## Sprint 07, session 2 (reopened): zip 7c, display copies and the first web map
+
+Reopened: d67ccb3 called Sprint 07 closed against state.md's audit table. The Master Plan tab's done-when, "a Maine layer shows in a web map using no AGOL feature storage, and DuckDB queries its canonical file in S3", was met only in its DuckDB half, and its build list held display copies and reading by URL. Kalli chose to reopen and finish over moving the web-map half to Sprint 08.
+
+- D-321: Display copies are drawn by python -m canopy.cli canonical <plot> <artifact> --display from the current version's own bytes, read back from the bucket and checked against their sha256, never a local copy; written under versions/<sha256>/display/ by the writer role, a dry run unless --write, no --by or --reason since no pointer moves. Contract 2 section 6 amended: the canonical command writes display copies, the door references them.
+- D-322: A copy is named web for points and web_<tolerance>m for polygons, so another tolerance is another copy. The envelope is put first and the GeoJSON last, each with If-None-Match; the same bytes write nothing; other bytes under a standing name are refused, never replaced.
+- D-323: A copy's envelope inherits the version's metadata (lineage, notes, row notes) less what it redraws (total_area_m2, geometry_type_native), its provenance under the branch version and its warnings; records derived_from, the allow record current when drawn, display_of and display_name; adds its own entry, make_display_copy 1.0.0, whose publication list holds every change. It is checked against the envelope schema and judged by the gate at canonical, public; a custom tier is refused. The GeoJSON carries no note text: a note settled later moves the allow record, not the copy.
+- D-324: Polygons are simplified as one coverage with shapely's coverage_simplify, in EPSG:26919, 25 m by default, so neighbours keep one shared edge; a coverage invalid before simplifying, or a geometry left empty after, is refused. Points simplify nothing, recorded as simplified with count 0. Coordinates are rounded to six decimal places. The copy is GeoJSON (RFC 7946) in EPSG:4326, its format_changed record naming the transformation pyproj chose; dates and times are written as ISO 8601 text, a missing one as null, each such field named; every property is kept.
+- D-325: In ArcGIS Online a display copy is referenced through Map Viewer's Add layer from URL and saved in a web map, so the only item is the web map and the layer is read from CloudFront each time. The Content route (New item from a URL) imports a GeoJSON as a copy and offers a hosted feature layer, and is not used. The web map item's description carries the layer's account and its notes until Sprint 08's door writes items.
+
+Built (zip 7c, then zip7c2): canopy/aws/display.py; prepare_display and write_display in canopy/aws/s3.py; --display and --tolerance in canopy/cli/canonical.py; tests/test_display_copy.py, 24 tests, five drawing real geometry; Contract 2 section 4 rewritten and section 6 amended. Tests: 1,313 passed.
+
+Written: outline_towns_outline, version eda591d0d3ba, allow record a19b45afae02, 528 towns. The clerk offices' display copy web under version 0b91cb0caae7, 392 points, 265,905 bytes, served by CloudFront as application/geo+json, cached a year, immutable. Drawn: the first web map, Kalli's, in ArcGIS Online's Map Viewer, from that URL.
+
+Found:
+- The clerk points carry review_read_on, a date GeoJSON cannot type; geopandas' to_json raised on its Timestamp.
+- The towns outline is not a valid coverage: Gray (2300528870) and Windham (2300586025) disagree along about 75 m near 43.8457 N, 70.3746 W, neither overlapping the other, each valid alone. Hypothesis, unconfirmed: Little Sebago Lake's shore after perennial water was clipped (D-142).
+- Maine's town outlines are NAD83 (EPSG:4269); the display copy reprojects and names the operation.
+- A curl -sI answer carries S3's md5 as its etag, never the version's sha256 (HASH-2), and names no URL.
+
+Wrong hypotheses:
+- That Sprint 07 was closed at zip 7b: judged against the audit table, not the tab's done-when.
+- That the display path would refuse rather than crash on a drawing error: zip7b2's fix for --all had not been carried into it.
+- That ArcGIS Online's Content route could reference a GeoJSON by URL without importing it.
+
+Lessons:
+- A sprint closes against its own tab's done-when, read from the tab.
+- A new path inherits the old fixes, or repeats the old crash.
+- A guard that refuses is the build working: the coverage check kept a crack off the first map of Maine's towns.
+
+Closed: Sprint 07, its done-when met; the Master Plan tab's display-copy and reading-by-URL build items, Experience Builder excepted.
+Opened: COVER-1, the Gray and Windham edge: repair in build_place_outlines, then a new version of the towns and their display copy; before Sprint 08's choropleths.
+Still open: Sprint 08, the publish door; Experience Builder by URL; O-6, DEPLOY-1, CANON-1, CLIDOC-1 after delivery.

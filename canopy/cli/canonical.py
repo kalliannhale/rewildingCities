@@ -17,6 +17,13 @@
       rewilding-writer profile in ~/.aws/config (REWILDING_CANONICAL_PROFILE
       names another)
 
+  python -m canopy.cli canonical maine outline_towns_outline --display
+      draws the current version's display copy for web maps (Contract 2,
+      section 4) from the version's own bytes in the bucket, and asks the gate;
+      sends nothing. --write sends it; --tolerance sets the polygons'
+      simplification in meters (25 by default). needs the same environment as
+      a write, since it reads the bucket
+
 exit codes: 0 written, already current, or a dry run read through; 1 refused,
 or a dry run with a receipt it could not judge; 2 asked wrongly. ~
 """
@@ -42,6 +49,10 @@ def register(subparsers) -> None:
     p.add_argument("--by", default=None, help="who moves the pointer, by name (with --write)")
     p.add_argument("--reason", default=None,
                    help="why, in plain words: a new vintage, a correction (with --write)")
+    p.add_argument("--display", action="store_true",
+                   help="draw the current version's display copy for web maps")
+    p.add_argument("--tolerance", type=int, default=None,
+                   help="with --display: polygon simplification in meters (default 25)")
     p.set_defaults(func=run)
 
 
@@ -52,6 +63,12 @@ def _asked_wrongly(args) -> str | None:
         return "give an artifact's name, or --all for a dry run over every receipt"
     if args.write and args.all:
         return "--write takes one artifact at a time; --all is a dry run only"
+    if getattr(args, "display", False) and args.all:
+        return "--display takes one artifact at a time"
+    if getattr(args, "tolerance", None) is not None and not getattr(args, "display", False):
+        return "--tolerance goes with --display"
+    if getattr(args, "display", False):
+        return None                      # a display copy moves no pointer: no --by or --reason
     if args.write and not ((args.by or "").strip() and (args.reason or "").strip()):
         return "--write needs --by and --reason: the pointer says who moved it and why"
     return None
@@ -70,7 +87,7 @@ def run(args) -> int:
         return 2
     bucket = os.environ.get(s3.BUCKET_ENV)
     domain = os.environ.get(s3.DOMAIN_ENV)
-    if args.write and not (bucket and domain):
+    if (args.write or getattr(args, "display", False)) and not (bucket and domain):
         print(f"refused: set {s3.BUCKET_ENV} and {s3.DOMAIN_ENV} first "
               f"(conda env config vars set, then reactivate the env)", file=sys.stderr)
         return 2
@@ -78,6 +95,9 @@ def run(args) -> int:
 
     if args.all:
         return _dry_run_all(s3, root, args.plot)
+
+    if getattr(args, "display", False):
+        return _display(s3, root, args, bucket, domain)
 
     if not args.write:
         ok = _say_one(s3, root, args.plot, args.artifact)
@@ -159,3 +179,34 @@ def _say_written(p, result, domain: str) -> None:
               f"\\\"SELECT count(*) AS n FROM read_parquet('{base}/{p.keys['data']}')\\\"))\"")
     else:
         print(f"   read the data:     curl -sI {base}/{p.keys['data']}")
+
+
+def _display(s3, root, args, bucket: str, domain: str) -> int:
+    profile = os.environ.get(s3.PROFILE_ENV) or s3.DEFAULT_PROFILE
+    client = s3.make_client(profile)
+    try:
+        p = s3.prepare_display(args.plot, args.artifact, client=client, bucket=bucket,
+                               domain=domain, root=root, tolerance_m=args.tolerance)
+        result = s3.write_display(p, client=client, bucket=bucket) if args.write else None
+    except s3.CanonicalRefusal as e:
+        _say_refusal(args.artifact, e)
+        return 1
+    st = p.stats
+    print(f"{p.harvest}: display copy '{p.name}' of version {p.sha256[:12]}, "
+          f"allow record {p.allow_sha256[:12]}")
+    print(f"   {st['feature_count']:,} features, {st['vertices_before']:,} vertices to "
+          f"{st['vertex_count']:,}, {st['size_bytes'] / 1_000_000:.1f} MB of GeoJSON")
+    for step in p.envelope["provenance"][-1]["publication"]:
+        print(f"   {step['step']}: {step['detail']}")
+    url = f"https://{domain}/{p.keys['geojson']}"
+    if result is None:
+        print(f"\n   a dry run: nothing sent. would write {p.keys['geojson']}")
+        return 0
+    if result["copy"] == "exists":
+        print("\n   already there with these bytes; nothing written")
+    else:
+        for key in result["written"]:
+            print(f"   wrote {key}")
+    print(f"\n   add to a web map by URL:  {url}")
+    print(f"   check it is served:       curl -sI {url}")
+    return 0

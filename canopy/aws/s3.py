@@ -464,3 +464,117 @@ def make_client(profile: str):
     assumed from the person's own login, so no key is ever handled here."""
     import boto3
     return boto3.Session(profile_name=profile).client("s3")
+
+
+# ── display copies (Contract 2, section 4) ───────────────────────────────
+@dataclass
+class PreparedDisplay:
+    """a display copy drawn from the current version, judged, not yet sent."""
+    plot: str
+    harvest: str
+    sha256: str
+    allow_sha256: str
+    name: str
+    body: bytes
+    envelope: dict
+    stats: dict
+    keys: dict = field(default_factory=dict)
+
+
+def display_keys(plot: str, harvest: str, sha256: str, name: str) -> dict:
+    prefix = f"{version_prefix(plot, harvest, sha256)}/display/{name}"
+    return {"geojson": f"{prefix}.geojson", "envelope": f"{prefix}.envelope.json"}
+
+
+def _get_bytes(client, bucket: str, key: str) -> bytes | None:
+    try:
+        return client.get_object(Bucket=bucket, Key=key)["Body"].read()
+    except Exception as e:
+        if _missing(e):
+            return None
+        raise
+
+
+def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: str,
+                    root: Path, tolerance_m: int | None = None, judge=default_judge,
+                    drawer=None, validate=None, now: datetime | None = None) -> PreparedDisplay:
+    """read the current version back from the bucket, check its bytes against
+    its name, draw the copy, build its envelope, and ask the gate. sends
+    nothing; a dry run is this alone."""
+    from canopy.aws import display
+    validate_plot(plot)
+    validate_artifact(artifact)
+    tolerance_m = display.DEFAULT_TOLERANCE_M if tolerance_m is None else tolerance_m
+    pointer, _ = read_pointer(client, bucket, pointer_key(plot, artifact))
+    if pointer is None:
+        raise CanonicalRefusal(f"'{artifact}' has no canonical version yet",
+                               "write it first: canonical <plot> <artifact> --write")
+    sha, allow_sha = pointer.get("sha256"), pointer.get("allow")
+    if pointer.get("data") != "data.parquet":
+        raise CanonicalRefusal(f"'{artifact}' is a {pointer.get('data')} document; a display "
+                               f"copy is drawn from features", "draw a features version")
+    prefix = version_prefix(plot, artifact, sha)
+    data = _get_bytes(client, bucket, f"{prefix}/data.parquet")
+    receipt_raw = _get_bytes(client, bucket, f"{prefix}/envelope.json")
+    if data is None or receipt_raw is None:
+        raise CanonicalRefusal(f"version {sha[:12]} is not whole in the bucket",
+                               "write it again; a write cut off partway finishes")
+    if sha256_of(data) != sha:
+        raise CanonicalRefusal(f"the bytes at version {sha[:12]} do not hash to its name",
+                               "stop and read the bucket's history before anything else")
+    receipt = json.loads(receipt_raw)
+    drawer = drawer or display.draw
+    id_field = (receipt.get("metadata") or {}).get("id_field")
+    try:
+        drawn, seconds = display.timed(drawer, data, tolerance_m=tolerance_m, id_field=id_field)
+    except CanonicalRefusal:
+        raise
+    except Exception as e:               # a drawing's error is a refusal, never a crash
+        said = (str(e).splitlines() or [""])[0][:300]
+        raise CanonicalRefusal(f"drawing the copy failed: {type(e).__name__}: {said}",
+                               "read the error; the version may hold a type GeoJSON "
+                               "cannot carry") from None
+    keys = display_keys(plot, artifact, sha, drawn["name"])
+    data_url = f"https://{domain}/{prefix}/data.parquet"
+    params = {"tolerance_m": tolerance_m if drawn["kind"] == "polygons" else None,
+              "projected": display.PROJECTED, "web": display.WEB,
+              "decimals": display.DECIMALS, "name": drawn["name"]}
+    env = display.display_envelope(receipt, display_key=keys["geojson"], data_url=data_url,
+                                   sha256=sha, allow_sha256=allow_sha, harvest=artifact,
+                                   drawn=drawn, params=params, duration_seconds=seconds,
+                                   now=now)
+    if validate is None:
+        from canopy.envelope import validate_envelope
+        def validate(e):
+            return validate_envelope(e, Path(root))
+    errors = validate(env)
+    if errors:
+        raise CanonicalRefusal("the copy's envelope does not match the envelope schema: "
+                               + "; ".join(str(x) for x in errors[:3]),
+                               "fix the envelope's shape in canopy/aws/display.py")
+    _judge(judge, env, plot, Path(root) / "plots" / plot)
+    return PreparedDisplay(plot=plot, harvest=artifact, sha256=sha, allow_sha256=allow_sha,
+                           name=drawn["name"], body=drawn["bytes"], envelope=env,
+                           stats=drawn["stats"], keys=keys)
+
+
+def write_display(prepared: PreparedDisplay, *, client, bucket: str) -> dict:
+    """send the envelope, then the GeoJSON last, each with If-None-Match. a
+    copy already there with these bytes writes nothing; one there with other
+    bytes is refused, never replaced."""
+    from canopy.aws.display import GEOJSON_TYPE, envelope_bytes
+    keys = prepared.keys
+    there = _get_bytes(client, bucket, keys["geojson"])
+    if there is not None:
+        if sha256_of(there) == sha256_of(prepared.body):
+            return {"copy": "exists", "written": [], "keys": keys}
+        raise CanonicalRefusal(
+            f"a display copy named '{prepared.name}' already stands under version "
+            f"{prepared.sha256[:12]} with other bytes, and a version's files never change",
+            "draw it under another name (another --tolerance), or find what changed")
+    written = []
+    for key, body, ctype in ((keys["envelope"], envelope_bytes(prepared.envelope), JSON_TYPE),
+                             (keys["geojson"], prepared.body, GEOJSON_TYPE)):
+        if _put_once(client, bucket, key, body, ctype):
+            written.append(key)
+    return {"copy": "new", "written": written, "keys": keys}

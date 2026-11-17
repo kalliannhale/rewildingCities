@@ -1,6 +1,6 @@
 # Contract 2 ~ Canonical objects
 
-**Status:** draft 0.3, 2026-11-16, for review (0.2 earlier the same day, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320. **Owner:**
+**Status:** draft 0.3, 2026-11-16, for review (0.2 earlier the same day, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
 Kalli. **Built in:** Sprint 07 (the stack, on bash-win's staging rails; the
 canonical write), Sprint 08 (the publish door). **Read by:** the publish
 route, the explorer, the community kit, the grove. **Rests on:** MP-68 (two
@@ -117,14 +117,35 @@ moves is never lost (D-307).
 
 ## 4. Display copies
 
-A display copy is a simplified GeoJSON made for a web map. It is a derivative,
-never a second truth:
+A display copy is a GeoJSON drawn for a web map. It is a derivative, never a
+second truth (D-321):
 
+- It is drawn by `python -m canopy.cli canonical <plot> <artifact> --display`
+  from the current version's own bytes, read back from the bucket and checked
+  against their sha256, never from a local copy. A dry run unless `--write`.
 - It lives under its source version's `display/` prefix, so it cannot outlive
-  or be confused with the version it came from.
-- Its envelope records `derived_from: <sha256>` and every change as a
-  publication step (Contract 1, rule 11): the simplification tolerance,
-  fields dropped, rounding, coastline clipping.
+  or be confused with the version it came from:
+  `versions/<sha256>/display/<name>.geojson` and `<name>.envelope.json`. Points
+  are named `web`; polygons `web_<tolerance>m`, so a copy at another tolerance
+  is another copy, and a name is never given new bytes (D-322).
+- Its envelope keeps the version's lineage, notes and provenance (inherited
+  under the branch `version`), records `derived_from: <sha256>` and the allow
+  record current when it was drawn, and adds its own entry whose publication
+  list holds every change (Contract 1, rule 11): `simplified`, `rounded`,
+  `format_changed` (D-323). It matches the envelope schema and is judged by the
+  gate as the version was, a custom tier refused (D-315).
+- **Polygons are simplified as one coverage** (shapely's `coverage_simplify`),
+  so neighbours keep one shared edge and no crack opens between towns; in
+  meters in UTM zone 19N (EPSG:26919), 25 m by default. A coverage that is
+  not valid before simplifying, or a geometry left empty after, is refused:
+  a town missing from the map, or a crack between two, would be a lie.
+  **Points** simplify nothing, said with count 0. Coordinates are rounded to
+  6 decimal places of a degree; the copy is GeoJSON (RFC 7946) in EPSG:4326,
+  its `format_changed` record naming the transformation pyproj chose
+  (Maine's outlines are NAD83). Every property is kept (D-324).
+- The copy carries no note text inside it. A note settled later moves the
+  allow record (D-320) without a new copy; the notes reach a map through its
+  item's description (Sprint 08).
 - It is regenerable from its source version and is never edited by hand. The
   hand-made `__public` and `__upload` files of October are what this rule
   exists to end (CII-20, D-94).
@@ -157,7 +178,8 @@ never a second truth:
 | Who | May |
 | --- | --- |
 | The canonical write (`canopy/aws/s3.py`, run as `python -m canopy.cli canonical`), as the role `rewilding-canonical-writer` | write a version and move `current`, only after the gate allows at target `canonical`, sharing level `public`, because CloudFront makes `harvests/` readable by anyone (D-315); never delete (D-308). A dry run is the default and touches no AWS; `--write` takes one artifact at a time, with `--by` and `--reason` (D-316). A lineage holding a `custom` tier is refused until O-6 |
-| The publish door | write display copies; push or reference them in ArcGIS |
+| The canonical command's `--display`, as the same role | write display copies under a version, only after the gate allows (D-321) |
+| The publish door | push or reference display copies in ArcGIS (Sprint 08) |
 | ArcGIS, the explorer, DuckDB, the community kit | read by URL through CloudFront, from any origin; never write (D-310) |
 
 A write the gate has not allowed is refused by the writer itself, not by
