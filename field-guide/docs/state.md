@@ -5,15 +5,18 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-16, at the hand-off closing Sprint 06 in its sixteenth session (zip 3a built and run: Cision out by name, tiers and terms for outlets and clerks, the outlet and clerk counts and the clerk office points allowed at public). Sprint 07's audit is below; Sprint 07 is next.
+**Updated:** 2026-11-17, at the hand-off closing Sprint 07 in its second session (zip 7b and its two fixes built and run: the canonical write, and the first canonical object written and read back through CloudFront). Sprint 08, the publish door, is next; its audit is in Starting the next session.
 
 ## Where the build stands
 
-- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Session 16's commits: 825e32e (session 15's hand-off, committed at session 16's start), 1497bfa (zip 3a and its two review fixes, 17 files, D-294 to D-300, its ledger block inside), then this state. Sprint 06's progress report is closed. Session 15's: b3426b1 (zips 2 and 2b).
-- Tests: `python -m pytest -q -rs | tail -3`. 1,247 passed at zip 3a. New in session 16: tests/test_tiers_and_terms.py (the real gate on the real seeds and manifest), with new tests in test_gate.py (requires_tier), test_outlet_sources.py (use) and the outlet and clerk preparation tests. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
+- Branch main. Confirm with `git log --oneline -15` and `git status -sb`, and that both are pushed. Sprint 07's commits: 7dcd3f0 (zip 7a, the stack), a000d62 (the old stacks removed; its message names a ledger block it does not hold), 7158e6f (7a's ledger block), then session 2's one commit: zip 7b with zip7b2 and zip7b3, its ledger block, this page and Sprint 07's progress report. Sprint 06's last: 1497bfa, 106f721, 02e9b87.
+- Tests: `python -m pytest -q -rs | tail -3`. 1,289 passed at zip 7b. New in Sprint 07: tests/test_canonical_write.py (42 tests, a fake client that keeps the bucket's overwrite lock and fails on any removal; one test converts a real GeoJSON with geopandas). `-q` prints a dot per test; `-rs` lists skips only, with reasons. The full suite runs about two and a half minutes; `-rs` summarizes skips only and hides FAILED lines, so a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations in tests/test_unit_authority.py, not ours. The R oracle tests run only where Rscript and rewildr are installed.
 - Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes, a progress line every 50, into plots/maine/.data/place_profile_profiles.json and its receipt; `--place AUTHORITY:CODE` prints one and writes nothing. The build reads 21 receipts and withholds none at public (session 16); the outlet counts, the clerk counts, the clerk office points and place_profile_profiles all judge allow.
-- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table stops at D-81 and its Sprint 06 tab predates the design pass (D-197 to D-200); check its claims against this page and the code. Refreshed at Sprint 06's close (session 16): a Delivery cut tab, the decision table as a pointer to the ledger, Sprint 06's tab closed, Sprint 07's status.
-- Next decision ID: D-301. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its decision table points to the ledger. Its Sprint 08 tab predates D-301 to D-320 and the delivery cut; this page's Sprint 08 audit says where it is out of date. Check its claims against this page and the code.
+- Next decision ID: D-321. Before minting any ID, grep the ledger for it (LEDGER-3). Item IDs too.
+- **Sprint 07 is closed** (session 2): the stack (zip 7a, D-301 to D-311) and the canonical write (zip 7b, D-312 to D-320). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
+- **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo, since the bucket's name holds the account id; the write assumes rewilding-canonical-writer through the rewilding-writer profile in ~/.aws/config. CloudFront: dvk5mp17wovwb.cloudfront.net. `terraform output` in canopy/terraform prints the rest.
+- **Canonical objects written:** clerk_offices_points_points, version 0b91cb0caae7, allow record 33ce1ddb61dc, 392 offices (2026-11-17). The dry run judges 37 of Maine's 58 receipts may leave. Every write is public and permanent: dry-run first, write one artifact at a time, read the pointer and the data back after.
 - **Sprint 06 is closed** (Kalli, session 16), its order below. Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check. Progress: field-guide/docs/progress/information/sprint-06.md.
 - **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code; the library's account is set aside.
 - On or after 2026-12-02, when the 133rd's rosters are acquired: flip available: true, TRIBE-4, SEN-1, then run maine_seats.
@@ -22,7 +25,17 @@ is fixed.
 - The Census key is set in the rewilding env (`conda env config vars`), loaded on activate; it was pasted into chat and shell history on 2026-11-16, so it is replaced (KEY-1).
 - The clerk list lives at plots/maine/.data/sos_clerk_info_20261114.csv (sha256 abdaef75...fedee816) and the 911 file at plots/maine/.data/e911_agol_20260827.gdb.zip (212 MB, sha256 ec153095...b7a692, named for its information cutoff). Since D-298 and D-299 the list is factual_directory and the 911 file maine_geolibrary_public, both public; the courtesy ask to the GeoLibrary goes in the wrap-up. The 911 file holds home addresses; it never leaves .data, and the door publishes receipts' artifacts only, never a manifest dataset (a test to write with the door, Sprint 08).
 
-## Sprint 06 ~ the place profile and the standard
+## Sprint 07 ~ storage outside AGOL (closed)
+
+**Goal:** the truth that leaves is written once, outside AGOL, in a bucket that cannot overwrite it, readable by URL from anywhere.
+
+**Zip 7a, the stack (session 1, D-301 to D-311).** One Terraform stack in canopy/terraform (D-306): a private, versioned bucket, TLS-only, SSE-S3 with SSE-C blocked, Block Public Access on, noncurrent versions kept (D-307); CloudFront with origin access control reading harvests/* alone, CORS for any origin, versions cached long and current never (D-302, D-310); the writer role, put, get and list under harvests/, every delete denied, no access key (D-308); the bucket policy as the overwrite lock for every principal (D-309); access logs; the budget switched by create_budget (D-311). Applied on Kalli's account in us-east-2, the project's assigned region, because an organization policy refuses S3 in us-east-1; the committed default stays us-east-1 for the handover. The README holds the order of apply and the handover addendum.
+
+**Zip 7b, the canonical write (session 2, D-312 to D-320).** canopy/aws/s3.py and `python -m canopy.cli canonical`. A receipt from the plot's .envelopes, its data in the plot's own .data (D-312), is judged by the gate at canonical, public (D-315). The receipt travels byte for byte as envelope.json; the allow record lives beside it, versioned by its own content (D-313, D-320). Parquet and JSON are written as they are; GeoJSON becomes GeoParquet, converted twice and refused if the two differ, the change recorded as format_changed by the canonical write (D-314). A custom tier is refused until O-6. The command is a dry run unless --write, which takes one artifact with --by and --reason (D-316). Data is put last; current moves with If-Match (D-317). A harvest's name is its artifact's (D-318).
+
+**The dry run (session 2):** 37 of 58 may leave, 21 withheld, 0 unjudged. Withheld: rule 5 for the outlet listings, groups and stacks; rule 9 for all five carriers' located_in_edges (EDGE-NOTE-1); rule 10 for the old outlets_* receipts, which still carry Cision from before D-294; rule 4 for eight receipts with no lineage (RECEIPT-1's chain); literacy and section 203's CSVs by format (both reach the public through the profile). May leave: every outline, every carrier's counts and points, every indicator table, the profile.
+
+## Sprint 06 ~ the place profile and the standard (closed in session 16)
 
 **Goal:** every Maine place has a six-part profile, its carriers are on the map, and every barrier is judged against a stated, absolute standard.
 
@@ -104,7 +117,7 @@ is fixed.
 
 **Still open in Contract 4:** P-2 (pairing table, after delivery, D-285), P-3 (free outlet), P-6 (FCC benchmark, with 7b), P-8 (section 203 on Wabanaki places; on the nations' terms), GAPS-1 (part 5 in the method authors' words). P-1 and P-5 closed in session 14 (D-271); P-7 and P-9 before.
 
-## Decided in session 1
+## Decided in Sprint 06, session 1
 
 | ID | One line |
 | --- | --- |
@@ -118,7 +131,7 @@ is fixed.
 | D-208 | A library outlet is FSCSKEY-FSCS_SEQ; fixed outlets only; bookmobiles listed, never placed; flags kept; the outlet file is Windows-1252 by its own text |
 | D-209 | A carrier is a registered indicator, role carrier, derivation located_count, in seeds/indicators/carriers.yml; every place a row, the count beside the rate; loam's statistical rule now judges ACS values only |
 
-## Decided in session 2
+## Decided in Sprint 06, session 2
 
 | ID | One line |
 | --- | --- |
@@ -126,7 +139,7 @@ is fixed.
 | D-211 | A temporary closure is a method choice, temporarily_closed (listed or placed); Maine chooses listed, following IMLS's own tables, so Atkins Memorial, Corinth, is listed and 261 fixed outlets are placed; the primitive refuses any other value |
 | D-212 | A carrier's meaning lives once, in its method; docstring, run header, registry and indicator rationale point to it. A rule (the other way is simply wrong) is a test; a choice (reasonable people differ) is declared. Bookmobiles are a rule |
 
-## Decided in session 3
+## Decided in Sprint 06, session 3
 
 | ID | One line |
 | --- | --- |
@@ -136,7 +149,7 @@ is fixed.
 | D-216 | garden/methods/index.yml routes only (domain, id, path); a method's name and answers_question_types live in the method; MethodIndexEntry carries neither |
 | D-217 | roots/count_by_unit deleted, never registered: count_located (D-209) is the one count of points in places |
 
-## Decided in session 4
+## Decided in Sprint 06, session 4
 
 | ID | One line |
 | --- | --- |
@@ -146,7 +159,7 @@ is fixed.
 | D-221 | Every type live work named is declared (water, forest, neighborhood boundaries; roads, nighttime_lights, population_density; measured_composition) or renamed to its existing home; check_alignment unregistered, its 0-byte file deleted |
 | D-222 | The wonder composer drafts current types; the three composed drafts (e6e967, 4ade33, STUB-1's 4a8f59) deleted |
 
-## Decided in session 5
+## Decided in Sprint 06, session 5
 
 | ID | One line |
 | --- | --- |
@@ -155,7 +168,7 @@ is fixed.
 | D-225 | loam's located_in view unions every located_in_edges receipt (LOC-VIEW-1); its carriers view gives every placed point of every located_count carrier, found through the edges receipt's own provenance record. place.py reads an exact count apart by derivation and labels every value by role, reading indicators through the registry |
 | D-226 | IMLS's codes (outlet types, structure statuses) are one shared crosswalk, seeds/crosswalks/libraries/imls_pls_outlets.yml, passed whole as `reading`; a release's outlet member and encoding are declared in its manifest entry and held to the run as source_facts; seeds/sources/imls_pls.yml is reference only, pointing to each fact's home |
 
-## Decided in session 6
+## Decided in Sprint 06, session 6
 
 | ID | One line |
 | --- | --- |
@@ -163,13 +176,13 @@ is fixed.
 | D-228 | One experiment per question: county standings answers basic_needs_and_opportunity (rent burden, vehicle access); broadband's county standing lives only in maine_broadband_access_subscription__cii_indicator_values_91b5c0, same method and choices |
 | D-229 | The no-curiosity warning names only the gap; advice to become a preparation comes only from the error for a run with a preparation method (a rule, tested) |
 
-## Decided in session 7
+## Decided in Sprint 06, session 7
 
 | ID | One line |
 | --- | --- |
 | D-230 | Schools from NCES EDGE 2024-25, keyed NCESSCH, columns and codes from one crosswalk; a school is in the state where NCES's point stands (STFIP), never its operator's (a rule, tested): the three BIE-operated Wabanaki community schools are placed, flagged and counted in every drawer, once each; DOE and MEGIS place nothing. Kalli's choice A, with her guard that Indian Island counts once, as the county subdivision it is |
 
-## Decided in session 8
+## Decided in Sprint 06, session 8
 
 | ID | One line |
 | --- | --- |
@@ -177,7 +190,7 @@ is fixed.
 | D-232 | Health centers from HRSA's sites file, a daily snapshot declared by day and sha256, rows held to the day; keyed BPHC Assigned Number. Rules: administrative sites, mobile units, sites with no point, withheld addresses, sites not open or elsewhere are listed. Look-alikes, seasonal sites (as an adjective) and every setting are placed (Kalli's choices); who a site serves stays SERVES-1's |
 | D-233 | A Census tribal area is counted, never refused, beside the note its step names (tribal_note), carried on every tribal row (context_note); the words are Kalli's DRAFT, on the nations' terms. loam refuses only the ACS on tribal areas (D-171) and judges each publisher on its own levels (LOAM-2). A tribal code and its persons are AIANNH plus component. A level no edge reaches takes its places' vintage |
 
-## Decided in session 9
+## Decided in Sprint 06, session 9
 
 | ID | One line |
 | --- | --- |
@@ -188,7 +201,7 @@ is fixed.
 | D-238 | Exact match: house number, street, ZIP; the street spelled through USPS Pub 28 (C1 suffixes, 233 directionals) on both sides; no suffix guessed; ZIP over town |
 | D-239 | A tie in one building settles on its bare point (a rule); a campus tie follows campus_ties (Maine: municipal_class, flagged tie_broken_by_class); every settled point carries its candidate count and spread |
 
-## Decided in session 10
+## Decided in Sprint 06, session 10
 
 | ID | One line |
 | --- | --- |
@@ -200,7 +213,7 @@ is fixed.
 | D-245 | Operating status through operating_vocabulary: operating, ceased, last_post (counted, words kept), unmapped (counted); ceased_outlets (listed, counted); Maine: listed |
 | D-246 | An outlet is placed by its town code at town, county and state only, each edge with its place's own vintage; never a district or tribal area. Outlets then edges keeps D-224's check; loam leaves a table layer out of the carriers view by name |
 
-## Decided in session 11
+## Decided in Sprint 06, session 11
 
 | ID | One line |
 | --- | --- |
@@ -211,7 +224,7 @@ is fixed.
 | D-251 | A status a source writes outside its operating column is read through operating_elsewhere by declared words (the ecosystem file's CLOSED) |
 | D-252 | Each outlet listing declares source.collected in the manifest (2026-08, Kalli); the count's time is "collected 2026-08", held to the manifest by a test until SRCFACT-2 |
 
-## Decided in session 12
+## Decided in Sprint 06, session 12
 
 | ID | One line |
 | --- | --- |
@@ -221,7 +234,7 @@ is fixed.
 | D-256 | office_reads keep, move to a town or the state, or list (reason in words) an outlet placed by its office town alone; refused otherwise; unread ones stay placed, flagged office_town_unread |
 | D-257 | A town review names a town_code or says state: true, never both |
 
-## Decided in session 13
+## Decided in Sprint 06, session 13
 
 | ID | One line |
 | --- | --- |
@@ -238,7 +251,7 @@ is fixed.
 | D-268 | Literacy is its own artifact, literacy_estimates, read by zip 2's profile |
 | D-269 | A proportion of exactly 1 is not_derived |
 
-## Decided in session 14
+## Decided in Sprint 06, session 14
 
 | ID | One line |
 | --- | --- |
@@ -256,7 +269,7 @@ is fixed.
 | D-281 | Contract 4 moves to draft 0.4 in zip 2, carrying D-258, D-263 and D-270 to D-280 |
 | D-282 | Part 4 pairs one measure only: CII's average literacy score and PIAAC's share at or below Level 1 are different measures, shown side by side in the literacy family, never as a disagreement |
 
-## Decided in session 15
+## Decided in Sprint 06, session 15
 
 | ID | One line |
 | --- | --- |
@@ -272,7 +285,7 @@ is fixed.
 | D-292 | Every level is profiled: Contract 4's six first, then the MEGIS divisions, as groundwork, saying so |
 | D-293 | The places and edges receipts are inputs of every profile; when withheld, the whole file cannot leave, said |
 
-## Decided in session 16
+## Decided in Sprint 06, session 16
 
 | ID | One line |
 | --- | --- |
@@ -284,9 +297,34 @@ is fixed.
 | D-299 | factual_directory (every member, no selection: the clerk list, public) and factual_compilation_counts (a chosen list: counts only, requires_tier aggregate-only, enforced in rule 10); Kalli's readings of Feist |
 | D-300 | The ecosystem file is project_own_work, credited to the project; to confirm with Dr. Mittal |
 
+## Decided in Sprint 07
+
+| ID | One line |
+| --- | --- |
+| D-301 | Kalli's own account, applied fresh, handed to the library as code; us-east-2 on her account, us-east-1 the committed default; the account id out of the repo |
+| D-302 | CloudFront with origin access control in front of a private bucket; it reads harvests/* alone (O-1) |
+| D-303 | GeoParquet canonical, GeoJSON display copies, GeoPackage on request (O-2) |
+| D-304 | Referenced GeoJSON layers for December; a Parquet feature layer a recorded read after (O-3) |
+| D-305 | Tests through an injected fake client, no moto; boto3 in environment.yml; old harvests regenerated, never moved |
+| D-306 | One stack, canopy/terraform; storage.tf and the December 2025 stack removed |
+| D-307 | Noncurrent versions kept |
+| D-308 | The writer role: put, get, list under harvests/; every delete denied; no access key (DEPLOY-1 retires the deployer's) |
+| D-309 | The bucket policy is the overwrite lock: versions need If-None-Match, current If-None-Match or If-Match |
+| D-310 | CORS for any origin, reads only; range headers exposed for DuckDB |
+| D-311 | create_budget switches the budget; false on Kalli's account |
+| D-312 | The write takes a receipt by name, its data in the plot's own .data, alone |
+| D-313 | The allow record beside the receipt, never inside; the receipt byte for byte |
+| D-314 | Parquet and JSON as they are; GeoJSON to GeoParquet, twice, format_changed by the canonical write; other formats refused by name |
+| D-315 | Target canonical at public; a custom tier refused until O-6 |
+| D-316 | The canonical command: a dry run by default; --write one artifact with --by and --reason; bucket and domain from the env |
+| D-317 | Data put last; current moved with If-Match; a revert is a move; versions cached a year, current no-cache |
+| D-318 | A harvest's name is its receipt's artifact name |
+| D-319 | batch.py and docker-compose.yml removed |
+| D-320 | Allow records versioned inside their version, named by content less their times |
+
 ## Contracts
 
-field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.4 (D-281, carrying D-258, D-263, D-270 to D-293).
+field-guide/docs/contracts/: 1 tiers and the gate 0.6 (the canonical write as an exit, D-314, D-315); 2 canonical objects 0.3 (D-312 to D-320; open: O-4, O-5 for Sprint 08, O-6 after delivery); 3 geography graph 1.0 (the grove teammate's review owed; CON3-2: section 2 still calls located_in a kind in the edges table); 4 place profile 0.4 (D-281, carrying D-258, D-263, D-270 to D-293).
 
 ## Where invariants are held
 
@@ -382,6 +420,11 @@ field-guide/docs/contracts/: 1 tiers and the gate 0.5; 2 canonical objects 0.1; 
 | Literacy and section 203 records are views keyed by place, never place_values | canopy/loam/graph.py _plant_records; tests/test_loam_records.py (D-275) |
 | A count's receipt names its rows' notes | count_located.output_metadata; tests/test_count_located.py (D-291) |
 | The boundaries' license term permits public with attribution | seeds/licenses; tests/test_license_geolibrary.py (D-290) |
+| Only an allowed receipt is written, from the plot's own .data, by its own name | canopy/aws/s3.py prepare; tests/test_canonical_write.py (D-312, D-315) |
+| A version is written once; current moves only with If-Match; nothing is ever removed | the bucket policy (D-309), s3.write; tests/test_canonical_write.py (D-317), which also reads s3.py's source |
+| The same data judged the same way sends nothing; a changed allow record is written alone | s3.allow_identity, s3.write; tests/test_canonical_write.py (D-320) |
+| A GeoJSON converts to the same bytes twice, or is refused | s3.convert_stably; tests/test_canonical_write.py (D-314) |
+| A custom tier never reaches the canonical bucket | s3._judge; tests/test_canonical_write.py (D-315, O-6) |
 
 ## Open items
 
@@ -411,6 +454,10 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
+| O-6 | How a version is withdrawn: a person's own removal, a tombstone, a CloudFront invalidation, on the terms of the people the data describes. Until then the canonical write refuses custom tiers (D-315) |
+| DEPLOY-1 | Retire the deployer IAM user's access key; deploy from expiring logins after |
+| CANON-1 | The old outlets_* receipts (Cision in their lineage) and the eight receipts with no lineage sit in .data and .envelopes, withheld; rerun or remove them |
+| CLIDOC-1 | canopy/cli/__init__.py's docstring lists neither map nor acquire |
 | BCAST-1 | A media database's radio and television stations count only where a local news list holds them; an FCC authority could say which air local news. Said in the method's interpretation |
 | SRCFACT-2 | D-192 holds a run to one input's source facts; the outlet count's time is held to its five listings by a test until a many-input step can be held the same way |
 | JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
@@ -488,6 +535,9 @@ Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-2
 - Run everything from the repo root. An unzip from field-guide/docs once made second copies of soil/ and tests/ there, and pytest refused the duplicate test names.
 - Run a preparation with `python -m canopy.cli sows <run.yml>`; `--dry-run` only validates. `sows` prints nothing until the run ends. Never `--resolve-only` casually (RESOLVE-1).
 - Do not run maine_seats on real data before 2026-12-02.
+- A canonical write is public and permanent. Dry-run it, write one artifact, then read the pointer with curl and the data with DuckDB, using the two commands the write prints.
+- Output saved to a file is buffered while errors are not, so a traceback can sit far above where a run died, and `tail -1` shows the last line printed. canonical --all prints line by line; other commands may not.
+- A block Claude draws that is not a command is drawn so it cannot run. One pasted diagram reached zsh in session 2 and was refused whole, harmlessly.
 - `authority` means only who assigns a place's code; a publisher is `published_by` everywhere, manifests included.
 - `$indicators.<id>` resolves to the declaration as a primitive receives it (as_declaration), with declaration_sha256 taken over the indicator's own mapping without its rationale (D-227). Adding or editing a sibling, a comment or a rationale moves no receipt; editing source, weight_by, replicates or the derivation does, and so does moving the indicator to another file (declared_in). as_declaration omits source, weight_by, replicates and rationale: the hash is what lets freshness see the first three.
 - A preparation uses soil/ primitives only and a preparation method; a run with a roots/ step or an analysis method is an experiment and names its curiosity (D-98, D-228). `curiosity: ref: ""` is a warning, never a pass.
@@ -581,28 +631,25 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
 
-**Next: Sprint 07, storage outside AGOL.** bash-win built the safety rails (commits 5cc2108, 51811da, 2026-11-14) and applied a staging stack on his own account; Kalli finishes the rest (session 16). Decided in session 16, to be recorded as D-301 onward at Sprint 07's first ledger block (grep first): Kalli's own account, applied fresh (MP-70: canonical files are citations, not a helper's); us-east-1 (Kalli's 11/01 choice; staging/variables.tf defaults to us-east-2, drift); CloudFront in front of the bucket with Block Public Access kept on (bash-win's lean, which Claude adopted over a public prefix); GeoParquet canonical, GeoJSON display copies, GeoPackage only on request; referenced GeoJSON layers for December, a Parquet feature layer as a recorded read after; tests reach S3 through an injected fake client, no moto, boto3 added to environment.yml; old harvests are regenerated through the canonical write, never moved; Terraform state local on Kalli's machine while she alone applies.
+**Next: Sprint 08, the publish door.** The Master Plan's Sprint 08 tab, read against this page in Sprint 07's session 2, is out of date in six places:
 
-**Sprint 07's audit (session 16), what is left:**
-
-| Step | Where it stands |
+| The tab says | What is true now |
 | --- | --- |
-| Budget, tags, versioning, force_destroy off, TLS-only, SSE (SSE-C blocked), KMS access logs, account-regional bucket name, provider 6.72.0 locked | done (staging) |
-| A least-privilege identity for the canonical write (put and get under harvests/, never delete) | missing: zip 7a |
-| One stack (D-3) | three: canopy/terraform/storage.tf (the per-city bucket, beside staging/, would create rewilding-nyc-cache), staging/, and terraform/ (December 2025: force_destroy true, versioning off, AWS Academy's LabRole, us-east-1, provider 5.x). Zip 7a: staging moves up, storage.tf deleted, terraform/ recorded as an experiment and removed |
-| The budget | account-wide: fine on Kalli's account; on a shared account it would need a Project tag filter |
-| Lifecycle: noncurrent versions expire after 90 days | safe only if a version key is never overwritten: the writer puts with a condition (If-None-Match), so only current's own history expires |
-| Public reach (O-1) | none yet: CloudFront with origin access and CORS for ArcGIS, zip 7a |
-| canopy/aws/s3.py, batch.py, docker-compose.yml | 0 bytes: the canonical write, zip 7b |
-| The four tests | none exist: zip 7b |
-| The bucket name | bucket.tf writes the full -account-region-an suffix itself; whether the provider adds it again is unread: read terraform plan's name before applying |
-| The image | the whole environment (PyTorch, torchvision, OpenCV) against D-5's reviewed subset; lacks boto3 and pytest; DEPS-1; forced amd64 |
-| Reading by URL in Map Viewer and Experience Builder | Kalli, as the ArcGIS admin, after 7b |
-| DuckDB reads the canonical GeoParquet through CloudFront | zip 7b, then Kalli's run |
+| The publish-route teammate leads | Kalli delivers the door (People, below) |
+| Reference targets are build item 10 | Referenced GeoJSON layers are December's road (D-304); uploading features is the exception, and O-5 (overwrite or truncate) mostly becomes: how a reference item moves to a new version's URL |
+| Nothing on display copies | The door makes them (Contract 2, sections 4 and 6): simplified GeoJSON under a version's display/, each with derived_from and its publication steps |
+| A tabular result reaches the door | A choropleth joins two canonical versions (an indicator table and an outline), while Contract 2 says a display copy is derived_from one. A fork for the design pass |
+| Provenance on every item names its canonical hash | It can name the version, its allow record and its CloudFront URL (D-318, D-320) |
+| The door publishes results | Zip 3b's list stands with it: CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the test that no manifest dataset is a publish target (the canonical write already takes receipts only, D-312), DEPS-1, OUT-REG-1, NOTHR-1, PROF-1 if cheap. D-274's allow record is answered (D-313, D-320) |
 
-Also from bash-win's log, not Sprint 07's and not on main: the API split (public_routes.py, production.py, tests/test_api_route_surface.py), decided 2026-11-14, perhaps on a branch; a slim Python-only API image (his option 2) beside the research image; E5's quota question for the NYC Batch pilot, unanswered. canopy/providers/s3.py is ESA WorldCover's reader, a namesake of canopy/aws/s3.py, never the canonical write.
+**Sprint 08's first consultation needs:** the publish route assignment (F1 to F8, R1 to R11; ask Kalli where it lives), canopy/visuals.py, canopy/cli/map.py (read in session 2, reread if changed), tests/test_publish_latch.py, canopy/providers/arcgis.py, canopy/introspect.py, seeds/schemas/manifest.schema.yml, canopy/aws/s3.py as it stands, and session 15's zip command for zip 3b's reads (the ledger's session 15 block, and 825e32e).
 
-**Zip 7a's consultation needs from Kalli:** `terraform -version` and `aws sts get-caller-identity` on her machine; her budget alert address. **Its reads:** the staging .tf files and the December stack (read in session 16, sprint07_read.zip; reread if changed), Contract 2 (read), and terraform plan's output after the build. **Then zip 7b**, the canonical write, after rereading canopy/envelope.py and canopy/expose/check.py for how the allow record attaches. **Then Sprint 08, zip 3b, the door:** CARRY-1 with EDGE-NOTE-1, the two-artifact outlet layer, the profile's allow record (D-274), the test that no manifest dataset is ever a publish target, DEPS-1 and OUT-REG-1, NOTHR-1, PROF-1 if cheap. Its reads are session 15's zip command, kept in the ledger's session 15 block and in git history (825e32e).
+## Sprint 07 session 2's notes (zip 7b built and run; the first canonical object)
+
+- What went right: the reads came before every lean that rested on them (the receipts' formats, the real envelope schema, two real receipts); the dry run was read before any write, and it found a crash and a design gap while both were still free to fix; the first write wrote exactly four keys in order and read back 392 through CloudFront.
+- Wrong hypotheses: that a writer refusing all but Parquet stays useful; that a traceback's place in a saved file is where the run died; that tail -1 shows how a run ended; that an allow record could be written once per version.
+- Lessons: read what a writer will meet before deciding what it refuses; an identity names only what cannot change without the thing changing; a batch read reports each surprise and goes on; run the whole suite before anything permanent.
+- Session shape: one chat held the repo check, both reads zips, three builds, two dry runs, the first write and the hand-off. The hand-off rule stands: a long build starts fresh from state.md.
 
 ## Session 16's notes (zip 3a, built and run; Sprint 07 audited)
 

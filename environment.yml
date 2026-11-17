@@ -36,6 +36,7 @@ dependencies:
   # --- acquisition ---
   - requests
   - earthengine-api
+  - boto3>=1.36          # the canonical write: conditional puts, If-None-Match and If-Match (D-305)
 
   # --- api ---
   - fastapi

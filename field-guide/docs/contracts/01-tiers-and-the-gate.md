@@ -1,6 +1,6 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.5, 2026-11-11, for review (E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.6, 2026-11-16, for review (0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
 **Rests on:** MP-67 (publishing is opt-in), MP-72 (Wabanaki places as a
@@ -19,7 +19,7 @@ or shown to anyone who is not running the plot. Today and planned:
 | --- | --- | --- |
 | `map --publish` | `canopy/cli/map.py` to ArcGIS Online | built (MP-67); gate wired in Sprint 03 |
 | The publish door | `canopy/expose/publish.py` | Sprint 08 |
-| The canonical write | `canopy/aws/s3.py` (Contract 2) | Sprint 07 |
+| The canonical write | `canopy/aws/s3.py` (Contract 2), target `canonical` at `public` | built in Sprint 07 (zip 7b, D-315) |
 | The explorer's layers and profiles | read from canonical files | Sprints 06, 09 |
 | Exports from the community kit | the kit's local page | Sprint 10 |
 
@@ -195,7 +195,9 @@ every map drawn from it, and no exit has to know what happened upstream. The
 gate gathers every record in the chain into its allow record, each once
 (keyed by `by`, `at`, `step` and `detail`, since an ancestor reached through two
 inputs appears twice in the chain). `metadata.publication` is never read or
-written. `by: the gate` is for a change the exit itself makes, recorded there.
+written. A change an exit itself makes is recorded by that exit, `by` naming
+it: the gate, or the canonical write, which records its GeoJSON to GeoParquet
+conversion in the version's allow record (D-314, D-320).
 
 ## Decided in review
 

@@ -1732,3 +1732,46 @@ Lessons:
 Closed: O-1, O-2, O-3 (D-302 to D-304); Sprint 07's audit rows for the write identity, one stack, lifecycle and public reach.
 Opened: DEPLOY-1, retire the deployer IAM user's access key after delivery, and deploy from expiring logins after.
 Still open: zip 7b, the canonical write (canopy/aws/s3.py and its four tests), after rereading canopy/envelope.py and canopy/expose/check.py.
+
+## Sprint 07, session 2: zip 7b, the canonical write
+
+- D-312: The canonical write takes a receipt in the plot's own .envelopes, by its artifact name, and never a manifest dataset. Its data file is resolved against the garden's root (receipts write paths through preparations/..) and must sit inside the plot's own .data, travelling alone: a receipt naming secondary files is refused until Contract 2 says how they travel.
+- D-313: The gate's allow record lives beside the receipt, never inside it (D-274 stands). The receipt is uploaded byte for byte as envelope.json and the envelope schema is unchanged.
+- D-314: Formats (A3, Kalli's choice): Parquet is written as it is; JSON is a document and written as it is (the place profile); GeoJSON is converted by the canonical write to GeoParquet with geopandas, no index column, converted twice and refused if the two files differ. The change is a format_changed record appended to the allow record's publication steps, by the canonical write, naming the libraries and their versions, the crs, the feature count and the source file's sha256 (Contract 1 section 8 amended: an exit records its own changes, the gate or the canonical write). CSV, GeoPackage, rasters and Arrow are refused by name. A library upgrade can make new bytes from the same content, and so a new version; Contract 2 says so. A1, the receipt's own format, was the fallback and was not chosen.
+- D-315: The target is canonical at public, because CloudFront makes everything under harvests/ readable by anyone. A lineage holding a custom tier is refused by the writer even when the gate allows it, until O-6 decides how a version is withdrawn.
+- D-316: python -m canopy.cli canonical <plot> <artifact> is a dry run by default and touches no AWS; --all is a dry run only, reads every receipt through any error, and exits 1 if one could not be judged; --write takes one artifact at a time and needs --by and --reason. The bucket and the CloudFront domain come from REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN in the env (the bucket's name holds the account id, D-301), the profile from REWILDING_CANONICAL_PROFILE, rewilding-writer when unset.
+- D-317: A version is whole when its data file exists, and the data file is put last, each version file with If-None-Match, so a write cut off partway finishes on the next try. The pointer is created with If-None-Match and moved with If-Match; a pointer moved by another writer meanwhile is left as they set it, said. A move back to an existing version is a revert, with its reason. Versions are cached a year, immutable; current is no-cache.
+- D-318: A harvest's name is its receipt's artifact name. A version's URL is a citation forever, so a rename makes a new harvest and never moves an old one. map.py's map_<indicator>__<layer> files are not receipts and are not written.
+- D-319: canopy/aws/batch.py and docker-compose.yml removed, both 0 bytes: the NYC Batch pilot is after delivery (E5's quota question unanswered) and nothing composes before the API image split. Git history keeps their place.
+- D-320: The allow record is versioned inside its version: versions/<sha256>/allow/<allow-sha256>.json, named by the sha256 of its content less its times (the gate's checked_at, the write's own steps' at, prepared_at) and less which receipt was read. The same data judged the same way writes nothing, not even a refused put; the same data with a changed allow record (a note's text settled on the nations' terms, TRIBE-7, P-8; a license read again) writes that record alone and moves current, which names sha256, allow, previous and previous_allow. Old records stay readable as history. Found before the first write, so nothing migrates.
+
+Built (zip 7b, then zip7b2 and zip7b3 after the dry runs): canopy/aws/s3.py, the canonical write; canopy/cli/canonical.py, registered in canopy/cli/__init__.py; tests/test_canonical_write.py, 42 tests through an injected fake client that keeps the bucket's overwrite lock and fails on any removal; boto3>=1.36 in environment.yml (1.43.67 installed); Contract 1 at 0.6, Contract 2 at 0.3. Removed: canopy/aws/batch.py, docker-compose.yml. Tests: 1,289 passed.
+
+Written: the first canonical object. clerk_offices_points_points, version 0b91cb0caae7, allow record 33ce1ddb61dc, 392 offices as GeoParquet, moved by Kalli A. Hale on 2026-11-17 01:02 UTC. Read back: curl of current through CloudFront showed the pointer; DuckDB's read_parquet over the CloudFront URL counted 392.
+
+Found:
+- Maine holds 58 receipts: 28 Parquet, 21 GeoJSON, 8 CSV, 1 JSON. A writer that refused all but Parquet would have refused the clerk points, every carrier's points, every outline and the profile.
+- The dry run: 37 of 58 may leave, 21 withheld, 0 that could not be judged. Withheld: rule 5, the outlet listings, groups and stacks (aggregate-only); rule 9, all five carriers' located_in_edges (EDGE-NOTE-1); rule 10, the old outlets_* receipts, which still carry Cision under terms_unknown from before D-294 (the carriers_* stack is clean of it); rule 4, eight receipts with no lineage (dissolve_counties_dissolved and the repair_*, units_* and validate_* chain RECEIPT-1 names); by format, literacy and section 203's CSVs. Every outline, carrier count and carrier point, every indicator table and the profile may leave.
+- GDAL's GeoJSON reader refuses one object past its size limit, and outline_state_outline, Maine whole in one feature, is past it. OGR_GEOJSON_MAX_OBJ_SIZE 0 lifts it for the process; it bounds the reader's memory, not the bytes written.
+- Hashes held across separate processes, not only within one: the senate outline, the clerk points and the outlet counts named the same sha256 in two dry runs.
+- An allow record carries what can change while data does not (note texts, license terms, tiers). With identity on data alone, the first write would have frozen the DRAFT tribal notes at a citable URL forever.
+- boto3 was already in the env; mamba installed nothing.
+
+Wrong hypotheses:
+- That the writer could refuse every non-Parquet receipt and stay useful (fork A's first lean).
+- That where a traceback sits in a saved file is where the run died: stdout to a file is buffered and stderr is not, so the traceback landed after receipt 19 while the run died on receipt 37.
+- That tail -1 of a saved run shows how it ended: it showed the last line printed before the crash.
+- That an allow record could be written once per version.
+- That a rerun with the same allow record would send nothing while it still tried the put: a refused put is still a request.
+
+Lessons:
+- Read the formats a writer will meet before deciding what it refuses.
+- A command whose output is saved prints line by line, so the file's order is the true order.
+- A batch read reports each item's surprise and goes on; one error never hides the rest.
+- An identity names only what cannot change without the thing changing; whatever can change on its own gets its own identity.
+- A diagram in a command's box gets pasted: diagrams that are not commands are drawn so they cannot run.
+- Run the whole suite before anything permanent, not only the new file's tests.
+
+Closed: Sprint 07's audit rows for the canonical write, the four tests, DuckDB through CloudFront and batch.py; D-274's question of where the profile's allow record lives (beside it, D-313, D-320).
+Opened: O-6, how a version is withdrawn, on the terms of the people the data describes (Contract 2; after delivery). CANON-1, the old outlets_* receipts and the eight lineage-less receipts sit in .data and .envelopes, withheld; rerun or remove them after delivery. CLIDOC-1, canopy/cli/__init__.py's docstring lists neither map nor acquire.
+Still open: Sprint 08, the publish door, with display copies (Contract 2 section 4), reference layers by URL (D-304), CARRY-1 and EDGE-NOTE-1. DEPLOY-1 after delivery. Reading by URL in Map Viewer and Experience Builder, Kalli as the ArcGIS admin.
