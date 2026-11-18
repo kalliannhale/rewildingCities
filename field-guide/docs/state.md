@@ -5,16 +5,16 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-18, at Sprint 09 session 1's hand-off. Sprint 09 is in progress. Session 1 read Experience Builder against the door's items, decided the explorer's shape (Experience Builder stays, D-68; its places come from a feature collection the door pushes, D-350), built and ran zip 9a (D-350 to D-360) and closed UPDATE-1, RAMP-1 and COVER-1. Every profile, the House, Senate and Census tribal outlines and their copies, and the towns' copy are in the bucket; broadband's standing draws darker for harder access in test and library. Next is zip 9b: see Starting the next session.
+**Updated:** 2026-11-18, at Sprint 09 session 3's hand-off. Sprint 09 is in progress. Session 2 read what zip 9b touches (reads_9b, 74 files, and a dry run of all 58 receipts) and rehearsed a separate Feature Collection item. Session 3 settled the four forks on Kalli's word (go with the intuitions, revised once against failure and drift: D-363 to D-366) and rehearsed the places as one web map, which ArcGIS stored and Experience Builder drove from Search (D-361, D-362). No product code changed in either session. Next: R5 and the polygon size read, then zip 9b's build: see Starting the next session.
 
 ## Where the build stands
 
-- Branch main, pushed. Confirm with `git log --oneline -15` and `git status -sb`. Sprint 09 session 1's commits: 284e56f (Sprint 08's hand-off, landed at this session's start: it had not been committed), 7d93a25 (zip 9a, D-350 to D-359), 510c104 (the library in the credit, D-360), a9aea9f (the run's ledger block), 5aacc14 (this hand-off, which appended the run's block a second time), 5e8c969 (the block once again, and the door's record after the restyles). Sprint 08's commits: c67a67a (zip 8a, D-326 to D-334), 060bcdd (its hand-off), then session 2's: 1ba3098 (zip 8b and 8b2, D-335 to D-347), fc773e3 (rule 11 gains joined and marked, D-348), 2ba91e7 (pyproj's unnamed operation said in words), 07111bf (the run's record), 98e4295 (zip 8c, D-349), d87f324 (the record agrees with ArcGIS), then this hand-off's commit. Sprint 07's last: 481263c; Sprint 06's last: 1497bfa, 106f721, 02e9b87.
+- Branch main, pushed. Confirm with `git log --oneline -15` and `git status -sb`. Sprint 09 sessions 2 and 3 changed no product code: their one commit is this hand-off (state.md, the ledger block, the rehearsal scripts in tests/rehearsals/sprint-09/). Session 3 began at 75595fd, clean. Sprint 09 session 1's commits: 284e56f (Sprint 08's hand-off, landed at this session's start: it had not been committed), 7d93a25 (zip 9a, D-350 to D-359), 510c104 (the library in the credit, D-360), a9aea9f (the run's ledger block), 5aacc14 (this hand-off, which appended the run's block a second time), 5e8c969 (the block once again, and the door's record after the restyles). Sprint 08's commits: c67a67a (zip 8a, D-326 to D-334), 060bcdd (its hand-off), then session 2's: 1ba3098 (zip 8b and 8b2, D-335 to D-347), fc773e3 (rule 11 gains joined and marked, D-348), 2ba91e7 (pyproj's unnamed operation said in words), 07111bf (the run's record), 98e4295 (zip 8c, D-349), d87f324 (the record agrees with ArcGIS), then this hand-off's commit. Sprint 07's last: 481263c; Sprint 06's last: 1497bfa, 106f721, 02e9b87.
 - Tests: `python -m pytest -q -rs | tail -3`. **1,457 passed** at zip 9a: zip 8c's 1,415 plus tests/test_telling.py (22, three reading the real profiles when they are on disk), test_door_restyle.py (9), test_pinch.py (5, needing shapely), test_note_status.py (3), test_standard_sources.py (3); test_door_choropleth.py's title check still reads "higher is better". At zip 8c, 1,415: zip 8a's 1,332, plus tests/test_choropleth.py (15), test_joined_copy.py (24, 3 drawing real geometry), test_door_choropleth.py (32, a fake portal that rewrites descriptions as ArcGIS does), test_receipt_names.py (10), test_no_threshold.py (2); test_map_indicators.py rewritten for the keyed join. The full suite runs about three minutes; a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations, not ours.
 - Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes into plots/maine/.data/place_profile_profiles.json. Rebuilt 2026-11-18 on the fixed standard (D-357) and written canonically (824e79d23b1d). A change to the standard, the notes or a profile's wording means a rebuild and a new version.
 - The telling: canopy/wonder/telling.py turns a profile into the explorer's text fields (D-351). Its register is seeds/language/plain_language.yml (D-352); tests/test_telling.py holds every field to it.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its Sprint 08 tab is marked done at this hand-off. Check its claims against this page and the code.
-- Next decision ID: **D-361**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
+- Next decision ID: **D-367**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
 - **Sprint 08 is closed** (session 2). Progress: field-guide/docs/progress/infrastructure/sprint-08.md. **Sprint 07 is closed** (session 2 of Sprint 07). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
 - **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo; the write assumes rewilding-canonical-writer through the rewilding-writer profile. CloudFront: dvk5mp17wovwb.cloudfront.net.
 - **Canonical objects written** (every write public and permanent; dry-run first, one artifact at a time, read the pointer and data back after):
@@ -44,7 +44,8 @@ is fixed.
 
   The door's first item, 143923c7 (zip 8a), and broadband's first test item, dd56fefa, were found deleted in ArcGIS by the first `--check` (who deleted them is not recorded; Kalli went ahead with `--replace`) and remade; each new entry keeps the old in `previous`. **An item id is what an Experience Builder app holds, so a door item is never deleted by hand once anything is built on it** (Sprint 09).
 - The hand-made web map 5fcd410b007a49aaa279e6a2b548f507 (D-325) sits outside the door's record.
-- **Experience Builder, as read in session 1** (D-350): its Map widget draws a door map's referenced GeoJSON, and no widget can read it. Search reads a feature collection; a widget that should follow a search connects to the Search widget's **output** data source (Select data, Outputs), never the searched data. Its published config is the item resource config/config.json. The rehearsal app read_9a (05b3d08a86174f78a725e77e7d833a1e, RDS_NU) holds an Arcade test source wired Search to Text, Embed and Table; it was public and Kalli was asked to make it private; confirm. It is a rehearsal space, never the explorer.
+- **Rehearsal items, outside the door's record, never the explorer:** the places web map 000c5dcf102f4b878562a0494b6ee7fa (session 3; rewildingCities test, private; five layers, 738 places; tests/rehearsals/sprint-09/places_webmap_sent.json records what was sent); session 2's Feature Collection item and its Map Viewer web map 5dcd073073f24f3398cb2a5514e22517, both found public though made private, cause unknown. Experience Builder's R2 work in session 3 changed neither sharing nor the stored map, so that cause is elsewhere.
+- **Experience Builder, as read in session 1** (D-350): its Map widget draws a door map's referenced GeoJSON, and no widget can read it. Search reads a feature collection; a widget that should follow a search connects to the Search widget's **output** data source (Select data, Outputs), never the searched data. Its published config is the item resource config/config.json. The rehearsal app read_9a (05b3d08a86174f78a725e77e7d833a1e, RDS_NU) holds an Arcade test source wired Search to Text, Embed and Table; it was public and Kalli was asked to make it private; confirm. It is a rehearsal space, never the explorer. Session 3: a Map widget on a web map that holds feature collections works, and a Search choice moves the map, Text and Table together.
 - Kalli has explicit permission to publish as RDS_NU for this project; its password is typed at the door's prompt and never stored, logged or committed.
 - **Sprint 06 is closed** (Kalli, session 16). Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check.
 - **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code.
@@ -55,7 +56,9 @@ is fixed.
 
 ## Sprint 09 ~ the explorer (in progress)
 
-Session 1 built zip 9a and ran it. The explorer's shape (D-350): an Experience Builder app owned by RDS_NU, featured on the library's Hub page. Search and the profile panel read the places item, a feature collection the door pushes with one layer per level and every field from the telling; the lens maps are door web maps grouped by CII's five pillars; the full six-part profile can follow in an Embed later. Zip 9b builds the places item, the withheld table, the lens maps, `--check` reading the app's config, and the guide for building the app by hand. Contract 4 says the door makes no ArcGIS item of a profile; the places item reverses that line, and 9b raises Contract 4 and records why.
+Session 1 built zip 9a and ran it. The explorer's shape (D-350, revised by D-361): an Experience Builder app owned by RDS_NU, featured on the library's Hub page. Its places live inside one door web map, one feature collection layer per level, every field from the telling; Search, the profile panel and the Map widget all read that map, and no separate places item is made. The lens maps are door web maps grouped by CII's five pillars (D-365); the withheld table is told from a canonical refusal record (D-363); the full six-part profile can follow in an Embed later. Zip 9b builds the places map, the withheld table, the lens maps, `publish --adopt-app` and `--check` reading the app's config and every item's sharing (D-366), and the guide for building the app by hand. Contract 4 says the door makes no ArcGIS item of a profile; the places map reverses that line, and 9b raises Contract 4 and records why: the places are copied into the map's JSON (file storage, no hosted feature layer), not referenced by URL.
+
+Open before 9b's build (EXPLORE-1): exploring by the map. Two ways in, one selection: Search and a map click both select the same record and the panel follows the selection (R5, by hand). Points only let a reader click a dot, so the intuition is places drawn as polygons inside the map, if a coarser simplification fits; a dry-run size read decides.
 
 ## Decided in Sprint 09
 
@@ -72,6 +75,12 @@ Session 1 built zip 9a and ran it. The explorer's shape (D-350): an Experience B
 | D-358 | A note may carry status: draft, told as "Draft wording"; tribal_representation_legislature added as a draft, with its sources |
 | D-359 | The explorer target: public, folder rewildingCities explorer, RDS_NU (Kalli) |
 | D-360 | The credit and citation name Northeastern University Library (Kalli) |
+| D-361 | The places live inside one door web map, one feature collection layer per level; no separate places item. Rehearsed in session 3: 738 places stored in 2,351,336 bytes, every count back, Search moves the map and widgets (Kalli) |
+| D-362 | A places map's canonical form writes every whole float as an integer, and the door sends, records and checks that one form: ArcGIS stores 5615270.0 as 5615270 (16 coordinates, the whole 32-byte difference) |
+| D-363 | Fork 1: the withheld table is told from a canonical refusal record of the gate's refusals only, under harvests/ with a name no receipt can take, versioned by content; `--check` reruns the judgment and says stale; rows are kinds of data, naming no withheld outlet; the nine stale receipts are moved to .data/retired first, unless a live reader needs one, which is rerun instead (Kalli) |
+| D-364 | Fork 2: a target names a portal account and each recorded entry names its kind; an entry with no kind is refused, the five recorded entries get theirs written; a feature collection layer moves by its collections' hash, never a URL; the description names both hashes; the door's opening line says what it now stores (Kalli) |
+| D-365 | Fork 3: five lens maps always, since an app holds item ids; an empty pillar holds the orientation outlines and says so; "measured, not yet mapped" (literacy) is told apart from "not yet measured", from one home shared with the profile; every value drawn declares a direction; values only, never standings (Kalli) |
+| D-366 | Fork 4: `publish --adopt-app` records the hand-built app, refusing one not owned by RDS_NU, outside the explorer folder, or read_9a; `--check` reads its published config (and says so) and compares every recorded item's and the app's sharing with its target's (Kalli) |
 
 ## Sprint 08 ~ the publish door (closed in session 2)
 
@@ -97,7 +106,7 @@ Session 1 built zip 9a and ran it. The explorer's shape (D-350): an Experience B
 
 **Zip 7c, display copies (session 2, reopened, D-321 to D-325).** canopy/aws/display.py and `canonical <plot> <artifact> --display`: drawn from the current version's own bytes read back from the bucket and checked against its sha256, written under the version's display/ (D-321); points named web, polygons web_<tolerance>m, a name never given new bytes (D-322); an envelope inheriting the version's lineage, notes and chain, with its own make_display_copy entry recording simplified, rounded and format_changed, schema-checked and judged by the gate (D-323); polygons simplified as one coverage in EPSG:26919, 25 m by default, an invalid coverage or an emptied geometry refused; points simplify nothing, said with count 0; six decimals; GeoJSON in EPSG:4326 naming pyproj's operation; dates as ISO 8601 text, each such field named (D-324). In ArcGIS Online a copy is referenced through Map Viewer's Add layer from URL; the Content route imports GeoJSON and is not used (D-325).
 
-**The dry run (session 2):** 37 of 58 may leave, 21 withheld, 0 unjudged. Withheld: rule 5 for the outlet listings, groups and stacks; rule 9 for all five carriers' located_in_edges (EDGE-NOTE-1); rule 10 for the old outlets_* receipts, which still carry Cision from before D-294; rule 4 for eight receipts with no lineage (RECEIPT-1's chain); literacy and section 203's CSVs by format (both reach the public through the profile). May leave: every outline, every carrier's counts and points, every indicator table, the profile.
+**The dry run (session 2):** 37 of 58 may leave, 21 withheld, 0 unjudged. Withheld: rule 5 for the outlet listings, groups and stacks; rule 9 for all five carriers' located_in_edges (EDGE-NOTE-1); rule 10 for the old outlets_* receipts, which still carry Cision from before D-294; rule 4 for eight receipts with no lineage (RECEIPT-1's chain; six in Sprint 09 session 2's read); literacy and section 203's CSVs by format (both reach the public through the profile). May leave: every outline, every carrier's counts and points, every indicator table, the profile.
 
 ## Sprint 06 ~ the place profile and the standard (closed in session 16)
 
@@ -576,7 +585,7 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | CATALOG-1 | The open catalog target kind (DCAT or STAC) for the open data hub, Sprint 13 (D-326) |
 | O-6 | How a version is withdrawn: a person's own removal, a tombstone, a CloudFront invalidation, on the terms of the people the data describes. Until then the canonical write refuses custom tiers (D-315) |
 | DEPLOY-1 | Retire the deployer IAM user's access key; deploy from expiring logins after |
-| CANON-1 | The old outlets_* receipts (Cision in their lineage) and the eight receipts with no lineage sit in .data and .envelopes, withheld; rerun or remove them |
+| CANON-1 | The old outlets_* receipts (Cision in their lineage, 3) and the six receipts with no lineage sit in .data and .envelopes, withheld; D-363 retires them before the refusal record is written |
 | BCAST-1 | A media database's radio and television stations count only where a local news list holds them; an FCC authority could say which air local news. Said in the method's interpretation |
 | SRCFACT-2 | D-192 holds a run to one input's source facts; the outlet count's time is held to its five listings by a test until a many-input step can be held the same way |
 | JOIN-1 | loam's join grammar knows a key's name, never its issuer; HRSA rows carry three issuers (BPHC, the grantee number, CMS's NPI). Nothing reads joinable() for carriers |
@@ -603,10 +612,15 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | --- | --- |
 | CARRY-1 | loam's carriers view carries only id, name and coordinates. The door's points copies already carry every property, so the explorer may never need it: decide when the explorer's layers are drawn (D-347) |
 | EDGE-NOTE-1 | located_in_edges receipts name no row notes, so rule 9 withholds the five carriers' edges; two lines in build_located_in and five reruns, only if the explorer needs carriers' edges in the bucket. Split towns do not: their shares are in every profile (corrected in session 1) |
-| PLACES-1 | Zip 9b: the places item, a door-pushed feature collection, one layer per level, the telling's fields; its size against what Experience Builder carries comfortably, rehearsed in read_9a first |
-| WITHHELD-1 | Zip 9b: what the gate withholds belongs to the plot, not a place (no profile carries a refusal), and by definition is not in the bucket; where the withheld table is drawn from is 9b's first fork |
-| LENS-1 | Zip 9b: lens maps of many layers, grouped by CII's five pillars through a crosswalk seed (the weights seed lists CII's own published indicators, not ours); which indicators each lens draws |
-| APPCHECK-1 | Zip 9b: `publish --check` reads the app's config/config.json and confirms every item id in it is one the door recorded |
+| PLACES-1 | Zip 9b: the places map (D-361, D-362): a new door entry kind that builds one web map of feature collection layers from the profile's current version and each level's outline, recorded and owed a move when the profile or an outline moves. The state's outline (c15851b5bb9b, may leave) is written canonically first, so the state has a layer. Its tests turn session 3's rehearsal into the suite: the door's fake portal stores a whole float as an integer, as ArcGIS does, and the map built from fixture rows must read back unchanged under D-362's canonical form |
+| WITHHELD-1 | Zip 9b (D-363). Predicted after retiring the nine: 8 refused by the gate (3 outlet types, 5 tribal edges), 4 by the canonical write; another count means a read was wrong. Still open: the exact-name read of who reads the nine stale receipts |
+| LENS-1 | Zip 9b (D-365): the crosswalk seed is national; whether the weights seed lets one indicator sit in two pillars is unread, and the crosswalk refuses or allows that on purpose. Every values table (towns, House, Senate, counties, state) is written canonically and joined before any lens exists. Our measures fill two pillars of five |
+| APPCHECK-1 | Zip 9b (D-366) |
+| EXPLORE-1 | Exploring by the map (Kalli, session 3). R5 by hand: wire Text to the places layer's selected features, then a map click and a Search choice must both move it. Polygons inside the map, if they fit: a `--polygons` dry run simplifies each outline as one coverage (display.py's _simplify_coverage) at 100, 250 and 500 m and reports bytes per level and any place emptied. The towns' 25 m copy alone is 9.5 MB |
+| LIMIT-1 | tests/test_telling.py holds the telling to ITEM_BYTES = 4,000,000, and nothing names its source; the largest stored so far is 2,351,336 bytes. A documented Esri limit, or a larger rehearsal, settles it |
+| STACK-1 | A reservation the Census counts as both a county subdivision and a tribal area gets one point in each layer, on the same spot (a town and a tribal area share y 5615270 in session 3's map). Read in R2 whether Search's two results can be told apart |
+| SHARES-1 | A Senate district's `shares` runs to 3,039 characters, the longest told field. Read how it reads in Text; if it is a wall, the telling says the largest towns and leaves the full list to the profile |
+| HUB-1 | The Hub site (pressforwardmaine-nu.hub.arcgis.com): its owner, before the app is featured there |
 
 ### Not yet sorted (look each up in the ledger)
 
@@ -630,13 +644,50 @@ Closed in Sprint 08 session 1: CLIDOC-1, ADOPT-1 (the door made its own item), O
 
 Closed in session 15: the boundaries' terms (D-290), the counts' rule 9 gap (D-291); Tiers in part (D-283). Opened: LIC-2, GAPS-1, EDGE-NOTE-1, NOTHR-1, PROF-1.
 
+Sprint 09 sessions 2 and 3: the four forks settled (D-363 to D-366); opened EXPLORE-1, LIMIT-1, STACK-1, SHARES-1, HUB-1.
+
 Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), DEPS-1, NOTHR-1. Opened: RAMP-1, UPDATE-1, SIZE-2, MANIFEST-2, RUNNAMES-1, STEPNAME-1, DOORSAY-2, SIGNIN-1, INDIAN-1.
+
+## How files move (the zip workflow)
+
+The one home for how files travel between Claude's sandbox and Kalli's machine (Kalli, Sprint 09 session 3, written out so it cannot drift). The repo is public, so nothing is ever written to the repo root that is not meant to be committed. Every path below is repo-relative, and every command runs from the repo root.
+
+**1. Reads: Kalli's files to Claude.** Claude never guesses a file name. It gives one block that builds the list from the repo itself (`find`, `git ls-files | grep -E`, `git --no-pager grep -l`), sorted and deduplicated into /tmp/<name>.txt; a second block prints the count and the list, so Kalli sees what goes; a third zips exactly that list:
+
+    zip -q ~/Downloads/<name>.zip -@ < /tmp/<name>.txt && ls -lh ~/Downloads/<name>.zip
+
+Reads zips are named for the session and step, in order: reads_9b, reads_9c, reads_9d. They go to ~/Downloads, never the repo root (session 10's two context zips and session 3's reads_9c.zip sat untracked there). Kalli attaches the zip to her next message. A count far off what Claude expected is pasted before the zip is made.
+
+**2. Changes: Claude's files to Kalli.** A build, a fix or a hand-off comes as one zip of repo-relative paths, made in the sandbox and listed with `unzip -l` before it is delivered, with no `__pycache__` or other strays in it. Kalli downloads it to ~/Downloads and unzips it from the repo root:
+
+    unzip -o ~/Downloads/<name>.zip -d .
+
+Files are whole-file replacements, never positional patches. `git --no-pager diff --stat` and `git status -sb` are read before anything runs, and Claude says what they should show. A file Claude has not seen whole is changed by a guarded helper in _sprint06/ that writes nothing unless its anchor matches exactly once; _sprint06/ holds helpers only and is deleted at the session's end. Inline `cat > path << 'EOF'` is for one small file when a zip would be heavier: one file per paste, every `EOF` at the left edge, the path read in the diff-stat before it is trusted (session 10 once wrote state.md to a root file named PATH). A long paste runs alone.
+
+**3. A ledger block travels inside the zip, never into the repo.** It sits at the zip's top level as ledger_block_<sprint>_<sessions>.md, starting with a newline. The repo files are unzipped without it, and it is appended only when its heading is absent, in one command so it can never land twice (5aacc14):
+
+    unzip -o ~/Downloads/<name>.zip -x <block>.md -d .
+    grep -q "<the block's heading>" field-guide/docs/build_ledger.md && echo "already there" || unzip -p ~/Downloads/<name>.zip <block>.md >> field-guide/docs/build_ledger.md
+
+Every new decision and item ID is grepped with `grep -n` before the append (`|| echo "none taken"`), since a block's own line satisfies a later grep.
+
+**4. Rehearsals are evidence, and they live with the tests.** A rehearsal script lives at tests/rehearsals/<sprint>/, beside tests/debug/, with the record of what it sent, and is committed (Kalli, session 3). Session 2's rehearse_places.py sat in _sprint06/ and was deleted with it. A rehearsal and a test differ in one way: a rehearsal reaches the live portal with a typed password and is run by hand; a test runs offline, every time, in the suite. pytest collects only test_*.py, so a file named rehearse_*.py or diff_*.py never runs in the suite; `python -m pytest --co -q tests/rehearsals` says so. What a rehearsal finds becomes a test: the portal's behaviour goes into the door's fake portal, the way it already rewrites descriptions as ArcGIS does (D-349), so the suite guards it from then on.
+
+**5. Every commit is guarded and names its files.** A zsh array, then add, a check that prints STOP when nothing changed, and a commit that keeps everything else out:
+
+    files=(<path> <path> ...)
+    git add -- $files && { git diff --cached --quiet -- $files && echo STOP || git commit -m "<message>" -- $files; }
+    git push && git log --oneline -3 && git status -sb
+
+**6. The hand-off.** It ends with one zip, <sprint>_handoff.zip: field-guide/docs/state.md, the ledger block, and anything else the hand-off commits. Kalli runs it through steps 2, 3 and 5. The next session starts when Kalli uploads that same zip; Claude reads field-guide/docs/state.md inside it whole, the retrospectives first, before anything else.
+
+**7. Loose downloads.** A file Claude delivered loose and then replaced with a zip is removed from ~/Downloads with `rm -f` before the zip is unzipped, so an old copy is never moved in by mistake.
 
 ## Working agreement, as it stands
 
 - Never build against a schema or part of the codebase not yet read (Kalli, session 13): before any code, Claude lists every contract it must satisfy (envelope and metadata schemas, method, experiment and manifest schemas, registries, the readers downstream of what it writes), reads each as it is in the repo, reads every test and caller of what it changes, and says in the consultation what it read and what it could not see.
 - Design before code, nothing chosen silently. Small choices: Claude takes the lean and says so.
-- Small fixes come inline as guarded helpers in _sprint06/; zips are for builds (session 13).
+- How files move between Claude and Kalli's machine has one home: How files move, above. Every other line here points to it.
 - Sessions are consultations for a zip (Kalli, session 12): a short consultation per step (what the zip holds, forks with leans, what only Kalli or her machine supplies), then one ambitious zip that builds it all on her go. A zip can hold any amount of code; it cannot hold data her machine must fetch, her decisions, or terms not yet read, and each consultation names those three.
 - Claude may read public sources and draft reviews from them (session 12): each cites the page read, read_by says Claude read it, and Kalli confirms before publishing. Claude's guesses are never evidence; a page read and cited is.
 - Four forks to a decision tree (Kalli, session 10): Claude reads what the forks rest on first, lays out the tree with a lean, the problems and how to make each better, workshops it with what the reads show, then drafts one holistic zip that fixes everything found, on Kalli's go. A fork that rests on data waits for its read. The guards stay: diff-stat counts, guarded helpers, a receipt read after every real run.
@@ -651,19 +702,16 @@ Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), 
 - Rule or choice: ask whether a reasonable person could decide it the other way. No: a rule, held by a test. Yes: a choice, declared in the method and recorded in the receipt.
 - Before any threshold or external claim, Claude researches and cites what a source actually says, in the vintage the build uses, and says plainly where a source gives no number.
 - When Kalli says a concept is unclear, Claude explains it from the ground up, with a picture where one helps, before asking anything of it.
-- Changes come as a zip of repo-relative files (Kalli's preference), unzipped from the repo root with `unzip -o ~/Downloads/<n>.zip -d .`; small files and every ledger block come inline. Inline files are `cat > path << 'EOF'`, one file per paste, every `EOF` at the left edge. A file Claude has not seen whole is changed by a guarded helper in `_sprint06/` that writes nothing unless its anchor matches once; the helper folder is deleted after.
-- Whole-file replacements; `git --no-pager diff --stat` is read before anything runs.
-- Every commit block is guarded and names its files: a zsh array, `git add -- $files`, then `git diff --cached --quiet -- $files` prints STOP when nothing changed, and `git commit -- $files` keeps anything else out.
-- Ledger blocks appended with cat >>, each starting with a newline. Grep every new ID first. No em dashes, no inline shell comments.
+- Grep every new ID before it is written anywhere. No em dashes, no inline shell comments.
 - Before changing a signature, search the keyword across every caller and test, then read each hit for meaning.
 - Read real output as its reader would before committing a telling. A receipt is read after every real run.
-- Usage: one step per chat; state.md is the only upload at the start; long output is filtered (`| tail -3`, `| grep`); Claude names exact files and asks for whole files rather than many line ranges.
-- When Claude needs several repo files, it gives a `zip` command so Kalli uploads one zip (`-j` only when no two files share a name). The zip is written to ~/Downloads, never the repo root: the repo is public, and session 10's two context zips sat untracked there until deleted.
+- Usage: one step per chat; long output is filtered (`| tail -3`, `| grep`); Claude names exact files and asks for whole files rather than many line ranges. What is uploaded, and how: How files move.
 - A data check is a "read", never a "probe" (Kalli, session 8).
-- Every long paste runs alone, and after any heredoc append the expected line count is read in `git --no-pager diff --stat` before committing (session 9: one paste lost its middle, one landed twice).
 - A test that stubs a contract (`validate=lambda e: []`) has not read it: the joined copy passed every sandbox test and failed the real schema (session 2). Every schema a new output meets is read whole, and one test holds the new output to it unstubbed.
 - The ID grep comes before the append, and reads lines with `grep -n`, never only a count: a block's own line satisfies a later `grep -c` (session 2).
 - Run `publish <plot> --check` before committing a publish run's record, and after anything is done by hand in ArcGIS.
+- At a fork, Claude's preferred option is an intuition, not a lean (Kalli, Sprint 09). When Kalli says go with the intuitions, Claude revises each once against failure and drift before it is recorded.
+- A rehearsal script lives in the repo at tests/rehearsals/<sprint>/ with the record of what it sent, and is committed at the hand-off. Session 2's rehearse_places.py sat in _sprint06/, which is deleted at a session's end, and no copy survived.
 
 ## Traps
 
@@ -736,7 +784,7 @@ Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), 
 - Cision's ZIPs lost their leading zero in a spreadsheet (Maine's 04282 reads 4282) on some rows; compare ZIPs as five digits, and never take the first five digits of a stripped ZIP+4.
 - The carriers' own stack and groups are carriers_stack_stack.csv and carriers_groups_groups.csv: a glob for *outlet* misses them and finds maine_outlets' stale copies (926 records either way; session 10's 924 was a miscount).
 - Session 10's hand-off wrote state.md to a root file named PATH: a heredoc's path is read in the diff-stat before it is trusted.
-- _sprint06/ holds read helpers only; delete it at the session's end, never commit it.
+- _sprint06/ holds read helpers only; delete it at the session's end, never commit it. A rehearsal is not a read helper: it goes in tests/rehearsals/ (session 3).
 - Listed outlets live in the receipt (metadata.listed_outlets), never the csv, which holds placed outlets only. Session 12's first read helper looked in the csv and read "absent" for "listed".
 - A read of the outlet csv taken before a sows run reads the old run: the review checker's watch list did, and showed the Boothbay paper twice after it was merged.
 - A review names a record by source and name as written; a name a source writes twice alike (same_record_as) is named once, and a name the run shows is its first member's by source_order (local_news_catalyst, then maine_media_ecosystem, before cision).
@@ -773,6 +821,9 @@ Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), 
 - Every door write changes plots/maine/publish/published.yml, the door's record of what it made. Commit it with the run, every time: after the restyles it sat uncommitted until `git status` showed it at the hand-off.
 - A check and the step it guards are one command, never two pasted lines with "skip the second": `grep -q "<heading>" <ledger> || cat <block> >> <ledger>` appends only when the block is absent. Two lines pasted together appended the run's block twice (5aacc14, undone in 5e8c969).
 - Claude's sandbox has no shapely, geopandas, duckdb or pytest, so it runs pure-Python tests through a stand-in and skips the rest; tests that need shapely run first on Kalli's machine.
+- ArcGIS stores a whole float as an integer (5615270.0 comes back 5615270): a hash of the sent text never matches the stored one unless whole floats are written as integers first (D-362).
+- The door's arcgis_webmap kind is built around one layer that reads a URL: build makes one layer, moved reads operationalLayers[0], layer_url and adoptable_layer key on `url`. A feature collection layer has no URL, so any check that compares URLs judges it wrong without crashing (D-364).
+- Run a rehearsal from the repo root: `python tests/rehearsals/sprint-09/rehearse_places_webmap.py` (dry run; `--write`, `--check`). It reads only the bucket, through CloudFront, and needs no AWS credentials.
 - The profiles' working text carries ledger ids by the thousand (D-271 alone 18,293 times); nothing public may pass it through. The telling builds from structured fields.
 
 ## People
@@ -781,17 +832,26 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 ## Starting the next session
 
-Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
+Kalli uploads this hand-off's zip (s09_handoff.zip). Claude reads field-guide/docs/state.md inside it whole, the retrospectives first, confirms, and asks for what the next step's design needs. Files move as How files move says. Ask whether the repo is current (this hand-off's commit at HEAD, clean).
 
-**Next: zip 9b, the rest of Sprint 09** (the Master Plan's Sprint 09 tab). Done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer. What 9b builds, each with its lean from session 1:
+**Next: the last two reads, then zip 9b** (the Master Plan's Sprint 09 tab). Done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer.
 
-1. **The places item (PLACES-1).** A told copy per level, drawn from the profile version's own bytes and each level's outline markers (a point inside every place, D-340), its fields from the telling; then a new door target kind that pushes a feature collection item holding them, one layer per level, recorded like any item and owed a move when the profile moves. File storage, not feature storage (D-350). Contract 4 is raised for it.
-2. **The withheld table (WITHHELD-1).** One row per layer the gate holds back, with its reason in plain words. The first fork: a refusal is by definition not in the bucket, so the door either judges it live from the plot's receipts when it publishes (and says so), or a plot-level record of the dry run is written canonically first.
-3. **The lens maps (LENS-1).** Door web maps of many layers: the House, Senate, county, town and tribal outlines, grouped by CII's five pillars through a small crosswalk seed. Towns show values, never standings (D-75).
-4. **APPCHECK-1.** `publish --check` reads the app's config and names any item id the door did not record.
-5. **The app, built by hand** from a step-by-step guide: Search over the places layers, Text and Table wired to Search's output, the lens maps, the withheld table, the credit; owned by RDS_NU, public, featured on the library's Hub page (ask Kalli for its link and owner).
+1. **R5, by hand in read_9a (EXPLORE-1).** Text wired to the places layer's selected features; does a map click move it, and does a Search choice still move it? Note SHARES-1 and STACK-1 while there.
+2. **The polygon size read (EXPLORE-1), on Kalli's go.** A `--polygons` dry run in the rehearsal script: each outline simplified as one coverage at 100, 250 and 500 m, bytes per level, any place emptied. If one tolerance fits, rehearse polygons as the places' geometry; if none does, points carry the panel and the lens maps carry the shapes.
+3. **The exact-name read (WITHHELD-1)** of who reads the nine stale receipts.
+4. **Zip 9b's consultation and build**, from D-361 to D-366: the state outline written; the places map entry kind (D-361, D-362, D-364); the refusal record and withheld table (D-363); the values tables written and joined, the crosswalk, five lens maps (D-365); `--adopt-app` and the widened `--check` (D-366); Contract 4 raised; the guide for building the app by hand. Every first write lands private in test.
 
-**9b's consultation needs.** Ask whether the repo is current. Read before any lean: canopy/aws/s3.py's prepare_display and the canonical command (a JSON version has no display copy today), publish.py's read_copy and check, targets/base.py, records.py, the door's tests and fakes, the CII pillar seed and the indicator registry, and Esri's documentation for a feature collection item's JSON (its layers, field lengths, size). Rehearse a real feature collection in read_9a before the explorer holds it. After 9b: Sprint 09's progress report, the Master Plan's stale "Where it stands" and Sprint 09 tab, and Contract 4.
+**9b's reads still owed:** canopy/aws/s3.py (prepare_display, the canonical command, where a plot-level record can live under harvests/), targets/__init__.py (registered), the CII pillar seed and the weights seed, the indicator registry's directions for every lens value, and every caller and test of target.kind (3 in the door, 7 in the tests), tests/test_webmap_json.py (the web map shape's own test, unread so far), and canopy/cli/publish.py and canopy/cli/canonical.py (where the new flags land). After 9b: Sprint 09's progress report, the Master Plan's stale "Where it stands" and Sprint 09 tab (its forks are D-350 and D-361 now), and Contract 4.
+
+## Sprint 09 sessions 2 and 3's notes (the reads, two rehearsals, the forks settled)
+
+- Session 2's reads (reads_9b, 74 files; canonical maine --all; three receipt reads): the 21 withheld are rule 5 outlet types (3), rule 9 tribal edges (5), rules 5 and 10 on the stale outlets_* (3), rule 4 with no lineage (6, not eight), and four the canonical write refuses (literacy and Section 203 as CSV, validate_counties and validate_towns as fetched sources, D-337), whose content reaches the public another way. The profile's receipts_withheld and structure_withheld are empty. outline_state_outline may leave and was never written; GJSON-1 does not bind the canonical path. The values tables (towns, House, Senate: broadband standing, no vehicle, rent burden, households without broadband, limited English; counties: rent burden, no vehicle; the state: the count) are not in the bucket. A canonical refusal record cannot pass today's gate as an artifact (rules 4 and 10): refusals are content, like the allow record.
+- Session 2's rehearsal: a Feature Collection item of the towns' told rows (528 placed; 2300357936 left out, not invented) stored parsed identical; Search, Text and Table worked; the Map widget takes only web maps, and Map Viewer saved a web map of it with empty operationalLayers. Both items were found public though made private.
+- Session 3's rehearsal (tests/rehearsals/sprint-09/): the profile and five outlines read through CloudFront, each checked against its sha256; each place's point is display.py's marker, projected with the door's _mercator. The dry run met every prediction: 16, 35, 151, 528 and 8 placed; the state and 2300357936 left out and named; 2,351,368 bytes. Sent private to test as 000c5dcf102f4b878562a0494b6ee7fa; ArcGIS added the web map typeKeywords and an extent itself. The stored map differed only in 16 whole coordinates written as integers. In read_9a, a Map widget on it worked and a Search choice moved the map, Text and Table; `--check` after R2 read it private and unchanged.
+- What went right: the reads came before the script, and three of them changed it (the door already projects to Web Mercator; the kind keys on URLs; the first script was gone); the script reused the door's own functions, so what it sends is what 9b will send; every count was predicted before the run; the hash miss was read to its last byte before anything was concluded; the sharing was read after each hand step.
+- Wrong hypotheses: that session 1's state.md was session 2's (the upload was older; session 2's notes were appended to it, not folded in); that rehearse_places.py was somewhere on disk (_sprint06/ is deleted at a session's end); that Map Viewer might misplace 4326 points (the door sends 102100); that the hash miss was the extent's long decimals (it was whole coordinates).
+- Lessons: a rehearsal is evidence, so it is committed with its record; a portal stores numbers its own way, so the door's canonical form is the portal's; a kind built for one shape keys its checks on that shape's fields, and a new shape breaks them in silence; a state page is rewritten whole, or its header lies.
+- Session shape: one chat held the forks' revision, three reads, the rehearsal script, its dry run, write, diff and checks, and this hand-off.
 
 ## Sprint 09 session 1's notes (the consultation; zip 9a built and run)
 

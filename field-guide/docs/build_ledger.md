@@ -1946,3 +1946,53 @@ Profiles rebuilt on the fixed standard (1,663 places, 303.6 s, no input withheld
 
 Closed: UPDATE-1, RAMP-1, COVER-1.
 Seen again: SIGNIN-1. A mistyped password at --check refused the item it was asked for and moved on, so two items read refused for a typo; the door should ask again for the same item.
+
+## Sprint 09, sessions 2 and 3 (2026-11-17 to 18): the forks settled, the places as one web map
+
+Repo at 75595fd, clean, at session 3's start. No product code changed in either session; this hand-off commits state.md, this block and the rehearsal scripts (tests/rehearsals/sprint-09/).
+
+### Reads
+
+- Session 2 (reads_9b, 74 files; canonical maine --all; three receipt reads). The 21 receipts that may not leave: rule 5 outlet types (carriers_outlets, carriers_groups, carriers_stack); rule 9 tribal edges (five located_in_edges, EDGE-NOTE-1); rules 5 and 10 on the stale outlets_* (3); rule 4, no lineage (6, where state.md said eight); and four refused by the canonical write, not the gate: literacy and Section 203 as CSV, validate_counties and validate_towns as fetched sources (D-337). The last four reach the public another way. Once the stale nine are set aside, two kinds of data are kept from the public: named news outlets with their source lists, and the links between points and places.
+- Session 2: the profile's receipts_withheld and structure_withheld are empty; outline_state_outline (c15851b5bb9b) may leave and was never written, and GJSON-1 does not bind the canonical path; no values table is in the bucket; a target has one kind, read in 3 places in the door and 7 in the tests; a canonical refusal record cannot pass today's gate as an artifact (rules 4 and 10); our measures fill two of CII's five pillars.
+- Session 3 (reads_9c, 14 files; reads_9d, 4): arcgis_webmap.py already projects to Web Mercator (_mercator, WEB_MERCATOR, extent_of); the kind is built around one layer read by URL (build, moved's operationalLayers[0], layer_url, adoptable_layer); fields are typed from their own values, strings max(256, longest); profiles carry no geometry, and display.py's _markers puts a point on each place's own surface; the door reads versions through CloudFront with no AWS credentials. No rehearse_places.py exists anywhere on Kalli's machine: it sat in _sprint06/, which is deleted at a session's end. The ledger names no source for test_telling.py's ITEM_BYTES = 4,000,000 (LIMIT-1).
+
+### Rehearsals
+
+- Session 2: a Feature Collection item of the towns' told rows, 1,684,160 bytes sent and 1,651,605 stored, parsed identical. Search, Text (from Search's output) and Table worked; the Map widget takes only web maps; Map Viewer saved a web map of it (5dcd073073f24f3398cb2a5514e22517) with empty operationalLayers. Both items were found public though made private.
+- Session 3: rehearse_places_webmap.py tells the profile's current version (824e79d23b1d) and places each row on its level's current outline (counties ee88e4f41db3, Senate c603add2e7f6, House 146e0ca3ac11, towns eda591d0d3ba, tribal 57e9ac56a143), each checked against its sha256. Dry run: 16, 35, 151, 528 and 8 placed, as predicted; the state (no canonical outline) and 2300357936 (INDIAN-1) left out and named; 923 MEGIS divisions not shown; longest field a Senate district's shares, 3,039 characters (SHARES-1); 2,351,368 bytes, canonical sha256 f640fc4e8897.
+- Session 3: sent private to rewildingCities test as 000c5dcf102f4b878562a0494b6ee7fa. Stored 2,351,336 bytes, 5 of 5 layers, every count back; ArcGIS added typeKeywords (ArcGIS Online, Explorer Web Map, Map, Online Map, Web Map) and the extent. diff_places_webmap.py rebuilt the map to f640fc4e8897 and found 16 differences, all whole coordinates sent as N.0 and stored as N: two characters each, the whole 32 bytes. A town and a tribal area share one point (STACK-1).
+- Session 3, by hand in read_9a: a Map widget on the web map works, and a Search choice moves the map, Text and Table (Kalli). `--check` after R2: private, stored map unchanged (b53a56044938), so Experience Builder's work did not change sharing.
+
+### Decided
+
+- D-361. The places live inside one door web map, one feature collection layer per level; no separate places item is made. Search, the profile panel and the Map widget read that one map, so the places have one home. Rests on session 3's rehearsal (Kalli).
+- D-362. A places map's canonical form writes every whole float as an integer; the door sends that form, records its hash and checks the stored map against it. ArcGIS stores 5615270.0 as 5615270, so a hash of anything else reports a hand edit that never happened (D-349's lesson, for numbers).
+- D-363. Fork 1, the withheld table (Kalli: go with the intuition, revised). A canonical refusal record of the gate's refusals only, never the canonical write's, whose content reaches the public another way. It lives under harvests/ (the only prefix the writer and CloudFront reach) with a name no receipt can take (D-318), versioned by its content like the allow record. `--check` reruns the judgment and says stale when it no longer matches. The public table's rows are kinds of data, each with whose rule holds it back and what would change it; no reason names a withheld outlet. Before the record is written, the nine stale receipts are moved to .data/retired, never deleted, unless the exact-name read finds a live reader, whose receipt is rerun to earn its lineage instead. Predicted after: 8 gate refusals, 4 write refusals.
+- D-364. Fork 2, targets (Kalli). A target names a portal account; each recorded entry names its own kind, and an entry with none is refused, never defaulted; the five recorded entries get theirs written, with a test that every entry names a known kind. A feature collection layer moves by its collections' hash, never a URL. The description names the profile version's sha256 and the told copy's canonical hash. The door's opening line ("never uploads features") is rewritten: the places are copied into the map's JSON as file storage, with no hosted feature layer, and Contract 4 says so.
+- D-365. Fork 3, the lens maps (Kalli). Five lens maps always, since an app holds item ids and a map made later means rewiring by hand; an empty pillar holds the orientation outlines and says plainly that no measure is drawn. "Measured, told in each place's description, not yet drawn on a map" (literacy, a CSV) is told apart from "not yet measured", and both come from one home shared with the profile's list. Every value drawn declares a direction (D-353). Values only, never standings. The crosswalk seed is national; whether one indicator may sit in two pillars is read first. Every values table is written canonically and joined before any lens.
+- D-366. Fork 4, the app (Kalli). `publish --adopt-app` records the hand-built app and refuses one not owned by RDS_NU, outside the explorer folder, or read_9a's id. `--check` reads its published config/config.json and says so, since an unpublished edit does not show there, and compares every recorded item's and the app's sharing with its target's.
+
+### Opened
+
+- EXPLORE-1. Exploring by the map (Kalli): two ways in, one selection. R5 by hand: Text wired to the places layer's selected features, moved by a map click and by a Search choice. Points let a reader click only a dot, so the intuition is polygons inside the map, if they fit; a `--polygons` dry run reports bytes per level at 100, 250 and 500 m and any place emptied.
+- LIMIT-1. ITEM_BYTES = 4,000,000 has no named source; 2,351,336 bytes is the largest stored.
+- STACK-1. A reservation counted as both a county subdivision and a tribal area gets one point in each layer, on one spot.
+- SHARES-1. A Senate district's shares field, 3,039 characters, may read as a wall in Text.
+- HUB-1. The Hub site's owner (pressforwardmaine-nu.hub.arcgis.com).
+
+### Wrong hypotheses
+
+- That the state.md uploaded at session 3's start was session 2's: it was session 1's, with session 2's notes later appended to a copy, header unchanged.
+- That rehearse_places.py survived somewhere on disk.
+- That Map Viewer might misplace points sent in EPSG:4326: the door sends 102100, so the question never arose.
+- That the 32-byte miss was the extent's long decimals: it was 16 whole coordinates.
+- Session 2's, recorded there: a read that matched names as substrings; a runnable command with a hand-filled blank; an item sent without keywords or extent; calling the whole dry run "what the gate withholds".
+
+### Lessons
+
+- A rehearsal is evidence: it is committed with the record of what it sent, in tests/rehearsals/<sprint>/ beside tests/debug/, never in a folder deleted at a session's end (Kalli: rehearsals belong with the tests). It is run by hand against the live portal; what it finds becomes a fake and a test, so the suite guards it offline.
+- A portal stores numbers its own way, so the door's canonical form follows the portal's.
+- A kind built for one shape keys its checks on that shape's fields; a new shape breaks them in silence, so the checks are read before the shape is added.
+- A state page is rewritten whole at a hand-off, or its header says something false.
+- A working agreement spread over several lines drifts: the zip workflow had three lines that disagreed (ledger blocks inline, appended with cat >>, and inside a zip). It now has one home, state.md's How files move, and the other lines point to it (Kalli).
