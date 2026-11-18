@@ -1,0 +1,131 @@
+profile version 824e79d23b1d
+points map: 2,351,368 bytes as the rehearsal sends it, canonical sha256 f640fc4e8897; 2,351,336 in D-362's form
+layers draw in this order, the last on top: county, sldu, sldl, cousub, aiannh
+shaped in the mixed map: cousub; every other level a point
+  state   no canonical outline for this level yet: 1 told rows not drawn
+  county  outline_counties_outline ee88e4f41db3: canonical outline every told place valid
+  sldu    outline_senate_outline c603add2e7f6: canonical outline every told place valid
+  sldl    outline_house_outline 146e0ca3ac11: canonical outline every told place valid
+  cousub  outline_towns_outline eda591d0d3ba: canonical outline every told place valid
+  aiannh  outline_tribal_outline 57e9ac56a143: canonical outline every told place valid
+
+=== 25 m ===
+  county  5.1s  least area kept 100.0% at Knox County, Maine (23013)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 6,659,036 bytes, 346,367 vertices, drew 16 of 16 told
+        invalid after rounding: 2: Androscoggin County, Maine (23001): Self-intersection[-7811266.88950276 5486164.82872928]; Piscataquis County, Maine (23021): Self-intersection[-7662073.00879029 5658358.87944747]
+      rounded to 0.1 m: 7,905,670 bytes, 346,367 vertices, drew 16 of 16 told
+  sldu    8.1s  least area kept 99.9% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 6,800,541 bytes, 349,492 vertices, drew 35 of 35 told
+        invalid after rounding: 2: State Senate District 4 (2024); Maine (23004): Self-intersection[-7662073.00879029 5658358.87944747]; State Senate District 21 (2024); Maine (23021): Self-intersection[-7811266.88950276 5486164.82872928]
+      rounded to 0.1 m: 8,058,451 bytes, 349,492 vertices, drew 35 of 35 told
+  sldl    8.5s  least area kept 99.8% at State House District 118 (2024); Maine (23118)  pinches opened in 4
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 7,429,622 bytes, 363,901 vertices, drew 151 of 151 told
+        invalid after rounding: 4: State House District 30 (2024); Maine (23030): Self-intersection[-7727414.16666667 5667628.49616858]; State House District 31 (2024); Maine (23031): Self-intersection[-7662073.00879029 5658358.87944747]; State House District 94 (2024); Maine (23094): Self-intersection[-7811266.88950276 5486164.82872928]; State House District 116 (2024); Maine (23116): Self-intersection[-7826547.9605449 5413680.30110474]
+      rounded to 0.1 m: 8,739,076 bytes, 363,901 vertices, drew 151 of 151 told
+  cousub  8.5s  least area kept 99.3% at Muscle Ridge Islands UT (2301347962)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 8,809,554 bytes, 377,896 vertices, drew 528 of 529 told
+        invalid after rounding: 4: Lewiston city (2300138740): Self-intersection[-7811266.88950276 5486164.82872928]; Dover-Foxcroft town (2302118195): Ring Self-intersection[-7706147 5644982]; Medford town (2302144830): Self-intersection[-7662073.00879029 5658358.87944747]; Willimantic town (2302185710): Self-intersection[-7727414.16666667 5667628.49616858]
+      rounded to 0.1 m: 10,169,548 bytes, 377,896 vertices, drew 528 of 529 told
+  aiannh  0.1s  least area kept 99.4% at Penobscot Reservation (2760R)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 184,963 bytes, 7,575 vertices, drew 8 of 8 told
+      rounded to 0.1 m: 212,157 bytes, 7,575 vertices, drew 8 of 8 told
+  at 25 m, rounded to 1 m: every level shaped 29,884,615 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 25 m, rounded to 1 m: shaped cousub only 9,543,127 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 25 m, rounded to 0.1 m: every level shaped 35,085,801 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 25 m, rounded to 0.1 m: shaped cousub only 10,903,121 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+
+=== 100 m ===
+  county  5.0s  least area kept 99.9% at Knox County, Maine (23013)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 2,263,481 bytes, 115,022 vertices, drew 16 of 16 told
+        invalid after rounding: 2: Cumberland County, Maine (23005): Self-intersection[-7817742.84739088 5443757.82343289]; Piscataquis County, Maine (23021): Self-intersection[-7676278.04859093 5663009.85004735]
+      rounded to 0.1 m: 2,676,887 bytes, 115,022 vertices, drew 16 of 16 told
+  sldu    8.0s  least area kept 99.7% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 2,370,596 bytes, 116,337 vertices, drew 35 of 35 told
+        invalid after rounding: 2: State Senate District 4 (2024); Maine (23004): Self-intersection[-7676278.04859093 5663009.85004735]; State Senate District 25 (2024); Maine (23025): Self-intersection[-7817742.84739088 5443757.82343289]
+      rounded to 0.1 m: 2,788,804 bytes, 116,337 vertices, drew 35 of 35 told
+  sldl    8.4s  least area kept 99.0% at State House District 99 (2024); Maine (23099)  pinches opened in 4
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 2,828,202 bytes, 121,721 vertices, drew 151 of 151 told
+        invalid after rounding: 3: State House District 30 (2024); Maine (23030): Self-intersection[-7734820.41129032 5646502.14919355]; State House District 31 (2024); Maine (23031): Self-intersection[-7686716.94318182 5679309.48863636]; State House District 105 (2024); Maine (23105): Self-intersection[-7817742.84739088 5443757.82343289]
+      rounded to 0.1 m: 3,265,554 bytes, 121,721 vertices, drew 151 of 151 told
+  cousub  8.8s  least area kept 94.3% at Penobscot Indian Island Reservation (2301957936)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 4,045,950 bytes, 127,180 vertices, drew 528 of 529 told
+        invalid after rounding: 3: North Yarmouth town (2300553860): Self-intersection[-7817742.84739088 5443757.82343289]; Abbot town (2302100100): Self-intersection[-7734820.41129032 5646502.14919355]; Brownville town (2302108325): Self-intersection[-7686716.94318182 5679309.48863636]
+      rounded to 0.1 m: 4,502,938 bytes, 127,180 vertices, drew 528 of 529 told
+  aiannh  0.1s  least area kept 94.3% at Penobscot Reservation (2760R)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 94,884 bytes, 2,834 vertices, drew 8 of 8 told
+      rounded to 0.1 m: 105,042 bytes, 2,834 vertices, drew 8 of 8 told
+  at 100 m, rounded to 1 m: every level shaped 11,604,012 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 100 m, rounded to 1 m: shaped cousub only 4,779,523 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 100 m, rounded to 0.1 m: every level shaped 13,340,124 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 100 m, rounded to 0.1 m: shaped cousub only 5,236,511 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+
+=== 250 m ===
+  county  5.2s  least area kept 99.5% at Knox County, Maine (23013)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,347,263 bytes, 66,800 vertices, drew 16 of 16 told
+        invalid after rounding: 2: Aroostook County, Maine (23003): Self-intersection[-7689363.26613795 5945696.17004355]; Penobscot County, Maine (23019): Self-intersection[-7640147.91878351 5639776.24707832]
+      rounded to 0.1 m: 1,587,421 bytes, 66,800 vertices, drew 16 of 16 told
+  sldu    7.9s  least area kept 98.2% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,445,334 bytes, 67,639 vertices, drew 35 of 35 told
+        invalid after rounding: 2: State Senate District 1 (2024); Maine (23001): Self-intersection[-7689363.26613795 5945696.17004355]; State Senate District 8 (2024); Maine (23008): Self-intersection[-7640151.73107345 5639780]
+      rounded to 0.1 m: 1,688,570 bytes, 67,639 vertices, drew 35 of 35 told
+  sldl    8.6s  least area kept 95.8% at State House District 119 (2024); Maine (23119)  pinches opened in 4
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,866,061 bytes, 71,082 vertices, drew 151 of 151 told
+        invalid after rounding: 1: State House District 1 (2024); Maine (23001): Self-intersection[-7689363.26613795 5945696.17004355]
+      rounded to 0.1 m: 2,121,621 bytes, 71,082 vertices, drew 151 of 151 told
+  cousub  8.3s  least area kept 75.5% at Muscle Ridge Islands UT (2301347962)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 3,057,798 bytes, 75,172 vertices, drew 528 of 529 told
+      rounded to 0.1 m: 3,328,090 bytes, 75,172 vertices, drew 528 of 529 told
+  aiannh  0.1s  least area kept 85.2% at Penobscot Reservation (2760R)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 74,801 bytes, 1,777 vertices, drew 8 of 8 told
+      rounded to 0.1 m: 81,171 bytes, 1,777 vertices, drew 8 of 8 told
+  at 250 m, rounded to 1 m: every level shaped 7,792,156 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 250 m, rounded to 1 m: shaped cousub only 3,791,371 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: under)
+  at 250 m, rounded to 0.1 m: every level shaped 8,807,772 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 250 m, rounded to 0.1 m: shaped cousub only 4,061,663 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+
+=== 500 m ===
+  county  5.0s  least area kept 99.0% at Knox County, Maine (23013)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,099,541 bytes, 53,762 vertices, drew 16 of 16 told
+        invalid after rounding: 2: Aroostook County, Maine (23003): Self-intersection[-7689362.10283888 5945697.31358001]; York County, Maine (23031): Self-intersection[-7848474.25557606 5388337.3665473]
+      rounded to 0.1 m: 1,292,707 bytes, 53,762 vertices, drew 16 of 16 told
+        invalid after rounding: 1: York County, Maine (23031): Self-intersection[-7848474.18434057 5388337.12099594]
+  sldu    7.9s  least area kept 90.3% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,193,831 bytes, 54,402 vertices, drew 35 of 35 told
+        invalid after rounding: 1: State Senate District 1 (2024); Maine (23001): Self-intersection[-7689362.10283888 5945697.31358001]
+      rounded to 0.1 m: 1,389,299 bytes, 54,402 vertices, drew 35 of 35 told
+  sldl    8.4s  least area kept 87.0% at State House District 119 (2024); Maine (23119)  pinches opened in 4
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 1,597,439 bytes, 56,944 vertices, drew 151 of 151 told
+        invalid after rounding: 1: State House District 1 (2024); Maine (23001): Self-intersection[-7689362.10283888 5945697.31358001]
+      rounded to 0.1 m: 1,802,087 bytes, 56,944 vertices, drew 151 of 151 told
+  cousub  8.4s  least area kept 56.6% at Muscle Ridge Islands UT (2301347962)  pinches opened in 2
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 2,779,087 bytes, 60,503 vertices, drew 528 of 529 told
+      rounded to 0.1 m: 2,996,609 bytes, 60,503 vertices, drew 528 of 529 told
+  aiannh  0.1s  least area kept 74.9% at Penobscot Reservation (2760R)
+      invalid after simplifying, before rounding: none
+      rounded to 1 m: 69,481 bytes, 1,497 vertices, drew 8 of 8 told
+      rounded to 0.1 m: 74,837 bytes, 1,497 vertices, drew 8 of 8 told
+  at 500 m, rounded to 1 m: every level shaped 6,740,278 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 500 m, rounded to 1 m: shaped cousub only 3,512,660 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: under)
+  at 500 m, rounded to 0.1 m: every level shaped 7,556,438 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: OVER)
+  at 500 m, rounded to 0.1 m: shaped cousub only 3,730,182 bytes (points map 2,351,336; the suite's unsourced line 4,000,000: under)
+
+polygon read: nothing sent, nothing written

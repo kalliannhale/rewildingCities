@@ -1,0 +1,39 @@
+profile version 824e79d23b1d
+points map: 2,351,368 bytes as the rehearsal sends it, canonical sha256 f640fc4e8897; 2,351,336 in D-362's form
+  state   no canonical outline for this level yet: 1 told rows not drawn
+
+=== 100 m ===
+  county  outline_counties_outline ee88e4f41db3  5.5s  drew 16 of 16 told  2,263,481 bytes  115,022 vertices  least area kept 99.9% at Knox County, Maine (23013)
+      2 made invalid by the rounding: Cumberland County, Maine (23005), Piscataquis County, Maine (23021)
+  sldu    outline_senate_outline c603add2e7f6  8.5s  drew 35 of 35 told  2,370,596 bytes  116,337 vertices  least area kept 99.7% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      2 made invalid by the rounding: State Senate District 4 (2024); Maine (23004), State Senate District 25 (2024); Maine (23025)
+  sldl    outline_house_outline 146e0ca3ac11  8.9s  drew 151 of 151 told  2,828,202 bytes  121,721 vertices  least area kept 99.0% at State House District 99 (2024); Maine (23099)  pinches opened in 4
+      3 made invalid by the rounding: State House District 30 (2024); Maine (23030), State House District 31 (2024); Maine (23031), State House District 105 (2024); Maine (23105)
+  cousub  outline_towns_outline eda591d0d3ba  9.3s  drew 528 of 529 told  4,045,950 bytes  127,180 vertices  least area kept 94.3% at Penobscot Indian Island Reservation (2301957936)  pinches opened in 2
+      3 made invalid by the rounding: North Yarmouth town (2300553860), Abbot town (2302100100), Brownville town (2302108325)
+  aiannh  outline_tribal_outline 57e9ac56a143  0.1s  drew 8 of 8 told  94,884 bytes  2,834 vertices  least area kept 94.3% at Penobscot Reservation (2760R)
+  the whole map at 100 m: 11,604,012 bytes; the points map 2,351,336; the suite's unsourced line 4,000,000 (OVER)
+
+=== 250 m ===
+  county  outline_counties_outline ee88e4f41db3  5.9s  drew 16 of 16 told  1,347,263 bytes  66,800 vertices  least area kept 99.5% at Knox County, Maine (23013)
+      2 made invalid by the rounding: Aroostook County, Maine (23003), Penobscot County, Maine (23019)
+  sldu    outline_senate_outline c603add2e7f6  9.0s  drew 35 of 35 told  1,445,334 bytes  67,639 vertices  least area kept 98.2% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      2 made invalid by the rounding: State Senate District 1 (2024); Maine (23001), State Senate District 8 (2024); Maine (23008)
+  sldl    outline_house_outline 146e0ca3ac11  9.5s  drew 151 of 151 told  1,866,061 bytes  71,082 vertices  least area kept 95.8% at State House District 119 (2024); Maine (23119)  pinches opened in 4
+      1 made invalid by the rounding: State House District 1 (2024); Maine (23001)
+  cousub  outline_towns_outline eda591d0d3ba  9.5s  drew 528 of 529 told  3,057,798 bytes  75,172 vertices  least area kept 75.5% at Muscle Ridge Islands UT (2301347962)  pinches opened in 2
+  aiannh  outline_tribal_outline 57e9ac56a143  0.1s  drew 8 of 8 told  74,801 bytes  1,777 vertices  least area kept 85.2% at Penobscot Reservation (2760R)
+  the whole map at 250 m: 7,792,156 bytes; the points map 2,351,336; the suite's unsourced line 4,000,000 (OVER)
+
+=== 500 m ===
+  county  outline_counties_outline ee88e4f41db3  5.6s  drew 16 of 16 told  1,099,541 bytes  53,762 vertices  least area kept 99.0% at Knox County, Maine (23013)
+      2 made invalid by the rounding: Aroostook County, Maine (23003), York County, Maine (23031)
+  sldu    outline_senate_outline c603add2e7f6  8.9s  drew 35 of 35 told  1,193,831 bytes  54,402 vertices  least area kept 90.3% at State Senate District 28 (2024); Maine (23028)  pinches opened in 2
+      1 made invalid by the rounding: State Senate District 1 (2024); Maine (23001)
+  sldl    outline_house_outline 146e0ca3ac11  9.7s  drew 151 of 151 told  1,597,439 bytes  56,944 vertices  least area kept 87.0% at State House District 119 (2024); Maine (23119)  pinches opened in 4
+      1 made invalid by the rounding: State House District 1 (2024); Maine (23001)
+  cousub  outline_towns_outline eda591d0d3ba  9.6s  drew 528 of 529 told  2,779,087 bytes  60,503 vertices  least area kept 56.6% at Muscle Ridge Islands UT (2301347962)  pinches opened in 2
+  aiannh  outline_tribal_outline 57e9ac56a143  0.1s  drew 8 of 8 told  69,481 bytes  1,497 vertices  least area kept 74.9% at Penobscot Reservation (2760R)
+  the whole map at 500 m: 6,740,278 bytes; the points map 2,351,336; the suite's unsourced line 4,000,000 (OVER)
+
+polygon read: nothing sent, nothing written

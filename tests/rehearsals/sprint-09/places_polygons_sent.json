@@ -1,0 +1,36 @@
+{
+  "item_id": "7079e2b4d1234db48f12ac1dcbe51478",
+  "sha256": "4927ecdb6d4492ba607c2caed9934f55168c9e27b17d192334eb6d8a84fc40cf",
+  "counts": {
+    "rewilding-places-county": 16,
+    "rewilding-places-sldu": 35,
+    "rewilding-places-sldl": 151,
+    "rewilding-places-cousub": 528,
+    "rewilding-places-aiannh": 8
+  },
+  "profile_version": "824e79d23b1ddfbf9a8ab93b74f478fa24606765227c53d83f27e863ce266e5d",
+  "form": "D-362",
+  "layer_order": [
+    "county",
+    "sldu",
+    "sldl",
+    "cousub",
+    "aiannh"
+  ],
+  "levels": {
+    "cousub": {
+      "outline": "outline_towns_outline eda591d0d3ba",
+      "tolerance_m": 250,
+      "decimals": 0,
+      "finer_because": [],
+      "drawn": 528,
+      "told": 529,
+      "vertices": 75172,
+      "least_area_kept": [
+        "Muscle Ridge Islands UT (2301347962)",
+        0.755
+      ],
+      "pinches_opened": 2
+    }
+  }
+}
