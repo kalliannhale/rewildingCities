@@ -1929,3 +1929,5 @@ Corrected: state.md said split towns need EDGE-NOTE-1; their shares are on the o
 Opened: none. RAMP-1 and UPDATE-1 close when the restyle runs and --check reads it.
 Wrong hypotheses: that the towns' crack was a sliver of missing land; that the dissolve ran in s2; that Experience Builder could not let a search steer an Embed (the widgets listened to the wrong data source); that voice.py spoke for places; that profiles carried refusals per place (none does: what is withheld belongs to the plot).
 Lessons: a test with a noisy setup is not a test (an empty URL box and a page that may refuse framing); read the real output as its reader would (D-271 appeared 18,293 times in public-bound text); a contract's line can be reversed for a reason, but out loud.
+
+| D-360 | The credit line and the suggested citation name Northeastern University Library, whose project account owns every item (Kalli) |
