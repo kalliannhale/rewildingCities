@@ -5,17 +5,16 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-17, at Sprint 08's close. Session 2 built and ran zip 8b with three fixes (8b2, 8c and two inline): the choropleth, joined copies, markers, local dry runs, two guards on what may be written, the door with two parents, `publish --check`, and the door reading descriptions back. Sprint 08 is closed against its own tab's done-when: broadband pushed twice to test left one layer, one layer each in test and library, each naming its canonical hash; the check reads 5 of 5 items as recorded. Next is Sprint 09, the explorer: see Starting the next session.
-
-**Sprint 09, in progress (2026-11-18):** zip 9a, D-350 to D-359: the telling, the plain-language register, the ramp turned (RAMP-1), the restyle the door owes, credit and citation, the pinch opened in the copy (COVER-1), the standard's CII and Cision fixes, notes with a draft status. Zip 9b follows: the places item, the withheld table, lens maps, `--check` reading the app's config. Experience Builder stays the explorer (D-68 stands, D-350).
+**Updated:** 2026-11-18, at Sprint 09 session 1's hand-off. Sprint 09 is in progress. Session 1 read Experience Builder against the door's items, decided the explorer's shape (Experience Builder stays, D-68; its places come from a feature collection the door pushes, D-350), built and ran zip 9a (D-350 to D-360) and closed UPDATE-1, RAMP-1 and COVER-1. Every profile, the House, Senate and Census tribal outlines and their copies, and the towns' copy are in the bucket; broadband's standing draws darker for harder access in test and library. Next is zip 9b: see Starting the next session.
 
 ## Where the build stands
 
-- Branch main, pushed. Confirm with `git log --oneline -15` and `git status -sb`. Sprint 08's commits: c67a67a (zip 8a, D-326 to D-334), 060bcdd (its hand-off), then session 2's: 1ba3098 (zip 8b and 8b2, D-335 to D-347), fc773e3 (rule 11 gains joined and marked, D-348), 2ba91e7 (pyproj's unnamed operation said in words), 07111bf (the run's record), 98e4295 (zip 8c, D-349), d87f324 (the record agrees with ArcGIS), then this hand-off's commit. Sprint 07's last: 481263c; Sprint 06's last: 1497bfa, 106f721, 02e9b87.
-- Tests: `python -m pytest -q -rs | tail -3`. **1,415 passed** at zip 8c: zip 8a's 1,332, plus tests/test_choropleth.py (15), test_joined_copy.py (24, 3 drawing real geometry), test_door_choropleth.py (32, a fake portal that rewrites descriptions as ArcGIS does), test_receipt_names.py (10), test_no_threshold.py (2); test_map_indicators.py rewritten for the keyed join. The full suite runs about three minutes; a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations, not ours.
-- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes into plots/maine/.data/place_profile_profiles.json. NOTHR-1's fix changes what a no-threshold entry with no value says, so the profiles are **rebuilt before they are written canonically** (Sprint 09).
+- Branch main, pushed. Confirm with `git log --oneline -15` and `git status -sb`. Sprint 09 session 1's commits: 284e56f (Sprint 08's hand-off, landed at this session's start: it had not been committed), 7d93a25 (zip 9a, D-350 to D-359), 510c104 (the library in the credit, D-360), then the run's ledger block and this hand-off's commit. Sprint 08's commits: c67a67a (zip 8a, D-326 to D-334), 060bcdd (its hand-off), then session 2's: 1ba3098 (zip 8b and 8b2, D-335 to D-347), fc773e3 (rule 11 gains joined and marked, D-348), 2ba91e7 (pyproj's unnamed operation said in words), 07111bf (the run's record), 98e4295 (zip 8c, D-349), d87f324 (the record agrees with ArcGIS), then this hand-off's commit. Sprint 07's last: 481263c; Sprint 06's last: 1497bfa, 106f721, 02e9b87.
+- Tests: `python -m pytest -q -rs | tail -3`. **1,457 passed** at zip 9a: zip 8c's 1,415 plus tests/test_telling.py (22, three reading the real profiles when they are on disk), test_door_restyle.py (9), test_pinch.py (5, needing shapely), test_note_status.py (3), test_standard_sources.py (3); test_door_choropleth.py's title check still reads "higher is better". At zip 8c, 1,415: zip 8a's 1,332, plus tests/test_choropleth.py (15), test_joined_copy.py (24, 3 drawing real geometry), test_door_choropleth.py (32, a fake portal that rewrites descriptions as ArcGIS does), test_receipt_names.py (10), test_no_threshold.py (2); test_map_indicators.py rewritten for the keyed join. The full suite runs about three minutes; a failing run is reread with `python -m pytest -q --lf 2>&1 | tail -8`. The 2 warnings are Starlette and FastAPI test-client deprecations, not ours.
+- Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes into plots/maine/.data/place_profile_profiles.json. Rebuilt 2026-11-18 on the fixed standard (D-357) and written canonically (824e79d23b1d). A change to the standard, the notes or a profile's wording means a rebuild and a new version.
+- The telling: canopy/wonder/telling.py turns a profile into the explorer's text fields (D-351). Its register is seeds/language/plain_language.yml (D-352); tests/test_telling.py holds every field to it.
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its Sprint 08 tab is marked done at this hand-off. Check its claims against this page and the code.
-- Next decision ID: **D-350**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
+- Next decision ID: **D-361**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
 - **Sprint 08 is closed** (session 2). Progress: field-guide/docs/progress/infrastructure/sprint-08.md. **Sprint 07 is closed** (session 2 of Sprint 07). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
 - **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo; the write assumes rewilding-canonical-writer through the rewilding-writer profile. CloudFront: dvk5mp17wovwb.cloudfront.net.
 - **Canonical objects written** (every write public and permanent; dry-run first, one artifact at a time, read the pointer and data back after):
@@ -23,13 +22,17 @@ is fixed.
 | Harvest | Version | Allow record | Rows | Display copies |
 | --- | --- | --- | --- | --- |
 | clerk_offices_points_points | 0b91cb0caae7 | 33ce1ddb61dc | 392 | `web` |
-| outline_towns_outline | eda591d0d3ba | a19b45afae02 | 528 | none of its own (COVER-1) |
+| outline_towns_outline | eda591d0d3ba | a19b45afae02 | 528 | `web_25m` (sha 4a33d5a1..., 9.5 MB, opened at 2 places, D-356) |
+| outline_house_outline | 146e0ca3ac11 | 579be49bc2e6 | 151 | `web_25m` (sha ed297340..., 9.1 MB, opened at 4) |
+| outline_senate_outline | c603add2e7f6 | 7f60539a73e8 | 35 | `web_25m` (sha 93700774..., 8.7 MB, opened at 2) |
+| outline_tribal_outline | 57e9ac56a143 | f3b47cbb5540 | 8 | `web_25m` (sha 6250b764..., 0.2 MB) |
+| place_profile_profiles | 824e79d23b1d | cfeaf7315c54 | 1,663 places | none yet (zip 9b's told copies) |
 | broadband_standardize_standings | fd9fdf0a4a0a | a5f55ad0b26b | 3,222 | `outline_counties_outline_ee88e4f41db3_web_25m` (sha 10e23ac0..., 8.6 MB) |
 | outline_counties_outline | ee88e4f41db3 | 513d0d01678e | 16 | none of its own |
 | county_count_derive_values | fe7922079828 | f278d116b315 | 16 | none (no honest map yet, D-347) |
 | carriers_counts_values | 33d9b4d7b9b5 | 45a517f1117a | 546 | `outline_towns_outline_eda591d0d3ba_markers` (sha c8b87ff3..., 0.6 MB) |
 
-- **The door's items** (nu.maps.arcgis.com, owned by RDS_NU; recorded in plots/maine/publish/published.yml; `publish maine --check` read 5 of 5 as recorded on 2026-11-17):
+- **The door's items** (nu.maps.arcgis.com, owned by RDS_NU; recorded in plots/maine/publish/published.yml; on 2026-11-18 both broadband items were restyled (RAMP-1, UPDATE-1) and `--check` read 3 of 3 test and 2 of 2 library items as recorded). The explorer target (folder rewildingCities explorer, public, D-359) holds nothing yet:
 
 | Target | Record key | Item | Sharing |
 | --- | --- | --- | --- |
@@ -40,7 +43,8 @@ is fixed.
 | library | clerk_offices_points_points | cac536bb95a2415086ea53f4dbe52af3 | organization |
 
   The door's first item, 143923c7 (zip 8a), and broadband's first test item, dd56fefa, were found deleted in ArcGIS by the first `--check` (who deleted them is not recorded; Kalli went ahead with `--replace`) and remade; each new entry keeps the old in `previous`. **An item id is what an Experience Builder app holds, so a door item is never deleted by hand once anything is built on it** (Sprint 09).
-- The hand-made web map 5fcd410b007a49aaa279e6a2b548f507 (D-325) sits outside the door's record. Experience Builder is untried.
+- The hand-made web map 5fcd410b007a49aaa279e6a2b548f507 (D-325) sits outside the door's record.
+- **Experience Builder, as read in session 1** (D-350): its Map widget draws a door map's referenced GeoJSON, and no widget can read it. Search reads a feature collection; a widget that should follow a search connects to the Search widget's **output** data source (Select data, Outputs), never the searched data. Its published config is the item resource config/config.json. The rehearsal app read_9a (05b3d08a86174f78a725e77e7d833a1e, RDS_NU) holds an Arcade test source wired Search to Text, Embed and Table; it was public and Kalli was asked to make it private; confirm. It is a rehearsal space, never the explorer.
 - Kalli has explicit permission to publish as RDS_NU for this project; its password is typed at the door's prompt and never stored, logged or committed.
 - **Sprint 06 is closed** (Kalli, session 16). Carried forward, not done: step 7b, the FCC map (P-6, the first cut); step 10, the pairing table (P-2, after delivery); OWN-1's ledger check.
 - **Delivery, as Kalli set it in session 16:** the door, the kit and the canonical files in S3 for December; the explorer (Sprint 09) after. Clerk offices as points and outlets at their towns on the map, the aggregate counts kept for analyses. The cloud stack is tested on Kalli's own AWS account and handed to the library as code.
@@ -48,6 +52,26 @@ is fixed.
 - HRSA's sites copy, the Section 203 release, the PIAAC workbook, the clerk list and the 911 file live in plots/maine/.data as before (sha256s in the manifest). The 911 file holds home addresses and never leaves .data; since D-337 the canonical write refuses any receipt whose data file is a manifest dataset's cache, and a test walks every plot.
 - Retired receipts: plots/maine/.data/retired/ holds derive_values and standardize_standings, the broadband experiment's receipts from before its steps were renamed (D-336). Moved, never deleted: loam unions every receipt left in .envelopes.
 - The Census key is set in the rewilding env and is replaced (KEY-1).
+
+## Sprint 09 ~ the explorer (in progress)
+
+Session 1 built zip 9a and ran it. The explorer's shape (D-350): an Experience Builder app owned by RDS_NU, featured on the library's Hub page. Search and the profile panel read the places item, a feature collection the door pushes with one layer per level and every field from the telling; the lens maps are door web maps grouped by CII's five pillars; the full six-part profile can follow in an Embed later. Zip 9b builds the places item, the withheld table, the lens maps, `--check` reading the app's config, and the guide for building the app by hand. Contract 4 says the door makes no ArcGIS item of a profile; the places item reverses that line, and 9b raises Contract 4 and records why.
+
+## Decided in Sprint 09
+
+| ID | One line |
+| --- | --- |
+| D-350 | Experience Builder draws a referenced GeoJSON layer and no widget reads it; Search reads a feature collection and steers other widgets through its output data source; the explorer stays Experience Builder, its places a door-pushed feature collection (file storage) |
+| D-351 | canopy/wonder/telling.py: six levels, 740 places, MEGIS divisions out; sentences from structured parts, never working text; 3.2 KB a row at the median, 2.5 MB in all |
+| D-352 | seeds/language/plain_language.yml: grade 9 at each field's median place, claim words refused, no working id; "Where the data is stored"; the range statement reworded (Kalli) |
+| D-353 | RAMP-1: darker means harder; a standing's lowest fifth darkest; a value darker in its declared worse direction, recorded as join.directions when a copy is drawn; no direction, no colours |
+| D-354 | owed() owes a restyle when the door's renderer changes, by the move's path |
+| D-355 | plots/<plot>/publish/credit.yml: credit, citation ({title}, {version}, {url}), data guide line; refused when incomplete |
+| D-356 | COVER-1: a pinch, not a crack; the copy moves pinched hole vertices 0.1 m into their holes, recorded as `opened`; canonical outlines unchanged |
+| D-357 | The CII published measures acquirable (terms of use, CII-19); Cision out of the outlet sources; the last post needs our own model |
+| D-358 | A note may carry status: draft, told as "Draft wording"; tribal_representation_legislature added as a draft, with its sources |
+| D-359 | The explorer target: public, folder rewildingCities explorer, RDS_NU (Kalli) |
+| D-360 | The credit and citation name Northeastern University Library (Kalli) |
 
 ## Sprint 08 ~ the publish door (closed in session 2)
 
@@ -398,7 +422,7 @@ is fixed.
 
 ## Contracts
 
-field-guide/docs/contracts/: 1 tiers and the gate 0.8 (a copy with two parents, D-342, D-343); 2 canonical objects 0.5 (joined copies, markers, local dry runs, what may be written at all: sections 4a and 4b); 3 geography graph 1.0 (the grove teammate's review owed; CON3-2); 4 place profile 0.4.
+field-guide/docs/contracts/: 1 tiers and the gate 0.8 (a copy with two parents, D-342, D-343; zip 9a added `opened` to section 8's step list without raising the version, so raise it with Contract 4's change in zip 9b); 2 canonical objects 0.5 (the same: `opened` in section 4's list) (joined copies, markers, local dry runs, what may be written at all: sections 4a and 4b); 3 geography graph 1.0 (the grove teammate's review owed; CON3-2); 4 place profile 0.4.
 
 ## Where invariants are held
 
@@ -522,10 +546,7 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 
 | ID | One line |
 | --- | --- |
-| COVER-1 | The towns outline is not a valid coverage (Gray and Windham, about 75 m near 43.8457 N, 70.3746 W); the counties are (session 2). Blocks the explorer's town lens and any town choropleth; markers never need it. Repair in build_place_outlines, then a new towns version |
 | GJSON-1, D-157 | GJSON-1 still bounds any reader of the state outline; D-157's notes travel in the door's descriptions |
-| RAMP-1 | The Maine plan says darker always means harder access; the door's fifths draw darker as the better standing (D-344). Reverse the ramp before Sprint 09's maps, and make a renderer change owed, since owed() compares no renderer today |
-| UPDATE-1 | ArcGIS has never answered the door's update call: every item was made by addItem, and "reseen" wrote the record only. The first real move (a version, an allow record, RAMP-1) is its test |
 | SIZE-2 | broadband's counties copy is 8.6 MB (346,367 vertices, mostly coastline); Map Viewer draws it in the browser. If it loads slowly, `--tolerance 100` draws `..._web_100m` and `publish --display` points the map at it |
 | MANIFEST-2 | sows reports available_but_missing for cii_2026_published and county_locations_2024; nothing in 8b read them. Read whether they predate session 2 |
 | OUTCONF-1 | Before named outlets publish (counts already may): Kalli confirms the Claude-read reviews still in the seed (read_by): the Castine Patriot and the Boothbay Register placed by newsroom (Castine, Wiscasset count none of their own); whether the Peaks Islander still publishes; Gorham Times, Islesboro Island News, The Irregular, Maine Biz and Maine Wire placed by name. Cision's reads left with Cision (D-294). With the makers' word on Easton's and LNC's lists, named outlets move their tiers and terms (D-297, D-299) |
@@ -549,7 +570,7 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | RUNNAMES-1 | Two runs writing one receipt name, each receipt holding whichever ran last: maine_counties and maine_governance_units (validate_counties_checked, repair_counties_repaired, dissolve_counties_dissolved); nyc_thermal_landscape and nyc_park_cooling_pedestrian (validate_lst_checked, crop_lst_cropped). Named in tests/test_receipt_names.py |
 | STEPNAME-1 | wonder composes a method's recipe step ids verbatim, so every experiment from cii_indicator_values writes standardize_standings; the step-name test holds the line until wonder prefixes them |
 | DOORSAY-2 | After --replace finds an item gone, the plan line still names the step it first owed ("reseen"); restate the plan once the live check changes it |
-| SIGNIN-1 | A refused sign-in in --check reads like a problem with the item; say "the sign-in was refused, so this item was not read" |
+| SIGNIN-1 | A refused sign-in in --check reads like a problem with the item, and a mistyped password moves on to the next item instead of asking again (seen 2026-11-18: two items read refused for a typo). Ask again for the same item, and say "the sign-in was refused, so this item was not read" |
 | INDIAN-1 | 2300357936, Penobscot Indian Island Reservation's Census code in Aroostook, has a row (count 0) and no land face, so the outlet markers leave it undrawn and say "1 row outside"; how it is shown is the nation's to decide (P-8) |
 | OAUTH-1 | An OAuth sign-in kind for ArcGIS Enterprise portals, where generateToken is no longer the default (D-329) |
 | CATALOG-1 | The open catalog target kind (DCAT or STAC) for the open data hub, Sprint 13 (D-326) |
@@ -581,7 +602,11 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | ID | One line |
 | --- | --- |
 | CARRY-1 | loam's carriers view carries only id, name and coordinates. The door's points copies already carry every property, so the explorer may never need it: decide when the explorer's layers are drawn (D-347) |
-| EDGE-NOTE-1 | located_in_edges receipts name no row notes, so rule 9 withholds the five carriers' edges; two lines in build_located_in and five reruns, when the explorer needs split towns or edges in the bucket |
+| EDGE-NOTE-1 | located_in_edges receipts name no row notes, so rule 9 withholds the five carriers' edges; two lines in build_located_in and five reruns, only if the explorer needs carriers' edges in the bucket. Split towns do not: their shares are in every profile (corrected in session 1) |
+| PLACES-1 | Zip 9b: the places item, a door-pushed feature collection, one layer per level, the telling's fields; its size against what Experience Builder carries comfortably, rehearsed in read_9a first |
+| WITHHELD-1 | Zip 9b: what the gate withholds belongs to the plot, not a place (no profile carries a refusal), and by definition is not in the bucket; where the withheld table is drawn from is 9b's first fork |
+| LENS-1 | Zip 9b: lens maps of many layers, grouped by CII's five pillars through a crosswalk seed (the weights seed lists CII's own published indicators, not ours); which indicators each lens draws |
+| APPCHECK-1 | Zip 9b: `publish --check` reads the app's config/config.json and confirms every item id in it is one the door recorded |
 
 ### Not yet sorted (look each up in the ledger)
 
@@ -742,6 +767,11 @@ Closed in Sprint 08 session 2: LAYER-1 (D-338), DOORSAY-1, DOORCHECK-1 (D-345), 
 - A recorded console transcript (demo/index.html's figures) is history: never rename a line inside one.
 - After a renamed run, move its old receipts out of .envelopes (into .data/retired): loam unions every receipt there, and the old and new would carry one indicator twice.
 - `--local` copies need no AWS; every other `--display` needs the writer profile, even as a dry run.
+- In Experience Builder, a widget that should follow a search connects to the Search widget's output data source (Select data, Outputs tab), never the searched data; wired to the searched data it never changes (session 1 lost a morning to it).
+- A test page that may refuse to be framed (example.org) is no test of an Embed; OpenStreetMap's embed pages are made to be framed.
+- A shapely LinearRing has no area: measure a hole as shapely.Polygon(ring.coords).
+- Claude's sandbox has no shapely, geopandas, duckdb or pytest, so it runs pure-Python tests through a stand-in and skips the rest; tests that need shapely run first on Kalli's machine.
+- The profiles' working text carries ledger ids by the thousand (D-271 alone 18,293 times); nothing public may pass it through. The telling builds from structured fields.
 
 ## People
 
@@ -751,17 +781,22 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 Upload this file only. Claude reads it whole, the retrospectives first, confirms, and asks for what the next step's design needs.
 
-**Next: Sprint 09, the explorer** (the Master Plan's Sprint 09 tab). The Maine explorer in ArcGIS Experience Builder: search any place, open its profile, switch between district, county and town lenses, and see what is withheld and why. Done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer.
+**Next: zip 9b, the rest of Sprint 09** (the Master Plan's Sprint 09 tab). Done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer. What 9b builds, each with its lean from session 1:
 
-**How Sprint 08 shapes it.** The explorer's maps are the door's items, and an Experience Builder app holds them by item id. The door moves an item in place when the truth moves, so an app built on it never needs rebuilding; an item deleted by hand breaks it, as today's two remakes would have. The explorer is therefore built only on items `publish --check` reads as recorded. Its layers are joined copies and markers drawn by `canonical --display --join`, from tables and outlines already in the bucket, so every map carries both parents' provenance and both credits by construction, and "referenced layers use no AGOL feature storage" is already true. Sprint 09 asks for three things the door does not yet do:
+1. **The places item (PLACES-1).** A told copy per level, drawn from the profile version's own bytes and each level's outline markers (a point inside every place, D-340), its fields from the telling; then a new door target kind that pushes a feature collection item holding them, one layer per level, recorded like any item and owed a move when the profile moves. File storage, not feature storage (D-350). Contract 4 is raised for it.
+2. **The withheld table (WITHHELD-1).** One row per layer the gate holds back, with its reason in plain words. The first fork: a refusal is by definition not in the bucket, so the door either judges it live from the plot's receipts when it publishes (and says so), or a plot-level record of the dry run is written canonically first.
+3. **The lens maps (LENS-1).** Door web maps of many layers: the House, Senate, county, town and tribal outlines, grouped by CII's five pillars through a small crosswalk seed. Towns show values, never standings (D-75).
+4. **APPCHECK-1.** `publish --check` reads the app's config and names any item id the door did not record.
+5. **The app, built by hand** from a step-by-step guide: Search over the places layers, Text and Table wired to Search's output, the lens maps, the withheld table, the credit; owned by RDS_NU, public, featured on the library's Hub page (ask Kalli for its link and owner).
 
-1. **Symbology from the Maine plan.** Darker always means harder access (RAMP-1: the door draws darker as the better standing today); towns show values, never standings; open-ended values are labelled. A renderer change must become something the door owes, and its first move is UPDATE-1's test against a real portal.
-2. **Every level as a lens.** Counties draw now. Towns wait on COVER-1, since a town choropleth simplifies the towns as one coverage; House, Senate and tribal outlines exist in the graph (outline_house, outline_senate, outline_tribal) and are not yet written canonically, nor read for coverage. Split towns do not need EDGE-NOTE-1: their shares are on the graph's overlaps edges, which every profile's part 1 already carries (corrected in Sprint 09).
-3. **The profile panel.** The profiles are a JSON document, which the door refuses by design ("the explorer reads documents by URL"); so the fork between a pop-up, a table widget and an embedded page from S3 rests on the canonical write of place_profile_profiles, rebuilt first for NOTHR-1, and on what Experience Builder can read by URL. The withheld layers and their reasons are the gate's own refusals (read_exposure), which can travel the same way.
+**9b's consultation needs.** Ask whether the repo is current. Read before any lean: canopy/aws/s3.py's prepare_display and the canonical command (a JSON version has no display copy today), publish.py's read_copy and check, targets/base.py, records.py, the door's tests and fakes, the CII pillar seed and the indicator registry, and Esri's documentation for a feature collection item's JSON (its layers, field lengths, size). Rehearse a real feature collection in read_9a before the explorer holds it. After 9b: Sprint 09's progress report, the Master Plan's stale "Where it stands" and Sprint 09 tab, and Contract 4.
 
-The credit line to Kalli A. Hale, a suggested citation and a link to the data guide are description and credits, the door's own fields, so they change every item at once and each owes a describe.
+## Sprint 09 session 1's notes (the consultation; zip 9a built and run)
 
-**Sprint 09's consultation needs.** Before any lean, read Experience Builder's documentation for a web map's layers, search and a URL-embedded page, Kalli's current Experience Builder dashboard and its web maps (as their JSON), the Maine redesign's sections on commitments, products and the explorer, Contract 4, demo/index.html, and the reads zip built by `git --no-pager grep -l` on each identifier the change touches (the door's renderer and owed(), choropleth.py, display.py, s3.py, profile.py, check.py's read_exposure, build_place_outlines.R for COVER-1). Ask Kalli whether the repo is current first.
+- What went right: the repo was checked first and Sprint 08's hand-off was found uncommitted and landed; every lean waited for its read, and three reads changed the design (Experience Builder's data panel, the coverage read, the real profiles); Kalli pushed for a retest of the Embed when Claude was ready to drop it, and it worked; every bucket draw printed its local sha256 before it was written, and every pinch count was predicted by a read before the code ran; the first real update went to a private test item first.
+- Wrong hypotheses: that the towns' crack was a gap or a sliver (it is a pinch, and the House and Senate inherit it); that the dissolve ran in s2; that Experience Builder could not let a search steer an Embed; that redesigning around our own page was simpler than testing the original; that voice.py spoke for places; that profiles carried refusals per place; that 2 KB a place would hold the telling (3.2 KB at the median); that a hole's ring has an area.
+- Lessons: a test with a noisy setup is not a test; read the real output as its reader would, by the thousand; when the design changes direction twice in a day, line up what the options share before choosing (the shared core made the choice cheap); show plainly, in public text, and keep claim words out by test, not by hope.
+- Session shape: one long chat held the consultation, the Experience Builder reads, zip 9a with two small fixes, the whole run and this hand-off. The hand-off rule stands: zip 9b starts fresh from this page.
 
 ## Sprint 08 session 2's notes (zip 8b, its fixes, the run, Sprint 08 closed)
 
