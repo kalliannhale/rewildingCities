@@ -4,8 +4,8 @@ targets:
   library:
     broadband_standardize_standings/outline_counties_outline/cii_broadband:
       allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
-      description_seen_sha256: 27c2cbb5f509200b810a5b9df4bd49f22ebae568ff10d4ec613deb9a0008512c
-      description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
+      description_seen_sha256: 0b4d3628a2ecacba17d5aa9e572e3697bcb59d82de8a9a0d3bfdc006061a1895
+      description_sha256: d4cf2b3e1711b9ad9a9cf6e1f11d9e2fd672f6256f8d91ec712ca7a4b7befe81
       display: outline_counties_outline_ee88e4f41db3_web_25m
       door_version: 1.0.0
       folder: press-forward
@@ -22,7 +22,7 @@ targets:
       kind: arcgis_webmap
       layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
       markers: false
-      moved_at: '2026-11-17T09:23:57.456417+00:00'
+      moved_at: '2026-11-18T02:12:11.468406+00:00'
       moved_by: Kalli A. Hale
       outline:
         allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
@@ -37,8 +37,8 @@ targets:
           harvest: outline_counties_outline
           sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
         sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
-      reason: record how ArcGIS stores its description (D-349)
-      renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
+      reason: 'RAMP-1: darker means harder access'
+      renderer_sha256: 0da231d318b4c10659272ae4e683310566fbbd455222d25af11f4077c8e1a197
       rest_version: '2026.3'
       sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
       sharing: organization
@@ -75,8 +75,8 @@ targets:
   test:
     broadband_standardize_standings/outline_counties_outline/cii_broadband:
       allow: a5f55ad0b26bcb251f144eecb5709c3a3549492a9e481a12a1b812e7cabdfda9
-      description_seen_sha256: 27c2cbb5f509200b810a5b9df4bd49f22ebae568ff10d4ec613deb9a0008512c
-      description_sha256: 8364c8b3b5802965b629428ca13c7b158e31f8841fe14dd9ec7d6fb1f6bfff18
+      description_seen_sha256: 0b4d3628a2ecacba17d5aa9e572e3697bcb59d82de8a9a0d3bfdc006061a1895
+      description_sha256: d4cf2b3e1711b9ad9a9cf6e1f11d9e2fd672f6256f8d91ec712ca7a4b7befe81
       display: outline_counties_outline_ee88e4f41db3_web_25m
       door_version: 1.0.0
       folder: rewildingCities test
@@ -93,7 +93,7 @@ targets:
       kind: arcgis_webmap
       layer_id: rewilding-broadband_standardize_standings-outline_counties_outline-cii_broadband
       markers: false
-      moved_at: '2026-11-17T09:21:31.628046+00:00'
+      moved_at: '2026-11-18T02:04:21.187249+00:00'
       moved_by: Kalli A. Hale
       outline:
         allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
@@ -108,8 +108,8 @@ targets:
           harvest: outline_counties_outline
           sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
         sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
-      reason: remade after it was deleted
-      renderer_sha256: 8d9e7d732693e53887d52d257db30e68aa2e103e18b7eab43ff247e5ec168dd8
+      reason: 'RAMP-1: darker means harder access; first real update (UPDATE-1)'
+      renderer_sha256: 0da231d318b4c10659272ae4e683310566fbbd455222d25af11f4077c8e1a197
       rest_version: '2026.3'
       sha256: fd9fdf0a4a0aa8e57c2dfa685d2a6f1879e5ab1482072c9509e9658fed88e880
       sharing: private
