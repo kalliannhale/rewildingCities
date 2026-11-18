@@ -38,6 +38,18 @@
       drawn from the bucket must print, so nothing permanent happens before the
       whole copy has been drawn, joined and judged once
 
+  python -m canopy.cli canonical maine --refusals
+      judges every receipt in the plot and says what the refusal record would
+      hold: the gate's refusals only, kinds of data and why (D-363), and whether
+      the record the bucket holds is still current or stale. --write writes it
+      (with --by and --reason), under harvests/<plot>/_refusals/
+
+  python -m canopy.cli canonical maine place_profile_profiles --told
+      tells every place the explorer shows from the profile's current version
+      and the current refusal record, as one told copy under the profile's
+      version, named by everything that can change it (D-370, D-378). a dry
+      run unless --write; --local tells the plot's own files and never writes
+
 exit codes: 0 written, already current, or a dry run read through; 1 refused,
 or a dry run with a receipt it could not judge; 2 asked wrongly. ~
 """
@@ -72,11 +84,30 @@ def register(subparsers) -> None:
     p.add_argument("--markers", action="store_true",
                    help="with --join: each place as one point on its surface")
     p.add_argument("--local", action="store_true",
-                   help="with --display: draw from the plot's own files; a dry run, no AWS")
+                   help="with --display or --told: from the plot's own files; a dry run, no AWS")
+    p.add_argument("--refusals", action="store_true",
+                   help="the plot's refusal record: what the gate keeps in, and why (D-363)")
+    p.add_argument("--told", action="store_true",
+                   help="tell the profile's current version for the explorer (D-370)")
     p.set_defaults(func=run)
 
 
 def _asked_wrongly(args) -> str | None:
+    others = ("display", "join", "markers", "tolerance", "told", "all")
+    if getattr(args, "refusals", False):
+        if args.artifact or any(getattr(args, k, None) for k in others + ("local",)):
+            return "--refusals is the whole plot's: it takes no artifact and no other option"
+        if args.write and not ((args.by or "").strip() and (args.reason or "").strip()):
+            return "--write needs --by and --reason: the pointer says who moved it and why"
+        return None
+    if getattr(args, "told", False):
+        if not args.artifact:
+            return "--told names the profile it tells, e.g. place_profile_profiles"
+        if any(getattr(args, k, None) for k in others[:4] + ("all",)):
+            return "--told takes no --display, --join, --markers, --tolerance or --all"
+        if getattr(args, "local", False) and args.write:
+            return "--local tells your own files and never writes; drop --write"
+        return None                      # a told copy moves no pointer: no --by or --reason
     if args.all and args.artifact:
         return "give one artifact or --all, not both"
     if not args.all and not args.artifact:
@@ -90,8 +121,8 @@ def _asked_wrongly(args) -> str | None:
     display = getattr(args, "display", False)
     if (getattr(args, "join", None) or getattr(args, "local", False)) and not display:
         return "--join and --local go with --display"
-    if getattr(args, "markers", False) and not getattr(args, "join", None):
-        return "--markers goes with --join"
+    if getattr(args, "markers", False) and not display:
+        return "--markers goes with --display"
     if getattr(args, "markers", False) and getattr(args, "tolerance", None) is not None:
         return "--markers simplifies nothing, so it takes no --tolerance"
     if getattr(args, "local", False) and args.write:
@@ -117,11 +148,19 @@ def run(args) -> int:
     bucket = os.environ.get(s3.BUCKET_ENV)
     domain = os.environ.get(s3.DOMAIN_ENV)
     local = getattr(args, "local", False)
-    if (args.write or getattr(args, "display", False)) and not local and not (bucket and domain):
+    reads_bucket = getattr(args, "display", False) or getattr(args, "told", False) or \
+        getattr(args, "refusals", False)
+    if (args.write or reads_bucket) and not local and not (bucket and domain):
         print(f"refused: set {s3.BUCKET_ENV} and {s3.DOMAIN_ENV} first "
               f"(conda env config vars set, then reactivate the env)", file=sys.stderr)
         return 2
     root = find_root()
+
+    if getattr(args, "refusals", False):
+        return _refusals(s3, root, args, bucket)
+
+    if getattr(args, "told", False):
+        return _told(s3, root, args, bucket, domain)
 
     if args.all:
         return _dry_run_all(s3, root, args.plot)
@@ -255,4 +294,76 @@ def _display(s3, root, args, bucket: str, domain: str) -> int:
             print(f"   wrote {key}")
     print(f"\n   add to a web map by URL:  {url}")
     print(f"   check it is served:       curl -sI {url}")
+    return 0
+
+
+def _refusals(s3, root, args, bucket: str) -> int:
+    """the refusal record: judged now, set beside the one the bucket holds."""
+    from canopy.aws import told
+    profile = os.environ.get(s3.PROFILE_ENV) or s3.DEFAULT_PROFILE
+    client = s3.make_client(profile)
+    try:
+        record = told.refusal_record(args.plot, root=root)
+        sha = told._sha(told.document_bytes(record))
+        held = told.read_refusals(client, bucket, args.plot)
+        result = (told.write_refusals(record, client=client, bucket=bucket, by=args.by,
+                                      reason=args.reason) if args.write else None)
+    except s3.CanonicalRefusal as e:
+        _say_refusal("the refusal record", e)
+        return 1
+    print(f"the refusal record for {args.plot}: {record['receipts_judged']} receipts judged, "
+          f"{len(record['withheld'])} withheld by the gate; sha256 {sha[:12]}")
+    if record.get("refused_before_the_gate"):
+        print(f"   refused by the write before the gate, so not told: "
+              f"{', '.join(record['refused_before_the_gate'])}")
+    for w in record["withheld"]:
+        rules = ", ".join(sorted({str(r.get("rule")) for r in w["refusals"]}))
+        print(f"   {w['receipt']}  ({w['semantic_type']}): rule {rules}")
+    if held is None:
+        print("   the bucket holds none yet")
+    elif held[0] == sha:
+        print(f"   the bucket's record {held[0][:12]} is current")
+    else:
+        print(f"   STALE: the bucket's record is {held[0][:12]}; this judgment would replace it")
+    if result is None:
+        print("\n   a dry run: nothing sent. --write --by ... --reason ... writes it")
+        return 0
+    for key in result["written"]:
+        print(f"   wrote {key}")
+    print(f"   pointer {result['pointer']}")
+    return 0
+
+
+def _told(s3, root, args, bucket: str, domain: str) -> int:
+    from canopy.aws import told
+    local = getattr(args, "local", False)
+    client = None
+    if not local:
+        profile = os.environ.get(s3.PROFILE_ENV) or s3.DEFAULT_PROFILE
+        client = s3.make_client(profile)
+    try:
+        p = told.prepare_told(args.plot, harvest=args.artifact, client=client, bucket=bucket,
+                              domain=domain, root=root, local=local)
+        result = told.write_told(p, client=client, bucket=bucket) if args.write else None
+    except s3.CanonicalRefusal as e:
+        _say_refusal(args.artifact, e)
+        return 1
+    print(f"{p.harvest}: told copy '{p.name}' of version {p.sha256[:12]}, allow record "
+          f"{str(p.allow_sha256)[:12]}, refusal record {p.refusals_sha256[:12]}")
+    print(f"   {p.rows} places told, {len(p.body):,} bytes; left out by level: "
+          + (", ".join(f"{k} {v}" for k, v in sorted(p.skipped.items())) or "none"))
+    notes = p.envelope["metadata"].get("context_notes") or []
+    print(f"   gate: may leave at public; carries {', '.join(notes) if notes else 'no notes'}")
+    print(f"   copy sha256 {p.copy_sha256}")
+    if p.local:
+        print(f"\n   a local dry run, from your own files: nothing sent, and nothing can be. "
+              f"it would be {p.keys['json']}")
+        return 0
+    if result is None:
+        print(f"\n   a dry run: nothing sent. would write {p.keys['json']}")
+        return 0
+    if result["copy"] == "exists":
+        print("\n   already there with these bytes; nothing written")
+    for key in result["written"]:
+        print(f"   wrote {key}")
     return 0

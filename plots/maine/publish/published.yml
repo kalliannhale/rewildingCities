@@ -186,3 +186,76 @@ targets:
       sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
       sharing: private
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/clerk_offices_points_points/versions/0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1/display/web.geojson
+    places:
+      counts:
+        aiannh: 8
+        county: 16
+        cousub: 528
+        sldl: 151
+        sldu: 35
+        state: 1
+      description_seen_sha256: dc4e7bbc2837845bfe5dadaf6c08ebc2369c488b34b071ddc562149c3b6663bb
+      description_sha256: 6d50595f6d176a01888b223d6e1d7a4edf3157e8097d47b371705ded867a3242
+      door_version: 1.0.0
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - carrier_seen_on_nations_land
+        - carrier_unseen_on_nations_land
+        - census_tribal_area
+        - census_tribal_places
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: 865b9979d41843e2a4c3fe2ff696e734
+      kind: arcgis_places_map
+      map_sha256: 5ee5d888b7ad76dcf32bd9ad68cd21bc8e9acde4adf076fa2742dfc8bf58b803
+      moved_at: '2026-11-18T19:24:28.034443+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        Census tribal area points:
+          allow: f3b47cbb5540f0143556d0713c362ba4a97ee394a03683a2f96347855e90b9d5
+          copy: markers
+          harvest: outline_tribal_outline
+          sha256: 57e9ac56a1430a1d79fa2ebde7580bed36ae46d6c4ec19e07593396fb3868aec
+        County points:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          copy: markers
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+        Maine House district points:
+          allow: 579be49bc2e6d589ab713ef2d5186bb4a2e1985261d0cb91b873a775a7e13a38
+          copy: markers
+          harvest: outline_house_outline
+          sha256: 146e0ca3ac11b7fef4683c7c39e555904ad950cfaedc2c596ba68ab0afc0fe97
+        Maine Senate district points:
+          allow: 7f60539a73e85974f817f91c16b50eacaebfc0856dd9388d31694daae9adb9a8
+          copy: markers
+          harvest: outline_senate_outline
+          sha256: c603add2e7f6d56cab7d769b438ba0a3ab9738713df432368d8749e8d903a050
+        State points:
+          allow: ef0603f94c6bb146cf2ff1ab76831b1c8a2b8241c720470bb62b9d3297454fab
+          copy: markers
+          harvest: outline_state_outline
+          sha256: c15851b5bb9b849b6b0bbd2406ee33d47bc453885f9ed8e2681f2720ad1259a2
+        Town or city shapes:
+          allow: a19b45afae024ee736c45d3b31116a1c0776e2e4799f6e03e035e67c49dca070
+          copy: web_250m
+          harvest: outline_towns_outline
+          sha256: eda591d0d3baf0d9dac6197f39a4aa1558f84f8c10b1b61a5162c251871bd285
+        told places:
+          allow: cfeaf7315c54c4c0fa9105881361cbdc04b25f3befd2e8321fae84cada10b50e
+          copy: told_20d8f35f247e
+          harvest: place_profile_profiles
+          sha256: 824e79d23b1ddfbf9a8ab93b74f478fa24606765227c53d83f27e863ce266e5d
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the explorer's places map (D-371)
+      refusals_sha256: dddf81863049a16269882a4b4ff73e113524804c837cb6ac84726d8963df37a7
+      rest_version: '2026.3'
+      sharing: private

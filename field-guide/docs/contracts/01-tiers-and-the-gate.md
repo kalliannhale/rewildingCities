@@ -1,6 +1,6 @@
 # Contract 1 ~ Tiers and the one exposure gate
 
-**Status:** draft 0.8, 2026-11-17, for review (0.8: a joined copy's second parent binds rule 10 as its first does, D-342, and the door checks notes and credits against both parents' allow records, D-343; 0.7: the publish door as the exit to ArcGIS, D-326 to D-330, and E-3 to E-5 recorded as built, D-115, D-116, GATE-1; 0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
+**Status:** draft 0.9, 2026-11-18, for review (0.9: the refusal record, the gate's refusals for a whole plot written as content, D-363, and `told` in rule 11's closed set, D-370; 0.8: a joined copy's second parent binds rule 10 as its first does, D-342, and the door checks notes and credits against both parents' allow records, D-343; 0.7: the publish door as the exit to ArcGIS, D-326 to D-330, and E-3 to E-5 recorded as built, D-115, D-116, GATE-1; 0.6: the canonical write as an exit, D-314, D-315; E-1 and E-2 decided, D-101, D-102; E-7, rule 11's records live in provenance, D-143; E-8, notes bind by row, D-156, D-157). **Owner:** Kalli. **Built in:**
 Sprint 03 (`canopy/expose/gate.py`, the publish-route teammate; tier
 declarations, Person 3). **Read by:** everyone who writes an exit.
 **Rests on:** MP-67 (publishing is opt-in; its `map --publish` is superseded by the publish door, D-326), MP-72 (Wabanaki places as a
@@ -196,11 +196,32 @@ not word one note differently, the item's credits come from both, and a
 dataset the gate names at the target that neither record holds is refused
 (D-343).
 
+### The refusal record (D-363, zip 9b1)
+
+Rules 7 and 8 make a refusal content: it says a kind of data exists here and
+is withheld, and why, without showing it. The refusal record is that content
+for a whole plot, so a reader of the explorer can see what the tool holds and
+does not show. `canonical <plot> --refusals` judges every receipt in the plot
+at the canonical write's own question (target `canonical`, `public`) and keeps
+the gate's refusals only: each withheld receipt's name and semantic type, and
+each refusal's rule, type, tier, ancestor, reason and what would admit it.
+Never a value, a member or a time: `checked_at` is left out, so the same
+judgment is the same record. A receipt the canonical write refuses before it
+asks the gate (a fetched source passed through, D-297, D-337) is the write's
+refusal, so it is named apart (`refused_before_the_gate`) and never told,
+whatever the gate would say of it; one the write refuses after, for its
+format, the gate allowed, so it is not here at all.
+
+It is the gate's own words, so nothing judges it. It is written under
+`harvests/<plot>/_refusals/` (Contract 2), told on the state's row of the
+explorer's places (D-376), and judged again by `publish <plot> --check`, which
+says when the record a map tells is stale.
+
 ## 8. The publication record (rule 11)
 
 | Field | Meaning |
 | --- | --- |
-| `step` | `held_out`, `field_dropped`, `renamed`, `rounded`, `format_changed`, `simplified`, `clipped`, `joined` (columns added from another table, D-339), `marked` (a place drawn as one point on its surface, D-340), `opened` (a pinched hole vertex moved into its own hole so a coverage is valid, COVER-1, D-356) |
+| `step` | `held_out`, `field_dropped`, `renamed`, `rounded`, `format_changed`, `simplified`, `clipped`, `joined` (columns added from another table, D-339), `marked` (a place drawn as one point on its surface, D-340), `opened` (a pinched hole vertex moved into its own hole so a coverage is valid, COVER-1, D-356), `told` (a profile's places told in plain sentences for the explorer, D-370) |
 | `detail` | what exactly: which units, which field, to what precision, which tolerance |
 | `count` | how many units or fields it touched |
 | `by` | the primitive or the gate |

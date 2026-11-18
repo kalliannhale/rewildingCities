@@ -94,7 +94,7 @@ def test_the_same_records_write_the_same_words():
 
 
 def test_build_names_the_layer_by_its_harvest():
-    t = Target(id="test", kind="arcgis_webmap", portal="https://p.invalid", owner="RDS_NU",
+    t = Target(id="test", kind="arcgis", portal="https://p.invalid", owner="RDS_NU",
                owner_kind="institutional", folder="f", sharing="private")
     built = ArcGISWebMap().build(t, copy())
     assert built.layer_id == "rewilding-clerks_points"

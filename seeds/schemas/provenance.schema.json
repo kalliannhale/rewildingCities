@@ -129,7 +129,7 @@
         "properties": {
           "step": {
             "type": "string",
-            "enum": ["held_out", "field_dropped", "renamed", "rounded", "format_changed", "simplified", "clipped", "joined", "marked", "opened"],
+            "enum": ["held_out", "field_dropped", "renamed", "rounded", "format_changed", "simplified", "clipped", "joined", "marked", "opened", "told"],
             "description": "What kind of change; the closed set of Contract 1, section 8"
           },
           "detail": {

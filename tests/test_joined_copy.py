@@ -247,9 +247,13 @@ def test_an_outline_never_written_says_so():
         joined(client)
 
 
-def test_markers_need_an_outline():
+def test_markers_need_an_outline_or_a_join():
+    """a table's version alone is no outline: markers are drawn from an outline
+    of polygons (D-377), or for a table joined onto one."""
+    client = FakeS3()
+    version(client, TABLE, b"PAR1 table", TABLE_RECEIPT)
     with pytest.raises(s3.CanonicalRefusal, match="joined onto an outline"):
-        s3.prepare_display(PLOT, TABLE, client=FakeS3(), bucket="b", domain="d", root=ROOT,
+        s3.prepare_display(PLOT, TABLE, client=client, bucket="b", domain="d", root=ROOT,
                            judge=allow, validate=lambda e: [], markers=True)
 
 
@@ -317,7 +321,7 @@ def test_a_local_copy_can_never_be_written(tmp_path):
 # ── the command ──────────────────────────────────────────────────────────
 @pytest.mark.parametrize("argv,said", [
     (["canonical", "maine", "t", "--join", "o"], "go with --display"),
-    (["canonical", "maine", "t", "--display", "--markers"], "--markers goes with --join"),
+    (["canonical", "maine", "t", "--markers"], "--markers goes with --display"),
     (["canonical", "maine", "t", "--display", "--join", "o", "--markers", "--tolerance", "5"],
      "no --tolerance"),
     (["canonical", "maine", "t", "--display", "--local", "--write"], "never writes"),

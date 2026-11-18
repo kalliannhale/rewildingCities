@@ -47,7 +47,9 @@ import math
 
 from .base import Built, PublishRefusal, Target, TargetKind
 
-KIND = "arcgis_webmap"
+KIND = "arcgis"                     # the portal a target speaks to (D-371)
+MADE_WEBMAP = "arcgis_webmap"       # what an entry says the door made: a map
+MADE_PLACES = "arcgis_places_map"   # reading a copy by URL, or the places map
 SPEC_VERSION = "2.38"
 OBJECTID = "__OBJECTID"
 TOKEN_MINUTES = 60
@@ -520,11 +522,18 @@ def _drawn_on(copy: dict, meta: dict) -> list[str]:
 # --- the kind ----------------------------------------------------------------
 
 class ArcGISWebMap(TargetKind):
+    """an ArcGIS portal. its name is the target kind `arcgis`; the class keeps
+    its first name, since everything it builds by URL is still a web map."""
     name = KIND
 
     def __init__(self, http=None, version: str = "1.0.0"):
         self.http = http
         self.version = version
+
+    def build_places(self, target: Target, places: dict) -> Built:
+        """the places map for the parents the door read (arcgis_places.py)."""
+        from .arcgis_places import build_places
+        return build_places(places, self.version)
 
     def build(self, target: Target, copy: dict) -> Built:
         layer_id = "rewilding-" + str(copy.get("key") or copy["artifact"]).replace("/", "-")
@@ -534,7 +543,7 @@ class ArcGISWebMap(TargetKind):
                    f"version {copy['sha256'][:12]}, read by URL from the canonical store")[:250]
         data = webmap_of(copy, layer_id, self.version)
         tags = ["rewildingCities", copy["plot"], copy["artifact"]]
-        extra = {}
+        extra = {"made": MADE_WEBMAP}
         if copy.get("outline"):
             tags += [copy["outline"]["harvest"], copy["indicator"]]
             layer = data["operationalLayers"][0]

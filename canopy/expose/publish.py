@@ -41,7 +41,18 @@ door's: the legend is a claim, so a move puts it back and says so.
 
 `publish <plot> --check` signs in and reads every recorded item against the
 record, writing nothing: the one way a deleted or hand-edited item is seen
-when nothing is owed (DOORCHECK-1). ~
+when nothing is owed (DOORCHECK-1). it compares every item's sharing with its
+target's as well as its record's (D-372).
+
+the places map (zip 9b1, D-371) is the door's other kind of item, and the one
+where it stores features: `publish <plot> --places` reads the told copy, the
+refusal record and each level's display copy by URL, and copies every place
+into one web map's own JSON (file storage, never a hosted feature layer,
+arcgis_places.py). its record key is `places` and its kind
+arcgis_places_map; it is owed a move when any of its parents moves or the map
+the door would build differs, and it is checked by the hash of its stored
+JSON (D-362, D-372). every entry names its kind, and an entry with none is
+refused (D-371). ~
 """
 
 from __future__ import annotations
@@ -57,7 +68,7 @@ from pathlib import Path
 import yaml
 
 from canopy.expose.targets import PublishRefusal, load_targets, record_path, registered
-from canopy.expose.targets.arcgis_webmap import sha256_text
+from canopy.expose.targets.arcgis_webmap import MADE_PLACES, MADE_WEBMAP, sha256_text
 
 VERSION = "1.0.0"
 DOMAIN_ENV = "REWILDING_CANONICAL_DOMAIN"
@@ -97,15 +108,18 @@ def _display_name(receipt: dict) -> str:
     return display.display_name("polygons", display.DEFAULT_TOLERANCE_M)
 
 
-def _current(fetch, base: str, plot: str, artifact: str) -> dict:
+def _current(fetch, base: str, plot: str, artifact: str, document: bool = False) -> dict:
     """a harvest's current version as CloudFront serves it: the pointer, the
-    allow record it names and the version's receipt."""
+    allow record it names and the version's receipt. a document (the place
+    profile) is read only when asked for, by the places map."""
     from canopy.aws import s3
     current = _json(fetch, f"{base}/{s3.pointer_key(plot, artifact)}")
     if current is None:
         raise PublishRefusal(f"'{artifact}' has no canonical version",
                              f"write it first: canonical {plot} {artifact} --write")
-    if current.get("data") != "data.parquet":
+    if document and current.get("data") != "data.json":
+        raise PublishRefusal(f"'{artifact}' is not a document", "read the place profile")
+    if not document and current.get("data") != "data.parquet":
         raise PublishRefusal(f"'{artifact}' is a {current.get('data')} document, which no "
                              f"map draws", "the explorer reads documents by URL")
     sha, allow = current["sha256"], current["allow"]
@@ -425,7 +439,8 @@ def _check_live(kind, session, target, entry: dict, replace: bool, built=None) -
 def _entry(copy, target, built, item_id, layer_id, gate_record, by, reason, prior,
            rest_version, now) -> dict:
     return {
-        "kind": target.kind, "portal": target.portal, "owner": target.owner,
+        "kind": built.extra.get("made") or MADE_WEBMAP, "portal": target.portal,
+        "owner": target.owner,
         "folder": target.folder, "item_id": item_id, "layer_id": layer_id,
         "display": copy["display"], "url": copy["url"],
         "sha256": copy["sha256"], "allow": copy["allow"],
@@ -500,6 +515,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
             o.lines.append(f"gate: may leave at {target.sharing}"
                            + (f"; carries {', '.join(notes)}" if notes else "; no notes bind it"))
             entry = (record["targets"].get(tid) or {}).get(key)
+            _kind_of(entry, MADE_WEBMAP)
             if entry and (entry.get("portal") != target.portal or entry.get("owner") != target.owner):
                 raise PublishRefusal(f"the record's item lives at {entry.get('portal')} as "
                                      f"{entry.get('owner')}, not as this target declares",
@@ -520,17 +536,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
                 o.outcome = "unchanged"
                 continue
 
-            account = (target.portal, target.owner)
-            if account not in sessions:
-                password = (ask or _ask)(f"password for {target.owner} at {target.portal} "
-                                         f"(typed, never stored): ")
-                session = kind.sign_in(target, password)
-                who = kind.whoami(session)
-                if who != target.owner:
-                    raise PublishRefusal(f"the portal says this sign-in is {who}, not "
-                                         f"{target.owner}", "sign in as the target's owner (F4)")
-                sessions[account] = session
-            session = sessions[account]
+            session = _session(sessions, kind, target, ask)
 
             layer_id = built.layer_id
             if entry is not None:
@@ -611,11 +617,14 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
 
 
 def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = None,
-          ask=None) -> list[Outcome]:
+          ask=None, fresh_refusals=None) -> list[Outcome]:
     """every recorded item of the named targets (every target, when none is
     named) read as it stands and set beside the record. signs in, writes
-    nothing, and moves nothing: `unchanged` means the record and the bucket
-    agree, and this is how the item itself is seen agreeing (DOORCHECK-1)."""
+    nothing, and moves nothing: `as recorded` means the record, the item and
+    the target agree (DOORCHECK-1). each item's sharing is compared with its
+    target's as well as its record's (D-372); a places map is compared by the
+    hash of its stored JSON, and the refusal record it tells is judged again,
+    so a stale one is said (D-363)."""
     plot_dir = Path(root) / "plots" / plot
     kinds = kinds or registered(version=VERSION)
     targets = load_targets(plot_dir, kinds)
@@ -625,6 +634,7 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                              f"one of {', '.join(sorted(targets))}")
     record = read_record(plot_dir)
     sessions: dict = {}
+    fresh = {}
     out: list[Outcome] = []
     for tid in (target_ids or sorted(record["targets"])):
         if tid not in targets:
@@ -636,31 +646,45 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
             o = Outcome(f"{tid} {key}", "differs")
             out.append(o)
             try:
+                made = entry.get("kind")
+                if made not in (MADE_WEBMAP, MADE_PLACES):
+                    o.lines.append(f"the record's entry names no kind the door makes "
+                                   f"({made!r}), so it cannot be read (D-371)")
+                    continue
                 if entry.get("portal") != target.portal or entry.get("owner") != target.owner:
                     o.lines.append(f"the record's item lives at {entry.get('portal')} as "
                                    f"{entry.get('owner')}, not as the target declares")
                     continue
-                skey = (target.portal, target.owner)
-                if skey not in sessions:
-                    password = (ask or _ask)(f"password for {target.owner} at {target.portal} "
-                                             f"(typed, never stored): ")
-                    session = kind.sign_in(target, password)
-                    who = kind.whoami(session)
-                    if who != target.owner:
-                        raise PublishRefusal(f"the portal says this sign-in is {who}, not "
-                                             f"{target.owner}", "sign in as the target's owner (F4)")
-                    sessions[skey] = session
-                session = sessions[skey]
+                session = _session(sessions, kind, target, ask)
                 state = kind.read(session, entry["item_id"])
                 found = []
+                if entry.get("sharing") != target.sharing:
+                    found.append(f"the record says {entry.get('sharing')}, the target "
+                                 f"{target.sharing}: publish again to share it as declared")
                 if state is None:
                     found.append(f"item {entry['item_id']} is gone; publish with --replace")
                 else:
                     if state["owner"] != target.owner:
                         found.append(f"owned by {state['owner']}, not {target.owner}")
-                    live = kind.layer_url(state["data"], entry["layer_id"])
-                    if live != entry["url"]:
-                        found.append(f"its layer reads {live}, not the recorded {entry['url']}")
+                    if made == MADE_PLACES:
+                        from canopy.expose.targets.arcgis_places import map_sha256
+                        stored = map_sha256(state["data"])
+                        if stored != entry.get("map_sha256"):
+                            found.append(f"its stored map hashes to {stored[:12]}, not the "
+                                         f"recorded {str(entry.get('map_sha256'))[:12]}: "
+                                         f"changed by hand")
+                        if "now" not in fresh:
+                            fresh["now"] = (fresh_refusals or _fresh_refusals)(plot, Path(root))
+                        if fresh["now"] != entry.get("refusals_sha256"):
+                            found.append(f"the refusal record it tells "
+                                         f"({str(entry.get('refusals_sha256'))[:12]}) is stale: "
+                                         f"the gate judges {fresh['now'][:12]} now; write it "
+                                         f"with canonical {plot} --refusals --write, tell the "
+                                         f"profile again, then publish")
+                    else:
+                        live = kind.layer_url(state["data"], entry["layer_id"])
+                        if live != entry["url"]:
+                            found.append(f"its layer reads {live}, not the recorded {entry['url']}")
                     if not described_as_recorded(state["description"], entry):
                         found.append(
                             "its description was changed by hand" if entry.get("description_seen_sha256")
@@ -668,17 +692,18 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                                  "written before the door read descriptions back): publish it with "
                                  "--write once, which checks it against the door's own text and "
                                  "records it (D-349)")
-                    shared = _access_of(entry.get("sharing"))
-                    if state.get("access") != shared:
-                        found.append(f"it is shared '{state.get('access')}', the record says "
-                                     f"{entry.get('sharing')}")
+                    for said, level in (("record", entry.get("sharing")),
+                                        ("target", target.sharing)):
+                        if state.get("access") != _access_of(level):
+                            found.append(f"it is shared '{state.get('access')}', the {said} "
+                                         f"says {level}")
                     if (entry.get("renderer_sha256") and hasattr(kind, "renderer_sha256")
                             and kind.renderer_sha256(state["data"], entry["layer_id"])
                             != entry["renderer_sha256"]):
                         found.append("its renderer was restyled by hand; the next move puts "
                                      "the door's back")
                 if found:
-                    o.lines.extend(found)
+                    o.lines.extend(dict.fromkeys(found))
                 else:
                     o.outcome = "as recorded"
                     o.lines.append(f"item {entry['item_id']} is as the door left it")
@@ -691,6 +716,42 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
     return out
 
 
+def _fresh_refusals(plot: str, root: Path) -> str:
+    """the sha256 the refusal record would have if it were judged now."""
+    from canopy.aws import told
+    return told._sha(told.document_bytes(told.refusal_record(plot, root=root)))
+
+
+def _kind_of(entry: dict | None, wanted: str) -> None:
+    """an entry names what the door made (D-371): one with no kind, or another
+    kind than this path makes, is refused, never guessed."""
+    if entry is None:
+        return
+    made = entry.get("kind")
+    if made != wanted:
+        raise PublishRefusal(
+            f"the record's entry is {'of no kind' if not made else f'a {made}'}, and this "
+            f"path makes a {wanted} (D-371)",
+            "publish it by its own path; an entry with no kind is set right in the record "
+            "by a person, from the item it names")
+
+
+def _session(sessions: dict, kind, target, ask):
+    """one sign-in per portal and account, checked against who the portal says
+    it is (F4)."""
+    account = (target.portal, target.owner)
+    if account not in sessions:
+        password = (ask or _ask)(f"password for {target.owner} at {target.portal} "
+                                 f"(typed, never stored): ")
+        session = kind.sign_in(target, password)
+        who = kind.whoami(session)
+        if who != target.owner:
+            raise PublishRefusal(f"the portal says this sign-in is {who}, not "
+                                 f"{target.owner}", "sign in as the target's owner (F4)")
+        sessions[account] = session
+    return sessions[account]
+
+
 def _access_of(sharing: str | None) -> str | None:
     """the portal's word for a sharing level, as an item reports its access."""
     return {"private": "private", "organization": "org", "public": "public"}.get(sharing or "")
@@ -699,3 +760,284 @@ def _access_of(sharing: str | None) -> str | None:
 def _ask(prompt: str) -> str:
     import getpass
     return getpass.getpass(prompt)
+
+
+# --- the places map (zip 9b1, D-371) ------------------------------------------
+
+PLACES_KEY = "places"
+
+
+def read_places(plot: str, *, domain: str, root: Path, fetch=default_fetch) -> dict:
+    """every parent of the places map, read through CloudFront and checked
+    against itself: the profile's current version and the refusal record it is
+    told with, the told copy those name, and each level's display copy on its
+    outline's current version. the told copy's name is made from the garden's
+    own files, so a seed changed and not yet told is refused here, loudly."""
+    from canopy.aws import s3, told
+    from canopy.expose.targets import arcgis_places as ap
+    s3.validate_plot(plot)
+    base = f"https://{domain}"
+    prof = _current(fetch, base, plot, told.PROFILE, document=True)
+    pointer = _json(fetch, f"{base}/{s3.pointer_key(plot, told.REFUSALS)}")
+    if pointer is None:
+        raise PublishRefusal("no refusal record is written",
+                             f"write it: canonical {plot} --refusals --write")
+    rsha = pointer["sha256"]
+    rurl = f"{base}/{told.refusals_keys(plot, rsha)['data']}"
+    raw = fetch(rurl)
+    if raw is None or told._sha(raw) != rsha:
+        raise PublishRefusal(f"the refusal record {rsha[:12]} is missing or does not hash to "
+                             f"its name", "read the bucket before anything else")
+    try:
+        name = told.told_name(told.told_inputs(root), rsha)
+    except s3.CanonicalRefusal as e:
+        raise PublishRefusal(e.reason, e.would_admit) from None
+    keys = told.told_keys(plot, prof["sha256"], name)
+    tell = f"canonical {plot} {told.PROFILE} --told --write"
+    env = _json(fetch, f"{base}/{keys['envelope']}")
+    body = fetch(f"{base}/{keys['json']}")
+    if env is None or body is None:
+        raise PublishRefusal(f"profile version {prof['sha256'][:12]} has no told copy "
+                             f"'{name}' for these seeds and refusal record {rsha[:12]}",
+                             f"tell it: {tell}")
+    doc = json.loads(body)
+    if ((env.get("metadata") or {}).get("derived_from") != prof["sha256"]
+            or doc.get("profile_version") != prof["sha256"]
+            or doc.get("refusals_version") != rsha):
+        raise PublishRefusal(f"the told copy '{name}' names another version",
+                             "read the bucket before anything else")
+    parents = [{"role": "told places", "harvest": told.PROFILE, "sha256": prof["sha256"],
+                "allow": prof["allow"], "copy": name, "url": f"{base}/{keys['json']}",
+                "allow_doc": prof["allow_doc"], "env": env}]
+    levels = {}
+    for lv in ap.ORDER:
+        harvest = ap.OUTLINES[lv]
+        o = _current(fetch, base, plot, harvest)
+        shaped = lv in ap.SHAPED
+        copy_name = ap.TOWNS_COPY if shaped else ap.POINTS_COPY
+        draw = (f"canonical {plot} {harvest} --display "
+                + ("--tolerance 250" if shaped else "--markers") + " --write")
+        dkeys = s3.display_keys(plot, harvest, o["sha256"], copy_name)
+        denv = _json(fetch, f"{base}/{dkeys['envelope']}")
+        graw = fetch(f"{base}/{dkeys['geojson']}")
+        if denv is None or graw is None:
+            raise PublishRefusal(f"version {o['sha256'][:12]} of {harvest} has no display copy "
+                                 f"'{copy_name}'", f"draw it: {draw}")
+        if (denv.get("metadata") or {}).get("derived_from") != o["sha256"]:
+            raise PublishRefusal(f"the copy '{copy_name}' of {harvest} names another version",
+                                 "read the bucket before anything else")
+        url = f"{base}/{dkeys['geojson']}"
+        levels[lv] = {"harvest": harvest, "sha256": o["sha256"], "allow": o["allow"],
+                      "copy": copy_name, "url": url, "geojson": json.loads(graw)}
+        parents.append({"role": f"{ap.LEVEL_LABELS[lv]} {'shapes' if shaped else 'points'}",
+                        "harvest": harvest, "sha256": o["sha256"], "allow": o["allow"],
+                        "copy": copy_name, "url": url, "allow_doc": o["allow_doc"],
+                        "env": denv})
+    return {"plot": plot, "title": f"Places in {plot}: the explorer's map ({plot})",
+            "told": {"rows": doc.get("rows") or [], "profile_sha256": prof["sha256"],
+                     "refusals_sha256": rsha, "refusals_url": rurl, "name": name,
+                     "version_url": prof["version_url"]},
+            "levels": levels, "parents": parents}
+
+
+def _parents(places: dict) -> dict:
+    return {p["role"]: {"harvest": p["harvest"], "sha256": p["sha256"], "allow": p["allow"],
+                        "copy": p["copy"]} for p in places["parents"]}
+
+
+def owed_places(entry: dict | None, places: dict, built, target) -> str:
+    """what a places map is owed: a move when a parent's version or copy moved,
+    or the door would build another map; the description alone when only an
+    allow record or the words moved."""
+    if entry is None:
+        return "create"
+    was, now = entry.get("parents") or {}, _parents(places)
+    moved = set(was) != set(now) or any(
+        (was[r].get("sha256"), was[r].get("copy")) != (now[r]["sha256"], now[r]["copy"])
+        for r in now if r in was)
+    if moved or entry.get("map_sha256") != built.extra["map_sha256"]:
+        return "move"
+    if (any(was[r].get("allow") != now[r]["allow"] for r in now)
+            or entry.get("description_sha256") != sha256_text(built.description)):
+        return "describe"
+    if entry.get("sharing") != target.sharing or list(entry.get("groups") or []) != list(target.groups):
+        return "share"
+    if not entry.get("description_seen_sha256"):
+        return "reseen"
+    return "unchanged"
+
+
+_SAY_PLACES = {"create": "owed: a new places map in folder '{folder}'",
+               "move": "owed: the whole map, rewritten from its parents (D-380), and the description",
+               "describe": "owed: the description alone (a new allow record or new words)",
+               "share": "owed: sharing at {sharing}",
+               "reseen": "owed: recording the description as ArcGIS stores it (D-349)",
+               "unchanged": "nothing owed"}
+
+
+def _check_places_live(kind, session, target, entry: dict, replace: bool, built=None) -> str | None:
+    """the places map as it stands, against the record (D-372)."""
+    from canopy.expose.targets.arcgis_places import map_sha256
+    state = kind.read(session, entry["item_id"])
+    if state is None:
+        if replace:
+            return "create"
+        raise PublishRefusal(f"item {entry['item_id']} is gone from {target.portal}",
+                             "publish with --replace to make a new one (F2)")
+    if state["owner"] != target.owner:
+        raise PublishRefusal(f"item {entry['item_id']} is owned by {state['owner']}, "
+                             f"not {target.owner}", "ownership moves in ArcGIS, by a person")
+    stored = map_sha256(state["data"])
+    if stored != entry.get("map_sha256"):
+        raise PublishRefusal(f"the places map was changed by hand: it hashes to {stored[:12]}, "
+                             f"not the recorded {str(entry.get('map_sha256'))[:12]}",
+                             "the door owns the whole map (D-380): publish with --replace "
+                             "after moving the changed item aside, or undo the change")
+    if not described_as_recorded(state["description"], entry, built):
+        raise PublishRefusal("the item's description was changed by hand; it is the "
+                             "door's, because it carries the notes (D-328)",
+                             "undo the edit in ArcGIS, then publish again")
+    return None
+
+
+def publish_places(plot: str, target_ids: list[str], *, root: Path, write: bool = False,
+                   by: str | None = None, reason: str | None = None, replace: bool = False,
+                   domain: str | None = None, fetch=default_fetch, judge=default_judge,
+                   kinds: dict | None = None, ask=None, now: str | None = None) -> list[Outcome]:
+    """the places map, for the named targets. a dry run unless write."""
+    plot_dir = Path(root) / "plots" / plot
+    kinds = kinds or registered(version=VERSION)
+    targets = load_targets(plot_dir, kinds)
+    unknown = [t for t in target_ids if t not in targets]
+    if unknown:
+        raise PublishRefusal(f"no target named {', '.join(unknown)} in this plot",
+                             f"one of {', '.join(sorted(targets))}")
+    domain = domain or os.environ.get(DOMAIN_ENV)
+    if not domain:
+        raise PublishRefusal(f"{DOMAIN_ENV} is not set, so the door cannot read the bucket",
+                             "set it as the canonical command needs it")
+    places = read_places(plot, domain=domain, root=Path(root), fetch=fetch)
+    from canopy.expose.records import load_licenses
+    places["licenses"] = load_licenses(Path(root) / "seeds" / "licenses")
+    places["credit"] = load_credit(plot_dir)
+    when = now or datetime.now(timezone.utc).isoformat()
+    record = read_record(plot_dir)
+    sessions: dict = {}
+    out: list[Outcome] = []
+    for tid in target_ids:
+        target = targets[tid]
+        kind = kinds[target.kind]
+        o = Outcome(tid, "refused")
+        out.append(o)
+        o.lines.append(f"{target.kind}, owned by {target.owner} at {target.portal}, "
+                       f"{target.sharing}")
+        if target.owner_kind == "personal":
+            o.lines.append("warning: a person's account owns this target's items; "
+                           "when they leave, the items leave with them (R7)")
+        try:
+            records = [judge_at(judge, {"display_env": p["env"], "plot": plot,
+                                        "allow_doc": p["allow_doc"]}, target, plot_dir)
+                       for p in places["parents"]]
+            notes = sorted({n for r in records for n in (r.get("context_text") or {})})
+            o.lines.append(f"gate: every parent may leave at {target.sharing}"
+                           + (f"; carries {', '.join(notes)}" if notes else "; no notes bind it"))
+            entry = (record["targets"].get(tid) or {}).get(PLACES_KEY)
+            _kind_of(entry, MADE_PLACES)
+            if entry and (entry.get("portal") != target.portal or entry.get("owner") != target.owner):
+                raise PublishRefusal(f"the record's item lives at {entry.get('portal')} as "
+                                     f"{entry.get('owner')}, not as this target declares",
+                                     "ownership moves in ArcGIS, by a person; then the record")
+            built = kind.build_places(target, places)
+            report = built.extra["report"]
+            for lv, line in report["levels"].items():
+                o.lines.append(f"{lv}: {line['placed']} of {line['told']} told, as "
+                               + (f"shapes rounded to {'1 m' if line['decimals'] == 0 else '0.1 m'}"
+                                  if line["shaped"] else "points"))
+            for x in report["left_out"]:
+                o.lines.append(f"left out: {x}, no place in its level's copy")
+            size = len(json.dumps(built.data).encode("utf-8"))
+            o.lines.append(f"the map: {size:,} bytes, sha256 {built.extra['map_sha256'][:12]} "
+                           f"(LIMIT-1 has no line yet, so none is applied)")
+            due = owed_places(entry, places, built, target)
+            o.lines.append(_SAY_PLACES[due].format(folder=target.folder, sharing=target.sharing))
+            if not write:
+                o.outcome = "unchanged" if due == "unchanged" else (
+                    "would publish" if due == "create" else "would update")
+                o.lines.append("a dry run: signed in nowhere, wrote nothing; the item "
+                               "itself is checked when the door writes")
+                continue
+            if due == "unchanged":
+                o.outcome = "unchanged"
+                continue
+            session = _session(sessions, kind, target, ask)
+            prior = entry
+            if entry is not None and _check_places_live(
+                    kind, session, target, entry, replace,
+                    built if due in ("reseen", "share") else None) == "create":
+                due = "create"
+                o.lines.append(f"item {entry['item_id']} is gone; making a new one (--replace)")
+            if due == "create":
+                item_id = kind.create(session, target, built)
+                provisional = _places_entry(places, target, built, item_id, records, by,
+                                            reason, prior, None, when)
+                provisional["sharing"] = None
+                record["targets"].setdefault(tid, {})[PLACES_KEY] = provisional
+                write_record(plot_dir, record)
+                kind.share(session, target, item_id)
+                o.outcome = "published"
+            else:
+                item_id = entry["item_id"]
+                if due == "move":
+                    kind.update(session, target, item_id, built, data=built.data)
+                elif due == "describe":
+                    kind.update(session, target, item_id, built, data=None)
+                if due != "reseen":
+                    kind.share(session, target, item_id)
+                o.outcome = "updated"
+            seen = _seen(kind, session, item_id)
+            stored = kind.read(session, item_id)
+            from canopy.expose.targets.arcgis_places import map_sha256
+            same = stored is not None and map_sha256(stored["data"]) == built.extra["map_sha256"]
+            o.lines.append("the stored map hashes SAME as sent" if same else
+                           "the stored map DIFFERS from what was sent: the record keeps what "
+                           "was sent, and --check will say so until it is read")
+            rest = kind.rest_version(session) if hasattr(kind, "rest_version") else None
+            final = _places_entry(places, target, built, item_id, records, by, reason, prior,
+                                  rest, when)
+            final["description_seen_sha256"] = seen
+            record["targets"].setdefault(tid, {})[PLACES_KEY] = final
+            write_record(plot_dir, record)
+            o.lines.append(f"item {item_id}: {target.portal}/home/item.html?id={item_id}")
+        except PublishRefusal as e:
+            o.outcome = "refused"
+            o.lines.append(f"refused: {e.reason}")
+            o.lines.append(f"  would admit it: {e.would_admit}")
+        except Exception as e:                       # one target's failure never stops another
+            o.outcome = "failed"
+            said = (str(e).splitlines() or [""])[0][:300]
+            o.lines.append(f"failed: {type(e).__name__}: {said}")
+    return out
+
+
+def _places_entry(places, target, built, item_id, records, by, reason, prior, rest_version,
+                  now) -> dict:
+    first = records[0] if records else {}
+    return {
+        "kind": MADE_PLACES, "portal": target.portal, "owner": target.owner,
+        "folder": target.folder, "item_id": item_id,
+        "map_sha256": built.extra["map_sha256"],
+        "parents": _parents(places),
+        "refusals_sha256": places["told"]["refusals_sha256"],
+        "counts": {lv: line["placed"] for lv, line in built.extra["report"]["levels"].items()},
+        "description_sha256": sha256_text(built.description),
+        "sharing": target.sharing, "groups": list(target.groups),
+        "gate": {"decision": "allow", "target": target.id,
+                 "sharing_level": first.get("sharing_level"),
+                 "gate_version": first.get("gate_version"),
+                 "context_notes": sorted({n for r in records
+                                          for n in (r.get("context_text") or {})})},
+        "door_version": VERSION, "rest_version": rest_version,
+        "moved_at": now, "moved_by": by, "reason": reason,
+        "previous": ({"map_sha256": prior.get("map_sha256"), "parents": prior.get("parents")}
+                     if prior else None),
+    }

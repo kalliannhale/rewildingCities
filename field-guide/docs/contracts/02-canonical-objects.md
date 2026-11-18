@@ -1,6 +1,6 @@
 # Contract 2 ~ Canonical objects
 
-**Status:** draft 0.5, 2026-11-17, for review (0.5 carries zip 8b: joined copies, markers, local dry runs and the two guards on what may be written, D-335 to D-341; 0.4 carries zip 8a's publish door, D-326 to D-332; 0.2 earlier on 2026-11-16, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
+**Status:** draft 0.6, 2026-11-18, for review (0.6 carries zip 9b1: an outline's markers copy, the told copy (a display copy that is a document), the refusal record and the places map, D-363, D-370 to D-372, D-376 to D-381; 0.5 carries zip 8b: joined copies, markers, local dry runs and the two guards on what may be written, D-335 to D-341; 0.4 carries zip 8a's publish door, D-326 to D-332; 0.2 earlier on 2026-11-16, at zip 7a; 0.1, 2026-11-10). 0.3 carries zip 7b's canonical write, D-312 to D-320, and zip 7c's display copies, D-321 to D-324. **Owner:**
 Kalli. **Built in:** Sprint 07 (the stack, on bash-win's staging rails; the
 canonical write), Sprint 08 (the publish door). **Read by:** the publish
 route, the explorer, the community kit, the grove. **Rests on:** MP-68 (two
@@ -59,6 +59,8 @@ harvests/<plot>/<harvest>/versions/<sha256>/allow/<allow-sha256>.json   (one per
 harvests/<plot>/<harvest>/versions/<sha256>/display/<n>.geojson
 harvests/<plot>/<harvest>/versions/<sha256>/display/<n>.envelope.json
 harvests/<plot>/<harvest>/current
+harvests/<plot>/_refusals/versions/<sha256>/data.json            (the refusal record, section 4c)
+harvests/<plot>/_refusals/current
 ```
 
 - `<plot>` is the plot name (`maine`), validated as D-22 validates plot names.
@@ -184,6 +186,41 @@ parents, and says so:
   must print before it is written, so nothing permanent happens before the
   whole copy has been drawn, joined and judged once.
 
+## 4c. The explorer's copies (zip 9b1)
+
+**Markers (D-377).** `canonical <plot> <outline> --display --markers` draws an
+outline as one point on each place's own surface, simplifying nothing,
+recorded `marked`, named `markers` under the outline's version. The places map
+reads every level but the towns from one.
+
+**Rounding, said (ROUND-2, D-379).** A polygon copy's `rounded` record names
+every shape its rounding leaves invalid, by id, or says every shape is valid.
+It is never refused for it: the door refuses to send an invalid shape (D-368),
+and a copy's dry run is where one is first seen.
+
+**The told copy (D-370, D-378, D-381).** A display copy may be a document.
+`canonical <plot> place_profile_profiles --told` tells every place the explorer
+shows (canopy/wonder/telling.py) from the profile's current version, read back
+from the bucket and checked against its sha256, and the current refusal record.
+It lives under the profile's version:
+`versions/<sha256>/display/told_<sha12>.json` and its envelope, named by the
+hash of every file that can change its bytes (canopy/aws/told.py, telling.py,
+place.py, the notes and plain_language.yml; the standard reaches it only
+through the profile's version) and of the refusal record's version, so a
+changed seed or a new judgment is a new name and never new bytes under one
+(D-322). Its envelope keeps the profile's metadata, lineage, notes and chain
+under the branch `version`, describes its rows as told rows, and adds a `told`
+record; the refusal record is named in its params, never as an input. It is
+judged as the profile was. `--local` tells the plot's own files and never
+writes.
+
+**The refusal record (D-363).** The gate's refusals for every receipt in a
+plot (Contract 1, section 7), written by `canonical <plot> --refusals --write`
+as a document with no time in it, versioned by its own bytes, its pointer
+moved as any pointer is. `_refusals` is a name no receipt can take, since an
+artifact name never begins with `_`. The bucket policy's locks already match
+it, so the infrastructure is unchanged.
+
 ## 4b. What may be written at all (D-335, D-337)
 
 - A receipt that names its run is written only if that run still declares the
@@ -221,7 +258,7 @@ parents, and says so:
 | --- | --- |
 | The canonical write (`canopy/aws/s3.py`, run as `python -m canopy.cli canonical`), as the role `rewilding-canonical-writer` | write a version and move `current`, only after the gate allows at target `canonical`, sharing level `public`, because CloudFront makes `harvests/` readable by anyone (D-315); never delete (D-308). A dry run is the default and touches no AWS; `--write` takes one artifact at a time, with `--by` and `--reason` (D-316). A lineage holding a `custom` tier is refused until O-6 |
 | The canonical command's `--display`, as the same role | write display copies under a version, only after the gate allows (D-321) |
-| The publish door (`canopy/expose/publish.py`, `python -m canopy.cli publish`) | reference display copies in ArcGIS by URL, reading the bucket only through CloudFront, so it needs no AWS credentials; never write the bucket (D-326). Pushing features into ArcGIS is not built |
+| The publish door (`canopy/expose/publish.py`, `python -m canopy.cli publish`) | reference display copies in ArcGIS by URL, reading the bucket only through CloudFront, so it needs no AWS credentials; never write the bucket (D-326). The one place it stores features is the places map (`publish <plot> --places`, D-371): the told copy's rows on each level's display copy, copied into one web map's own JSON, never a hosted feature layer, the door owning the whole map (D-380) |
 | ArcGIS, the explorer, DuckDB, the community kit | read by URL through CloudFront, from any origin; never write (D-310) |
 
 A write the gate has not allowed is refused by the writer itself, not by

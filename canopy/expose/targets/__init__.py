@@ -1,11 +1,13 @@
 """
 canopy/expose/targets ~ the kinds of place the publish door can write to
 
-  arcgis_webmap   a web map item in an ArcGIS portal whose layer reads a display
-                  copy by URL (D-326)
+  arcgis          an ArcGIS portal, by REST (D-326, D-371). it makes web maps
+                  whose layer reads a display copy by URL (arcgis_webmap), and
+                  the places map, which holds the explorer's places inside it
+                  (arcgis_places_map, arcgis_places.py)
 
 a kind is a TargetKind (base.py) registered here by name; targets.yml names
-the kind each target is. ~
+the kind each target is, and each recorded entry names what was made. ~
 """
 
 from __future__ import annotations

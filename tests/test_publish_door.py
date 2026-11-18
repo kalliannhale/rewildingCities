@@ -167,7 +167,7 @@ def garden(tmp_path, targets=None):
         "attribution": "required", "verified": True, "basis": "test"}}}))
     pub = tmp_path / "plots" / PLOT / "publish"
     pub.mkdir(parents=True)
-    targets = targets or {"test": {"kind": "arcgis_webmap", "portal": PORTAL, "owner": "RDS_NU",
+    targets = targets or {"test": {"kind": "arcgis", "portal": PORTAL, "owner": "RDS_NU",
                                    "owner_kind": "institutional", "folder": "rc test",
                                    "sharing": "private", "groups": []}}
     (pub / "targets.yml").write_text(yaml.safe_dump({"targets": targets}))
@@ -296,7 +296,7 @@ def test_a_sign_in_that_is_not_the_owner_writes_nothing(tmp_path):
 
 
 def test_one_password_serves_every_target_of_one_account(tmp_path):
-    t = {"kind": "arcgis_webmap", "portal": PORTAL, "owner": "RDS_NU",
+    t = {"kind": "arcgis", "portal": PORTAL, "owner": "RDS_NU",
          "owner_kind": "institutional", "folder": "f", "sharing": "private", "groups": []}
     root, portal, asked = garden(tmp_path, {"test": t, "library": dict(t, sharing="organization")}), FakePortal(), []
     outs = run(root, bucket(), portal, targets=("test", "library"), asked=asked)
@@ -306,7 +306,7 @@ def test_one_password_serves_every_target_of_one_account(tmp_path):
 
 
 def test_a_personal_owner_is_warned_about(tmp_path):
-    t = {"kind": "arcgis_webmap", "portal": PORTAL, "owner": "RDS_NU",
+    t = {"kind": "arcgis", "portal": PORTAL, "owner": "RDS_NU",
          "owner_kind": "personal", "folder": "f", "sharing": "private", "groups": []}
     root, portal = garden(tmp_path, {"test": t}), FakePortal()
     [o] = run(root, bucket(), portal, write=False)
@@ -315,7 +315,7 @@ def test_a_personal_owner_is_warned_about(tmp_path):
 
 # ── one target's trouble is its own ──────────────────────────────────────
 def test_one_failing_target_never_stops_the_others(tmp_path):
-    t = {"kind": "arcgis_webmap", "owner": "RDS_NU", "owner_kind": "institutional",
+    t = {"kind": "arcgis", "owner": "RDS_NU", "owner_kind": "institutional",
          "folder": "f", "sharing": "private", "groups": []}
     root = garden(tmp_path, {"down": dict(t, portal="https://down.invalid"),
                              "test": dict(t, portal=PORTAL)})
@@ -334,7 +334,7 @@ def test_one_failing_target_never_stops_the_others(tmp_path):
 
 
 def test_a_gate_refusal_stops_that_target_only(tmp_path):
-    t = {"kind": "arcgis_webmap", "portal": PORTAL, "owner": "RDS_NU",
+    t = {"kind": "arcgis", "portal": PORTAL, "owner": "RDS_NU",
          "owner_kind": "institutional", "folder": "f", "sharing": "private", "groups": []}
     root, portal = garden(tmp_path, {"test": t, "partner": dict(t, sharing="public")}), FakePortal()
     outs = run(root, bucket(), portal, targets=("partner", "test"),
@@ -396,7 +396,7 @@ def test_a_harvest_never_written_says_so(tmp_path):
 
 
 def test_targets_are_read_loudly(tmp_path):
-    root = garden(tmp_path, {"test": {"kind": "arcgis_webmap", "portal": PORTAL,
+    root = garden(tmp_path, {"test": {"kind": "arcgis", "portal": PORTAL,
                                       "owner": "RDS_NU", "owner_kind": "institutional",
                                       "folder": "f", "sharing": "private",
                                       "password": "never here"}})

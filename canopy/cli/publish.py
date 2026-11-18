@@ -18,6 +18,11 @@
       indicator coloured by the door's own classBreaks renderer (D-331). a new
       version or allow record of either parent is owed
 
+  python -m canopy.cli publish maine --places --to test
+      the places map (D-371): every place the explorer shows, told from the
+      told copy and placed on each level's display copy, held inside one web
+      map. a dry run unless --write; --replace makes a gone item again
+
   python -m canopy.cli publish maine --check
       signs in and reads every recorded item against the record, writing
       nothing (DOORCHECK-1); --to narrows it to those targets
@@ -50,7 +55,8 @@ from ._common import find_root
 def register(subparsers) -> None:
     p = subparsers.add_parser(
         "publish", help="the publish door: make or move a web map item that reads a "
-                        "display copy by URL (a dry run unless --write)")
+                        "display copy by URL, or the places map that holds the explorer's "
+                        "places (--places); a dry run unless --write")
     p.add_argument("plot", help="the plot name, e.g. maine")
     p.add_argument("artifact", nargs="?", default=None,
                    help="the harvest's name, as the canonical command wrote it")
@@ -71,6 +77,8 @@ def register(subparsers) -> None:
                    help="with --join: the copy drawn as one marker per place")
     p.add_argument("--check", action="store_true",
                    help="read every recorded item against the record; writes nothing")
+    p.add_argument("--places", action="store_true",
+                   help="the explorer's places map, held inside one web map (D-371)")
     p.set_defaults(func=run)
 
 
@@ -78,11 +86,28 @@ def _asked_wrongly(args) -> str | None:
     if getattr(args, "check", False):
         if args.artifact:
             return "--check reads every recorded item; it takes no artifact"
-        if args.write or args.adopt or args.replace or getattr(args, "join", None):
-            return "--check only reads; it takes no --write, --adopt, --replace or --join"
+        if args.write or args.adopt or args.replace or getattr(args, "join", None) \
+                or getattr(args, "places", False):
+            return "--check only reads every item; it takes no --write, --adopt, --replace, " \
+                   "--join or --places"
+        return None
+    if getattr(args, "places", False):
+        if args.artifact:
+            return "--places is the plot's places map; it takes no artifact"
+        if args.adopt or getattr(args, "join", None) or getattr(args, "indicator", None) \
+                or getattr(args, "markers", False) or args.display:
+            return "--places takes no --adopt, --display, --join, --indicator or --markers"
+        if not args.targets:
+            return "name at least one target with --to"
+        if len(set(args.targets)) != len(args.targets):
+            return "a target is named twice"
+        if args.write and not ((args.by or "").strip() and (args.reason or "").strip()):
+            return "--write needs --by and --reason: the record says who published and why"
+        if args.replace and not args.write:
+            return "--replace goes with --write"
         return None
     if not args.artifact:
-        return "name the harvest to publish, or --check"
+        return "name the harvest to publish, --places, or --check"
     if getattr(args, "join", None) and not getattr(args, "indicator", None):
         return "--join draws one indicator; name it with --indicator"
     if (getattr(args, "indicator", None) or getattr(args, "markers", False)) \
@@ -109,7 +134,7 @@ def run(args) -> int:
         print(f"asked wrongly: {problem}", file=sys.stderr)
         return 2
     from canopy.aws.s3 import CanonicalRefusal
-    from canopy.expose.publish import check, publish
+    from canopy.expose.publish import check, publish, publish_places
     from canopy.expose.targets import PublishRefusal
     if getattr(args, "check", False):
         try:
@@ -129,6 +154,23 @@ def run(args) -> int:
             bad += o.outcome != "as recorded"
         print(f"\n{len(outcomes) - bad} of {len(outcomes)} items as recorded; "
               f"nothing was written")
+        return 1 if bad else 0
+    if getattr(args, "places", False):
+        try:
+            outcomes = publish_places(args.plot, args.targets, root=find_root(),
+                                      write=args.write, by=(args.by or "").strip() or None,
+                                      reason=(args.reason or "").strip() or None,
+                                      replace=args.replace)
+        except (PublishRefusal, CanonicalRefusal) as e:
+            print(f"places  refused: {e.reason}", file=sys.stderr)
+            print(f"   would admit it: {e.would_admit}", file=sys.stderr)
+            return 1
+        bad = 0
+        for o in outcomes:
+            print(f"places to {o.target}: {o.outcome}")
+            for line in o.lines:
+                print(f"   {line}")
+            bad += o.outcome in ("refused", "failed")
         return 1 if bad else 0
     try:
         outcomes = publish(args.plot, args.artifact, args.targets, root=find_root(),

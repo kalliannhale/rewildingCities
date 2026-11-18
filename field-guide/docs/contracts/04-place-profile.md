@@ -1,6 +1,6 @@
 # Contract 4 ~ The place profile
 
-**Status:** draft 0.5, 2026-11-17 (0.5: the `gate` row names the canonical write, drift found in Sprint 08; 0.4, 2026-11-16: D-258, D-263, D-270 to D-282 and D-283 to
+**Status:** draft 0.6, 2026-11-18 (0.6: the explorer reads the profile through its told copy, and the places map holds the places, D-370, D-371; 0.5: the `gate` row names the canonical write, drift found in Sprint 08; 0.4, 2026-11-16: D-258, D-263, D-270 to D-282 and D-283 to
 D-293, built in zips 2 and 2b; 0.3 was D-197 to D-200). **Owner:** Kalli. **Built in:**
 Sprint 06 (`canopy/wonder/profile.py`, `canopy/wonder/verdicts.py`,
 `canopy/standards.py`; the command `python -m canopy.cli profile <plot>`).
@@ -47,7 +47,7 @@ so it can be read and tested without a bed.
 | `place` | the place's key, `(authority, code)`, and its `level`, `name`, `vintage` (Contract 3) |
 | `flags`, `context_note` | from the places table, shown first, never hidden behind a click |
 | `built_at`, `built_by` | when, and which profile version built it |
-| `gate` | `record: null` with why: the allow record is decided at the canonical write and kept beside the file, never inside the one it judges (D-274, D-313, D-320). A profile is a document, so the publish door makes no ArcGIS item of it; the explorer reads it by URL (D-326) |
+| `gate` | `record: null` with why: the allow record is decided at the canonical write and kept beside the file, never inside the one it judges (D-274, D-313, D-320). A profile is a document, so the publish door makes no ArcGIS item of it. The explorer reads it through its told copy, a display copy under the profile's version (Contract 2, section 4c, D-370), and the places map copies the told rows into one web map's own JSON (D-371). Every product still reads the profile: the told copy is drawn from it and named for it |
 
 ## 1. Who is represented
 

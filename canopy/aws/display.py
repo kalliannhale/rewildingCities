@@ -28,6 +28,14 @@ what drawing changes, each a rule 11 record in the copy's own provenance entry:
                   the edge; the shared border is not moved. the canonical
                   outline keeps the pinch; only the copy is opened
 
+  marked          an outline drawn as markers (`--display --markers`, D-377): one
+                  point on each place's own surface, named `markers`, for the
+                  places map; nothing is simplified
+
+a polygon copy's `rounded` record names every shape the rounding leaves
+invalid, by id, or says every shape is valid; it is never refused for it
+(ROUND-2, D-379), since the door refuses to send an invalid shape (D-368).
+
 refused rather than drawn: a coverage that is not valid for any other reason
 (its towns overlap or leave gaps before anything is simplified), a pinch that
 opening does not make valid, a geometry left empty by simplification (a town
@@ -81,11 +89,13 @@ def _refusal(reason: str, would_admit: str):
 
 
 def display_name(kind: str, tolerance_m: int) -> str:
-    """`web` for points, `web_<tolerance>m` for polygons, so a copy drawn at
-    another tolerance is another copy and never a second set of bytes under
-    one name."""
+    """`web` for points, `web_<tolerance>m` for polygons, `markers` for an
+    outline drawn as one point per place (D-377), so a copy drawn another way
+    is another copy and never a second set of bytes under one name."""
     if kind == "points":
         return "web"
+    if kind == "markers":
+        return "markers"
     if not isinstance(tolerance_m, int) or isinstance(tolerance_m, bool) or tolerance_m <= 0:
         raise _refusal(f"a tolerance is a whole number of meters above zero; got {tolerance_m!r}",
                        "give --tolerance as meters, e.g. 25")
@@ -257,15 +267,29 @@ def _markers(frame, id_field: str | None):
     return projected.to_crs(WEB), step
 
 
-def _round(frame) -> tuple:
+def _round(frame, id_field: str | None = None) -> tuple:
+    """coordinates rounded to DECIMALS places of a degree. a polygon the
+    rounding leaves invalid is named in the record, never refused here
+    (ROUND-2, D-379): the door refuses to send one (D-368), and a dry run of
+    the copy is where it is first seen."""
     import geopandas
     import numpy
     import shapely
     rounded = shapely.transform(numpy.asarray(frame.geometry),
                                 lambda c: numpy.round(c, DECIMALS))
     frame = frame.set_geometry(geopandas.GeoSeries(rounded, index=frame.index, crs=WEB))
-    return frame, {"step": "rounded", "count": int(len(frame)), "detail": (
-        f"coordinates rounded to {DECIMALS} decimal places of a degree, about 10 cm")}
+    detail = f"coordinates rounded to {DECIMALS} decimal places of a degree, about 10 cm"
+    polygons = numpy.isin(shapely.get_type_id(rounded), (3, 6))
+    if bool(numpy.any(polygons)):
+        bad = polygons & ~shapely.is_valid(rounded)
+        if bool(numpy.any(bad)):
+            ids = (frame[id_field].astype(str)[bad].tolist() if id_field in frame.columns
+                   else [str(i) for i in frame.index[bad]])
+            detail += (f"; {len(ids)} shape(s) invalid after rounding "
+                       f"({', '.join(ids[:10])}{' and more' if len(ids) > 10 else ''})")
+        else:
+            detail += "; every shape valid after rounding"
+    return frame, {"step": "rounded", "count": int(len(frame)), "detail": detail}
 
 
 def _dates_as_text(frame) -> list[str]:
@@ -313,10 +337,11 @@ def _stats(frame, kind: str, names: set, vertices_before: int, body: bytes,
 
 
 def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
-         id_field: str | None = None) -> dict:
+         id_field: str | None = None, markers: bool = False) -> dict:
     """a GeoParquet version drawn as a web GeoJSON. returns the bytes, the
     publication records (step, detail, count), the copy's kind and what its
-    metadata should say."""
+    metadata should say. with markers, an outline is drawn as one point on
+    each place's own surface (D-377), simplifying nothing."""
     import numpy
     import shapely
 
@@ -325,11 +350,17 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
         raise _refusal("the version's GeoParquet declares no crs", "rewrite it with its crs")
     source_crs = frame.crs.to_string()
     kind, names = _kind_of(frame)
-    name = display_name(kind, tolerance_m)
+    if markers and kind != "polygons":
+        raise _refusal(f"markers are drawn from an outline of polygons; this version holds "
+                       f"{', '.join(sorted(names))}", "draw it without --markers")
     vertices_before = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
     steps: list[dict] = []
 
-    if kind == "polygons":
+    if markers:
+        frame, step = _markers(frame, id_field)
+        kind = "markers"
+        steps.append(step)
+    elif kind == "polygons":
         frame, drawn_steps = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
         steps.extend(drawn_steps)
     else:
@@ -337,13 +368,14 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
         steps.append({"step": "simplified", "count": 0,
                       "detail": "points: nothing to simplify"})
 
-    frame, step = _round(frame)
+    frame, step = _round(frame, id_field)
     steps.append(step)
     as_text = _dates_as_text(frame)
     steps.append(_format_step(frame, source_crs, as_text))
 
     body = frame.to_json(drop_id=True).encode("utf-8")
     stats = _stats(frame, kind, names, vertices_before, body, source_crs)
+    name = display_name(kind, tolerance_m)
     return {"bytes": body, "steps": steps, "kind": kind, "name": name, "stats": stats}
 
 
@@ -392,7 +424,7 @@ def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: st
     else:
         frame, drawn_steps = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
         steps.extend(drawn_steps)
-    frame, step = _round(frame)
+    frame, step = _round(frame, id_field)
     steps.append(step)
     as_text = _dates_as_text(frame)
 

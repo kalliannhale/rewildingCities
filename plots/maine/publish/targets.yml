@@ -14,7 +14,7 @@
 
 targets:
   test:
-    kind: arcgis_webmap
+    kind: arcgis
     portal: https://nu.maps.arcgis.com
     owner: RDS_NU
     owner_kind: institutional
@@ -22,7 +22,7 @@ targets:
     sharing: private
     groups: []
   library:
-    kind: arcgis_webmap
+    kind: arcgis
     portal: https://nu.maps.arcgis.com
     owner: RDS_NU
     owner_kind: institutional
@@ -30,7 +30,7 @@ targets:
     sharing: organization
     groups: []
   explorer:
-    kind: arcgis_webmap
+    kind: arcgis
     portal: https://nu.maps.arcgis.com
     owner: RDS_NU
     owner_kind: institutional

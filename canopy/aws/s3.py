@@ -675,9 +675,6 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
     validate_artifact(artifact)
     if join:
         validate_artifact(join)
-    if markers and not join:
-        raise CanonicalRefusal("markers are drawn for a table joined onto an outline",
-                               "give --join <outline>")
     tolerance_m = display.DEFAULT_TOLERANCE_M if tolerance_m is None else tolerance_m
     root = Path(root)
     base = f"https://{domain}" if domain else "local:"
@@ -687,13 +684,22 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
     data_url = f"{base}/{v['prefix']}/data.parquet"
 
     if not join:
+        meta = receipt.get("metadata") or {}
+        if markers and meta.get("data_category") != "vector":
+            raise CanonicalRefusal(
+                f"markers are drawn from a place outline, or for a table joined onto an "
+                f"outline; '{artifact}' is {meta.get('data_category')}",
+                "give --join <outline> to draw a table, or name an outline")
         drawer = drawer or display.draw
-        id_field = (receipt.get("metadata") or {}).get("id_field")
-        drawn, seconds = _drawn(drawer, v["data"], tolerance_m=tolerance_m, id_field=id_field)
+        id_field = meta.get("id_field")
+        extra = {"markers": True} if markers else {}       # a stand-in drawer takes none
+        drawn, seconds = _drawn(drawer, v["data"], tolerance_m=tolerance_m, id_field=id_field,
+                                **extra)
         keys = display_keys(plot, artifact, v["sha256"], drawn["name"])
         params = {"tolerance_m": tolerance_m if drawn["kind"] == "polygons" else None,
                   "projected": display.PROJECTED, "web": display.WEB,
-                  "decimals": display.DECIMALS, "name": drawn["name"]}
+                  "decimals": display.DECIMALS, "name": drawn["name"],
+                  **({"markers": True} if markers else {})}
         env = display.display_envelope(receipt, display_key=keys["geojson"], data_url=data_url,
                                        sha256=v["sha256"], allow_sha256=v["allow"],
                                        harvest=artifact, drawn=drawn, params=params,

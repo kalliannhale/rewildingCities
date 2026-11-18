@@ -7,10 +7,14 @@ institution's or a person's, the folder, the sharing level and the groups. no
 central list exists, so a community starting a plot anywhere names its own
 portal and its own owner without asking anyone (D-326).
 
-a target's kind is how the door speaks to it. kinds sit behind one small
-interface, the way providers do (canopy/providers/base.py), and register by
-name. December builds one kind, arcgis_webmap; an open catalog record (DCAT or
-STAC) for the open data hub is the next one named (Sprint 13).
+a target's kind names the portal it speaks to (D-371): `arcgis`, for ArcGIS
+Online and any ArcGIS Enterprise portal. kinds sit behind one small interface,
+the way providers do (canopy/providers/base.py), and register by name. what
+the door makes in a target is named on each recorded entry instead:
+arcgis_webmap (a map whose layer reads a display copy by URL) or
+arcgis_places_map (the explorer's places, held inside the map). an open
+catalog record (DCAT or STAC) for the open data hub is the next kind named
+(Sprint 13).
 
 nothing secret lives here. a password is typed at a prompt when the door
 writes and is never stored (D-329). ~
@@ -27,6 +31,7 @@ import yaml
 from canopy.expose.gate import SHARING_LEVELS
 
 OWNER_KINDS = ("institutional", "personal")
+RENAMED = {"arcgis_webmap": "arcgis"}      # a target's kind before D-371, and after
 SIGN_INS = ("token",)
 _FIELDS = {"kind", "portal", "owner", "owner_kind", "folder", "sharing", "groups", "sign_in"}
 _REQUIRED = ("kind", "portal", "owner", "owner_kind", "folder", "sharing")
@@ -85,6 +90,10 @@ def load_targets(plot_dir: Path, kinds: dict) -> dict[str, Target]:
         missing = [k for k in _REQUIRED if not str(t.get(k) or "").strip()]
         if missing:
             raise PublishRefusal(f"{where} is missing {', '.join(missing)}", "declare them")
+        if t["kind"] in RENAMED:
+            raise PublishRefusal(f"{where} has kind '{t['kind']}', which names what the door "
+                                 f"makes, not the portal it speaks to (D-371)",
+                                 f"kind: {RENAMED[t['kind']]}")
         if t["kind"] not in kinds:
             raise PublishRefusal(f"{where} has kind '{t['kind']}', which no target kind "
                                  f"registers", f"use one of {', '.join(sorted(kinds))}")

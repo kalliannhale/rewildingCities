@@ -20,7 +20,10 @@ than describing it. tests/test_telling.py holds every sentence to it.
                                    each town, the standard's measures, the
                                    notes and their status
   tell(profile, ctx)               one place's fields, every value a string
-  tell_all(doc, root)              every place the explorer shows
+  tell_all(doc, root, refusals)    every place the explorer shows; with the
+                                   plot's refusal record, the state's row also
+                                   says what the tool holds and does not show
+  tell_withheld(record, ctx)       that field, in plain words (D-376, D-378)
 
 the explorer shows six levels: the state, counties, towns, House and Senate
 districts, and Census tribal areas. MEGIS civil divisions are how towns join
@@ -464,9 +467,47 @@ def tell(profile: dict, ctx: TellingContext) -> dict:
     return row
 
 
-def tell_all(doc: dict, root: str | Path) -> tuple[list[dict], TellingContext]:
+# why a kind of data stays in, by the gate's rule (Contract 1), in plain words
+WITHHELD_WORDS = {
+    1: "its declaration needs correcting",
+    2: "its kind of data is not declared yet",
+    3: "this kind of data is never shown",
+    4: "nothing records how it was made",
+    5: "it names or locates its members, so it is shown only as counts for each place",
+    6: "it is shown only with the consent of the community it describes",
+    9: "it must carry a context note that it does not carry yet",
+    10: "its license does not allow sharing it publicly",
+}
+
+
+def tell_withheld(record: dict, ctx: TellingContext) -> str:
+    """what the plot holds and does not show, from its refusal record: each kind
+    of data once, with why, never a member of it (Contract 1, rule 8). told on
+    the state's row, the one place the whole plot is (D-376)."""
+    kinds: dict = {}
+    for w in record.get("withheld") or []:
+        what = ctx.language.strip(str(w.get("semantic_type") or "a kind of data")
+                                  .replace("_", " "))
+        why = kinds.setdefault(what, [])
+        for r in w.get("refusals") or []:
+            said = WITHHELD_WORDS.get(r.get("rule"), "the exposure gate keeps it in")
+            if said not in why:
+                why.append(said)
+    if not kinds:
+        return "Nothing this tool holds is kept from this map."
+    n = len(kinds)
+    lines = [f"This tool holds {n} kind{'s' if n != 1 else ''} of data that this map "
+             f"does not show."]
+    for what, why in sorted(kinds.items()):
+        lines.append(_sentence(f"{what}: {'; '.join(why) or 'the exposure gate keeps it in'}"))
+    return " ".join(lines)
+
+
+def tell_all(doc: dict, root: str | Path,
+             refusals: dict | None = None) -> tuple[list[dict], TellingContext]:
     """every place the explorer shows, told; the others counted by level in
-    ctx.skipped, so a reader of the run sees what was left out."""
+    ctx.skipped, so a reader of the run sees what was left out. with the
+    plot's refusal record, the state's row carries `withheld` (D-376)."""
     ctx = TellingContext.load(doc, root)
     rows = []
     for p in doc.get("places") or []:
@@ -474,7 +515,10 @@ def tell_all(doc: dict, root: str | Path) -> tuple[list[dict], TellingContext]:
         if level not in EXPLORER_LEVELS:
             ctx.skipped[level] = ctx.skipped.get(level, 0) + 1
             continue
-        rows.append(tell(p, ctx))
+        row = tell(p, ctx)
+        if refusals is not None and level == "state":
+            row["withheld"] = tell_withheld(refusals, ctx)
+        rows.append(row)
     return rows, ctx
 
 

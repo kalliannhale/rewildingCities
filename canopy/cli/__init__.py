@@ -17,6 +17,9 @@ packaged; see the note in setup_guide.md.)
   publish <plot> <artifact> --to <target>
                                  make or move a web map item that reads a
                                  display copy by URL (a dry run unless --write)
+  publish <plot> --places --to <target>
+                                 the places map: the explorer's places held
+                                 inside one web map (D-371)
 
 Each command is its own module exposing register(subparsers). Add a command by
 writing canopy/cli/<name>.py with a register() that calls set_defaults(func=...),
