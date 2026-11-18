@@ -1906,3 +1906,26 @@ Run (2026-11-17): zip 8b, with zip8b2 (the passthrough finding, RUNNAMES-1), fc7
 
 Sprint 08 closed against its own tab's done-when. Not done: MCF and partner targets (no portal or account given); F3, F7, F8 (D-334); a real update call (UPDATE-1).
 Opened: RAMP-1, UPDATE-1, SIZE-2, MANIFEST-2, DOORSAY-2, SIGNIN-1, INDIAN-1.
+
+## Sprint 09, session 1 ~ zip 9a, the explorer's ground (D-350 to D-359)
+
+Built from state.md, four reads zips (reads9a to reads9d), Experience Builder's own docs, a scratch app owned by RDS_NU (read_9a, made private after), two coverage reads and the rebuilt profiles (built 2026-11-18 01:18 UTC). Every lean was read against the code it touches before it was built.
+
+| ID | One line |
+| --- | --- |
+| D-350 | Experience Builder draws a door web map's referenced GeoJSON layer, and no widget can read it (the data panel says "No layer"; Esri's supported data list, 2026-11-10, names feature collections, not GeoJSON). Search reads a feature collection, and a selection reaches Text and Embed only through the Search widget's own output data source, never the searched data. So the explorer stays in Experience Builder (D-68 stands), and its places come from a feature collection the door pushes (zip 9b), which is file storage, not feature storage |
+| D-351 | canopy/wonder/telling.py tells each profile as text fields for the explorer, built from the profile's structured parts and never its working text. Six levels, 740 places; MEGIS civil divisions stay out, since most share a town's name. On the real profiles: 3.2 KB a row at the median, 6.7 KB at most, 2.5 MB in all |
+| D-352 | The public register lives in seeds/language/plain_language.yml (Kalli): about ninth grade (Flesch-Kincaid, each field's median place, names masked), claim words refused (truth, honest), and no working id (a ledger id, a step, a rule number, a Census table code). The door's heading is "Where the data is stored"; the range statement says sampling error makes a range wider where samples are small |
+| D-353 | RAMP-1: darker always means harder access. A standing's lowest fifth is the darkest. A value is darker in the direction its indicator declares worse, recorded in a joined copy's envelope (join.directions) from the registry when the copy is drawn; a copy with no direction is refused rather than guessed. No value stays hatched, never a ramp colour |
+| D-354 | owed() owes a restyle when the door's renderer differs from the one recorded, by the move's own path; the first is broadband's, which makes UPDATE-1's first real update |
+| D-355 | plots/<plot>/publish/credit.yml holds the credit line, the citation (its {title}, {version} and {url} filled per item) and the data guide line; every item carries them; a missing or unknown field is refused. The data guide is Sprint 13's, so the line says it is coming |
+| D-356 | COVER-1 decided: the crack is a pinch. At Gray and Windham, and House 113 and 116, two places' holes (removed water) touch one shared border point, so GEOS's coverage check refuses a shape whose every border matches (a toy reproduces it; make_valid and 1 cm precision do not help). The display copy moves only those hole vertices 0.1 m into their holes and records `opened`, a new word in rule 11's closed set; the canonical outlines keep the pinch, and the towns' version stands |
+| D-357 | The standard: the CII published measures are acquirable, waiting on terms of use (CII-19), since no receipt in the plot holds them; Cision leaves the outlet sources (D-294), and the last post, which only Cision recorded, needs our own model |
+| D-358 | A note may carry status: draft. The four Wabanaki drafts are marked, and the telling writes "Draft wording" before them (TRIBE-7). tribal_representation_legislature is added as a draft: four nonvoting House seats from the 133rd (LD 785, P.L. 2025, c. 705); which nations send representatives as of March 2026, from Maine Public |
+| D-359 | The explorer target is public, in the folder rewildingCities explorer, owned by RDS_NU (Kalli); test and library are unchanged |
+
+Closed: COVER-1 (D-356), when its copies are drawn.
+Corrected: state.md said split towns need EDGE-NOTE-1; their shares are on the overlaps edges every profile carries.
+Opened: none. RAMP-1 and UPDATE-1 close when the restyle runs and --check reads it.
+Wrong hypotheses: that the towns' crack was a sliver of missing land; that the dissolve ran in s2; that Experience Builder could not let a search steer an Embed (the widgets listened to the wrong data source); that voice.py spoke for places; that profiles carried refusals per place (none does: what is withheld belongs to the plot).
+Lessons: a test with a noisy setup is not a test (an empty URL box and a page that may refuse framing); read the real output as its reader would (D-271 appeared 18,293 times in public-bound text); a contract's line can be reversed for a reason, but out loud.

@@ -43,8 +43,8 @@ what enters the range is declared, and everything left out is named:
     who makes the place up; the top list stays alphabetical, for finding
 
 a town range is one estimate per town, however much of the town lies in
-the place: a spread of town estimates, not of the place's people, and wider
-than the truth where samples are small. every telling says so.
+the place: a spread of town estimates, not of the place's people, and
+sampling error makes it wider where samples are small. every telling says so.
 
 an exact count is read apart (D-209). its value is a count of points
 standing in the place, exact at every level from the place's own located_in
@@ -76,8 +76,8 @@ TOWN_LEVEL = "cousub"
 NEEDED_VIEWS = ("places", "edges", "place_values")
 
 RANGE_STATEMENT = ("each range is one estimate per town, however much of the town lies "
-                   "here: a spread of town estimates, not of this place's people, and wider "
-                   "than the truth where samples are small")
+                   "here: a spread of town estimates, not of this place's people, and "
+                   "sampling error makes it wider where samples are small")
 
 
 @dataclass

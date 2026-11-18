@@ -640,6 +640,27 @@ def _drawn(drawer, *args, **kwargs):
                                "cannot carry") from None
 
 
+def _directions(root: Path, indicators: list) -> dict:
+    """each joined indicator's declared direction (higher_is_better or
+    higher_is_worse), read from the registry when the copy is drawn and kept
+    in the copy's envelope, so the door colours a value from the bucket's
+    records alone (RAMP-1). an indicator the registry does not know is left
+    out, and the door refuses to colour it rather than guess. a root with no
+    registry at all records none, with the same result."""
+    from canopy.indicators import IndicatorRegistry
+    where = Path(root) / "seeds" / "indicators"
+    if not where.is_dir():
+        return {}                    # nothing recorded; the door then refuses to colour a value
+    try:
+        registry = IndicatorRegistry.load(where)
+    except Exception as e:
+        raise CanonicalRefusal(f"the indicator registry did not load, so no direction can be "
+                               f"recorded: {type(e).__name__}: {str(e)[:200]}",
+                               "fix seeds/indicators, then draw the copy again") from None
+    known = set(registry.all())
+    return {ind: registry.get(ind).direction for ind in indicators if ind in known}
+
+
 def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: str,
                     root: Path, tolerance_m: int | None = None, judge=default_judge,
                     drawer=None, validate=None, now: datetime | None = None,
@@ -697,6 +718,7 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
                                 outline_sha256=o["sha256"], level=level,
                                 widths=choropleth.load_widths(root), markers=markers,
                                 tolerance_m=tolerance_m, id_field=ometa.get("id_field"))
+        drawn["join"]["directions"] = _directions(root, drawn["join"].get("indicators") or [])
         keys = display_keys(plot, artifact, v["sha256"], drawn["name"])
         params = {"tolerance_m": None if markers else tolerance_m, "markers": markers,
                   "projected": display.PROJECTED, "web": display.WEB,

@@ -7,6 +7,9 @@
 # text lives here and nowhere else, so one id always has one text (D-149).
 #
 #   text          what travels with the artifact, in plain words
+#   status        optional: draft, for a text not yet reviewed; it is shown as
+#                 a draft wherever it is told. a note with no status is
+#                 reviewed (Sprint 09)
 #   when_merged   optional: the note a place carries instead when it holds
 #                 this note's place, wholly or in part (D-158). A county holds
 #                 a reservation; the county is not the reservation's boundary,
@@ -39,6 +42,7 @@ notes:
 
   # DRAFT (D-158), for Kalli and Person 3 to word
   contains_census_tribal_area:
+    status: draft
     text: >
       This place includes all or part of a Census tribal area. That boundary
       is the U.S. Census Bureau's, not the nation's own, and the tribal area
@@ -47,6 +51,7 @@ notes:
 
   # DRAFT (D-159, PENOB-1), for Kalli and Person 3 to word
   penobscot_main_stem_waters:
+    status: draft
     text: >
       This display leaves out the waters of the Penobscot River's Main Stem
       around the reservation's islands. The Census Bureau's reservation
@@ -57,6 +62,7 @@ notes:
 
   # DRAFT (D-233), Kalli's words, waiting on the nations' terms (P-8, CARE)
   carrier_unseen_on_nations_land:
+    status: draft
     text: >
       This count comes from a federal source that does not see the nation's
       own libraries, clinics or programs, which are kept on the nation's own
@@ -66,8 +72,28 @@ notes:
 
   # DRAFT (D-233), Kalli's words, waiting on the nations' terms (P-8, CARE)
   carrier_seen_on_nations_land:
+    status: draft
     text: >
       This count includes schools the nation operates with the Bureau of
       Indian Education, as the federal source sees them. Programs the nation
       keeps on its own terms may not appear. The boundary is the U.S. Census
       Bureau's, not the nation's own.
+
+  # DRAFT (Sprint 09, NOTE-3), Kalli's to word with Person 3; who sits in the
+  # 133rd Legislature waits on its rosters (TRIBE-4). Sources, read 2026-11-17:
+  # Maine Public, 2026-03-17, "Tribal leaders endorse compromise bills"
+  # (which nations send representatives, and what they may do); LD 785,
+  # P.L. 2025, c. 705, signed 2026-04-15 (the Mi'kmaq Nation's seat, from the
+  # 133rd). The Maine Monitor's page says only the Penobscot seat was filled;
+  # every other source says otherwise, so it is not cited.
+  tribal_representation_legislature:
+    status: draft
+    text: >
+      The Maine House of Representatives has nonvoting seats for the
+      Wabanaki Nations. As of March 2026, the Passamaquoddy Tribe and the
+      Houlton Band of Maliseet Indians send representatives; the Penobscot
+      Nation also has a seat. Starting with the 133rd Legislature, the
+      Mi'kmaq Nation may elect one too. Tribal representatives can
+      introduce bills, serve on committees and vote in committee, but not
+      on the House or Senate floor. Who holds these seats in the 133rd
+      Legislature will be added from its member lists.

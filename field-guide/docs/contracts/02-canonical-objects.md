@@ -132,7 +132,8 @@ second truth (D-321):
   under the branch `version`), records `derived_from: <sha256>` and the allow
   record current when it was drawn, and adds its own entry whose publication
   list holds every change (Contract 1, rule 11): `simplified`, `rounded`,
-  `format_changed` (D-323). It matches the envelope schema and is judged by the
+  `format_changed` (D-323), and `opened` first where a pinch had to be
+  opened (D-356). It matches the envelope schema and is judged by the
   gate as the version was, a custom tier refused (D-315).
 - **Polygons are simplified as one coverage** (shapely's `coverage_simplify`),
   so neighbours keep one shared edge and no crack opens between towns; in

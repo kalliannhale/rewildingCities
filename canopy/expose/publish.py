@@ -287,6 +287,36 @@ def write_record(plot_dir: Path, doc: dict) -> None:
     os.replace(tmp, path)
 
 
+# --- the plot's credit line --------------------------------------------------
+
+CREDIT_FIELDS = ("credit", "citation", "data_guide")
+
+
+def load_credit(plot_dir: Path) -> dict | None:
+    """plots/<plot>/publish/credit.yml: the credit line, the suggested citation
+    (with {title}, {version} and {url} filled per item) and the data guide line,
+    one home for words every item carries. a plot without the file carries
+    none; a file missing a field, or with a field the door does not know, is
+    refused, never guessed."""
+    path = Path(plot_dir) / "publish" / "credit.yml"
+    if not path.is_file():
+        return None
+    doc = yaml.safe_load(path.read_text()) or {}
+    unknown = sorted(set(doc) - set(CREDIT_FIELDS))
+    missing = [k for k in CREDIT_FIELDS if not str(doc.get(k) or "").strip()]
+    if unknown or missing:
+        raise PublishRefusal(
+            f"{path.name}: " + "; ".join(([f"unknown fields {', '.join(unknown)}"] if unknown else [])
+                                         + ([f"missing {', '.join(missing)}"] if missing else [])),
+            f"give exactly {', '.join(CREDIT_FIELDS)}")
+    try:
+        str(doc["citation"]).format(title="t", version="v", url="u")
+    except (KeyError, IndexError, ValueError) as e:
+        raise PublishRefusal(f"{path.name}: the citation names a field the door does not fill "
+                             f"({e})", "use only {title}, {version} and {url}") from None
+    return {k: str(doc[k]).strip() for k in CREDIT_FIELDS}
+
+
 # --- planning and writing ----------------------------------------------------
 
 @dataclass
@@ -302,6 +332,9 @@ def owed(entry: dict | None, copy: dict, built, target, adopt: str | None) -> st
     outline, was = copy.get("outline") or {}, entry.get("outline") or {}
     if entry.get("sha256") != copy["sha256"] or was.get("sha256") != outline.get("sha256"):
         return "move"
+    if built.extra.get("renderer_sha256") and entry.get("renderer_sha256") != \
+            built.extra["renderer_sha256"]:
+        return "restyle"
     if (entry.get("allow") != copy["allow"] or was.get("allow") != outline.get("allow")
             or entry.get("description_sha256") != sha256_text(built.description)):
         return "describe"
@@ -317,6 +350,8 @@ def owed(entry: dict | None, copy: dict, built, target, adopt: str | None) -> st
 _SAY = {"create": "owed: a new web map in folder '{folder}'",
         "adopt": "owed: adopting item {adopt}, its layer moved to this version",
         "move": "owed: the layer moved from {old} to {new}, and the description",
+        "restyle": "owed: the layer's colours, which the door now draws differently (RAMP-1), "
+                   "and the description",
         "describe": "owed: the description alone (a new allow record or new words)",
         "share": "owed: sharing at {sharing}",
         "reseen": "owed: recording the description as ArcGIS stores it, which it rewrites (D-349)",
@@ -443,6 +478,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
     key = copy["key"]
     from canopy.expose.records import load_licenses
     copy["licenses"] = load_licenses(Path(root) / "seeds" / "licenses")
+    copy["credit"] = load_credit(plot_dir)
     when = now or datetime.now(timezone.utc).isoformat()
     record = read_record(plot_dir)
     sessions: dict = {}
@@ -540,7 +576,7 @@ def publish(plot: str, artifact: str, target_ids: list[str], *, root: Path,
                 o.outcome = "published"
             else:
                 item_id = entry["item_id"]
-                if due == "move":
+                if due in ("move", "restyle"):
                     state = kind.read(session, item_id)
                     if (built.extra.get("renderer_sha256") and hasattr(kind, "renderer_sha256")
                             and kind.renderer_sha256(state["data"], layer_id)

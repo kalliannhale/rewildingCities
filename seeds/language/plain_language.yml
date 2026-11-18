@@ -1,0 +1,33 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# seeds/language/plain_language.yml
+# The register of every sentence rewildingCities writes for the public
+# (Kalli, Sprint 09): technical and rigorous, but plain, at about a ninth-grade
+# reading level. It shows what the data says rather than describing its
+# virtues, and makes few claims.
+#
+# canopy/wonder/telling.py writes the explorer's sentences, and
+# tests/test_telling.py holds every one of them to this file:
+#
+#   reading_grade_ceiling   the Flesch-Kincaid grade each of the telling's
+#                           fields may not exceed at its median place, scored
+#                           with capitalized words (names) masked, since a
+#                           name's syllables say nothing about the prose
+#   claim_words             words a public sentence never uses: they describe
+#                           the work instead of showing it. matched whole and
+#                           without case
+#   working_ids             a public sentence never carries a ledger or plan id
+#                           (D-271, OBS-1, P-6, step 7b), a gate rule's number
+#                           (rule 5) or a Census table
+#                           code (B25071_001E); this pattern finds them
+# ═══════════════════════════════════════════════════════════════════════════════
+
+reading_grade_ceiling: 9
+
+claim_words:
+  - truth
+  - truthful
+  - honest
+  - honestly
+  - honesty
+
+working_ids: '\b[A-Z][A-Z0-9]*-\d+\b|\bstep \d+[a-z]?\b|\b[A-Z]+\d+[A-Z]?_\d+[A-Z]*\b|\brule \d+\b'

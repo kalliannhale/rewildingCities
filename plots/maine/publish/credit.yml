@@ -1,0 +1,9 @@
+# plots/maine/publish/credit.yml ~ the words every item the door makes carries (D-355)
+# {title}, {version} and {url} are filled per item: its title, the first 12
+# characters of the canonical version it reads, and that version's address.
+
+credit: Prepared by Kalli A. Hale for rewildingCities. The data's own sources and their terms are listed under License.
+
+citation: "Hale, Kalli A. (2026). {title}. rewildingCities. Canonical version {version}. {url}"
+
+data_guide: A data guide will come with the open data hub. Until then, this description says how the layer was made, and the receipt linked above records every step.

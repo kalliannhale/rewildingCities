@@ -204,8 +204,18 @@ def extent_of(bbox) -> dict | None:
 
 
 # a sequential ramp, light to dark, each step distinct to colour-blind
-# readers (ColorBrewer YlGnBu, five classes): darker is a better standing
+# readers (ColorBrewer YlGnBu, five classes). darker always means harder
+# access (RAMP-1): the lowest standing is the darkest fifth, and a value is
+# drawn darker in the direction its indicator declares worse. a place with no
+# value is hatched grey, never a colour of the ramp
 RAMP = ([255, 255, 204], [161, 218, 180], [65, 182, 196], [44, 127, 184], [37, 52, 148])
+DIRECTIONS = ("higher_is_better", "higher_is_worse")
+
+
+def _harder(i: int, direction: str) -> list:
+    """the ramp's colour for class i of five, counted from the lowest value up,
+    so the class that means harder access is the darker one."""
+    return RAMP[4 - i] if direction == "higher_is_better" else RAMP[i]
 NO_VALUE_FILL = {"type": "esriSFS", "style": "esriSFSBackwardDiagonal",
                  "color": [110, 110, 110, 255],
                  "outline": {"type": "esriSLS", "style": "esriSLSSolid",
@@ -262,14 +272,14 @@ def choropleth_of(copy: dict, fields: list[dict]) -> tuple[dict, str, str]:
             raise PublishRefusal(f"the standing of {ind} names no reference population, so its "
                                  f"fifths cannot be said", "a standings table names it")
         names = ("lowest", "second", "middle", "fourth", "highest")
-        infos = [{"classMaxValue": 20 * (i + 1), "symbol": _fill(RAMP[i]),
+        infos = [{"classMaxValue": 20 * (i + 1), "symbol": _fill(_harder(i, "higher_is_better")),
                   "label": f"{names[i]} fifth ({'0' if i == 0 else f'above {20 * i}'} "
                            f"to {20 * (i + 1)})"} for i in range(5)]
         renderer = {"type": "classBreaks", "field": field, "minValue": 0,
                     "classBreakInfos": infos, "defaultSymbol": NO_VALUE_FILL,
                     "defaultLabel": empty}
         title = (f"{ind} by {level}: standing in fifths of the {int(ref):,} places with a "
-                 f"value, higher is better ({copy['plot']})")
+                 f"value, higher is better; darker is a lower standing ({copy['plot']})")
         return renderer, field, title
 
     if not values:
@@ -299,16 +309,24 @@ def choropleth_of(copy: dict, fields: list[dict]) -> tuple[dict, str, str]:
                  f"{_number(top)}; none listed is its own class ({copy['plot']})")
         return renderer, field, title
 
+    direction = ((join.get("directions") or {}).get(ind))
+    if direction not in DIRECTIONS:
+        raise PublishRefusal(
+            f"this copy does not say whether a higher {ind} means easier or harder access, "
+            f"so its colours cannot say which places are harder (RAMP-1)",
+            "draw the copy again with canonical --display --join, which records each "
+            "indicator's declared direction")
     lo, hi = min(values), max(values)
     span = (hi - lo) or 1.0
     infos = [{"classMaxValue": hi if i == 4 else lo + span * (i + 1) / 5,
-              "symbol": _fill(RAMP[i]),
+              "symbol": _fill(_harder(i, direction)),
               "label": f"{_number(lo + span * i / 5)} to {_number(hi if i == 4 else lo + span * (i + 1) / 5)}"}
              for i in range(5)]
     renderer = {"type": "classBreaks", "field": field, "minValue": lo,
                 "classBreakInfos": infos, "defaultSymbol": NO_VALUE_FILL, "defaultLabel": empty}
+    worse = "higher" if direction == "higher_is_worse" else "lower"
     title = (f"{ind} by {level}, in five equal steps from {_number(lo)} to {_number(hi)}, "
-             f"not a standard ({copy['plot']})")
+             f"not a standard; {worse} is harder access and drawn darker ({copy['plot']})")
     return renderer, field, title
 
 
@@ -434,7 +452,7 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
         *(_drawn_on(copy, meta) if outline else []),
         "<h3>Context notes</h3>",
         _li([f"<b>{e(k)}</b>: {e(str(v))}" for k, v in sorted(notes.items())]),
-        "<h3>Where its truth lives</h3>",
+        "<h3>Where the data is stored</h3>",
         _li([f"version: <code>{e(base)}/</code>",
              f"receipt: <code>{e(base)}/envelope.json</code>",
              f"allow record: <code>{e(base)}/allow/{copy['allow']}.json</code>",
@@ -445,6 +463,7 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
         "<h3>License</h3>", _li(terms),
         "<h3>Caveats and warnings</h3>", _li(caveats + warnings),
         "<h3>What changed on the way out</h3>", _li(steps),
+        *_credit(copy),
         f"<p>Made by the rewildingCities publish door {e(version)}. Edit the map's "
         f"style freely; the door rewrites this description, which carries the notes.</p>",
     ]
@@ -455,6 +474,22 @@ def description_of(copy: dict, version: str) -> tuple[str, str, str]:
     access = "; ".join(sorted(set(credits))) + ("; " if credits else "") + \
         "rewildingCities canonical store"
     return description, license_info, access
+
+
+def _credit(copy: dict) -> list[str]:
+    """the plot's credit line, suggested citation and data guide line, from
+    plots/<plot>/publish/credit.yml, in the same words on every item. the
+    citation names this map's title and the canonical version it reads."""
+    c = copy.get("credit")
+    if not c:
+        return []
+    e = html.escape
+    citation = str(c["citation"]).format(title=copy.get("title") or copy["artifact"],
+                                         version=copy["sha256"][:12],
+                                         url=copy["version_url"] + "/")
+    return ["<h3>Credit and citation</h3>",
+            _li([e(str(c["credit"])), f"Suggested citation: {e(citation)}",
+                 e(str(c["data_guide"]))])]
 
 
 def _drawn_on(copy: dict, meta: dict) -> list[str]:

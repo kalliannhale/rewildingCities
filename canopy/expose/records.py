@@ -20,7 +20,8 @@ from .gate import SHARING_LEVELS, TIERS
 CONSENT_REQUIRED = ("id", "plot", "target", "sharing_level", "covers",
                     "granted_by", "on_behalf_of", "granted_on", "terms", "status")
 STATUSES = ("active", "withdrawn")
-NOTE_FIELDS = ("text", "when_merged")
+NOTE_FIELDS = ("text", "when_merged", "status")
+NOTE_STATUSES = ("reviewed", "draft")      # a note marked draft shows as one (TRIBE-7)
 
 
 def load_licenses(licenses_dir: str | Path) -> dict[str, dict]:
@@ -82,9 +83,11 @@ _UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
 
 
 def load_notes(notes_dir: str | Path) -> dict[str, dict]:
-    """every context note: id -> {text, when_merged}. the one home of a note's
-    text (D-157). refuses an id declared twice, a note without text, a field
-    it does not know, and a when_merged that names no note or itself."""
+    """every context note: id -> {text, when_merged, status}. the one home of a
+    note's text (D-157). refuses an id declared twice, a note without text, a
+    field it does not know, a when_merged that names no note or itself, and a
+    status that is not reviewed or draft. a note with no status is reviewed;
+    a draft is shown as a draft wherever it is told (Sprint 09)."""
     path = Path(notes_dir) / "notes.yml"
     try:
         doc = yaml.load(path.read_text(), Loader=_UniqueKeyLoader) or {}
@@ -105,7 +108,10 @@ def load_notes(notes_dir: str | Path) -> dict[str, dict]:
         if merged is not None and (merged == nid or merged not in notes):
             raise ValueError(f"note '{nid}': when_merged names '{merged}', which is "
                              f"{'itself' if merged == nid else 'not a note'}")
-        notes[nid] = {"text": spec["text"].strip(), "when_merged": merged}
+        status = spec.get("status") or "reviewed"
+        if status not in NOTE_STATUSES:
+            raise ValueError(f"note '{nid}': status '{status}'; one of {', '.join(NOTE_STATUSES)}")
+        notes[nid] = {"text": spec["text"].strip(), "when_merged": merged, "status": status}
     return notes
 
 

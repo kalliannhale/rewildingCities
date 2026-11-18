@@ -20,9 +20,18 @@ what drawing changes, each a rule 11 record in the copy's own provenance entry:
                   has no date type, so a date or time is written as ISO 8601
                   text and a missing one as null, each such field named
 
-refused rather than drawn: a coverage that is not valid (its towns overlap or
-leave gaps before anything is simplified), a geometry left empty by
-simplification (a town vanished from the map), mixed or unknown geometry.
+  opened          only where a coverage has pinches (COVER-1): two places
+                  share one point where each has a hole (removed water)
+                  touching its own edge, which GEOS's coverage check refuses
+                  though every border matches. each such hole vertex is moved
+                  OPEN_PINCH_M into its own hole, so the hole no longer touches
+                  the edge; the shared border is not moved. the canonical
+                  outline keeps the pinch; only the copy is opened
+
+refused rather than drawn: a coverage that is not valid for any other reason
+(its towns overlap or leave gaps before anything is simplified), a pinch that
+opening does not make valid, a geometry left empty by simplification (a town
+vanished from the map), mixed or unknown geometry.
 
 a joined copy (D-331, zip 8b) is a long-form table drawn on an outline version:
 one wide GeoJSON, every place of the outline and every indicator's columns
@@ -57,6 +66,7 @@ DEFAULT_TOLERANCE_M = 25
 PROJECTED = "EPSG:26919"
 WEB = "EPSG:4326"
 DECIMALS = 6
+OPEN_PINCH_M = 0.1       # COVER-1: how far a pinched hole vertex moves into its hole
 GEOJSON_TYPE = "application/geo+json"
 
 _POINTS = {"Point", "MultiPoint"}
@@ -105,21 +115,103 @@ def _kind_of(frame) -> tuple[str, set]:
                    f"{', '.join(sorted(names))}", "split it upstream")
 
 
+def _on(line_coords, point, tol: float = 1e-6) -> bool:
+    import shapely
+    return shapely.LineString(line_coords).distance(shapely.Point(point)) < tol
+
+
+def _nudged(ring_coords: list, k: int, distance: float) -> tuple | None:
+    """vertex k of a closed ring moved `distance` along the bisector of its two
+    neighbours, which for a hole's pinch points into the hole. None when the
+    neighbours give no direction."""
+    import math
+    n = len(ring_coords) - 1                       # the last vertex repeats the first
+    p = ring_coords[k % n]
+    a, b = ring_coords[(k - 1) % n], ring_coords[(k + 1) % n]
+    ux, uy = a[0] - p[0], a[1] - p[1]
+    vx, vy = b[0] - p[0], b[1] - p[1]
+    la, lb = math.hypot(ux, uy), math.hypot(vx, vy)
+    if la == 0 or lb == 0:
+        return None
+    dx, dy = ux / la + vx / lb, uy / la + vy / lb
+    norm = math.hypot(dx, dy)
+    if norm == 0:
+        return None
+    return (p[0] + distance * dx / norm, p[1] + distance * dy / norm)
+
+
+def _open_pinches(coverage, distance: float):
+    """(coverage, record) with every pinch opened (COVER-1), or (coverage, None)
+    when its invalid edges are not pinches. a pinch is a point two places' bad
+    edges share, lying on each one's shell and on one of its holes. only hole
+    vertices move; every shell, and so every shared border, is kept."""
+    import numpy
+    import shapely
+    bad = shapely.coverage_invalid_edges(coverage)
+    flagged = [i for i in range(len(coverage)) if not bool(shapely.is_empty(bad[i]))]
+    owners: dict = {}
+    for i in flagged:
+        for c in shapely.get_coordinates(bad[i]):
+            owners.setdefault((float(c[0]), float(c[1])), set()).add(i)
+    kisses = {pt for pt, who in owners.items() if len(who) > 1}
+    if not kisses:
+        return coverage, None
+    out, moved, places = list(coverage), 0, 0
+    for i in flagged:
+        parts, changed = [], False
+        for part in shapely.get_parts(coverage[i]):
+            shell = list(part.exterior.coords)
+            holes = []
+            for ring in part.interiors:
+                coords = [tuple(c) for c in ring.coords]
+                for k in range(len(coords) - 1):
+                    pt = (float(coords[k][0]), float(coords[k][1]))
+                    if pt in kisses and _on(shell, pt):
+                        to = _nudged(coords, k, distance)
+                        if to is None:
+                            return coverage, None
+                        coords[k] = to
+                        if k == 0:
+                            coords[-1] = to
+                        moved, changed = moved + 1, True
+                holes.append(coords)
+            parts.append(shapely.Polygon(shell, holes))
+        if changed:
+            places += 1
+            out[i] = parts[0] if len(parts) == 1 else shapely.MultiPolygon(parts)
+    if not moved:
+        return coverage, None
+    out = numpy.asarray(out, dtype=object)
+    if not bool(numpy.all(shapely.is_valid(out))) or not bool(shapely.coverage_is_valid(out)):
+        return coverage, None
+    return out, {"step": "opened", "count": places, "detail": (
+        f"{moved} pinched hole vertices in {places} places moved {OPEN_PINCH_M} m into their "
+        f"own holes (COVER-1): at each, two places' holes (removed water) touched one shared "
+        f"point of their border, which GEOS's coverage check refuses though every border "
+        f"matches; no border moved, and the canonical outline keeps the pinch")}
+
+
 def _simplify_coverage(frame, tolerance_m: int, id_field: str | None, vertices_before: int):
     """polygons simplified as one coverage in PROJECTED, back in WEB, and the
-    publication record that says so."""
+    publication records that say so: `opened` first when a pinch had to be
+    opened, then `simplified`."""
     import geopandas
     import numpy
     import shapely
     projected = frame.to_crs(PROJECTED)
     coverage = numpy.asarray(projected.geometry)
+    steps: list[dict] = []
     if not bool(shapely.coverage_is_valid(coverage)):
-        bad = shapely.coverage_invalid_edges(coverage)
-        n_bad = int((~shapely.is_empty(bad)).sum())
-        raise _refusal(
-            f"the polygons are not a valid coverage: {n_bad} of them overlap a "
-            f"neighbour or leave a gap, so simplifying them as one would draw cracks",
-            "repair the coverage upstream, then write a new version")
+        opened, record = _open_pinches(coverage, OPEN_PINCH_M)
+        if record is None:
+            bad = shapely.coverage_invalid_edges(coverage)
+            n_bad = int((~shapely.is_empty(bad)).sum())
+            raise _refusal(
+                f"the polygons are not a valid coverage: {n_bad} of them overlap a "
+                f"neighbour or leave a gap, so simplifying them as one would draw cracks",
+                "repair the coverage upstream, then write a new version")
+        coverage = opened
+        steps.append(record)
     simple = shapely.coverage_simplify(coverage, tolerance_m)
     gone = shapely.is_empty(simple)
     if bool(numpy.any(gone)):
@@ -133,13 +225,13 @@ def _simplify_coverage(frame, tolerance_m: int, id_field: str | None, vertices_b
         geopandas.GeoSeries(simple, index=projected.index, crs=PROJECTED))
     frame = projected.to_crs(WEB)
     vertices_simple = int(shapely.get_num_coordinates(numpy.asarray(frame.geometry)).sum())
-    step = {"step": "simplified", "count": int(len(frame)), "detail": (
+    steps.append({"step": "simplified", "count": int(len(frame)), "detail": (
         f"polygons simplified as one coverage (shapely {shapely.__version__} "
         f"coverage_simplify, GEOS {shapely.geos_version_string}), so neighbours keep "
         f"one shared edge; tolerance {tolerance_m} m in {PROJECTED}, roughly the square "
         f"root of the area of each triangle removed; vertices {vertices_before:,} to "
-        f"{vertices_simple:,}")}
-    return frame, step
+        f"{vertices_simple:,}")})
+    return frame, steps
 
 
 def _markers(frame, id_field: str | None):
@@ -238,8 +330,8 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
     steps: list[dict] = []
 
     if kind == "polygons":
-        frame, step = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
-        steps.append(step)
+        frame, drawn_steps = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
+        steps.extend(drawn_steps)
     else:
         frame = frame.to_crs(WEB) if source_crs != WEB else frame
         steps.append({"step": "simplified", "count": 0,
@@ -296,9 +388,10 @@ def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: st
     if markers:
         frame, step = _markers(frame, id_field)
         kind = "markers"
+        steps.append(step)
     else:
-        frame, step = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
-    steps.append(step)
+        frame, drawn_steps = _simplify_coverage(frame, tolerance_m, id_field, vertices_before)
+        steps.extend(drawn_steps)
     frame, step = _round(frame)
     steps.append(step)
     as_text = _dates_as_text(frame)
@@ -415,7 +508,7 @@ def joined_envelope(table_receipt: dict, outline_receipt: dict, *, display_key: 
                       "authority": join["authority"], "level": join["level"],
                       "lineage": ometa.get("lineage")},
         "join": {"counts": join["counts"], "indicators": join["indicators"],
-                 "columns": join["columns"]},
+                 "columns": join["columns"], "directions": dict(join.get("directions") or {})},
         "row_context_notes": list(join["row_notes"]),
         "context_notes": carried,
     })
