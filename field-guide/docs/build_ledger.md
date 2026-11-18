@@ -2254,3 +2254,30 @@ Kalli named it, and the build went ahead here.
   follows the run.
 - A rule about units is written against the seeds' real units, read first: the
   chain held 27 measures, not 3.
+
+### Sprint 09 session 6, the run so far, and zip 9b2a (D-394)
+
+- The suite: 1,533 passed, as predicted. 9b2 committed as 04cccd1.
+- The first lens dry run named 13 copies still to draw (12 tables never
+  written, and carriers_counts_values drawn only as markers), and refused, as
+  LENS-1 says.
+- The told dry run (--local, the rebuilt 281851f1fd97): 740 places, 2,273,224
+  bytes, 158 more than session 5's, from the plain labels. The withheld
+  sentence read whole: all four labels matched their types. Two weak spots
+  for a reader, opened as PLAINWORDS-2 (after delivery): the rule 5 reason is
+  said four times, and "a context note it does not carry yet" never says
+  which note.
+- The 12 values tables written, each pointer read back at its dry run's sha.
+- The 13 joins read as dry runs at 25 m, each named for its outline's current
+  version. Sizes read at 25 and 100 m: towns 11.9 MB to 5.7 MB, House 9.8 to
+  3.8, counties 8.6 to 2.9.
+
+| ID | Decision |
+| --- | --- |
+| D-394 | Lens copies are drawn at 250 m, the tolerance of the towns' shapes in the places map (D-367, D-369), so a place has one outline on every page; lenses.yml names it once (`tolerance`), a level may name its own, and read_lens reads and names copies at it. Held by a test. Rests on the 250 m sizes, read before any join is written |
+
+- Opened: LOAD-1. Whether ArcGIS fetches every GeoJSON layer of a web map when
+  it opens, visible or not. Read on the first lens in test, in the browser's
+  Network tab, before any lens reaches the explorer.
+- Wrong hypothesis: that a lens layer weighs nothing until a reader turns it
+  on. Not read; LOAD-1.

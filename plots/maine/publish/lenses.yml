@@ -11,9 +11,15 @@
 #
 # orientation is the copy an empty lens shows, so a reader sees Maine and the
 # words saying nothing is placed there yet.
+#
+# tolerance is the simplification every joined copy is drawn at, in metres
+# (D-394): 250, the towns' shapes in the places map (D-367, D-369), so a place
+# has one outline on every page of the explorer, and a lens's towns copy weighs
+# a fraction of the 11.9 MB it would at 25 m. a level may name its own.
 # ============================================================================
 
 orientation: outline_counties_outline
+tolerance: 250
 
 levels:
   cousub:

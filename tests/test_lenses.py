@@ -120,7 +120,7 @@ def garden(tmp_path, tables=None, sharing="private"):
         "owner_kind": "institutional", "folder": "rc test", "sharing": sharing, "groups": []}})
     for rel in ("seeds/indicators", "seeds/weights", "seeds/crosswalks/pillars"):
         shutil.copytree(REPO / rel, root / rel)
-    plan = {"orientation": COUNTIES, "levels": {
+    plan = {"orientation": COUNTIES, "tolerance": 250, "levels": {
         "cousub": {"outline": TOWNS, "tables": tables if tables is not None else [T_LANG]},
         "county": {"outline": COUNTIES, "tables": [C_LANG]}}}
     (root / "plots" / PLOT / "publish" / "lenses.yml").write_text(yaml.safe_dump(plan))
@@ -160,7 +160,7 @@ def _joined(pages, table, tsha, outline, osha, level, values, *, standing=False)
     pages[f"{v}/envelope.json"] = json.dumps({"metadata": {"data_category": "tabular"}})
     inds = sorted({i for row in values for i in row})
     columns = {i: [f"{i}__value"] + ([f"{i}__percentile"] if standing else []) for i in inds}
-    name = display.joined_name(outline, osha)
+    name = display.joined_name(outline, osha, tolerance_m=250)
     dk = s3.display_keys(PLOT, table, tsha, name)
     pages[f"{BASE}/{dk['envelope']}"] = json.dumps({
         "metadata": {"derived_from": tsha, "bbox": [-71.0, 43.0, -67.0, 47.5],
@@ -282,7 +282,7 @@ def test_a_copy_still_to_draw_is_named_and_stops_the_write(tmp_path):
     [o] = run(root, bucket(draw_towns=False), portal)
     said = "\n".join(o.lines)
     assert o.outcome == "refused" and portal.items == {}
-    assert f"canonical {PLOT} {T_LANG} --display --join {TOWNS} --write" in said
+    assert f"canonical {PLOT} {T_LANG} --display --join {TOWNS} --tolerance 250 --write" in said
     assert "LENS-1" in said
 
 
@@ -308,6 +308,15 @@ def test_an_empty_lane_holds_the_orientation_copy_and_says_so(tmp_path):
     [layer] = data["operationalLayers"]
     assert layer["title"].startswith("No measure is placed in this lens yet")
     assert "No measure is placed in this lens yet" in item["description"]
+
+
+def test_every_layer_reads_the_copy_at_the_plans_tolerance(tmp_path):
+    """D-394: one outline per place on every page, the places map's 250 m."""
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    _, data = stored(portal)
+    urls = [l["url"] for g in data["operationalLayers"] for l in g["layers"]]
+    assert urls and all(u.endswith("_web_250m.geojson") for u in urls)
 
 
 def test_an_unknown_lane_is_refused(tmp_path):

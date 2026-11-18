@@ -15,7 +15,8 @@ publishes it.
   load_lanes(root)             the lanes of seeds/crosswalks/pillars/, each with
                                its members and how each was placed
   load_plan(plot_dir)          plots/<plot>/publish/lenses.yml: each level's
-                               outline and values tables, and the orientation copy
+                               outline, values tables and tolerance, and the
+                               orientation copy
   read_lens(plot, lane, ...)   every layer a lens draws, read through CloudFront
                                and checked as the door checks any copy; what is
                                not yet drawn is named with the command that draws it
@@ -198,10 +199,13 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
         except PublishRefusal:
             missing.append(f"{outline} is not written: canonical {plot} {outline} --write")
             continue
-        name = display.joined_name(outline, o["sha256"])
+        tol = int(spec.get("tolerance") or plan.get("tolerance") or display.DEFAULT_TOLERANCE_M)
+        name = display.joined_name(outline, o["sha256"], tolerance_m=tol)
         layers = []
         for table in spec.get("tables") or []:
-            draw = f"canonical {plot} {table} --display --join {outline} --write"
+            draw = (f"canonical {plot} {table} --display --join {outline}"
+                    + (f" --tolerance {tol}" if tol != display.DEFAULT_TOLERANCE_M else "")
+                    + " --write")
             try:
                 t = door._current(get, base, plot, table)
             except PublishRefusal:
@@ -219,7 +223,7 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
                 if ind not in held or ind in counts:
                     continue
                 copy = door.read_copy(plot, table, domain=domain, fetch=get, join=outline,
-                                      indicator=ind)
+                                      indicator=ind, display=name)
                 columns = ((copy["display_env"].get("metadata") or {}).get("join") or {}) \
                     .get("columns") or {}
                 if column_name(ind, "percentile") in (columns.get(ind) or []):
