@@ -1931,3 +1931,18 @@ Wrong hypotheses: that the towns' crack was a sliver of missing land; that the d
 Lessons: a test with a noisy setup is not a test (an empty URL box and a page that may refuse framing); read the real output as its reader would (D-271 appeared 18,293 times in public-bound text); a contract's line can be reversed for a reason, but out loud.
 
 | D-360 | The credit line and the suggested citation name Northeastern University Library, whose project account owns every item (Kalli) |
+
+## Sprint 09, session 1 ~ zip 9a's run
+
+Profiles rebuilt on the fixed standard (1,663 places, 303.6 s, no input withheld at public). Every write was dry-run first; every bucket draw printed the local draw's sha256 before it was written.
+
+| What | Result |
+| --- | --- |
+| UPDATE-1 | broadband's test item (8bc72001) restyled by the door's first real update; --check read 3 of 3 test items as recorded. ArcGIS stores a renderer exactly as sent, unlike a description (D-349) |
+| RAMP-1 | the library item (2ebb4f3e) restyled; --check read 2 of 2 library items as recorded. The south coast is now light and the far north and Washington County dark |
+| COVER-1 | the towns' copy written (4a33d5a173f3, 9.5 MB), opened at 2 places; the towns' version eda591d0d3ba unchanged |
+| Outlines written | House 146e0ca3ac11 (151), Senate c603add2e7f6 (35), Census tribal areas 57e9ac56a143 (8); their copies ed297340651a (opened at 4 places), 93700774267d (2), 6250b7647584 (none) |
+| Profiles written | place_profile_profiles 824e79d23b1d, allow record cfeaf7315c54, JSON as built |
+
+Closed: UPDATE-1, RAMP-1, COVER-1.
+Seen again: SIGNIN-1. A mistyped password at --check refused the item it was asked for and moved on, so two items read refused for a typo; the door should ask again for the same item.
