@@ -1,0 +1,63 @@
+# ============================================================================
+# seeds/crosswalks/pillars/cii_2026_lanes.yml ~ the lenses' lanes (D-374, D-383,
+# D-384, D-390)
+# ============================================================================
+# a lens is one map of one lane. there are two kinds of lane:
+#
+#   pillar   one of CII's five pillars. its members are never typed here: an
+#            indicator joins it when its `replicates.column` equals a
+#            published measure's `derivation.column` and the weights seed
+#            places that measure in this pillar (D-383). CII's own membership,
+#            read from CII's own file, so no placement is ours.
+#   ours     a lane rewildingCities draws beside CII's, by role (D-384, D-390).
+#            every member is named here with its reason in words, defined_by
+#            rewildingcities, and told on the map as ours.
+#
+# every member a lens draws is a share or a rate (its unit starts with
+# percent or per_): a count mostly maps where people live, so counts stay in
+# the profile (D-385). a test holds every rule in this file
+# (tests/test_lenses.py). national: no plot's places are named here.
+# ============================================================================
+
+id: cii_2026_lanes
+weights: cii_2026_equal_chips
+
+lanes:
+  news_information: {kind: pillar}
+  civic_participation: {kind: pillar}
+  equity_justice: {kind: pillar}
+  health_opportunity: {kind: pillar}
+  environmental_resilience: {kind: pillar}
+
+  our_barriers:
+    kind: ours
+    name: Barriers measured by rewildingCities
+    role: barrier
+    members:
+      limited_english_persons_share:
+        reason: >
+          The share of people 5 and over who speak English less than very
+          well, from the Census's twelve language groups added. CII measures
+          a language other than English spoken at home, which is a different
+          claim, so this is ours and not CII's.
+      limited_english_households:
+        reason: >
+          The Census's limited English speaking households: no one 14 and over
+          speaks only English or speaks English very well. A household that may
+          need information in another language.
+
+  carriers:
+    kind: ours
+    name: Carriers, per 1,000 people
+    role: carrier
+    members:
+      library_outlets_per_1000:
+        reason: Public library outlets, the places people go to find information.
+      news_outlets_per_1000:
+        reason: Local news outlets, counted at the town where each one is placed.
+      clerk_offices_per_1000:
+        reason: Town and city clerk offices, where people register to vote and ask the town.
+      public_schools_per_1000:
+        reason: Public schools, which carry news home to families.
+      health_center_sites_per_1000:
+        reason: Federally funded health center sites, where people get care and health news.

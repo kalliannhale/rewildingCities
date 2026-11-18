@@ -52,7 +52,20 @@ arcgis_places.py). its record key is `places` and its kind
 arcgis_places_map; it is owed a move when any of its parents moves or the map
 the door would build differs, and it is checked by the hash of its stored
 JSON (D-362, D-372). every entry names its kind, and an entry with none is
-refused (D-371). ~
+refused (D-371).
+
+a lens (zip 9b2, D-385) is the door's third kind: `publish <plot> --lens <lane>`
+reads every joined copy a lane draws (canopy/expose/lenses.py) and writes one
+web map whose layers read them by URL, grouped by level. its record key is
+`lens/<lane>` and its kind arcgis_lens_map; like the places map, the door owns
+it whole and checks it by the hash of its stored JSON (D-380). a lens with any
+copy still to draw is never written (LENS-1).
+
+`publish <plot> --adopt-app <item> --to <target> --write` records an
+Experience Builder app built by hand (D-366): refused unless the target's
+owner owns it, it sits in the target's folder, it is published, and the plot
+does not list it as a rehearsal. `--check` reads its published config again,
+by hash, and its sharing. ~
 """
 
 from __future__ import annotations
@@ -68,7 +81,8 @@ from pathlib import Path
 import yaml
 
 from canopy.expose.targets import PublishRefusal, load_targets, record_path, registered
-from canopy.expose.targets.arcgis_webmap import MADE_PLACES, MADE_WEBMAP, sha256_text
+from canopy.expose.targets.arcgis_webmap import (MADE_APP, MADE_LENS, MADE_PLACES, MADE_WEBMAP,
+                                                 sha256_text)
 
 VERSION = "1.0.0"
 DOMAIN_ENV = "REWILDING_CANONICAL_DOMAIN"
@@ -647,7 +661,7 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
             out.append(o)
             try:
                 made = entry.get("kind")
-                if made not in (MADE_WEBMAP, MADE_PLACES):
+                if made not in (MADE_WEBMAP, MADE_PLACES, MADE_LENS, MADE_APP):
                     o.lines.append(f"the record's entry names no kind the door makes "
                                    f"({made!r}), so it cannot be read (D-371)")
                     continue
@@ -656,6 +670,9 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                                    f"{entry.get('owner')}, not as the target declares")
                     continue
                 session = _session(sessions, kind, target, ask)
+                if made == MADE_APP:
+                    _check_app(kind, session, target, entry, o)
+                    continue
                 state = kind.read(session, entry["item_id"])
                 found = []
                 if entry.get("sharing") != target.sharing:
@@ -666,13 +683,14 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                 else:
                     if state["owner"] != target.owner:
                         found.append(f"owned by {state['owner']}, not {target.owner}")
-                    if made == MADE_PLACES:
+                    if made in (MADE_PLACES, MADE_LENS):
                         from canopy.expose.targets.arcgis_places import map_sha256
                         stored = map_sha256(state["data"])
                         if stored != entry.get("map_sha256"):
                             found.append(f"its stored map hashes to {stored[:12]}, not the "
                                          f"recorded {str(entry.get('map_sha256'))[:12]}: "
                                          f"changed by hand")
+                    if made == MADE_PLACES:
                         if "now" not in fresh:
                             fresh["now"] = (fresh_refusals or _fresh_refusals)(plot, Path(root))
                         if fresh["now"] != entry.get("refusals_sha256"):
@@ -681,7 +699,7 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                                          f"the gate judges {fresh['now'][:12]} now; write it "
                                          f"with canonical {plot} --refusals --write, tell the "
                                          f"profile again, then publish")
-                    else:
+                    elif made == MADE_WEBMAP:
                         live = kind.layer_url(state["data"], entry["layer_id"])
                         if live != entry["url"]:
                             found.append(f"its layer reads {live}, not the recorded {entry['url']}")
@@ -875,8 +893,10 @@ _SAY_PLACES = {"create": "owed: a new places map in folder '{folder}'",
                "unchanged": "nothing owed"}
 
 
-def _check_places_live(kind, session, target, entry: dict, replace: bool, built=None) -> str | None:
-    """the places map as it stands, against the record (D-372)."""
+def _check_places_live(kind, session, target, entry: dict, replace: bool, built=None,
+                       what: str = "places map") -> str | None:
+    """a map the door owns whole (the places map, a lens) as it stands, against
+    the record (D-372, D-380)."""
     from canopy.expose.targets.arcgis_places import map_sha256
     state = kind.read(session, entry["item_id"])
     if state is None:
@@ -889,7 +909,7 @@ def _check_places_live(kind, session, target, entry: dict, replace: bool, built=
                              f"not {target.owner}", "ownership moves in ArcGIS, by a person")
     stored = map_sha256(state["data"])
     if stored != entry.get("map_sha256"):
-        raise PublishRefusal(f"the places map was changed by hand: it hashes to {stored[:12]}, "
+        raise PublishRefusal(f"the {what} was changed by hand: it hashes to {stored[:12]}, "
                              f"not the recorded {str(entry.get('map_sha256'))[:12]}",
                              "the door owns the whole map (D-380): publish with --replace "
                              "after moving the changed item aside, or undo the change")
@@ -1041,3 +1061,301 @@ def _places_entry(places, target, built, item_id, records, by, reason, prior, re
         "previous": ({"map_sha256": prior.get("map_sha256"), "parents": prior.get("parents")}
                      if prior else None),
     }
+
+
+# --- the lenses (zip 9b2, D-385) ----------------------------------------------
+
+def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, write: bool = False,
+                 by: str | None = None, reason: str | None = None, replace: bool = False,
+                 domain: str | None = None, fetch=default_fetch, judge=default_judge,
+                 kinds: dict | None = None, ask=None, now: str | None = None) -> list[Outcome]:
+    """one lane's lens, for the named targets. a dry run unless write. a lens
+    with any copy still to draw is named, and never written (LENS-1)."""
+    from canopy.expose.lenses import describe_members, lens_key, read_lens
+    plot_dir = Path(root) / "plots" / plot
+    kinds = kinds or registered(version=VERSION)
+    targets = load_targets(plot_dir, kinds)
+    unknown = [t for t in target_ids if t not in targets]
+    if unknown:
+        raise PublishRefusal(f"no target named {', '.join(unknown)} in this plot",
+                             f"one of {', '.join(sorted(targets))}")
+    domain = domain or os.environ.get(DOMAIN_ENV)
+    if not domain:
+        raise PublishRefusal(f"{DOMAIN_ENV} is not set, so the door cannot read the bucket",
+                             "set it as the canonical command needs it")
+    lens = read_lens(plot, lane, domain=domain, root=Path(root), fetch=fetch)
+    from canopy.expose.records import load_licenses
+    lens["licenses"] = load_licenses(Path(root) / "seeds" / "licenses")
+    lens["credit"] = load_credit(plot_dir)
+    key = lens_key(lane)
+    when = now or datetime.now(timezone.utc).isoformat()
+    record = read_record(plot_dir)
+    sessions: dict = {}
+    out: list[Outcome] = []
+    for tid in target_ids:
+        target = targets[tid]
+        kind = kinds[target.kind]
+        o = Outcome(tid, "refused")
+        out.append(o)
+        o.lines.append(f"{lens['name']} ({lens['kind']}), to {target.kind}, owned by "
+                       f"{target.owner} at {target.portal}, {target.sharing}")
+        try:
+            for line in describe_members(lens):
+                o.lines.append(f"member: {line}")
+            for lv in lens["levels"]:
+                o.lines.append(f"{lv['label']}: " + ", ".join(c["indicator"] for c in lv["layers"]))
+            for ind in lens["counts"]:
+                o.lines.append(f"not drawn: {ind} is a count, kept in the profile (D-385)")
+            if lens["orientation"] is not None:
+                o.lines.append("no measure of this lane is drawn at any level: the lens holds "
+                               "the orientation copy and says so")
+            for m in lens["missing"]:
+                o.lines.append(f"still to draw: {m}")
+            if lens["missing"]:
+                raise PublishRefusal(
+                    f"{len(lens['missing'])} of the plan's copies are not drawn yet, and a lens "
+                    f"is written only when every table is drawn (LENS-1)",
+                    "run each command named above, then publish the lens")
+            records = [judge_at(judge, c, target, plot_dir) for c in lens["judged"]]
+            notes = sorted({n for r in records for n in (r.get("context_text") or {})})
+            o.lines.append(f"gate: every layer may leave at {target.sharing}"
+                           + (f"; carries {', '.join(notes)}" if notes else "; no notes bind it"))
+            entry = (record["targets"].get(tid) or {}).get(key)
+            _kind_of(entry, MADE_LENS)
+            if entry and (entry.get("portal") != target.portal or entry.get("owner") != target.owner):
+                raise PublishRefusal(f"the record's item lives at {entry.get('portal')} as "
+                                     f"{entry.get('owner')}, not as this target declares",
+                                     "ownership moves in ArcGIS, by a person; then the record")
+            built = kind.build_lens(target, lens)
+            size = len(json.dumps(built.data).encode("utf-8"))
+            o.lines.append(f"the map: {size:,} bytes, sha256 {built.extra['map_sha256'][:12]}; "
+                           f"its layers read their copies by URL")
+            due = owed_places(entry, lens, built, target)
+            o.lines.append(_SAY_PLACES[due].format(folder=target.folder, sharing=target.sharing)
+                           .replace("places map", "lens"))
+            if not write:
+                o.outcome = "unchanged" if due == "unchanged" else (
+                    "would publish" if due == "create" else "would update")
+                o.lines.append("a dry run: signed in nowhere, wrote nothing; the item "
+                               "itself is checked when the door writes")
+                continue
+            if due == "unchanged":
+                o.outcome = "unchanged"
+                continue
+            session = _session(sessions, kind, target, ask)
+            prior = entry
+            if entry is not None and _check_places_live(
+                    kind, session, target, entry, replace,
+                    built if due in ("reseen", "share") else None, what="lens") == "create":
+                due = "create"
+                o.lines.append(f"item {entry['item_id']} is gone; making a new one (--replace)")
+            if due == "create":
+                item_id = kind.create(session, target, built)
+                provisional = _lens_entry(lens, target, built, item_id, records, by, reason,
+                                          prior, None, when)
+                provisional["sharing"] = None
+                record["targets"].setdefault(tid, {})[key] = provisional
+                write_record(plot_dir, record)
+                kind.share(session, target, item_id)
+                o.outcome = "published"
+            else:
+                item_id = entry["item_id"]
+                if due == "move":
+                    kind.update(session, target, item_id, built, data=built.data)
+                elif due == "describe":
+                    kind.update(session, target, item_id, built, data=None)
+                if due != "reseen":
+                    kind.share(session, target, item_id)
+                o.outcome = "updated"
+            seen = _seen(kind, session, item_id)
+            stored = kind.read(session, item_id)
+            from canopy.expose.targets.arcgis_places import map_sha256
+            same = stored is not None and map_sha256(stored["data"]) == built.extra["map_sha256"]
+            o.lines.append("the stored map hashes SAME as sent" if same else
+                           "the stored map DIFFERS from what was sent: the record keeps what "
+                           "was sent, and --check will say so until it is read")
+            rest = kind.rest_version(session) if hasattr(kind, "rest_version") else None
+            final = _lens_entry(lens, target, built, item_id, records, by, reason, prior,
+                                rest, when)
+            final["description_seen_sha256"] = seen
+            record["targets"].setdefault(tid, {})[key] = final
+            write_record(plot_dir, record)
+            o.lines.append(f"item {item_id}: {target.portal}/home/item.html?id={item_id}")
+        except PublishRefusal as e:
+            o.outcome = "refused"
+            o.lines.append(f"refused: {e.reason}")
+            o.lines.append(f"  would admit it: {e.would_admit}")
+        except Exception as e:                       # one target's failure never stops another
+            o.outcome = "failed"
+            said = (str(e).splitlines() or [""])[0][:300]
+            o.lines.append(f"failed: {type(e).__name__}: {said}")
+    return out
+
+
+def _lens_entry(lens, target, built, item_id, records, by, reason, prior, rest_version,
+                now) -> dict:
+    first = records[0] if records else {}
+    return {
+        "kind": MADE_LENS, "portal": target.portal, "owner": target.owner,
+        "folder": target.folder, "item_id": item_id, "lane": lens["lane"],
+        "map_sha256": built.extra["map_sha256"],
+        "parents": _parents(lens),
+        "layers": built.extra["report"]["levels"], "empty": built.extra["report"]["empty"],
+        "description_sha256": sha256_text(built.description),
+        "sharing": target.sharing, "groups": list(target.groups),
+        "gate": {"decision": "allow", "target": target.id,
+                 "sharing_level": first.get("sharing_level"),
+                 "gate_version": first.get("gate_version"),
+                 "context_notes": sorted({n for r in records
+                                          for n in (r.get("context_text") or {})})},
+        "door_version": VERSION, "rest_version": rest_version,
+        "moved_at": now, "moved_by": by, "reason": reason,
+        "previous": ({"map_sha256": prior.get("map_sha256"), "parents": prior.get("parents")}
+                     if prior else None),
+    }
+
+
+# --- adopting the app (zip 9b2, D-366) ----------------------------------------
+
+APP_KEY = "app"
+APP_TYPE = "Web Experience"
+REHEARSALS_FILE = "rehearsals.yml"
+
+
+def config_sha256(config: dict) -> str:
+    """the one hash of an app's published config: keys sorted, no spaces."""
+    return sha256_text(json.dumps(config, sort_keys=True, separators=(",", ":")))
+
+
+def item_ids_in(doc) -> list[str]:
+    """every item id an app's config names (its data sources, its maps), in order."""
+    found: list[str] = []
+
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k == "itemId" and isinstance(v, str) and v not in found:
+                    found.append(v)
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    walk(doc)
+    return found
+
+
+def _rehearsals(plot_dir: Path) -> dict:
+    path = Path(plot_dir) / "publish" / REHEARSALS_FILE
+    if not path.is_file():
+        return {}
+    return (yaml.safe_load(path.read_text()) or {}).get("never_adopt") or {}
+
+
+def _judge_app(app: dict | None, item_id: str, target, plot_dir: Path, record: dict) -> list[str]:
+    """the refusals D-366 names, then what the app reads that the door did not make."""
+    if item_id in _rehearsals(plot_dir):
+        raise PublishRefusal(f"item {item_id} is a rehearsal ({_rehearsals(plot_dir)[item_id]}), "
+                             f"never the explorer", "adopt the app built for the explorer")
+    if app is None:
+        raise PublishRefusal(f"item {item_id} is not in {target.portal}, or this account "
+                             f"cannot read it", "check the id in the app's address")
+    if app.get("type") != APP_TYPE:
+        raise PublishRefusal(f"item {item_id} is a {app.get('type')}, not an Experience "
+                             f"Builder app", "adopt the app, not one of its maps")
+    if app.get("owner") != target.owner:
+        raise PublishRefusal(f"the app is owned by {app.get('owner')}, not {target.owner}",
+                             "ownership moves in ArcGIS, by a person (R7)")
+    if app.get("folder") != target.folder:
+        raise PublishRefusal(f"the app sits in folder {app.get('folder')!r}, not the target's "
+                             f"{target.folder!r}", "move it into the target's folder in ArcGIS")
+    if app.get("config") is None:
+        raise PublishRefusal("the app has never been published, so it has no config to record",
+                             "publish it in Experience Builder, then adopt it")
+    ours = {e.get("item_id") for entries in (record.get("targets") or {}).values()
+            for e in (entries or {}).values()}
+    return [i for i in item_ids_in(app["config"]) if i not in ours]
+
+
+def adopt_app(plot: str, item_id: str, target_id: str, *, root: Path, write: bool = False,
+              by: str | None = None, reason: str | None = None, kinds: dict | None = None,
+              ask=None, now: str | None = None) -> Outcome:
+    """record the hand-built Experience Builder app under the target's key `app`.
+    it reads the app, so it signs in; it records only with write."""
+    plot_dir = Path(root) / "plots" / plot
+    kinds = kinds or registered(version=VERSION)
+    targets = load_targets(plot_dir, kinds)
+    if target_id not in targets:
+        raise PublishRefusal(f"no target named {target_id} in this plot",
+                             f"one of {', '.join(sorted(targets))}")
+    target = targets[target_id]
+    kind = kinds[target.kind]
+    o = Outcome(target_id, "refused")
+    record = read_record(plot_dir)
+    try:
+        if item_id in _rehearsals(plot_dir):
+            _judge_app(None, item_id, target, plot_dir, record)
+        session = _session({}, kind, target, ask)
+        app = kind.read_app(session, item_id)
+        foreign = _judge_app(app, item_id, target, plot_dir, record)
+        sha = config_sha256(app["config"])
+        reads = item_ids_in(app["config"])
+        o.lines.append(f"app {item_id} ({app.get('title')}), owned by {app['owner']} in "
+                       f"{app['folder']}, shared '{app.get('access')}'")
+        o.lines.append(f"its published config hashes to {sha[:12]}; it reads {len(reads)} "
+                       f"item(s)")
+        for i in foreign:
+            o.lines.append(f"warning: it reads item {i}, which the door did not make: a "
+                           f"layer there is not checked by the gate at this door")
+        if app.get("access") != _access_of(target.sharing):
+            o.lines.append(f"warning: it is shared '{app.get('access')}', the target says "
+                           f"{target.sharing}; share it in ArcGIS, then --check")
+        entry = (record["targets"].get(target_id) or {}).get(APP_KEY)
+        _kind_of(entry, MADE_APP)
+        if not write:
+            o.outcome = "would publish" if entry is None else "would update"
+            o.lines.append("read only: the record is written with --write")
+            return o
+        record["targets"].setdefault(target_id, {})[APP_KEY] = {
+            "kind": MADE_APP, "portal": target.portal, "owner": target.owner,
+            "folder": target.folder, "item_id": item_id, "title": app.get("title"),
+            "config_sha256": sha, "reads": reads, "foreign": foreign,
+            "sharing": target.sharing, "groups": list(target.groups),
+            "door_version": VERSION, "moved_at": now or datetime.now(timezone.utc).isoformat(),
+            "moved_by": by, "reason": reason,
+            "previous": ({"item_id": entry.get("item_id"), "config_sha256": entry.get("config_sha256")}
+                         if entry else None)}
+        write_record(plot_dir, record)
+        o.outcome = "published" if entry is None else "updated"
+        o.lines.append(f"recorded as {target_id} {APP_KEY}")
+    except PublishRefusal as e:
+        o.outcome = "refused"
+        o.lines.append(f"refused: {e.reason}")
+        o.lines.append(f"  would admit it: {e.would_admit}")
+    return o
+
+
+def _check_app(kind, session, target, entry: dict, o) -> None:
+    """an adopted app, read again: its published config by hash, its owner, its
+    folder and its sharing against the target's (D-366)."""
+    app = kind.read_app(session, entry["item_id"])
+    found = []
+    if app is None:
+        found.append(f"app {entry['item_id']} is gone, or this account cannot read it")
+    else:
+        if app.get("owner") != target.owner:
+            found.append(f"owned by {app.get('owner')}, not {target.owner}")
+        if app.get("folder") != target.folder:
+            found.append(f"in folder {app.get('folder')!r}, not {target.folder!r}")
+        if app.get("config") is None:
+            found.append("it has no published config")
+        elif config_sha256(app["config"]) != entry.get("config_sha256"):
+            found.append(f"its published config hashes to {config_sha256(app['config'])[:12]}, "
+                         f"not the recorded {str(entry.get('config_sha256'))[:12]}: it was "
+                         f"published again since it was adopted; read it, then adopt it again")
+        if app.get("access") != _access_of(target.sharing):
+            found.append(f"it is shared '{app.get('access')}', the target says {target.sharing}")
+    if found:
+        o.lines.extend(found)
+    else:
+        o.outcome = "as recorded"
+        o.lines.append(f"app {entry['item_id']} is as adopted")

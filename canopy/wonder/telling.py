@@ -111,6 +111,7 @@ class Language:
     ceiling: float
     claim_words: tuple
     working_ids: re.Pattern
+    kinds: dict = field(default_factory=dict)   # a kind of data, in plain words (PLAINWORDS-1)
 
     @classmethod
     def load(cls, root: str | Path) -> "Language":
@@ -118,7 +119,17 @@ class Language:
         doc = yaml.safe_load(path.read_text()) or {}
         return cls(ceiling=float(doc["reading_grade_ceiling"]),
                    claim_words=tuple(str(w).lower() for w in doc["claim_words"]),
-                   working_ids=re.compile(doc["working_ids"]))
+                   working_ids=re.compile(doc["working_ids"]),
+                   kinds={str(k): " ".join(str(v).split())
+                          for k, v in (doc.get("kinds") or {}).items()})
+
+    def kind(self, semantic_type: str | None) -> str:
+        """a kind of data as a reader would name it: its plain words when the
+        register gives them, else its type with the underscores taken out."""
+        st = str(semantic_type or "")
+        if st in self.kinds:
+            return self.kinds[st]
+        return self.strip(st.replace("_", " ")) or "a kind of data"
 
     def strip(self, text: str) -> str:
         """a sentence with every working id taken out, with the brackets,
@@ -486,8 +497,7 @@ def tell_withheld(record: dict, ctx: TellingContext) -> str:
     the state's row, the one place the whole plot is (D-376)."""
     kinds: dict = {}
     for w in record.get("withheld") or []:
-        what = ctx.language.strip(str(w.get("semantic_type") or "a kind of data")
-                                  .replace("_", " "))
+        what = ctx.language.kind(w.get("semantic_type"))
         why = kinds.setdefault(what, [])
         for r in w.get("refusals") or []:
             said = WITHHELD_WORDS.get(r.get("rule"), "the exposure gate keeps it in")

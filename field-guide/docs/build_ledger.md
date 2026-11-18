@@ -2120,3 +2120,137 @@ PLACES-1 and WITHHELD-1 (the run). Opened: PLAINWORDS-1 (the withheld field in
 plain words), SIZE-3 (the map is 204,552 bytes, 5.4%, larger than session 4's,
 unexplained), PROFTIME-1 (`built_at` inside the hashed bytes, after delivery).
 LIMIT-1 revised: the places map is 4,077 bytes under ITEM_BYTES (4,000,000).
+
+## Sprint 09 session 6: 9b2's consultation and build, the hand-off landed, the lanes (2026-11-18)
+
+Kalli opened a fresh chat with the project's framing and zip 9b1a; Claude read
+the Master Plan's Sprint 09 tab, the fused build plan deck (Finishing Maine,
+early November), reads_9c, 9c_read2, reads_9i, reads_9j, the session 5 hand-off
+and the canonical dry run, then built zip 9b2 in the same chat on Kalli's word
+(she drives the run). Claude had twice tried to hand off before building;
+Kalli named it, and the build went ahead here.
+
+### Found
+
+- The session 5 hand-off zip had been committed inside canopy/ (4354d09), so the
+  repo's state.md and ledger stood at session 4. Landed in aafba57 (state.md and
+  the block) and a48f21b (the zip out of canopy/). The first commit held 2 of 3
+  paths: the `files=(...)` line was not run, so zsh kept an earlier array; the
+  guard committed nothing unintended, and the second try printed STOP for the
+  same reason.
+- The dry run over 49 receipts: 37 may leave, 12 withheld, 0 unjudged, as D-373
+  held. The values tables 9b2 draws: cousub, sldl and sldu `derive_values` and
+  `language_derive_values`; county `derive_values`, `language_derive_values` and
+  `count_derive_values`; state `count_derive_values` and `language_derive_values`;
+  `broadband_derive_values` (its level read in 9b2); the five carriers'
+  `counts_values`. Of these only carriers_counts_values and
+  county_count_derive_values are in the bucket.
+- No receipt holds CII's published values (cii_2026_published), so no county
+  value fills Civic Participation, Equity & Justice or Environmental Resilience
+  today (CIIPUB-1).
+- The crosswalk chain read: cii_broadband's `replicates.column` ("Percent of
+  households with broadband") equals cii_pub_broadband's `derivation.column`,
+  which the weights seed places in News and Information; rent burden and no
+  vehicle sit in Health and Opportunity the same way.
+- Every rewildingcities measure read (language.yml, rewilding.yml, the five
+  carrier seeds) declares a direction, so RAMP-1 can colour each.
+
+### Decided
+
+| ID | Decision |
+| --- | --- |
+| D-383 | A CII row joins a pillar when its `replicates.column` equals a published measure's `derivation.column` and the weights seed places that measure there; a test holds the chain for every row of seeds/crosswalks/pillars/ |
+| D-384 | Carriers are their own lane (Kalli): libraries, news outlets, clerk offices, schools and health centers are never placed in a CII pillar. "The CII stuff is another lane." |
+| D-385 | Lens maps: entry kind arcgis_lens_map, key lens/<pillar>, owned whole by the door and checked by hash as D-380 says; every layer referenced by URL to a joined display copy, so no lens touches the places map's headroom; layers grouped by level (towns, House, Senate, counties), the towns' group and its first measure visible; shares and rates only, counts stay in the profile; never a standing (D-365, D-75); an empty pillar holds the markers copies and says so |
+| D-386 | Words: a lens is a pillar's map; the switch between towns, districts and counties is "the level", in the guide and the app |
+| D-387 | Compare is a page of the app built by hand: two Searches driving two Texts on the places map, the ranges read from the told fields, so the ranges keep one home (the profile) and Compare needs no data or code |
+| D-388 | Sprints 11 and 13 are one zip after 9b2 with one page template: briefs and the data guide as canonical display documents; a brief's link built in Experience Builder from the place's `key`, never a new field (LIMIT-1's 4,077 bytes); the 186 briefs written after the 133rd's rosters (SEN-1, TRIBE-4); "one page" held by a length budget, said as a proxy, since environment.yml holds no page renderer (D-5) |
+| D-389 | The planner waits on the pairing table (P-2). Corrections at delivery: one plain channel with a stated policy; the claims store is designed after delivery (Track E), never Survey123, which would put people's claims in AGOL feature storage |
+
+### Decided in the build (Claude's intuitions, revised against error and drift, on Kalli's go)
+
+| ID | Decision |
+| --- | --- |
+| D-390 | LANES-1: the lanes run by role. Seven lenses: CII's five pillars, then two lanes of ours beside them, our barriers (limited English persons' share, limited English speaking households) and carriers (the five per 1,000). A pillar's members are never typed, only chained (D-383); ours are named in seeds/crosswalks/pillars/cii_2026_lanes.yml with a reason each. Kalli can move any member by editing that seed |
+| D-391 | A lens never draws a count; it draws shares, rates, scores, years and days. A lane of ours may hold no count (refused); a pillar's count (CII's own total of news outlets) is named in the dry run as kept in the profile. Households without broadband is a count, so it is in no lens |
+| D-392 | `--adopt-app` signs in to read, so it goes with --write and one --to; refused for a rehearsal listed in plots/<plot>/publish/rehearsals.yml (read_9a), a non-app, another owner, another folder, or an app never published; it records the config's hash and every item id the config names, and warns of any the door did not make. `--check` reads an adopted app by its config hash, owner, folder and sharing; a later publish in Experience Builder reads as changed until it is adopted again |
+| D-393 | PLAINWORDS-1: plain_language.yml's `kinds` names each withheld kind in a reader's words; a kind it does not name is told by its type, so the dry run shows which still need words. The labels move the told copy's name, and so both places maps |
+
+### Built: zip 9b2
+
+- seeds/crosswalks/pillars/cii_2026_lanes.yml (D-374, D-383, D-390, D-391).
+- canopy/expose/lenses.py: the indicators, the chain, the lanes, the plan, and
+  `read_lens`, which names every copy still to draw with its command.
+- canopy/expose/targets/arcgis_lens.py: a lens as one web map, a GroupLayer per
+  level, the first group and each group's first measure visible, every layer by
+  URL with the door's renderer; an empty lens holds the orientation copy and
+  says so; its words from the bucket's records alone.
+- canopy/expose/targets/arcgis_webmap.py: MADE_LENS, MADE_APP, `build_lens`,
+  `read_app`.
+- canopy/expose/publish.py: `publish_lens` (owed, written and checked as the
+  places map is, D-380; never written with a copy still to draw, LENS-1),
+  `adopt_app`, `check` for lenses (by hash) and apps (by config hash);
+  `_check_places_live` names what it checks.
+- canopy/cli/publish.py: `--lens LANE` (repeatable) and `--adopt-app ITEM`.
+- canopy/wonder/telling.py and seeds/language/plain_language.yml: PLAINWORDS-1.
+- plots/maine/publish/lenses.yml (each level's outline and values tables; the
+  counties' markers for orientation) and rehearsals.yml (read_9a).
+- field-guide/docs/guides/explorer_by_hand.md: the app by hand, ten pages.
+- Tests: tests/test_lenses.py (18), test_adopt_app.py (6),
+  test_plain_withheld.py (3). Run in Claude's sandbox by a stand-in harness
+  (no pytest, pyarrow or shapely there), with test_publish_door.py,
+  test_places_map.py, test_told.py, test_telling.py, test_door_restyle.py,
+  test_webmap_json.py and test_door_choropleth.py beside them: every failure
+  there was the harness (capsys, parametrize, shapely) or a file outside the
+  slice. The real suite runs first. Predicted: 1,533 passed (1,506 plus 27).
+- Not done in 9b2: Contracts 1 and 2 say nothing yet of the lens and app kinds;
+  they are raised at this session's hand-off, after the run, with what the run
+  shows.
+
+### Found in the build
+
+- Every cii_pub_* measure carries a `replicates` block, so the chain places all
+  27 of CII's published measures in their pillars, beside our three that
+  replicate them. A pillar's lens draws any of them a values table holds; none
+  does today (CIIPUB-1). Several are not percents (a score, years, days, dollars
+  per capita, rates per 10,000) and one is a count (Total news outlets).
+- CII's own carrier measures (library visits, journalist equivalents, mental
+  health providers, social associations, public good Facebook pages) sit in
+  CII's pillars by CII's placement. D-384 binds our carriers only.
+- Not yet read: which semantic types the eight withheld receipts carry. The
+  labels name news_outlet, outlet_groups, outlet_stack and located_in_edges;
+  the told dry run says whether those are the types.
+
+### Opened
+
+- CIIPUB-1. Read the manifest's cii_2026_published entry, its license at public
+  (rule 10) and MANIFEST-2 before 9b2 decides whether CII's county values fill
+  the three empty pillars.
+
+### Wrong hypotheses
+
+- That the Master Plan's Sprint 09 tab was the present: state.md was, and three
+  of Claude's four forks were decided already (D-353, D-365, D-366).
+- That split towns were a fork: the geography graph built them (D-76, D-182, D-185).
+- That outlet points refused in test_told.py's fixture was a bug: the delivery
+  cut shows outlets as counts until OUTCONF-1.
+- That Compare needed ranges in the values tables: that would give them two homes.
+- That three pillars would be empty for want of measures, then that CII's
+  published values fill them: neither was read; no receipt holds them (CIIPUB-1).
+- That a lens should draw only percents and per-person rates: CII's life
+  expectancy (years) and heat wave days are values a choropleth draws fairly;
+  the line is counts (D-391).
+- That the session would hand off before the zip: the work was the zip.
+- "D-65" for no standings on a lens: D-365.
+
+### Lessons
+
+- Design from state.md, never from a plan's tab; the tab trails the page.
+- A zip the browser saves inside the repo is committed whole by the next `git add`;
+  find it before anything else.
+- Run `files=(...)` in the same paste as the add that reads it, or zsh keeps an
+  older array.
+- A consultation ends in the zip it designed, not in a hand-off; the hand-off
+  follows the run.
+- A rule about units is written against the seeds' real units, read first: the
+  chain held 27 measures, not 3.

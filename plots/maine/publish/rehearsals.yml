@@ -1,0 +1,9 @@
+# ============================================================================
+# plots/maine/publish/rehearsals.yml ~ items the door never adopts (D-366)
+# ============================================================================
+# rehearsal spaces in the portal: built by hand to read how a widget behaves,
+# never the explorer. `publish --adopt-app` refuses each one by id.
+# ============================================================================
+
+never_adopt:
+  05b3d08a86174f78a725e77e7d833a1e: read_9a, the Experience Builder rehearsal app (Sprint 09 session 1)

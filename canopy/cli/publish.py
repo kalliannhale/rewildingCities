@@ -23,6 +23,19 @@
       told copy and placed on each level's display copy, held inside one web
       map. a dry run unless --write; --replace makes a gone item again
 
+  python -m canopy.cli publish maine --lens carriers --to test
+      a lens (zip 9b2, D-385): one lane's measures as one web map, a group of
+      layers per level, every layer reading a joined copy by URL. a dry run
+      unless --write; it names every copy still to draw, and a lens with any
+      is never written (LENS-1). --lens may be given more than once
+
+  python -m canopy.cli publish maine --adopt-app ITEM --to explorer --write \\
+      --by "Kalli A. Hale" --reason "the explorer, built by hand from the guide"
+      records the Experience Builder app built by hand (D-366): refused unless
+      the target's owner owns it, it sits in the target's folder, it has been
+      published, and plots/<plot>/publish/rehearsals.yml does not list it.
+      it signs in to read the app, so it always goes with --write
+
   python -m canopy.cli publish maine --check
       signs in and reads every recorded item against the record, writing
       nothing (DOORCHECK-1); --to narrows it to those targets
@@ -39,6 +52,8 @@
   --indicator I the one indicator a choropleth colours
   --markers     with --join: the copy drawn as one marker per place
   --check       read every recorded item, write nothing
+  --lens L      a lane of seeds/crosswalks/pillars/; repeatable
+  --adopt-app I with --write and one --to: record the hand-built app
 
 exit codes: 0 every target published, updated, unchanged or a dry run read
 through (with --check: every item as recorded); 1 any target refused or
@@ -79,10 +94,37 @@ def register(subparsers) -> None:
                    help="read every recorded item against the record; writes nothing")
     p.add_argument("--places", action="store_true",
                    help="the explorer's places map, held inside one web map (D-371)")
+    p.add_argument("--lens", action="append", default=[], dest="lenses", metavar="LANE",
+                   help="a lens: one lane's measures as one web map (D-385); repeatable")
+    p.add_argument("--adopt-app", default=None, dest="adopt_app", metavar="ITEM_ID",
+                   help="record the hand-built Experience Builder app (D-366); with --write "
+                        "and one --to")
     p.set_defaults(func=run)
 
 
 def _asked_wrongly(args) -> str | None:
+    lenses, app = getattr(args, "lenses", None) or [], getattr(args, "adopt_app", None)
+    if lenses or app:
+        if getattr(args, "check", False) or getattr(args, "places", False) or args.artifact:
+            return "--lens and --adopt-app take no artifact, --check or --places"
+        if lenses and app:
+            return "a lens and the app are two runs"
+        if args.adopt or getattr(args, "join", None) or getattr(args, "indicator", None) \
+                or getattr(args, "markers", False) or args.display:
+            return "--lens and --adopt-app take no --adopt, --display, --join, --indicator or --markers"
+        if not args.targets:
+            return "name at least one target with --to"
+        if len(set(args.targets)) != len(args.targets):
+            return "a target is named twice"
+        if len(set(lenses)) != len(lenses):
+            return "a lens is named twice"
+        if app and (len(args.targets) != 1 or not args.write):
+            return "--adopt-app records one app in one target, so it goes with --write and one --to"
+        if args.write and not ((args.by or "").strip() and (args.reason or "").strip()):
+            return "--write needs --by and --reason: the record says who published and why"
+        if args.replace and (app or not args.write):
+            return "--replace goes with --write and a lens"
+        return None
     if getattr(args, "check", False):
         if args.artifact:
             return "--check reads every recorded item; it takes no artifact"
@@ -134,7 +176,7 @@ def run(args) -> int:
         print(f"asked wrongly: {problem}", file=sys.stderr)
         return 2
     from canopy.aws.s3 import CanonicalRefusal
-    from canopy.expose.publish import check, publish, publish_places
+    from canopy.expose.publish import adopt_app, check, publish, publish_lens, publish_places
     from canopy.expose.targets import PublishRefusal
     if getattr(args, "check", False):
         try:
@@ -154,6 +196,38 @@ def run(args) -> int:
             bad += o.outcome != "as recorded"
         print(f"\n{len(outcomes) - bad} of {len(outcomes)} items as recorded; "
               f"nothing was written")
+        return 1 if bad else 0
+    if getattr(args, "adopt_app", None):
+        try:
+            o = adopt_app(args.plot, args.adopt_app, args.targets[0], root=find_root(),
+                          write=args.write, by=(args.by or "").strip() or None,
+                          reason=(args.reason or "").strip() or None)
+        except (PublishRefusal, CanonicalRefusal) as e:
+            print(f"app  refused: {e.reason}", file=sys.stderr)
+            print(f"   would admit it: {e.would_admit}", file=sys.stderr)
+            return 1
+        print(f"app to {o.target}: {o.outcome}")
+        for line in o.lines:
+            print(f"   {line}")
+        return 1 if o.outcome in ("refused", "failed") else 0
+    if getattr(args, "lenses", None):
+        bad = 0
+        for lane in args.lenses:
+            try:
+                outcomes = publish_lens(args.plot, lane, args.targets, root=find_root(),
+                                        write=args.write, by=(args.by or "").strip() or None,
+                                        reason=(args.reason or "").strip() or None,
+                                        replace=args.replace)
+            except (PublishRefusal, CanonicalRefusal) as e:
+                print(f"lens {lane}  refused: {e.reason}", file=sys.stderr)
+                print(f"   would admit it: {e.would_admit}", file=sys.stderr)
+                bad += 1
+                continue
+            for o in outcomes:
+                print(f"lens {lane} to {o.target}: {o.outcome}")
+                for line in o.lines:
+                    print(f"   {line}")
+                bad += o.outcome in ("refused", "failed")
         return 1 if bad else 0
     if getattr(args, "places", False):
         try:

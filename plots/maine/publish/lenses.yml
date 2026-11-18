@@ -1,0 +1,32 @@
+# ============================================================================
+# plots/maine/publish/lenses.yml ~ what the Maine plot's lenses draw (D-385)
+# ============================================================================
+# the lanes are national (seeds/crosswalks/pillars/); this file says where the
+# Maine plot holds their measures: for each level, in the order the lens's
+# groups are listed, the outline its tables are drawn on and the values tables
+# drawn there. a lens takes from each table the members of its lane the
+# table's joined copy holds, and nothing else. every table listed must have a
+# joined copy on its outline's current version before a lens is written
+# (LENS-1): a dry run names each one still to draw, with the command.
+#
+# orientation is the copy an empty lens shows, so a reader sees Maine and the
+# words saying nothing is placed there yet.
+# ============================================================================
+
+orientation: outline_counties_outline
+
+levels:
+  cousub:
+    outline: outline_towns_outline
+    tables: [cousub_derive_values, cousub_language_derive_values, carriers_counts_values,
+             libraries_counts_values, clerk_offices_counts_values, schools_counts_values,
+             health_centers_counts_values]
+  sldl:
+    outline: outline_house_outline
+    tables: [sldl_derive_values, sldl_language_derive_values]
+  sldu:
+    outline: outline_senate_outline
+    tables: [sldu_derive_values, sldu_language_derive_values]
+  county:
+    outline: outline_counties_outline
+    tables: [county_derive_values, county_language_derive_values]

@@ -5,7 +5,7 @@ build ledger (field-guide/docs/build_ledger.md) is the history; this page is
 the present. When the two disagree, the ledger and the code win, and this page
 is fixed.
 
-**Updated:** 2026-11-18, at Sprint 09 session 5's hand-off. Sprint 09 is in progress: zip 9b1 is built, run and committed, and the explorer's places map is public (item 6cdfb76c64bb4a59a1ecf34de17d796d, 7 of 7 items as recorded). Session 5 read R5 clean (D-367 holds), settled WTABLE-1 by Esri's web map specification (a web map table is by URL only, D-376), built zip 9b1 on Kalli's word (go with the intuitions, revised against error and drift: D-377 to D-381) and a fix, 9b1a, after the refusal record's dry run caught the write's own refusals counted as the gate's; then ran it: the nine retired, the state outline, five markers copies, the towns' web_250m (ROUND-2 closed: every shape valid after rounding), the refusal record, the told copy, the places map to test and to the explorer. The explorer goes to the library within the delivery window (Kalli). Next: zip 9b2's consultation.
+**Updated:** 2026-11-18, at Sprint 09 session 6. Sprint 09 is in progress. Session 6 landed the session 5 hand-off (aafba57, a48f21b), held 9b2's consultation (D-383 to D-389) and built zip 9b2 in the same chat (D-390 to D-393): the lanes seed and its chain, seven lenses (CII's five pillars and two lanes of ours, by role), `publish --lens`, `publish --adopt-app`, PLAINWORDS-1, and the guide for building the app by hand. Next: 9b2's run (Starting the next session).
 
 ## Where the build stands
 
@@ -14,7 +14,7 @@ is fixed.
 - Profiles: `python -m canopy.cli profile maine` builds all 1,663 places in about five minutes into plots/maine/.data/place_profile_profiles.json. Rebuilt 2026-11-18 on the fixed standard (D-357) and written canonically (824e79d23b1d). Rebuilt again in session 5 after the retirement: 281851f1fd97, identical to 824e79d23b1d with every `built_at` set aside (D-382), so not written; the bucket's version stays current and the explorer tells it. `canonical maine place_profile_profiles` now says it would write; that is the clock, not a change, and nothing is owed (PROFTIME-1). A change to the standard, the notes or a profile's wording means a rebuild and a new version.
 - The telling: canopy/wonder/telling.py turns a profile into the explorer's text fields (D-351). Its register is seeds/language/plain_language.yml (D-352); tests/test_telling.py holds every field to it. `tell_withheld` tells the refusal record on the state's row (D-376, D-378); its type names are still working vocabulary (PLAINWORDS-1).
 - Plan of record: the Master Plan, https://claude.ai/artifact/KpQRRSTyXr27emXnJFfL6z. Its Sprint 08 tab is marked done at this hand-off. Check its claims against this page and the code.
-- Next decision ID: **D-383**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
+- Next decision ID: **D-394**. Before minting any ID, grep the ledger for it **before** appending a block that names it: a block's own line satisfies a later grep (session 2). Item IDs too.
 - **Sprint 08 is closed** (session 2). Progress: field-guide/docs/progress/infrastructure/sprint-08.md. **Sprint 07 is closed** (session 2 of Sprint 07). Progress: field-guide/docs/progress/infrastructure/sprint-07.md.
 - **The canonical bucket.** Kalli's account, us-east-2 (D-301). REWILDING_CANONICAL_BUCKET and REWILDING_CANONICAL_DOMAIN are set in the rewilding env (`conda env config vars`), never in the repo; the write assumes rewilding-canonical-writer through the rewilding-writer profile. CloudFront: dvk5mp17wovwb.cloudfront.net.
 - **Canonical objects written** (every write public and permanent; dry-run first, one artifact at a time, read the pointer and data back after):
@@ -109,6 +109,17 @@ Contract 4 said the door makes no ArcGIS item of a profile; the places map rever
 | D-380 | The door owns the whole places map: `check` compares the D-362 hash of its stored JSON, any other change reads as changed by hand, a move rewrites it whole (narrowing D-328 for this kind) |
 | D-381 | D-370 revised: the told copy is named by the hash of told.py, telling.py, place.py, the notes and plain_language.yml, and the refusal record's version; the standard reaches the telling only through the profile's version |
 | D-382 | A profile rebuild's hold is the same places with every `built_at` set aside, since the profile stamps a time into every place and no rebuild can repeat its version. Read in session 5: identical, so D-373's retirement changed nothing the profile says, and the bucket's 824e79d23b1d stays current |
+| D-383 | A CII row joins a pillar when its `replicates.column` equals a published measure's `derivation.column` and the weights seed places that measure there; a test holds the chain for every row |
+| D-384 | Carriers are their own lane (Kalli): libraries, news outlets, clerk offices, schools and health centers are never placed in a CII pillar |
+| D-385 | Lens maps: entry kind arcgis_lens_map, key lens/<pillar>, owned whole and checked by hash (D-380); layers by URL to joined display copies, grouped by level, towns visible first; shares and rates only; never a standing (D-365, D-75); an empty pillar holds the markers copies and says so |
+| D-386 | A lens is a pillar's map; the switch between towns, districts and counties is "the level" |
+| D-387 | Compare is a page of the hand-built app: two Searches, two Texts, ranges from the told fields; no data or code |
+| D-388 | Sprints 11 and 13 are one zip after 9b2, one page template: briefs and the data guide as canonical display documents; a brief's link built from `key` in Experience Builder (LIMIT-1); briefs written after the 133rd's rosters; one page held by a length budget, a proxy (no page renderer, D-5) |
+| D-389 | The planner waits on P-2. Corrections at delivery: one plain channel and a stated policy; the claims store after delivery (Track E), never Survey123 |
+| D-390 | LANES-1: the lanes run by role. Seven lenses: CII's five pillars, then ours, barriers (limited English persons' share, limited English speaking households) and carriers (the five per 1,000), each named in seeds/crosswalks/pillars/cii_2026_lanes.yml with its reason |
+| D-391 | A lens never draws a count (shares, rates, scores, years and days it draws); a lane of ours holds none; a pillar's count is named and kept in the profile |
+| D-392 | `--adopt-app` goes with --write and one --to; refused for a listed rehearsal, a non-app, another owner or folder, or an unpublished app; records the config's hash and the items it reads, warning of any the door did not make; `--check` reads it by config hash, owner, folder and sharing |
+| D-393 | PLAINWORDS-1: plain_language.yml's `kinds` names each withheld kind; an unnamed kind is told by its type |
 
 ## Sprint 08 ~ the publish door (closed in session 2)
 
@@ -640,7 +651,9 @@ Sorted for delivery (Kalli asked, session 8). **Delivery (Kalli, session 8):** t
 | --- | --- |
 | CARRY-1 | loam's carriers view carries only id, name and coordinates. The door's points copies already carry every property, so the explorer may never need it: decide when the explorer's layers are drawn (D-347) |
 | EDGE-NOTE-1 | located_in_edges receipts name no row notes, so rule 9 withholds the five carriers' edges; two lines in build_located_in and five reruns, only if the explorer needs carriers' edges in the bucket. Split towns do not: their shares are in every profile (corrected in session 1) |
-| LENS-1 | Zip 9b2 (D-365, D-374): the two-pillar question is answered (CII places each indicator in exactly one). Still to read: seeds/indicators/language.yml and carriers.yml (directions, and where our own measures sit). Every values table is written canonically and joined before any lens exists |
+| LENS-1 | Zip 9b2 (D-365, D-383 to D-386). The values tables to write and join, from session 6's dry run: cousub, sldl and sldu `derive_values` and `language_derive_values`; county `derive_values`, `language_derive_values` and `count_derive_values`; state `count_derive_values` and `language_derive_values`; `broadband_derive_values` (its level read first); the five carriers' `counts_values`. Only carriers_counts_values and county_count_derive_values are in the bucket |
+| LANES-1 | Closed by D-390 (session 6) |
+| CIIPUB-1 | No receipt holds CII's published values, so Civic Participation, Equity & Justice and Environmental Resilience hold no value today. Read the manifest's cii_2026_published entry, its license at public (rule 10) and MANIFEST-2 before 9b2 decides |
 | APPCHECK-1 | Zip 9b (D-366) |
 | PLAINWORDS-1 | The state's withheld field is public and reads in working vocabulary: "Located in edges", "Outlet stack", and "it must carry a context note that it does not carry yet" (the gate's bookkeeping). Plain labels per kind of data in telling.py, then a new told copy and a move of both places maps. Small; before the app is featured |
 | SIZE-3 | The places map is 3,995,923 bytes, 204,552 (5.4%) more than session 4's shapes map; the state's row explains a few KB. Compare the two maps layer by layer before LIMIT-1's line is set |
@@ -866,16 +879,25 @@ Kalli delivers the whole product: every sprint, the publish route (Sprint 08) an
 
 ## Starting the next session
 
-Kalli uploads this hand-off's zip (s09_s5_handoff.zip). Claude reads field-guide/docs/state.md inside it whole, the retrospectives first, confirms, and asks for what the next step's design needs. Files move as How files move says. Ask whether the repo is current (this hand-off's commit at HEAD, clean, pushed). A zip Claude makes may land wherever Kalli's browser last saved, twice this session inside canopy/: find it with `find . ~/Downloads -maxdepth 3 -name "<zip>"` and move it out of the repo before unzipping.
+Kalli uploads this hand-off's zip (s09_s6_handoff.zip). Claude reads field-guide/docs/state.md inside it whole, the retrospectives first, confirms, and asks for what the next step's design needs. Files move as How files move says. Ask whether the repo is current (this hand-off's commit at HEAD, clean, pushed). A zip Claude makes may land wherever Kalli's browser last saved, twice this session inside canopy/: find it with `find . ~/Downloads -maxdepth 3 -name "<zip>"` and move it out of the repo before unzipping.
 
-**Next: zip 9b2's consultation** (the Master Plan's Sprint 09 tab; D-375). Sprint 09 is done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer. The places map is public; 9b2 makes the rest.
+**Next: zip 9b2's run** (D-383 to D-393). Sprint 09 is done when someone who has never seen the project can find their town, learn its barriers and carriers, and see what the tool cannot yet answer.
 
-1. **9b2's reads, named before any design:** seeds/indicators/language.yml and carriers.yml (the crosswalk's placements, D-374); the values tables' receipts and their joins (canopy/aws/display.py's draw_joined); canopy/expose/targets/arcgis_webmap.py and arcgis_places.py (lens maps beside the places map); canopy/expose/publish.py (`--adopt-app`, D-366); tests/test_places_map.py's fakes.
-2. **9b2's consultation:** what the zip holds, about four forks with intuitions, and the three things a zip cannot hold.
-3. **PLAINWORDS-1**, small, can ride with 9b2: plain labels for the withheld field, then the told copy and both places maps moved. Watch LIMIT-1's 4,077 bytes of headroom.
-4. **9b2's build and run**, then the app built by hand in Experience Builder from the guide, and `--adopt-app`.
+1. **The suite first:** predicted 1,533 passed (1,506 plus test_lenses.py 18, test_adopt_app.py 6, test_plain_withheld.py 3). 9b2's tests ran only in a stand-in harness in Claude's sandbox.
+2. **One lens dry run:** `python -m canopy.cli publish maine --lens our_barriers --to test`. It names every values table still to write and every joined copy still to draw, with each command (LENS-1). That list is the run's work order.
+3. **The values tables**, one at a time: each `canonical maine <table>` dry run read before its `--write`, then each `--display --join <outline>` dry run read before its `--write`.
+4. **The seven lenses to test**, private, each dry run first (`--lens news_information --lens civic_participation --lens equity_justice --lens health_opportunity --lens environmental_resilience --lens our_barriers --lens carriers`), then `--check`; then to the explorer on Kalli's word.
+5. **PLAINWORDS-1:** the told dry run read first (`canonical maine place_profile_profiles --told --local`); its withheld sentence read as a reader would, since it leaves in public. Then the told copy written and both places maps moved, each dry run first.
+6. **The app by hand** from field-guide/docs/guides/explorer_by_hand.md, every click written in the ledger; then `--adopt-app` and `--check`.
 
 After 9b2: Sprint 09's progress report, the Master Plan's stale "Where it stands" and Sprint 09 tab (its forks are D-350, D-361 and D-375 now), and the delivery blockers before handover (NAMES-1, OUTCONF-1 and the rest under Blocks delivery).
+
+## Sprint 09 session 6's notes (9b2's consultation, the hand-off landed, the lanes)
+
+- What went right: reading state.md caught that three of four proposed forks were already decided; the canonical dry run, not memory, named the values tables; the crosswalk chain was read end to end before it was claimed.
+- Wrong hypotheses: the Master Plan's tab as the present; split towns as a fork; ranges in the values tables (two homes); empty pillars, then CII-filled pillars, both unread (CIIPUB-1); "D-65" for D-365.
+- Lessons: design from this page, never a plan's tab; a zip the browser saves inside the repo gets committed whole; `files=(...)` runs in the same paste as the add.
+- Session shape: one chat held the project's framing, five reads, the hand-off landed in two commits, 9b2's consultation, and zip 9b2's build (Claude had twice reached for a hand-off before the zip; Kalli named it).
 
 ## Sprint 09 session 5's notes (R5, 9b1 built and run, the explorer's places public)
 

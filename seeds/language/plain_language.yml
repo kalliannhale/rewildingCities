@@ -19,6 +19,11 @@
 #                           (D-271, OBS-1, P-6, step 7b), a gate rule's number
 #                           (rule 5) or a Census table
 #                           code (B25071_001E); this pattern finds them
+#   kinds                   a kind of data the map holds back, in the words a
+#                           reader would use, for the state's withheld field
+#                           (PLAINWORDS-1). a kind not named here is told by
+#                           its type with the underscores taken out, so the
+#                           dry run's sentence says which still needs words
 # ═══════════════════════════════════════════════════════════════════════════════
 
 reading_grade_ceiling: 9
@@ -31,3 +36,9 @@ claim_words:
   - honesty
 
 working_ids: '\b[A-Z][A-Z0-9]*-\d+\b|\bstep \d+[a-z]?\b|\b[A-Z]+\d+[A-Z]?_\d+[A-Z]*\b|\brule \d+\b'
+
+kinds:
+  news_outlet: news outlets, by name and place
+  outlet_groups: news outlet records, matched across the source lists
+  outlet_stack: every source list of news outlets, stacked together
+  located_in_edges: which town each library, school, clinic, clerk's office or news outlet is in

@@ -4,7 +4,9 @@ canopy/expose/targets ~ the kinds of place the publish door can write to
   arcgis          an ArcGIS portal, by REST (D-326, D-371). it makes web maps
                   whose layer reads a display copy by URL (arcgis_webmap), and
                   the places map, which holds the explorer's places inside it
-                  (arcgis_places_map, arcgis_places.py)
+                  (arcgis_places_map, arcgis_places.py), the lenses, one lane's
+                  measures by URL (arcgis_lens_map, arcgis_lens.py, D-385), and
+                  it reads the hand-built app it records (arcgis_app, D-366)
 
 a kind is a TargetKind (base.py) registered here by name; targets.yml names
 the kind each target is, and each recorded entry names what was made. ~

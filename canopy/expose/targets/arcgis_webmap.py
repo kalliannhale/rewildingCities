@@ -50,6 +50,8 @@ from .base import Built, PublishRefusal, Target, TargetKind
 KIND = "arcgis"                     # the portal a target speaks to (D-371)
 MADE_WEBMAP = "arcgis_webmap"       # what an entry says the door made: a map
 MADE_PLACES = "arcgis_places_map"   # reading a copy by URL, or the places map
+MADE_LENS = "arcgis_lens_map"       # one lane's measures, every layer by URL (D-385)
+MADE_APP = "arcgis_app"             # an Experience Builder app, adopted (D-366)
 SPEC_VERSION = "2.38"
 OBJECTID = "__OBJECTID"
 TOKEN_MINUTES = 60
@@ -534,6 +536,37 @@ class ArcGISWebMap(TargetKind):
         """the places map for the parents the door read (arcgis_places.py)."""
         from .arcgis_places import build_places
         return build_places(places, self.version)
+
+    def build_lens(self, target: Target, lens: dict) -> Built:
+        """one lane's lens for the copies the door read (arcgis_lens.py, D-385)."""
+        from .arcgis_lens import build_lens
+        return build_lens(lens, self.version)
+
+    def read_app(self, session, item_id: str) -> dict | None:
+        """an Experience Builder app as it stands, for --adopt-app (D-366):
+        {owner, access, type, title, folder, config}. folder is the title of the
+        owner's folder that holds it (None at the owner's root, or when the
+        folder list cannot be read); config is its published config, the item
+        resource config/config.json, or None when it was never published."""
+        portal, token = session["portal"], session["token"]
+        item = portal.item(item_id, token)
+        if item is None:
+            return None
+        folder = None
+        if item.get("ownerFolder"):
+            try:
+                folders = portal.get(f"content/users/{item.get('owner')}", token).get("folders")
+            except PortalError:
+                folders = []
+            folder = next((f.get("title") for f in folders or []
+                           if f.get("id") == item.get("ownerFolder")), None)
+        try:
+            config = portal.get(f"content/items/{item_id}/resources/config/config.json", token)
+        except PortalError:
+            config = None
+        return {"owner": item.get("owner"), "access": item.get("access"),
+                "type": item.get("type"), "title": item.get("title"), "folder": folder,
+                "config": config}
 
     def build(self, target: Target, copy: dict) -> Built:
         layer_id = "rewilding-" + str(copy.get("key") or copy["artifact"]).replace("/", "-")
