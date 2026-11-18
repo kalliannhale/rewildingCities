@@ -1996,3 +1996,55 @@ Repo at 75595fd, clean, at session 3's start. No product code changed in either 
 - A kind built for one shape keys its checks on that shape's fields; a new shape breaks them in silence, so the checks are read before the shape is added.
 - A state page is rewritten whole at a hand-off, or its header says something false.
 - A working agreement spread over several lines drifts: the zip workflow had three lines that disagreed (ledger blocks inline, appended with cat >>, and inside a zip). It now has one home, state.md's How files move, and the other lines point to it (Kalli).
+
+## Sprint 09, session 4 (2026-11-18): the polygon read, the towns as shapes, 9b designed
+
+Repo at 9a69de8, clean, at the session's start; level with origin. No product code changed. Two strays at the repo root were removed: reads_9c.zip and _sprint08/, which held run_8b.md (8 KB, written 2026-11-18 01:38), deleted with it; Sprint 08's run record was committed in 07111bf, and whether run_8b.md held anything else is not known.
+
+### Reads
+
+- reads_9e (canopy/aws/display.py, canopy/expose/targets/arcgis_webmap.py, whole). `_simplify_coverage` refuses only a place emptied whole; a place that loses an island and keeps its mainland passes. Esri JSON winds outer rings clockwise and holes counterclockwise, the opposite of RFC 7946. Each level is simplified as its own coverage.
+- The polygon read, twice (tests/rehearsals/sprint-09/polygons_read_9e.txt, polygons_read_9e2.txt): the rehearsal's `--polygons`, the door's own `_simplify_coverage`, the door's `_mercator`, rings wound Esri's way, bytes in D-362's form, only places with a told row measured. The points map read 2,351,368 bytes, f640fc4e8897, both times (the refactor of `build()` changed nothing), and 2,351,336 in D-362's form: exactly what ArcGIS stored in session 3.
+  - Bytes, every level shaped, at 1 m: 29,884,615 (25 m), 11,604,012 (100 m), 7,792,156 (250 m), 6,740,278 (500 m). Towns alone shaped, every other level a point: 9,543,127, 4,779,523, 3,791,371, 3,512,660. At 0.1 m: 3,791,371 becomes 4,061,663 at 250 m.
+  - No place lost a part at any tolerance. Area shrinks instead: the least kept among towns is Penobscot Indian Island Reservation (94.3%) at 100 m and Muscle Ridge Islands UT (75.5%, 56.6%) at 250 and 500 m; among tribal areas, Penobscot Reservation (2760R) keeps 74.9% at 500 m.
+  - Validity: every canonical outline valid; every shape valid after simplifying, the door's 25 m included; 1 to 4 per level invalid after rounding to 1 m (self-intersections), all valid at 0.1 m but York County at 500 m. Towns at 250 and 500 m are valid at 1 m. One point near Lewiston fails in Androscoggin County, Senate District 21, House District 94 and Lewiston city: levels that share a border share its flaw.
+- reads_9f (35 files, 9,168 lines; canonical_all_9f.txt): all five recorded entries already name `kind: arcgis_webmap`; `publish()` reads one artifact with one parquet parent (`_current` refuses data.json); `check()` keys on a layer URL and compares sharing with the record, not the target; pillar membership lives only in seeds/weights/cii_2026_equal_chips.yml, keyed on CII's published indicators, each of the 27 in exactly one pillar; TellingContext.load reads the standard, the notes and plain_language.yml beside the profile. The dry run names the stale nine: outlets_disagreements, outlets_groups and outlets_stack (rule 10); dissolve_counties, repair_counties, repair_towns, units_dissolve, units_geoid and units_repair (rule 4).
+- The exact-name read (WITHHELD-1): no live reader. The outlets_* and units_* receipts name only each other; dissolve_counties and repair_counties appear in tests/test_receipt_names.py's known pairs and test_map_indicators.py's fixture dict; units_repair in test_preparations.py's tmp-plot fixtures; units_geoid in demo/index.html's old console figure.
+
+### Rehearsals
+
+- The shapes map, sent private to rewildingCities test as 7079e2b4d1234db48f12ac1dcbe51478 (places_polygons_sent.json): towns as shapes at 250 m rounded to 1 m, every other level a point, layer order county, sldu, sldl, cousub, aiannh (the last drawn on top). 3,791,371 bytes sent in D-362's form; `--polygons --check` read it private, 3,791,371 bytes, canonical sha256 4927ecdb6d44, SAME as sent, 5 of 5 layers, every count back. D-362 holds at the moment of sending. R5 has not yet been read on it.
+
+### Decided (Kalli: revise against error and drift, then go with the intuitions)
+
+- D-367. The places map draws towns as shapes at 250 m and every other level as a point; tribal points drawn last (STACK-1). Rests on R5, and reopens if a click on a shape does not move Text.
+- D-368. Never send an invalid shape: a shaped level rounds to 1 m; any place invalid, emptied or with a ring collapsed sends the whole level to 0.1 m, so neighbours keep one edge; a failure there refuses the level, named. Held by a test.
+- D-369. The towns' shapes come from a canonical display copy, web_250m; the door only projects, rounds, winds and applies D-368, and says so in the description.
+- D-370. The told rows are a canonical display document under the profile's version, told_<inputs sha12>.json with its envelope, named by the hash of every input the telling reads, so a changed seed is a new name (D-322). A `told` step joins rule 11's closed set; Contract 2's section 4 admits a document copy. The door reads the told copy, never the profile.
+- D-371. The places map is its own door path (`publish <plot> --places`), entry kind arcgis_places_map, key `places`, owed a move when the told copy, an outline or the towns' copy moves. A target's `kind` names the portal it speaks to (arcgis); an entry's `kind` names what the door made; an entry with none is refused. Revises D-364's mechanism.
+- D-372. `check()` compares a places map by the D-362 hash of its stored JSON, and every item's sharing with its target's.
+- D-373. The nine stale receipts move to plots/maine/.data/retired with their data files. Held after: 49 receipts, 37 may leave, 12 withheld (8 gate, 4 write); a profile rebuild still 824e79d23b1d.
+- D-374. The pillar crosswalk is national: membership by `replicates` alone; any other placement a declared row with its reason, defined_by rewildingcities, told as ours. Placements wait for language.yml and carriers.yml (9b2).
+- D-375. 9b is two zips, 9b1 and 9b2, each consulted briefly and built in a fresh chat.
+
+### Opened
+
+- WTABLE-1. Where the withheld table is shown: a web map table inside the places map, if Experience Builder's Table widget reads one; otherwise a told field.
+- DEMO-2. demo/index.html shows an old run naming units_geoid_with_geoid.
+- ROUND-2. The published display copies round to six decimals of a degree; validity after that rounding is unread.
+
+### Wrong hypotheses
+
+- That islands would lose parts at coarse tolerances: none did; they shrink.
+- That the first read's label, "made invalid by the rounding", was earned: it was right, and unproven until validity was read before the rounding too.
+- That the five recorded entries needed their kind written: they already named it.
+- That _sprint08/ held only helpers: it held run_8b.md.
+- That the door could carry the places map as a flag: it reads one parquet parent, and the profile is a document.
+
+### Lessons
+
+- Read a shape's validity at every stage it passes, or a failure is laid at the wrong step.
+- A border's flaw appears in every level that shares it.
+- Name a derived copy by every input that can change it, not only its parent.
+- A folder named for helpers is read before it is deleted.
+- The explorer's weight is a digital-access barrier of its own; the told text, not the shapes, is most of it (2.35 of 3.79 MB).
