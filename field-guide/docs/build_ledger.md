@@ -2048,3 +2048,75 @@ Repo at 9a69de8, clean, at the session's start; level with origin. No product co
 - Name a derived copy by every input that can change it, not only its parent.
 - A folder named for helpers is read before it is deleted.
 - The explorer's weight is a digital-access barrier of its own; the told text, not the shapes, is most of it (2.35 of 3.79 MB).
+
+## Sprint 09 session 5: R5, zip 9b1 built and run, the explorer's places public (2026-11-18)
+
+R5 read clean on all six (Kalli): a click on a town shape moves Text; on Indian
+Island the dot answers the nation and the shape the town; Search still moves
+the map and Text; a Senate district's shares field reads well; the map loads
+well on Kalli's connection; `--polygons --check` read private and SAME. So
+D-367 holds, and EXPLORE-1, STACK-1 and SHARES-1 close. The explorer goes to
+the library within the delivery window, so 9b1 and 9b2 are both due in it.
+
+WTABLE-1's spec read (Esri's web map specification, the `table` object): a web
+map table is defined by a URL to a table in a feature or map service and has no
+featureCollection property, unlike a feature layer. A table inside the places
+map would need a hosted table, which Contract 4 and the feature storage crisis
+keep out.
+
+| ID | Decision |
+| --- | --- |
+| D-376 | WTABLE-1: the withheld rows are told in one field, `withheld`, on the state's row, and the state joins the places map as a sixth level, a point, so the field has a clickable home. Told from the refusal record, so it moves when the record moves; never typed into an Experience Builder widget (Kalli) |
+| D-377 | Every level but the towns is drawn from a canonical `markers` copy of its outline (`canonical <plot> <outline> --display --markers`), one point on each place's own surface, recorded `marked`, named `markers` under the outline's version. Every shape and point in the explorer comes from a gated copy with an envelope, and the door stays geopandas-free (Kalli: go with the intuitions, revised against error and drift) |
+| D-378 | telling.py writes the withheld field (`tell_withheld`), each kind of data once with why, in the register plain_language.yml holds; the refusal record is told with the profile, so its version is in the told copy's name and the record is written first. It is named in the told entry's params, never as an input, since it is no semantic type and an input's type binds rule 2 |
+| D-379 | ROUND-2: a polygon display copy's `rounded` record names every shape its rounding leaves invalid, by id, or says every shape is valid; it is never refused for it. The door refuses to send one (D-368), and the towns' web_250m dry run is ROUND-2's read |
+| D-380 | The door owns the whole places map: `check` compares the D-362 hash of its stored JSON, any other change to it reads as changed by hand, and a move rewrites it whole. This narrows D-328 for this one kind, and the item's description says so |
+| D-381 | D-370 revised: the told copy is named by the hash of canopy/aws/told.py, canopy/wonder/telling.py, canopy/wonder/place.py (whose `_count` and `_pct` telling imports), seeds/notes/notes.yml and seeds/language/plain_language.yml, and the refusal record's version. The standard is not an input: telling reads it only through the profile, whose version is already the copy's own |
+| D-382 | A profile rebuild's hold is the same places with every `built_at` set aside: the profile stamps a time into every place, so no rebuild repeats its version. Read in the run: rebuilt as 281851f1fd97, identical to 824e79d23b1d without `built_at`, so the retirement changed nothing the profile says; the rebuilt profile is not written and the bucket's version stays current (Kalli) |
+
+Built: zip 9b1 (24 files) and zip 9b1a (6 files). canopy/aws/told.py (the refusal
+record and the told copy); `canonical --refusals` and `--told`; `--display
+--markers` for an outline alone; the `rounded` record says validity;
+canopy/expose/targets/arcgis_places.py (the places map: D-361, D-362, D-367 to
+D-369); `publish --places` with its own entry kind and key (D-371); `check`
+compares every item's sharing with its target's, a places map by its stored hash,
+and says a stale refusal record (D-363, D-372); a target's kind is `arcgis`, the
+old value refused with its new name, and each entry names what the door made
+(D-371); `told` joins rule 11's closed set. Contracts 1 (0.9), 2 (0.6) and 4 (0.6)
+raised. Tests: 1,506 passed (test_places_map.py 24, test_told.py 20,
+test_display_markers.py 5).
+
+9b1a: the refusal record's first dry run held 10, not 8. validate_counties_checked
+and validate_towns_checked are MEGIS's own layers passed through, refused by the
+canonical write before it asks the gate (D-297, D-337), and refused by the gate
+too (rule 4). Told, they would have said the towns and counties the map shows were
+withheld. The record now names a receipt the write refuses before the gate apart
+(`refused_before_the_gate`) and never tells it, as D-363 already said; Contract
+1's paragraph reworded. The stale `publish` help line fixed with it.
+
+The run, in order: the suite (1,505, then 1,506 after 9b1a); the nine moved to
+plots/maine/.data/retired with their data files (18 files, 0 flagged; D-373),
+then 49 receipts, 37 may leave, 12 withheld; the profile rebuilt and read (D-382);
+outline_state_outline written (c15851b5bb9b, allow ef0603f94c6b); five markers
+copies (state 1, counties 16, Senate 35, House 151, tribal 8); the towns' web_250m
+(528 shapes, 75,172 vertices, 2.0 MB, every shape valid after rounding, so ROUND-2
+closes, D-379); the refusal record (dddf81863049: 8 withheld by the gate, the
+four carriers and four located-in edges; the two validates named apart); the told
+copy told_20d8f35f247e of 824e79d23b1d (740 places, 2,273,066 bytes; `--local`
+told the rebuilt 281851f1fd97 under the same name); the places map to test
+(865b9979d41843e2a4c3fe2ff696e734, private) and to the explorer
+(6cdfb76c64bb4a59a1ecf34de17d796d, public): six levels, 1, 16, 35, 151, 528 shapes
+at 1 m and 8 tribal points on top; Penobscot Indian Island Reservation
+(2300357936) left out and named (INDIAN-1); 3,995,923 bytes, stored SAME as sent;
+`--check` 7 of 7 as recorded.
+
+Read after the public write: the state's withheld field reads "This tool holds 4
+kinds of data that this map does not show", then located-in edges, news outlet,
+outlet groups and outlet stack, each with why. Its type names are working
+vocabulary (PLAINWORDS-1).
+
+Closed: EXPLORE-1, STACK-1, SHARES-1 (R5); WTABLE-1 (D-376); ROUND-2 (D-379);
+PLACES-1 and WITHHELD-1 (the run). Opened: PLAINWORDS-1 (the withheld field in
+plain words), SIZE-3 (the map is 204,552 bytes, 5.4%, larger than session 4's,
+unexplained), PROFTIME-1 (`built_at` inside the hashed bytes, after delivery).
+LIMIT-1 revised: the places map is 4,077 bytes under ITEM_BYTES (4,000,000).
