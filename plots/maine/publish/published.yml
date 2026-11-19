@@ -260,9 +260,290 @@ targets:
       sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
       sharing: private
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/clerk_offices_points_points/versions/0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1/display/web.geojson
+    lens/carriers:
+      description_seen_sha256: 50491ded0024fdc2a657125c8d1f1eb52ef842dcc1e9a13aa6f1b886db959117
+      description_sha256: 24490dda3b39a3168ea6f62c07f07a189a6108905103eb230255a1afc591b546
+      door_version: 1.0.0
+      empty: false
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - carrier_seen_on_nations_land
+        - carrier_unseen_on_nations_land
+        - census_tribal_area
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: 068ba897ffa44bf9944634d5ddb241ef
+      kind: arcgis_lens_map
+      lane: carriers
+      layers:
+        cousub:
+        - news_outlets_per_1000
+        - library_outlets_per_1000
+        - clerk_offices_per_1000
+        - public_schools_per_1000
+        - health_center_sites_per_1000
+      map_sha256: 080abaeb0c146efc350f392a2bd65b2f01a4fdd174748b7e6418f972e8036e9c
+      moved_at: '2026-11-19T01:19:09.732816+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        cousub carriers_counts_values:
+          allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_bdb3fa02
+          harvest: carriers_counts_values
+          sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
+        cousub clerk_offices_counts_values:
+          allow: 8739e38c0226a37a880dbdde54aacd8813fffa2171a72ede0f762edf61db2585
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_ebcd9a7c
+          harvest: clerk_offices_counts_values
+          sha256: 30d832c9d25ed8fce6be6f4da3f6d434d1b09d4421c5353edde26e2e779af45f
+        cousub health_centers_counts_values:
+          allow: 5a24367bea36064c5b638bcd1dbd17291815f871fe1c4184bfd441ca3a3697a0
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_d92a49e0
+          harvest: health_centers_counts_values
+          sha256: 37587897bf0efc13b0d051e487202a7787b5f8a1624549da907ac40a4b43d780
+        cousub libraries_counts_values:
+          allow: 143fc0fb410eeb6c346beda2fe1fbbb142d3465c33ca9fa9f9daf8be62b16e1c
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_1de12ead
+          harvest: libraries_counts_values
+          sha256: 40164ca51055a6f21150827dc051f5ec2745d362d91137198e2cb261cee7a99d
+        cousub schools_counts_values:
+          allow: 584fb3c33e74e00c1f3cb9f60ca45cabf0e290f7722fa615e044527119887eb2
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_64339509
+          harvest: schools_counts_values
+          sha256: 0d46334daa29b0d601ba9ab4ca45ecbd487f9e814bfdc0c275aac88aee2f3c6c
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'Carriers, per 1,000 people: a lens on the maine plot (maine)'
+    lens/civic_participation:
+      description_seen_sha256: 2b162b945143ea939718cda43af093897eab29f80d7d9f4997c59554ab0b238e
+      description_sha256: 0eed27792ced9c00b0543aec1680329f9f161002546a43c60d5046b64532dd7d
+      door_version: 1.0.0
+      empty: true
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - contains_census_tribal_area
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: 5533d5b638024f87af112e4221347472
+      kind: arcgis_lens_map
+      lane: civic_participation
+      layers: {}
+      map_sha256: 4ef12c32aa968844f7b31dd20bbc6fd6460a0acd38222cfe0cdb8a3ff280755e
+      moved_at: '2026-11-19T01:15:44.129609+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        orientation:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          copy: markers
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'Civic Participation Index: a lens on the maine plot (maine)'
+    lens/environmental_resilience:
+      description_seen_sha256: c565631872e6d720832a2d5f48334ca077c7fa3258a0c637d5398c19621c2c52
+      description_sha256: a8bb5bc410656fd9949360bcc24d31bee88dbeddfd5489bde3f2398eabd20cf5
+      door_version: 1.0.0
+      empty: true
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - contains_census_tribal_area
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: a34782eb366649dd95a5c5bca3fbb692
+      kind: arcgis_lens_map
+      lane: environmental_resilience
+      layers: {}
+      map_sha256: 8664a47b2d07b926e4f5b9d7c2224989fcd7f43867ddb24325d087eacb22d891
+      moved_at: '2026-11-19T01:17:44.615040+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        orientation:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          copy: markers
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'Environmental Resilience Index: a lens on the maine plot (maine)'
+    lens/equity_justice:
+      description_seen_sha256: 9b1393449ad14e081ab01eb2001340dab9f7e70c22dca98221d50b026b9e8393
+      description_sha256: ad8083b1df9cb0d83da2d25db9a048e36fc9c0009e97ed105547d920a82f71d8
+      door_version: 1.0.0
+      empty: true
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - contains_census_tribal_area
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: e885afa6edb041969f919308ba18232b
+      kind: arcgis_lens_map
+      lane: equity_justice
+      layers: {}
+      map_sha256: 8b5b2a6b46502aafe817aed24933adab3f866bee544ff61577bebe5b8011231a
+      moved_at: '2026-11-19T01:16:52.285661+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        orientation:
+          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+          copy: markers
+          harvest: outline_counties_outline
+          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'Equity & Justice Index: a lens on the maine plot (maine)'
+    lens/health_opportunity:
+      description_seen_sha256: 601cec4bfacc131e0206c914204c4d992e2275bb47ed6bab271752cde95d458f
+      description_sha256: e82f602aef389fa7f98458bdc6defcfc43be9e578e784aa238d3328356ce7f02
+      door_version: 1.0.0
+      empty: false
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - census_tribal_area
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: c86bee39c11d4be2b12bf6b1c0d21d33
+      kind: arcgis_lens_map
+      lane: health_opportunity
+      layers:
+        county:
+        - cii_no_vehicle
+        - cii_rent_burden
+        cousub:
+        - cii_no_vehicle
+        - cii_rent_burden
+        sldl:
+        - cii_no_vehicle
+        - cii_rent_burden
+        sldu:
+        - cii_no_vehicle
+        - cii_rent_burden
+      map_sha256: 43e3c959e83a5a5a501c8f4538d290c11331703aedcb370cf16fcb1360614549
+      moved_at: '2026-11-19T01:17:19.175367+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        county county_derive_values:
+          allow: 3a4d29ebc96c1e416af347632d015f256103af7faff537a783e1c6c43927f88d
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_d277ee51
+          harvest: county_derive_values
+          sha256: 5929ddc0091f33a970dd09b627326d4d280267190a01c801b6cc74343defd458
+        cousub cousub_derive_values:
+          allow: d3ca1da71621fe942d6953ff9a982b032b1bcf1a35af617154287f1bd1f5f151
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_d277ee51
+          harvest: cousub_derive_values
+          sha256: 94a24e1a76a036ccf7cef8281d9c20b2d4d751eec80d0fd9536c9ebb8b97b7d7
+        sldl sldl_derive_values:
+          allow: 53f278990303906f3afa5ac567a08861a1beec511be5f6f544c3028b77d27736
+          copy: outline_house_outline_146e0ca3ac11_web_250m_only_d277ee51
+          harvest: sldl_derive_values
+          sha256: 1021e64407fe3acae33c453ae090db85bbcce6d8b4c5fbe14757e0d4f1abfb9d
+        sldu sldu_derive_values:
+          allow: f0491ee844eef27c9df4d8db529a33a6fe4580a16b6fa4214330b3cfee54f075
+          copy: outline_senate_outline_c603add2e7f6_web_250m_only_d277ee51
+          harvest: sldu_derive_values
+          sha256: 614f9a8da0d78eb90cc8f8dcf7e96885afe41cb22f0e0818994d75a9fe78d967
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'Health & Opportunity Index: a lens on the maine plot (maine)'
+    lens/news_information:
+      description_seen_sha256: a62a1948d6c913be85998ced61f7661232976ab01ceb49edb3aeee985d8da799
+      description_sha256: 169604afdf58520b47c757dd6b14d9314f3cdd6c4401d5880ad819160f46c07f
+      door_version: 1.0.0
+      empty: false
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - census_tribal_area
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: e8dd66ed1c534d4f84fca8bebebccc99
+      kind: arcgis_lens_map
+      lane: news_information
+      layers:
+        cousub:
+        - cii_broadband
+        sldl:
+        - cii_broadband
+        sldu:
+        - cii_broadband
+      map_sha256: d5623d41ed9e2d27884bb6aee3b6c114ab769ac4ed1f572b2796a16492ad0a72
+      moved_at: '2026-11-19T01:20:18.867551+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        cousub cousub_derive_values:
+          allow: d3ca1da71621fe942d6953ff9a982b032b1bcf1a35af617154287f1bd1f5f151
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_92b75197
+          harvest: cousub_derive_values
+          sha256: 94a24e1a76a036ccf7cef8281d9c20b2d4d751eec80d0fd9536c9ebb8b97b7d7
+        sldl sldl_derive_values:
+          allow: 53f278990303906f3afa5ac567a08861a1beec511be5f6f544c3028b77d27736
+          copy: outline_house_outline_146e0ca3ac11_web_250m_only_92b75197
+          harvest: sldl_derive_values
+          sha256: 1021e64407fe3acae33c453ae090db85bbcce6d8b4c5fbe14757e0d4f1abfb9d
+        sldu sldu_derive_values:
+          allow: f0491ee844eef27c9df4d8db529a33a6fe4580a16b6fa4214330b3cfee54f075
+          copy: outline_senate_outline_c603add2e7f6_web_250m_only_92b75197
+          harvest: sldu_derive_values
+          sha256: 614f9a8da0d78eb90cc8f8dcf7e96885afe41cb22f0e0818994d75a9fe78d967
+      portal: https://nu.maps.arcgis.com
+      previous: null
+      reason: the six lenses to test (D-385)
+      rest_version: '2026.3'
+      sharing: private
+      title: 'News and Information Index: a lens on the maine plot (maine)'
     lens/our_barriers:
-      description_seen_sha256: 765a86d4cb38505db41da8e1ad91e27f5375898869bde510cd9d708688fcc63f
-      description_sha256: d15141d6f8ea5752492efc01f7702dc0daaa798b83c7f84dfb94cf435fa8eb48
+      description_seen_sha256: c29adf35ca06fc22fbae3ceb2f35b01cb8520f74c0d876559a77a4c4cd9bbbf1
+      description_sha256: cce68e707d31289df3b797c2fb6278251361aad4d526eaaf0b9a95bcb268fdda
       door_version: 1.0.0
       empty: false
       folder: rewildingCities test
@@ -291,44 +572,44 @@ targets:
         sldu:
         - limited_english_households
         - limited_english_persons_share
-      map_sha256: 3176bc9779cde8dd44d960a799d858d7491b87bc293800ee5e40c34fb4b1cabb
-      moved_at: '2026-11-19T00:06:11.251052+00:00'
+      map_sha256: b86af989d846c39258083a4169e44ec2671559994b520ad7403aae60c1d2a0f3
+      moved_at: '2026-11-19T01:06:14.681736+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
       parents:
         county county_language_derive_values:
           allow: bf7353bd2a0ddd7db665a9b2c8a56fd92e61cb81510fc72076cd924f0d5b6903
-          copy: outline_counties_outline_ee88e4f41db3_web_250m
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_fafcdf83
           harvest: county_language_derive_values
           sha256: f5f35b89aa9372d4fb289e1f7a739c8ddb17de36ce58b74eada81fe7aeb7479f
         cousub cousub_derive_values:
           allow: d3ca1da71621fe942d6953ff9a982b032b1bcf1a35af617154287f1bd1f5f151
-          copy: outline_towns_outline_eda591d0d3ba_web_250m
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_7e4dfc03
           harvest: cousub_derive_values
           sha256: 94a24e1a76a036ccf7cef8281d9c20b2d4d751eec80d0fd9536c9ebb8b97b7d7
         cousub cousub_language_derive_values:
           allow: 02753881b37aec92aff3d5000cf54b4646eecc7c9fc9bfdcc008cf9f9098c2ea
-          copy: outline_towns_outline_eda591d0d3ba_web_250m
+          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_fafcdf83
           harvest: cousub_language_derive_values
           sha256: f2fe08ed377cd9839d775112362a152d98a23ac990f798b5257ebda4b2f99f12
         sldl sldl_derive_values:
           allow: 53f278990303906f3afa5ac567a08861a1beec511be5f6f544c3028b77d27736
-          copy: outline_house_outline_146e0ca3ac11_web_250m
+          copy: outline_house_outline_146e0ca3ac11_web_250m_only_7e4dfc03
           harvest: sldl_derive_values
           sha256: 1021e64407fe3acae33c453ae090db85bbcce6d8b4c5fbe14757e0d4f1abfb9d
         sldl sldl_language_derive_values:
           allow: 97d161c5ca776aabecfe169779be9d0a06f73b918688e0bd8dd49700f0d57b68
-          copy: outline_house_outline_146e0ca3ac11_web_250m
+          copy: outline_house_outline_146e0ca3ac11_web_250m_only_fafcdf83
           harvest: sldl_language_derive_values
           sha256: b4b2bc8ec7f95844c1bbd221a9b05a0614325f46738d9ee79bb9fe87a4993f4f
         sldu sldu_derive_values:
           allow: f0491ee844eef27c9df4d8db529a33a6fe4580a16b6fa4214330b3cfee54f075
-          copy: outline_senate_outline_c603add2e7f6_web_250m
+          copy: outline_senate_outline_c603add2e7f6_web_250m_only_7e4dfc03
           harvest: sldu_derive_values
           sha256: 614f9a8da0d78eb90cc8f8dcf7e96885afe41cb22f0e0818994d75a9fe78d967
         sldu sldu_language_derive_values:
           allow: 3dcbed5c4e558abc8a67a9c0ce4c86afd690ac3679b485b03019645ed54c78df
-          copy: outline_senate_outline_c603add2e7f6_web_250m
+          copy: outline_senate_outline_c603add2e7f6_web_250m_only_fafcdf83
           harvest: sldu_language_derive_values
           sha256: c200514646f36894be34a3bdad6147de8f38bbc8514ad3f24cca39b1ae313497
       portal: https://nu.maps.arcgis.com
@@ -370,9 +651,10 @@ targets:
             copy: outline_senate_outline_c603add2e7f6_web_250m
             harvest: sldu_language_derive_values
             sha256: c200514646f36894be34a3bdad6147de8f38bbc8514ad3f24cca39b1ae313497
-      reason: 'D-395: the lens saved in Map Viewer, written back'
+      reason: 'D-396: the lens on its slim copies'
       rest_version: '2026.3'
       sharing: private
+      title: 'Barriers measured by rewildingCities: a lens on the maine plot (maine)'
     places:
       counts:
         aiannh: 8
