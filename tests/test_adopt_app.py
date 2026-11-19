@@ -156,3 +156,11 @@ def test_the_command_takes_the_app_only_with_write_and_one_target():
     assert cli._asked_wrongly(_args(["maine", "--lens", "carriers", "--lens", "carriers",
                                      "--to", "test"]))
     assert cli._asked_wrongly(_args(["maine", "--lens", "carriers", "--to", "test"])) is None
+
+
+def test_restore_goes_only_with_write_and_a_whole_map():
+    assert cli._asked_wrongly(_args(["maine", "--lens", "carriers", "--to", "test", "--restore"]))
+    assert cli._asked_wrongly(_args(["maine", "clerks", "--to", "test", "--write", "--by", "k",
+                                     "--reason", "r", "--restore"]))
+    assert cli._asked_wrongly(_args(["maine", "--places", "--to", "test", "--write", "--by", "k",
+                                     "--reason", "r", "--restore"])) is None

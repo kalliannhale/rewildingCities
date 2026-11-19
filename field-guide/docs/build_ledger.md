@@ -2281,3 +2281,36 @@ Kalli named it, and the build went ahead here.
   Network tab, before any lens reaches the explorer.
 - Wrong hypothesis: that a lens layer weighs nothing until a reader turns it
   on. Not read; LOAD-1.
+
+### Sprint 09 session 6, the first lens, and zip 9b2b (D-395)
+
+- The 13 joins written at 250 m, each named for its outline's current version.
+  Sizes: the derive and carrier copies 1.7 to 4.4 MB; the language copies far
+  heavier, towns 16.2 MB, House 6.0, Senate 2.7, counties 2.1, since a language
+  table carries 26 indicators' columns for every place. Not predicted.
+- our_barriers written to test, private: item 699b44c2ed5d455da186f8277333e261,
+  stored SAME as sent. The map is 673,622 bytes, not a few kilobytes: every
+  layer lists every field of its copy twice (fields and fieldInfos). Counties
+  draw one measure, since limited_english_households is in no county table.
+- The lens draws in Map Viewer: the towns group on, coloured darker in the St.
+  John Valley and around Lewiston, Auburn and Portland. The other groups are
+  off by design (D-385), which read as "no views" until it was said.
+- The lens was then saved in Map Viewer (a Sketch layer, a new title), and
+  `--check` caught it: dad4b9bdd74d stored, 3176bc9779cd recorded. The door's
+  only way back was deleting the item and --replace, a new id; and a deleted
+  map with nothing owed could not be remade at all, in the places path too.
+
+| ID | Decision |
+| --- | --- |
+| D-395 | `--restore`, with --write and --places or --lens: the door reads the item even when nothing is owed, and a map or description changed by hand is written back whole into the same item, so the id an app holds keeps working. `--replace` now reads the item too, so a deleted map with nothing owed is remade. `--check` names --restore when it finds a hand change. Held by tests on both paths |
+
+- Opened: SLIM-1. A lens copy carrying only its lane's columns, which would
+  bring the towns language copy near 2.5 MB and the lens map's 673 KB down
+  with it. Decided after LOAD-1.
+- Still open: LOAD-1, read in the browser's Network tab on the restored lens.
+- Wrong hypotheses: that a lens map weighs a few kilobytes (its field lists
+  weigh 673 KB); that the language copies weigh what the derive copies do;
+  that "no views" meant the lens failed to draw.
+- Lesson: a test portal stands in for ArcGIS, and Map Viewer's Save is part of
+  ArcGIS. A door that owns a whole map needs a way to put the whole map back
+  that keeps its id, before anything is built on it.

@@ -21,7 +21,11 @@ calls the level a lens.
   app made anywhere else is refused at adoption.
 - Never build on read_9a. It is a rehearsal (plots/maine/publish/rehearsals.yml).
 - Never delete or save over a door item in Map Viewer. The app holds item ids,
-  and the door owns each map whole (D-380).
+  and the door owns each map whole (D-380). Opening a door map in Map Viewer
+  to look is fine; close it without saving. If one is saved by mistake,
+  `publish maine --check` says "changed by hand", and the same publish command
+  with `--write --restore` writes the door's whole map back into the same item,
+  so the app's id still works (D-395).
 
 ## Page 1: Explore
 

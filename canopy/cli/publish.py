@@ -52,6 +52,8 @@
   --indicator I the one indicator a choropleth colours
   --markers     with --join: the copy drawn as one marker per place
   --check       read every recorded item, write nothing
+  --restore     with --write and --places or --lens: a map changed by hand is
+                written back whole into the same item, keeping its id (D-395)
   --lens L      a lane of seeds/crosswalks/pillars/; repeatable
   --adopt-app I with --write and one --to: record the hand-built app
 
@@ -94,6 +96,9 @@ def register(subparsers) -> None:
                    help="read every recorded item against the record; writes nothing")
     p.add_argument("--places", action="store_true",
                    help="the explorer's places map, held inside one web map (D-371)")
+    p.add_argument("--restore", action="store_true",
+                   help="with --write and --places or --lens: write the door's whole map back "
+                        "into an item changed by hand, keeping its id (D-395)")
     p.add_argument("--lens", action="append", default=[], dest="lenses", metavar="LANE",
                    help="a lens: one lane's measures as one web map (D-385); repeatable")
     p.add_argument("--adopt-app", default=None, dest="adopt_app", metavar="ITEM_ID",
@@ -104,6 +109,9 @@ def register(subparsers) -> None:
 
 def _asked_wrongly(args) -> str | None:
     lenses, app = getattr(args, "lenses", None) or [], getattr(args, "adopt_app", None)
+    if getattr(args, "restore", False) and not (
+            args.write and (lenses or getattr(args, "places", False))):
+        return "--restore goes with --write and --places or --lens: it writes a whole map back"
     if lenses or app:
         if getattr(args, "check", False) or getattr(args, "places", False) or args.artifact:
             return "--lens and --adopt-app take no artifact, --check or --places"
@@ -217,7 +225,8 @@ def run(args) -> int:
                 outcomes = publish_lens(args.plot, lane, args.targets, root=find_root(),
                                         write=args.write, by=(args.by or "").strip() or None,
                                         reason=(args.reason or "").strip() or None,
-                                        replace=args.replace)
+                                        replace=args.replace,
+                                        restore=getattr(args, "restore", False))
             except (PublishRefusal, CanonicalRefusal) as e:
                 print(f"lens {lane}  refused: {e.reason}", file=sys.stderr)
                 print(f"   would admit it: {e.would_admit}", file=sys.stderr)
@@ -234,7 +243,8 @@ def run(args) -> int:
             outcomes = publish_places(args.plot, args.targets, root=find_root(),
                                       write=args.write, by=(args.by or "").strip() or None,
                                       reason=(args.reason or "").strip() or None,
-                                      replace=args.replace)
+                                      replace=args.replace,
+                                      restore=getattr(args, "restore", False))
         except (PublishRefusal, CanonicalRefusal) as e:
             print(f"places  refused: {e.reason}", file=sys.stderr)
             print(f"   would admit it: {e.would_admit}", file=sys.stderr)

@@ -689,7 +689,8 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                         if stored != entry.get("map_sha256"):
                             found.append(f"its stored map hashes to {stored[:12]}, not the "
                                          f"recorded {str(entry.get('map_sha256'))[:12]}: "
-                                         f"changed by hand")
+                                         f"changed by hand; publish it again with --write "
+                                         f"--restore to write the door's map back (D-395)")
                     if made == MADE_PLACES:
                         if "now" not in fresh:
                             fresh["now"] = (fresh_refusals or _fresh_refusals)(plot, Path(root))
@@ -894,9 +895,12 @@ _SAY_PLACES = {"create": "owed: a new places map in folder '{folder}'",
 
 
 def _check_places_live(kind, session, target, entry: dict, replace: bool, built=None,
-                       what: str = "places map") -> str | None:
+                       what: str = "places map", restore: bool = False) -> str | None:
     """a map the door owns whole (the places map, a lens) as it stands, against
-    the record (D-372, D-380)."""
+    the record (D-372, D-380). None when it stands as recorded; "create" when it
+    is gone and replace was asked; "restore" when it was changed by hand and
+    restore was asked, so the door writes its whole map back into the same item,
+    keeping the id an app holds (D-395)."""
     from canopy.expose.targets.arcgis_places import map_sha256
     state = kind.read(session, entry["item_id"])
     if state is None:
@@ -909,22 +913,28 @@ def _check_places_live(kind, session, target, entry: dict, replace: bool, built=
                              f"not {target.owner}", "ownership moves in ArcGIS, by a person")
     stored = map_sha256(state["data"])
     if stored != entry.get("map_sha256"):
+        if restore:
+            return "restore"
         raise PublishRefusal(f"the {what} was changed by hand: it hashes to {stored[:12]}, "
                              f"not the recorded {str(entry.get('map_sha256'))[:12]}",
-                             "the door owns the whole map (D-380): publish with --replace "
-                             "after moving the changed item aside, or undo the change")
+                             "the door owns the whole map (D-380): publish again with "
+                             "--write --restore, which writes it back into the same item (D-395)")
     if not described_as_recorded(state["description"], entry, built):
+        if restore:
+            return "restore"
         raise PublishRefusal("the item's description was changed by hand; it is the "
                              "door's, because it carries the notes (D-328)",
-                             "undo the edit in ArcGIS, then publish again")
+                             "publish again with --write --restore, or undo the edit in ArcGIS")
     return None
 
 
 def publish_places(plot: str, target_ids: list[str], *, root: Path, write: bool = False,
                    by: str | None = None, reason: str | None = None, replace: bool = False,
                    domain: str | None = None, fetch=default_fetch, judge=default_judge,
-                   kinds: dict | None = None, ask=None, now: str | None = None) -> list[Outcome]:
-    """the places map, for the named targets. a dry run unless write."""
+                   kinds: dict | None = None, ask=None, now: str | None = None,
+                   restore: bool = False) -> list[Outcome]:
+    """the places map, for the named targets. a dry run unless write. with
+    replace or restore, the item itself is read even when nothing is owed."""
     plot_dir = Path(root) / "plots" / plot
     kinds = kinds or registered(version=VERSION)
     targets = load_targets(plot_dir, kinds)
@@ -986,16 +996,25 @@ def publish_places(plot: str, target_ids: list[str], *, root: Path, write: bool 
                 o.lines.append("a dry run: signed in nowhere, wrote nothing; the item "
                                "itself is checked when the door writes")
                 continue
-            if due == "unchanged":
+            if due == "unchanged" and not (replace or restore):
                 o.outcome = "unchanged"
                 continue
             session = _session(sessions, kind, target, ask)
             prior = entry
-            if entry is not None and _check_places_live(
-                    kind, session, target, entry, replace,
-                    built if due in ("reseen", "share") else None) == "create":
+            live = None if entry is None else _check_places_live(
+                kind, session, target, entry, replace,
+                built if due in ("reseen", "share") else None, restore=restore)
+            if live == "create":
                 due = "create"
                 o.lines.append(f"item {entry['item_id']} is gone; making a new one (--replace)")
+            elif live == "restore":
+                due = "move"
+                o.lines.append(f"item {entry['item_id']} was changed by hand; the door's whole map "
+                               f"is written back into the same item (--restore, D-395)")
+            elif due == "unchanged":
+                o.outcome = "unchanged"
+                o.lines.append(f"item {entry['item_id']} stands as recorded; nothing written")
+                continue
             if due == "create":
                 item_id = kind.create(session, target, built)
                 provisional = _places_entry(places, target, built, item_id, records, by,
@@ -1068,9 +1087,11 @@ def _places_entry(places, target, built, item_id, records, by, reason, prior, re
 def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, write: bool = False,
                  by: str | None = None, reason: str | None = None, replace: bool = False,
                  domain: str | None = None, fetch=default_fetch, judge=default_judge,
-                 kinds: dict | None = None, ask=None, now: str | None = None) -> list[Outcome]:
+                 kinds: dict | None = None, ask=None, now: str | None = None,
+                 restore: bool = False) -> list[Outcome]:
     """one lane's lens, for the named targets. a dry run unless write. a lens
-    with any copy still to draw is named, and never written (LENS-1)."""
+    with any copy still to draw is named, and never written (LENS-1). with
+    replace or restore, the item itself is read even when nothing is owed."""
     from canopy.expose.lenses import describe_members, lens_key, read_lens
     plot_dir = Path(root) / "plots" / plot
     kinds = kinds or registered(version=VERSION)
@@ -1139,16 +1160,25 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
                 o.lines.append("a dry run: signed in nowhere, wrote nothing; the item "
                                "itself is checked when the door writes")
                 continue
-            if due == "unchanged":
+            if due == "unchanged" and not (replace or restore):
                 o.outcome = "unchanged"
                 continue
             session = _session(sessions, kind, target, ask)
             prior = entry
-            if entry is not None and _check_places_live(
-                    kind, session, target, entry, replace,
-                    built if due in ("reseen", "share") else None, what="lens") == "create":
+            live = None if entry is None else _check_places_live(
+                kind, session, target, entry, replace,
+                built if due in ("reseen", "share") else None, what="lens", restore=restore)
+            if live == "create":
                 due = "create"
                 o.lines.append(f"item {entry['item_id']} is gone; making a new one (--replace)")
+            elif live == "restore":
+                due = "move"
+                o.lines.append(f"item {entry['item_id']} was changed by hand; the door's whole lens "
+                               f"is written back into the same item (--restore, D-395)")
+            elif due == "unchanged":
+                o.outcome = "unchanged"
+                o.lines.append(f"item {entry['item_id']} stands as recorded; nothing written")
+                continue
             if due == "create":
                 item_id = kind.create(session, target, built)
                 provisional = _lens_entry(lens, target, built, item_id, records, by, reason,

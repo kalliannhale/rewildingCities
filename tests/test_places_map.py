@@ -446,3 +446,16 @@ def test_every_step_the_display_copy_and_the_told_copy_record_is_in_the_closed_s
         recorded = set(re.findall(r'"step": "([a-z_]+)"', (root / rel).read_text()))
         assert recorded and recorded <= allowed, (rel, sorted(recorded - allowed))
     assert display.display_name("markers", 25) == "markers"
+
+
+def test_restore_writes_the_places_map_back_into_the_same_item(tmp_path):
+    """D-395: an app holds the item's id, so a hand change is undone in place."""
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(root), portal)
+    [before] = portal.items
+    item, data = stored(portal)
+    data["operationalLayers"].pop()
+    item["text"] = json.dumps(data)
+    [o] = run(root, bucket(root), portal, restore=True)
+    assert o.outcome == "updated" and list(portal.items) == [before]
+    assert "SAME as sent" in "\n".join(o.lines)

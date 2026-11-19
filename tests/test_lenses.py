@@ -346,3 +346,57 @@ def test_a_lens_changed_by_hand_is_refused_on_the_next_move(tmp_path):
     item["text"] = json.dumps(data)
     [o] = run(root, bucket(towns_sha="u" * 64), portal)
     assert o.outcome == "refused" and "lens was changed by hand" in "\n".join(o.lines)
+
+
+# ── --restore (D-395) ───────────────────────────────────────────────────
+def _saved_in_map_viewer(portal):
+    """what session 6 found: a person saves the lens in Map Viewer, which adds a
+    Sketch layer and renames it."""
+    item, data = stored(portal)
+    data["operationalLayers"].append({"id": "sketch", "title": "Sketch", "layerType": "GraphicsLayer"})
+    item["text"] = json.dumps(data)
+    item["title"] = "renamed in Map Viewer"
+
+
+def test_restore_writes_the_whole_lens_back_into_the_same_item(tmp_path):
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    [before] = portal.items
+    _saved_in_map_viewer(portal)
+    [o] = run(root, bucket(), portal, restore=True)
+    said = "\n".join(o.lines)
+    assert o.outcome == "updated" and "--restore, D-395" in said and "SAME as sent" in said
+    assert list(portal.items) == [before]
+    _, data = stored(portal)
+    assert all(l.get("title") != "Sketch" for l in data["operationalLayers"])
+    [c] = door.check(PLOT, ["test"], root=root, kinds=registered(http=portal),
+                     ask=lambda p: "test-password")
+    assert c.outcome == "as recorded", c.lines
+
+
+def test_without_restore_a_hand_change_with_nothing_owed_is_left_and_said_by_check(tmp_path):
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    _saved_in_map_viewer(portal)
+    [o] = run(root, bucket(), portal)
+    assert o.outcome == "unchanged"
+    [c] = door.check(PLOT, ["test"], root=root, kinds=registered(http=portal),
+                     ask=lambda p: "test-password")
+    assert c.outcome == "differs" and "--restore" in "\n".join(c.lines)
+
+
+def test_restore_on_an_item_as_recorded_writes_nothing(tmp_path):
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    n = len(portal.posts("/update"))
+    [o] = run(root, bucket(), portal, restore=True)
+    assert o.outcome == "unchanged" and len(portal.posts("/update")) == n
+    assert "stands as recorded" in "\n".join(o.lines)
+
+
+def test_replace_remakes_a_deleted_lens_even_when_nothing_is_owed(tmp_path):
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    portal.items.clear()
+    [o] = run(root, bucket(), portal, replace=True)
+    assert o.outcome == "published" and len(portal.items) == 1
