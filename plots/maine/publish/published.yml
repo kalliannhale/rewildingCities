@@ -260,6 +260,119 @@ targets:
       sha256: 0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1
       sharing: private
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/clerk_offices_points_points/versions/0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1/display/web.geojson
+    lens/our_barriers:
+      description_seen_sha256: 765a86d4cb38505db41da8e1ad91e27f5375898869bde510cd9d708688fcc63f
+      description_sha256: d15141d6f8ea5752492efc01f7702dc0daaa798b83c7f84dfb94cf435fa8eb48
+      door_version: 1.0.0
+      empty: false
+      folder: rewildingCities test
+      gate:
+        context_notes:
+        - census_tribal_area
+        - contains_census_tribal_area
+        - penobscot_main_stem_waters
+        decision: allow
+        gate_version: 1.0.0
+        sharing_level: private
+        target: test
+      groups: []
+      item_id: 699b44c2ed5d455da186f8277333e261
+      kind: arcgis_lens_map
+      lane: our_barriers
+      layers:
+        county:
+        - limited_english_persons_share
+        cousub:
+        - limited_english_households
+        - limited_english_persons_share
+        sldl:
+        - limited_english_households
+        - limited_english_persons_share
+        sldu:
+        - limited_english_households
+        - limited_english_persons_share
+      map_sha256: 3176bc9779cde8dd44d960a799d858d7491b87bc293800ee5e40c34fb4b1cabb
+      moved_at: '2026-11-19T00:06:11.251052+00:00'
+      moved_by: Kalli A. Hale
+      owner: RDS_NU
+      parents:
+        county county_language_derive_values:
+          allow: bf7353bd2a0ddd7db665a9b2c8a56fd92e61cb81510fc72076cd924f0d5b6903
+          copy: outline_counties_outline_ee88e4f41db3_web_250m
+          harvest: county_language_derive_values
+          sha256: f5f35b89aa9372d4fb289e1f7a739c8ddb17de36ce58b74eada81fe7aeb7479f
+        cousub cousub_derive_values:
+          allow: d3ca1da71621fe942d6953ff9a982b032b1bcf1a35af617154287f1bd1f5f151
+          copy: outline_towns_outline_eda591d0d3ba_web_250m
+          harvest: cousub_derive_values
+          sha256: 94a24e1a76a036ccf7cef8281d9c20b2d4d751eec80d0fd9536c9ebb8b97b7d7
+        cousub cousub_language_derive_values:
+          allow: 02753881b37aec92aff3d5000cf54b4646eecc7c9fc9bfdcc008cf9f9098c2ea
+          copy: outline_towns_outline_eda591d0d3ba_web_250m
+          harvest: cousub_language_derive_values
+          sha256: f2fe08ed377cd9839d775112362a152d98a23ac990f798b5257ebda4b2f99f12
+        sldl sldl_derive_values:
+          allow: 53f278990303906f3afa5ac567a08861a1beec511be5f6f544c3028b77d27736
+          copy: outline_house_outline_146e0ca3ac11_web_250m
+          harvest: sldl_derive_values
+          sha256: 1021e64407fe3acae33c453ae090db85bbcce6d8b4c5fbe14757e0d4f1abfb9d
+        sldl sldl_language_derive_values:
+          allow: 97d161c5ca776aabecfe169779be9d0a06f73b918688e0bd8dd49700f0d57b68
+          copy: outline_house_outline_146e0ca3ac11_web_250m
+          harvest: sldl_language_derive_values
+          sha256: b4b2bc8ec7f95844c1bbd221a9b05a0614325f46738d9ee79bb9fe87a4993f4f
+        sldu sldu_derive_values:
+          allow: f0491ee844eef27c9df4d8db529a33a6fe4580a16b6fa4214330b3cfee54f075
+          copy: outline_senate_outline_c603add2e7f6_web_250m
+          harvest: sldu_derive_values
+          sha256: 614f9a8da0d78eb90cc8f8dcf7e96885afe41cb22f0e0818994d75a9fe78d967
+        sldu sldu_language_derive_values:
+          allow: 3dcbed5c4e558abc8a67a9c0ce4c86afd690ac3679b485b03019645ed54c78df
+          copy: outline_senate_outline_c603add2e7f6_web_250m
+          harvest: sldu_language_derive_values
+          sha256: c200514646f36894be34a3bdad6147de8f38bbc8514ad3f24cca39b1ae313497
+      portal: https://nu.maps.arcgis.com
+      previous:
+        map_sha256: 3176bc9779cde8dd44d960a799d858d7491b87bc293800ee5e40c34fb4b1cabb
+        parents:
+          county county_language_derive_values:
+            allow: bf7353bd2a0ddd7db665a9b2c8a56fd92e61cb81510fc72076cd924f0d5b6903
+            copy: outline_counties_outline_ee88e4f41db3_web_250m
+            harvest: county_language_derive_values
+            sha256: f5f35b89aa9372d4fb289e1f7a739c8ddb17de36ce58b74eada81fe7aeb7479f
+          cousub cousub_derive_values:
+            allow: d3ca1da71621fe942d6953ff9a982b032b1bcf1a35af617154287f1bd1f5f151
+            copy: outline_towns_outline_eda591d0d3ba_web_250m
+            harvest: cousub_derive_values
+            sha256: 94a24e1a76a036ccf7cef8281d9c20b2d4d751eec80d0fd9536c9ebb8b97b7d7
+          cousub cousub_language_derive_values:
+            allow: 02753881b37aec92aff3d5000cf54b4646eecc7c9fc9bfdcc008cf9f9098c2ea
+            copy: outline_towns_outline_eda591d0d3ba_web_250m
+            harvest: cousub_language_derive_values
+            sha256: f2fe08ed377cd9839d775112362a152d98a23ac990f798b5257ebda4b2f99f12
+          sldl sldl_derive_values:
+            allow: 53f278990303906f3afa5ac567a08861a1beec511be5f6f544c3028b77d27736
+            copy: outline_house_outline_146e0ca3ac11_web_250m
+            harvest: sldl_derive_values
+            sha256: 1021e64407fe3acae33c453ae090db85bbcce6d8b4c5fbe14757e0d4f1abfb9d
+          sldl sldl_language_derive_values:
+            allow: 97d161c5ca776aabecfe169779be9d0a06f73b918688e0bd8dd49700f0d57b68
+            copy: outline_house_outline_146e0ca3ac11_web_250m
+            harvest: sldl_language_derive_values
+            sha256: b4b2bc8ec7f95844c1bbd221a9b05a0614325f46738d9ee79bb9fe87a4993f4f
+          sldu sldu_derive_values:
+            allow: f0491ee844eef27c9df4d8db529a33a6fe4580a16b6fa4214330b3cfee54f075
+            copy: outline_senate_outline_c603add2e7f6_web_250m
+            harvest: sldu_derive_values
+            sha256: 614f9a8da0d78eb90cc8f8dcf7e96885afe41cb22f0e0818994d75a9fe78d967
+          sldu sldu_language_derive_values:
+            allow: 3dcbed5c4e558abc8a67a9c0ce4c86afd690ac3679b485b03019645ed54c78df
+            copy: outline_senate_outline_c603add2e7f6_web_250m
+            harvest: sldu_language_derive_values
+            sha256: c200514646f36894be34a3bdad6147de8f38bbc8514ad3f24cca39b1ae313497
+      reason: 'D-395: the lens saved in Map Viewer, written back'
+      rest_version: '2026.3'
+      sharing: private
     places:
       counts:
         aiannh: 8
