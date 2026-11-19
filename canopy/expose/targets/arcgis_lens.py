@@ -10,8 +10,9 @@ its first measure, so turning a group on shows one map, not a stack.
 
 the door owns the whole lens, as it owns the places map (D-380): the map is
 sent in D-362's form, recorded by its hash, and any other change to it reads as
-changed by hand. an empty lens holds the orientation copy and says, in its
-description and its one layer's title, that nothing is placed there yet. ~
+changed by hand. an empty lens holds no layer at all (D-400): a dot on a map
+reads as data, so a lens with nothing placed opens on the plan's extent and
+says so in its title and its description. ~
 """
 
 from __future__ import annotations
@@ -43,14 +44,8 @@ def lens_webmap(lens: dict, version: str) -> tuple[dict, dict]:
                        "title": f"{lv['label']} ({lens['plot']})", "layerType": "GroupLayer",
                        "visibility": i == 0, "layers": layers})
         report["levels"][lv["level"]] = [c["indicator"] for c in lv["layers"]]
-    first = lens["levels"][0]["layers"][0] if lens["levels"] else lens.get("orientation")
-    if not lens["levels"]:
-        o = lens["orientation"]
-        layer = layer_of(o, f"rewilding-lens-{lens['lane']}-orientation", fields_of(o["geojson"]))
-        layer["title"] = (f"No measure is placed in this lens yet: places shown for "
-                          f"orientation only ({lens['plot']})")
-        groups.append(layer)
-        report["empty"] = True
+    first = lens["levels"][0]["layers"][0] if lens["levels"] else None
+    report["empty"] = not lens["levels"]
     webmap = {
         "operationalLayers": groups,
         "baseMap": _copy.deepcopy(BASEMAP),
@@ -59,7 +54,9 @@ def lens_webmap(lens: dict, version: str) -> tuple[dict, dict]:
         "authoringAppVersion": version,
         "version": SPEC_VERSION,
     }
-    extent = extent_of(((first or {}).get("display_env", {}).get("metadata") or {}).get("bbox"))
+    bbox = ((first or {}).get("display_env", {}).get("metadata") or {}).get("bbox") \
+        if first else lens.get("extent")
+    extent = extent_of(bbox)
     if extent:
         webmap["initialState"] = {"viewpoint": {"targetGeometry": extent}}
     return door_form(webmap), report
@@ -106,8 +103,8 @@ def description_of(lens: dict, report: dict, sha: str, version: str) -> tuple[st
         "only: no place is ranked here.</p>",
         "<h3>What this lens draws</h3>",
         _li(drawn) if drawn else
-        "<p>No measure is placed in this lens yet. The places are shown only so the map "
-        "has somewhere to stand.</p>",
+        "<p><b>No measure is placed in this lens yet.</b> The map is empty on purpose: "
+        "nothing is drawn here until a measure is.</p>",
         "<h3>Its measures, and why each is here</h3>",
         _li(members) if members else "<p>None yet.</p>",
         "<h3>Context notes</h3>",
@@ -150,6 +147,9 @@ def build_lens(lens: dict, version: str) -> Built:
     description, license_info, access = description_of(lens, report, sha, version)
     snippet = (f"{lens['name']}, a lens on the {lens['plot']} plot: values only, darker is "
                f"harder access, read by URL from the canonical store")[:250]
+    if report["empty"]:
+        snippet = (f"{lens['name']}, a lens on the {lens['plot']} plot: no measure is placed "
+                   f"here yet")[:250]
     return Built(title=lens["title"][:256], snippet=snippet, description=description,
                  tags=["rewildingCities", lens["plot"], "lens", lens["lane"]],
                  license_info=license_info, access_information=access, data=data,

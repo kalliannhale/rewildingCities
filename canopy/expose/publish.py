@@ -1100,10 +1100,12 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
                  by: str | None = None, reason: str | None = None, replace: bool = False,
                  domain: str | None = None, fetch=default_fetch, judge=default_judge,
                  kinds: dict | None = None, ask=None, now: str | None = None,
-                 restore: bool = False) -> list[Outcome]:
+                 restore: bool = False, sessions: dict | None = None) -> list[Outcome]:
     """one lane's lens, for the named targets. a dry run unless write. a lens
     with any copy still to draw is named, and never written (LENS-1). with
-    replace or restore, the item itself is read even when nothing is owed."""
+    replace or restore, the item itself is read even when nothing is owed.
+    sessions, when given, is shared across lenses, so one run signs in to a
+    portal once (PASS-1)."""
     from canopy.expose.lenses import describe_members, lens_key, read_lens
     plot_dir = Path(root) / "plots" / plot
     kinds = kinds or registered(version=VERSION)
@@ -1123,7 +1125,7 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
     key = lens_key(lane)
     when = now or datetime.now(timezone.utc).isoformat()
     record = read_record(plot_dir)
-    sessions: dict = {}
+    sessions = sessions if sessions is not None else {}
     out: list[Outcome] = []
     for tid in target_ids:
         target = targets[tid]
@@ -1139,9 +1141,9 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
                 o.lines.append(f"{lv['label']}: " + ", ".join(c["indicator"] for c in lv["layers"]))
             for ind in lens["counts"]:
                 o.lines.append(f"not drawn: {ind} is a count, kept in the profile (D-385)")
-            if lens["orientation"] is not None:
+            if lens["empty"]:
                 o.lines.append("no measure of this lane is drawn at any level: the lens holds "
-                               "the orientation copy and says so")
+                               "no layer, and its title and description say so (D-400)")
             for m in lens["missing"]:
                 o.lines.append(f"still to draw: {m}")
             if lens["missing"]:
@@ -1151,8 +1153,9 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
                     "run each command named above, then publish the lens")
             records = [judge_at(judge, c, target, plot_dir) for c in lens["judged"]]
             notes = sorted({n for r in records for n in (r.get("context_text") or {})})
-            o.lines.append(f"gate: every layer may leave at {target.sharing}"
-                           + (f"; carries {', '.join(notes)}" if notes else "; no notes bind it"))
+            o.lines.append((f"gate: every layer may leave at {target.sharing}"
+                            + (f"; carries {', '.join(notes)}" if notes else "; no notes bind it"))
+                           if records else "gate: no layer, so nothing for the gate to judge")
             entry = (record["targets"].get(tid) or {}).get(key)
             _kind_of(entry, MADE_LENS)
             if entry and (entry.get("portal") != target.portal or entry.get("owner") != target.owner):

@@ -62,9 +62,14 @@ Carriers per 1,000 people).
 4. A **Text** widget above the map with one sentence, copied from the lens
    item's own description: what kind of lane it is (CII's pillar or ours) and
    how its measures were placed.
-5. An empty lens says "No measure is placed in this lens yet" in its layer's
-   title. Leave it that way. An empty pillar is a finding about what Maine's
-   public data reaches.
+5. An empty lens holds no layer, on purpose: a dot on a map reads as data
+   (D-400). Its title and description say no measure is placed there yet. Put
+   that sentence in large type in the page's Text widget. An empty pillar is a
+   finding about what Maine's public data reaches.
+6. On the Carriers page, towns are markers sized by how many carriers each has,
+   with "none listed" as its own hollow mark; counties are rates per 1,000
+   people (D-399). Say so in the page's Text widget, since the two levels draw
+   two kinds of number.
 
 ## Page 9: Compare
 

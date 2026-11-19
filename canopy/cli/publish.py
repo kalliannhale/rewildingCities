@@ -220,13 +220,15 @@ def run(args) -> int:
         return 1 if o.outcome in ("refused", "failed") else 0
     if getattr(args, "lenses", None):
         bad = 0
+        sessions: dict = {}                  # one sign-in for every lens of the run (PASS-1)
         for lane in args.lenses:
             try:
                 outcomes = publish_lens(args.plot, lane, args.targets, root=find_root(),
                                         write=args.write, by=(args.by or "").strip() or None,
                                         reason=(args.reason or "").strip() or None,
                                         replace=args.replace,
-                                        restore=getattr(args, "restore", False))
+                                        restore=getattr(args, "restore", False),
+                                        sessions=sessions)
             except (PublishRefusal, CanonicalRefusal) as e:
                 print(f"lens {lane}  refused: {e.reason}", file=sys.stderr)
                 print(f"   would admit it: {e.would_admit}", file=sys.stderr)

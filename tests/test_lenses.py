@@ -120,7 +120,7 @@ def garden(tmp_path, tables=None, sharing="private"):
         "owner_kind": "institutional", "folder": "rc test", "sharing": sharing, "groups": []}})
     for rel in ("seeds/indicators", "seeds/weights", "seeds/crosswalks/pillars"):
         shutil.copytree(REPO / rel, root / rel)
-    plan = {"orientation": COUNTIES, "tolerance": 250, "levels": {
+    plan = {"extent": [-71.1, 42.9, -66.9, 47.5], "tolerance": 250, "levels": {
         "cousub": {"outline": TOWNS, "tables": tables if tables is not None else [T_LANG]},
         "county": {"outline": COUNTIES, "tables": [C_LANG]}}}
     (root / "plots" / PLOT / "publish" / "lenses.yml").write_text(yaml.safe_dump(plan))
@@ -310,14 +310,16 @@ def test_a_standing_is_never_drawn_on_a_lens(tmp_path):
     assert "D-365" in e.value.reason
 
 
-def test_an_empty_lane_holds_the_orientation_copy_and_says_so(tmp_path):
+def test_an_empty_lane_holds_no_layer_and_says_so(tmp_path):
+    """D-400: a dot on a map reads as data, so an empty lens draws nothing."""
     root, portal = garden(tmp_path), StoringPortal()
     [o] = run(root, bucket(), portal, lane="civic_participation")
     assert o.outcome == "published"
+    assert "nothing for the gate to judge" in "\n".join(o.lines)
     item, data = stored(portal)
-    [layer] = data["operationalLayers"]
-    assert layer["title"].startswith("No measure is placed in this lens yet")
+    assert data["operationalLayers"] == []
     assert "No measure is placed in this lens yet" in item["description"]
+    assert data["initialState"]["viewpoint"]["targetGeometry"]["xmin"] < 0
 
 
 def test_every_layer_reads_its_lanes_slim_copy_at_the_plans_tolerance(tmp_path):
@@ -440,3 +442,96 @@ def test_a_title_changed_by_hand_is_said_and_restored(tmp_path):
     assert o.outcome == "updated" and item["title"] == door_title
     [c] = door.check(PLOT, ["test"], root=root, kinds=kinds, ask=lambda p: "test-password")
     assert c.outcome == "as recorded", c.lines
+
+
+# ── carriers: markers at towns, rates at counties (D-399) ───────────────
+CARRIER_T = "libraries_counts_values"
+
+
+def _carriers(pages, *, towns_markers=True):
+    """a carrier table: its full copies (the index), a towns markers copy with a
+    count column, and a counties rate copy."""
+    ind = "library_outlets_per_1000"
+    tsha = "9" * 64
+    v = f"{BASE}/{s3.version_prefix(PLOT, CARRIER_T, tsha)}"
+    pages[f"{BASE}/{s3.pointer_key(PLOT, CARRIER_T)}"] = json.dumps(
+        {"sha256": tsha, "allow": "b" * 64, "data": "data.parquet"})
+    pages[f"{v}/allow/{'b' * 64}.json"] = json.dumps({"gate": {
+        "context_text": NOTE, "license": [{"dataset": "imls", "term": "geo"}]}})
+    pages[f"{v}/envelope.json"] = json.dumps({"metadata": {"data_category": "tabular"}})
+    for outline, osha, level, markers in ((TOWNS, "t" * 64, "cousub", True),
+                                          (COUNTIES, "c" * 64, "county", False)):
+        full = s3.display_keys(PLOT, CARRIER_T, tsha, display.joined_name(outline, osha, tolerance_m=250))
+        pages[f"{BASE}/{full['envelope']}"] = json.dumps({"metadata": {
+            "derived_from": tsha, "join": {"indicators": [ind]}}})
+        if markers and not towns_markers:
+            continue
+        name = display.joined_name(outline, osha, tolerance_m=250, only=[ind], markers=markers)
+        dk = s3.display_keys(PLOT, CARRIER_T, tsha, name)
+        cols = [f"{ind}__value"] + ([f"{ind}__count"] if markers else [])
+        pages[f"{BASE}/{dk['envelope']}"] = json.dumps({
+            "metadata": {"derived_from": tsha, "bbox": [-71.0, 43.0, -67.0, 47.5],
+                         "display_kind": "markers" if markers else "outlines",
+                         "joined_to": {"harvest": outline, "sha256": osha, "level": level},
+                         "join": {"indicators": [ind], "columns": {ind: cols}, "only": [ind],
+                                  "directions": {ind: "higher_is_better"}}},
+            "provenance": [{"publication": [{"step": "joined", "detail": "2 places"}]}],
+            "warnings": []})
+        feats = []
+        for k, (count, rate) in enumerate(((0, 0.0), (2, 4.5))):
+            props = {"authority": "us_census_geoid", "code": f"23{k:03d}", "name": f"Place {k}",
+                     f"{ind}__value": rate}
+            if markers:
+                props[f"{ind}__count"] = count
+            geom = ({"type": "Point", "coordinates": [-70 + k / 10, 44.0]} if markers else
+                    {"type": "Polygon", "coordinates": [_square(-70 + k / 10, 44)]})
+            feats.append({"type": "Feature", "properties": props, "geometry": geom})
+        pages[f"{BASE}/{dk['geojson']}"] = json.dumps({"type": "FeatureCollection", "features": feats})
+    return pages
+
+
+def _carrier_garden(tmp_path):
+    root = garden(tmp_path)
+    plan = yaml.safe_load((root / "plots" / PLOT / "publish" / "lenses.yml").read_text())
+    plan["levels"]["cousub"]["tables"] = [{"table": CARRIER_T, "markers": True}]
+    plan["levels"]["county"]["tables"] = [CARRIER_T]
+    (root / "plots" / PLOT / "publish" / "lenses.yml").write_text(yaml.safe_dump(plan))
+    return root
+
+
+def test_town_carriers_are_markers_sized_by_count_and_counties_are_rates(tmp_path):
+    root, portal = _carrier_garden(tmp_path), StoringPortal()
+    [o] = run(root, _carriers(bucket()), portal, lane="carriers")
+    assert o.outcome == "published", o.lines
+    _, data = stored(portal)
+    by = {g["id"].rsplit("-", 1)[-1]: g["layers"] for g in data["operationalLayers"]}
+    [town], [county] = by["cousub"], by["county"]
+    tr = town["layerDefinition"]["drawingInfo"]["renderer"]
+    assert tr["field"] == "library_outlets_per_1000__count"
+    assert tr["classBreakInfos"][0]["label"] == "none listed"
+    assert town["url"].endswith("_markers_only_" + display.only_key(["library_outlets_per_1000"]) + ".geojson")
+    cr = county["layerDefinition"]["drawingInfo"]["renderer"]
+    assert cr["field"] == "library_outlets_per_1000__value"
+
+
+def test_a_markers_copy_still_to_draw_is_named_with_its_markers_command(tmp_path):
+    root = _carrier_garden(tmp_path)
+    [o] = run(root, _carriers(bucket(), towns_markers=False), StoringPortal(), lane="carriers",
+              write=False)
+    said = "\n".join(o.lines)
+    assert o.outcome == "refused"
+    assert (f"canonical {PLOT} {CARRIER_T} --display --join {TOWNS} --markers --only "
+            f"library_outlets_per_1000 --write") in said
+
+
+def test_one_sign_in_serves_every_lens_of_a_run(tmp_path):
+    """PASS-1: a run of several lenses asks for the password once."""
+    root, portal = garden(tmp_path), StoringPortal()
+    asked, sessions = [], {}
+    for lane in ("our_barriers", "civic_participation"):
+        door.publish_lens(PLOT, lane, ["test"], root=root, write=True, by="t", reason="r",
+                          domain=DOMAIN, fetch=fakes.fetcher(bucket()), judge=judge,
+                          kinds=registered(http=portal), ask=lambda p: asked.append(p) or "test-password",
+                          now="2026-11-18T00:00:00+00:00", sessions=sessions)
+    assert len(asked) == 1 and len(portal.items) == 2
+

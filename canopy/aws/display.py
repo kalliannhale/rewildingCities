@@ -476,9 +476,11 @@ def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: st
         f"{c['rows_outside_outline']} belong to places outside this outline, "
         f"{c['rows_other_level']} to another level and {c['rows_other_authority']} to "
         f"another authority; each indicator's columns named <indicator>__<column>"
-        + (f"; only {', '.join(joined['indicators'])} kept, the columns of "
-           f"{len(left_out)} other indicator(s) left out ({', '.join(left_out)}), for a "
-           f"lens (D-396)" if only else ""))})
+        + ((f"; only {', '.join(joined['indicators'])} kept, the columns of "
+            f"{len(left_out)} other indicator(s) left out ({', '.join(left_out)}), for a "
+            f"lens (D-396)" if left_out else
+            f"; {', '.join(joined['indicators'])} is every indicator the table holds, so "
+            f"nothing is left out (D-396)") if only else ""))})
     as_text += [choropleth.column_name(ind, col) for ind in joined["indicators"]
                 for col in table_dates]
     steps.append(_format_step(out, source_crs, as_text))

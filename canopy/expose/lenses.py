@@ -15,8 +15,9 @@ publishes it.
   load_lanes(root)             the lanes of seeds/crosswalks/pillars/, each with
                                its members and how each was placed
   load_plan(plot_dir)          plots/<plot>/publish/lenses.yml: each level's
-                               outline, values tables and tolerance, and the
-                               orientation copy
+                               outline, values tables and tolerance, which
+                               tables are drawn as markers, and the extent an
+                               empty lens opens on
   read_lens(plot, lane, ...)   every layer a lens draws, read through CloudFront
                                and checked as the door checks any copy; what is
                                not yet drawn is named with the command that draws it
@@ -25,8 +26,12 @@ a lens reads, for each table, the copy holding its lane's columns alone
 (D-396), sent compressed (D-397); the table's full copy is read only as the
 index of which indicators it holds. a lens never draws a count and never a standing (D-365, D-75, D-385): a
 pillar's count (CII's own total of news outlets) is named and kept in the
-profile, and a lane of ours may hold no count at all. an empty lens holds the
-orientation copy and says so. ~
+profile, and a lane of ours may hold no count at all. a table the plan marks
+`markers` is drawn as one marker per place sized by its carriers' count, with
+none listed its own class (D-399): a rate on a town of forty people stretches
+a scale until every other town reads the same, and the count is what a reader
+asks for. an empty lens holds no layer at all, only its extent and words that
+say nothing is placed there yet (D-400). ~
 """
 
 from __future__ import annotations
@@ -150,10 +155,18 @@ def load_plan(plot_dir: str | Path) -> dict:
         raise PublishRefusal(f"the plot declares no lenses ({path.name} is missing)",
                              f"write plots/<plot>/publish/{PLAN_FILE}")
     doc = yaml.safe_load(path.read_text()) or {}
-    if not doc.get("levels") or not doc.get("orientation"):
-        raise PublishRefusal(f"{path.name} names no levels or no orientation copy",
-                             "name each level's outline and tables, and the orientation outline")
+    if not doc.get("levels") or not doc.get("extent"):
+        raise PublishRefusal(f"{path.name} names no levels or no extent",
+                             "name each level's outline and tables, and the extent an empty "
+                             "lens opens on, as [west, south, east, north] in degrees")
     return doc
+
+
+def table_entry(entry) -> tuple[str, bool]:
+    """(table, markers) for a plan's table entry: a name, or {table, markers}."""
+    if isinstance(entry, dict):
+        return str(entry["table"]), bool(entry.get("markers"))
+    return str(entry), False
 
 
 # ── the bucket ───────────────────────────────────────────────────────────────
@@ -204,7 +217,8 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
         tol = int(spec.get("tolerance") or plan.get("tolerance") or display.DEFAULT_TOLERANCE_M)
         name = display.joined_name(outline, o["sha256"], tolerance_m=tol)
         layers = []
-        for table in spec.get("tables") or []:
+        for entry in spec.get("tables") or []:
+            table, markers = table_entry(entry)
             at = f" --tolerance {tol}" if tol != display.DEFAULT_TOLERANCE_M else ""
             draw = f"canonical {plot} {table} --display --join {outline}{at} --write"
             try:
@@ -224,18 +238,21 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
                 continue
             # the full copy is the index of what the table holds; the lens reads
             # its lane's slim copy, which carries those columns alone (D-396)
-            slim = display.joined_name(outline, o["sha256"], tolerance_m=tol, only=only)
+            slim = display.joined_name(outline, o["sha256"], tolerance_m=tol, only=only,
+                                       markers=markers)
             if door._json(get, f"{base}/{s3.display_keys(plot, table, t['sha256'], slim)['envelope']}") is None:
+                how = " --markers" if markers else at
                 missing.append(f"{table}'s lens copy for {', '.join(only)} is not drawn on "
-                               f"{outline}: canonical {plot} {table} --display --join {outline}"
-                               f"{at} --only {','.join(only)} --write")
+                               f"{outline}{' as markers' if markers else ''}: canonical {plot} "
+                               f"{table} --display --join {outline}{how} --only {','.join(only)} "
+                               f"--write")
                 continue
             drawn = []
             for ind in the["members"]:
                 if ind not in only:
                     continue
                 copy = door.read_copy(plot, table, domain=domain, fetch=get, join=outline,
-                                      indicator=ind, display=slim)
+                                      indicator=ind, display=slim, markers=markers)
                 columns = ((copy["display_env"].get("metadata") or {}).get("join") or {}) \
                     .get("columns") or {}
                 if column_name(ind, "percentile") in (columns.get(ind) or []):
@@ -256,20 +273,11 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
         if layers:
             levels.append({"level": level, "label": LEVEL_WORDS.get(level, level),
                            "layers": layers})
-    orientation = None
-    if not levels and not missing:
-        orientation = door.read_copy(plot, plan["orientation"], domain=domain, fetch=get,
-                                     display="markers")
-        judged.append(orientation)
-        parents.append({"role": "orientation", "harvest": plan["orientation"],
-                        "sha256": orientation["sha256"], "allow": orientation["allow"],
-                        "copy": "markers", "url": orientation["url"],
-                        "allow_doc": orientation["allow_doc"], "env": orientation["display_env"],
-                        "outline": None})
     return {"plot": plot, "lane": lane, "name": the["name"], "kind": the["kind"],
             "defined_by": the["defined_by"], "members": the["members"],
             "title": f"{the['name']}: a lens on the {plot} plot ({plot})",
-            "levels": levels, "orientation": orientation, "parents": parents,
+            "levels": levels, "empty": not levels and not missing,
+            "extent": [float(x) for x in plan["extent"]], "parents": parents,
             "judged": judged, "missing": missing, "counts": counts, "domain": domain}
 
 

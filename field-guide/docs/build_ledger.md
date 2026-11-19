@@ -2351,3 +2351,37 @@ Kalli named it, and the build went ahead here.
   test_slim_copy.py and 2 in test_lenses.py).
 - Wrong hypotheses: that a lens layer weighs nothing until it is turned on
   (LOAD-1 read the opposite); that CloudFront was compressing the copies.
+
+### Sprint 09 session 6, the seven lenses in test, and zip 9b2d (D-399, D-400)
+
+- The slim copies: our_barriers' 7, then the other lanes' 12, each named
+  `_only_<8 hex>` (households 7e4dfc03 and persons' share fafcdf83 at every
+  level). Towns 2.5 to 2.6 MB, House 2.0, Senate 1.8, counties 1.7, before
+  compression. curl: content-type application/json, content-encoding br.
+- LOAD-1 reread on our_barriers, cache off: 7 copies, 3.8 MB transferred, down
+  from 35.9 MB; the lens map 69,025 bytes, down from 673,622; the door's title
+  back on its first move (D-398). LOAD-2 (after delivery): every level's
+  layers still load on open, about 30 seconds at 1 Mbps.
+- All seven lenses in test, 11 of 11 items as recorded; record committed
+  b457452. Six password prompts in one run, and one typo cost a lens (PASS-1).
+- Kalli read them as a reader: Health & Opportunity reads well; the empty
+  pillars' county points read as data ("why would we have points for
+  environmental resilience?"); carriers at towns read as one dark wall, since
+  a rate on a town of forty people sets the top of five equal steps and
+  carriers declare no threshold to colour against; carriers were towns only.
+- Read: carrier tables hold county rows (16 of 16 joined).
+
+| ID | Decision |
+| --- | --- |
+| D-399 | Carriers draw at two levels in two kinds: towns as markers sized by carriers' count, none listed its own hollow class (the door's markers renderer); counties as rates per 1,000. A plan's table entry may be `{table, markers: true}`. This narrows D-391: a lens never draws a count of people; a count of carriers, the places that carry information, it may |
+| D-400 | An empty lens holds no layer: it opens on the plan's `extent` and says in its title, snippet and description that no measure is placed yet. Revises D-385's orientation copy, which read as data |
+
+- PASS-1 closed: a run of several lenses shares one sign-in.
+- The joined step no longer writes "0 other indicator(s) left out ()" when a
+  table holds one indicator.
+- Kept: shares in equal steps (Health & Opportunity reads well in them).
+  Opened: VIS-1, any other lens that reads as one colour, read by eye in test
+  before the explorer.
+- Wrong hypotheses: that a dot for orientation would not read as data; that
+  equal steps serve every value (they fail on a rate with tiny denominators).
+- Predicted: 1,551 passed (1,548 plus 3 in test_lenses.py).

@@ -9,8 +9,13 @@
 # joined copy on its outline's current version before a lens is written
 # (LENS-1): a dry run names each one still to draw, with the command.
 #
-# orientation is the copy an empty lens shows, so a reader sees Maine and the
-# words saying nothing is placed there yet.
+# extent is where an empty lens opens, [west, south, east, north] in degrees:
+# an empty lens holds no layer, since a dot on a map reads as data (D-400).
+#
+# a table marked `markers` is drawn as one marker per place, sized by its
+# carriers' count, none listed its own class (D-399). towns' carriers are drawn
+# so: a rate on a town of forty people stretches the scale until every other
+# town reads the same. counties have people enough for a rate.
 #
 # tolerance is the simplification every joined copy is drawn at, in metres
 # (D-394): 250, the towns' shapes in the places map (D-367, D-369), so a place
@@ -18,15 +23,20 @@
 # a fraction of the 11.9 MB it would at 25 m. a level may name its own.
 # ============================================================================
 
-orientation: outline_counties_outline
+extent: [-71.1, 42.9, -66.9, 47.5]
 tolerance: 250
 
 levels:
   cousub:
     outline: outline_towns_outline
-    tables: [cousub_derive_values, cousub_language_derive_values, carriers_counts_values,
-             libraries_counts_values, clerk_offices_counts_values, schools_counts_values,
-             health_centers_counts_values]
+    tables:
+      - cousub_derive_values
+      - cousub_language_derive_values
+      - {table: carriers_counts_values, markers: true}
+      - {table: libraries_counts_values, markers: true}
+      - {table: clerk_offices_counts_values, markers: true}
+      - {table: schools_counts_values, markers: true}
+      - {table: health_centers_counts_values, markers: true}
   sldl:
     outline: outline_house_outline
     tables: [sldl_derive_values, sldl_language_derive_values]
@@ -35,4 +45,6 @@ levels:
     tables: [sldu_derive_values, sldu_language_derive_values]
   county:
     outline: outline_counties_outline
-    tables: [county_derive_values, county_language_derive_values]
+    tables: [county_derive_values, county_language_derive_values, carriers_counts_values,
+             libraries_counts_values, clerk_offices_counts_values, schools_counts_values,
+             health_centers_counts_values]
