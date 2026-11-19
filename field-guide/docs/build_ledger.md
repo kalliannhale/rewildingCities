@@ -2314,3 +2314,40 @@ Kalli named it, and the build went ahead here.
 - Lesson: a test portal stands in for ArcGIS, and Map Viewer's Save is part of
   ArcGIS. A door that owns a whole map needs a way to put the whole map back
   that keeps its id, before anything is built on it.
+
+### Sprint 09 session 6, LOAD-1 read, and zip 9b2c (D-396 to D-398)
+
+- 9b2b committed as 714a8ec (1,540 passed). `--restore` wrote our_barriers
+  back into item 699b44c2ed5d455da186f8277333e261, stored SAME as sent; `--check`
+  read 5 of 5 as recorded.
+- LOAD-1, read by Kalli in Chrome's Network tab with the cache off: Map Viewer
+  fetches every GeoJSON layer of a web map when it opens, visible or not. The
+  lens pulled all 7 copies before a click, 35.9 MB, the towns language copy
+  16.2 MB of it. A second load came from the disk cache, which a first reader
+  does not have.
+- Why: each layer carries every column of its table (26 indicators in a
+  language table), and nothing is compressed. The door wrote every copy as
+  application/geo+json, which CloudFront does not compress (it compresses a
+  fixed list of types, application/json among them, and only objects of 1,000
+  to 10,000,000 bytes; AWS's developer guide, read in session 6). Compression
+  is on in both cache behaviours (canopy/terraform/cloudfront.tf, lines 71, 84).
+- `--restore` left the title Map Viewer gave the lens: the door never wrote or
+  read an item's title.
+
+| ID | Decision |
+| --- | --- |
+| D-396 | SLIM-1: a lens reads, for each table, a copy holding only its lane's columns and every place's own fields (`canonical <plot> <table> --display --join <outline> --only a,b`), named `<joined name>_only_<8 hex of the sorted set>`, so a changed set is a new name (D-322). The table's full copy is read only as the index of which indicators it holds. The columns left out are said in the copy's `joined` step and in metadata.join (only, left_out) |
+| D-397 | COMPRESS-1: a slim copy is sent as application/json, which CloudFront compresses; every other copy keeps application/geo+json, and no written copy changes type (D-309) |
+| D-398 | The door owns the title of a map it owns whole (the places map, a lens): it writes it on every move, records it, `--check` says a title changed by hand, and `--restore` puts it back. A recorded entry with no title is not read for one until its next move writes it |
+
+- Also: the dry run says "nothing owed by the record" and, with --restore or
+  --replace, that the item itself is read next, so a hand change found after it
+  no longer reads as a contradiction.
+- Not read: provenance.schema.json's closed set of step names. The left-out
+  columns are said in the existing `joined` step rather than a new step name;
+  whether rule 11 has a field_dropped step to use instead is FIELDSTEP-1.
+- Sandbox: test_slim_copy.py's real drawing is skipped there (no geopandas);
+  the real suite runs it. Predicted: 1,548 passed (1,540 plus 6 in
+  test_slim_copy.py and 2 in test_lenses.py).
+- Wrong hypotheses: that a lens layer weighs nothing until it is turned on
+  (LOAD-1 read the opposite); that CloudFront was compressing the copies.

@@ -150,7 +150,7 @@ def _outline(pages, harvest, sha, markers=False):
                             "name": "Androscoggin County"}}]})
 
 
-def _joined(pages, table, tsha, outline, osha, level, values, *, standing=False):
+def _joined(pages, table, tsha, outline, osha, level, values, *, standing=False, slim=None):
     """a values table's version and its copy joined on the outline's version."""
     v = f"{BASE}/{s3.version_prefix(PLOT, table, tsha)}"
     pages[f"{BASE}/{s3.pointer_key(PLOT, table)}"] = json.dumps(
@@ -159,34 +159,44 @@ def _joined(pages, table, tsha, outline, osha, level, values, *, standing=False)
         "context_text": NOTE, "license": [{"dataset": "acs", "term": "geo"}]}})
     pages[f"{v}/envelope.json"] = json.dumps({"metadata": {"data_category": "tabular"}})
     inds = sorted({i for row in values for i in row})
-    columns = {i: [f"{i}__value"] + ([f"{i}__percentile"] if standing else []) for i in inds}
-    name = display.joined_name(outline, osha, tolerance_m=250)
-    dk = s3.display_keys(PLOT, table, tsha, name)
-    pages[f"{BASE}/{dk['envelope']}"] = json.dumps({
-        "metadata": {"derived_from": tsha, "bbox": [-71.0, 43.0, -67.0, 47.5],
-                     "display_kind": "outlines",
-                     "joined_to": {"harvest": outline, "sha256": osha, "level": level},
-                     "join": {"indicators": inds, "columns": columns,
-                              "directions": {i: "higher_is_worse" for i in inds}}},
-        "provenance": [{"publication": [{"step": "joined", "detail": f"{len(values)} places"}]}],
-        "warnings": []})
-    feats = []
-    for k, row in enumerate(values):
-        props = {"authority": "us_census_geoid", "code": f"23{k:03d}", "name": f"Place {k}"}
-        props.update({f"{i}__value": x for i, x in row.items()})
-        feats.append({"type": "Feature", "properties": props,
-                      "geometry": {"type": "Polygon", "coordinates": [_square(-70 + k / 10, 44)]}})
-    pages[f"{BASE}/{dk['geojson']}"] = json.dumps({"type": "FeatureCollection", "features": feats})
+    held = sorted(set(inds) | {"some_other_measure"})
+    # the full copy, which a lens reads as the index of what the table holds
+    full = s3.display_keys(PLOT, table, tsha, display.joined_name(outline, osha, tolerance_m=250))
+    pages[f"{BASE}/{full['envelope']}"] = json.dumps({"metadata": {
+        "derived_from": tsha, "join": {"indicators": held}}})
+    if slim is False:
+        return
+    for only in ([inds] if slim is None else slim):
+        columns = {i: [f"{i}__value"] + ([f"{i}__percentile"] if standing else []) for i in only}
+        name = display.joined_name(outline, osha, tolerance_m=250, only=only)
+        dk = s3.display_keys(PLOT, table, tsha, name)
+        pages[f"{BASE}/{dk['envelope']}"] = json.dumps({
+            "metadata": {"derived_from": tsha, "bbox": [-71.0, 43.0, -67.0, 47.5],
+                         "display_kind": "outlines",
+                         "joined_to": {"harvest": outline, "sha256": osha, "level": level},
+                         "join": {"indicators": only, "columns": columns, "only": only,
+                                  "directions": {i: "higher_is_worse" for i in only}}},
+            "provenance": [{"publication": [{"step": "joined", "detail": f"{len(values)} places"}]}],
+            "warnings": []})
+        feats = []
+        for k, row in enumerate(values):
+            props = {"authority": "us_census_geoid", "code": f"23{k:03d}", "name": f"Place {k}"}
+            props.update({f"{i}__value": x for i, x in row.items() if i in only})
+            feats.append({"type": "Feature", "properties": props,
+                          "geometry": {"type": "Polygon", "coordinates": [_square(-70 + k / 10, 44)]}})
+        pages[f"{BASE}/{dk['geojson']}"] = json.dumps({"type": "FeatureCollection", "features": feats})
 
 
-def bucket(*, towns_sha="t" * 64, table_sha="1" * 64, draw_towns=True, standing=False):
+def bucket(*, towns_sha="t" * 64, table_sha="1" * 64, draw_towns=True, standing=False,
+           slim_towns=None):
     pages = {}
     _outline(pages, TOWNS, towns_sha)
     _outline(pages, COUNTIES, "c" * 64, markers=True)
     both = [{"limited_english_persons_share": 2.5, "limited_english_households": 1.0},
             {"limited_english_persons_share": 7.5, "limited_english_households": 3.0}]
     if draw_towns:
-        _joined(pages, T_LANG, table_sha, TOWNS, towns_sha, "cousub", both, standing=standing)
+        _joined(pages, T_LANG, table_sha, TOWNS, towns_sha, "cousub", both, standing=standing,
+                slim=slim_towns)
     else:
         v = f"{BASE}/{s3.version_prefix(PLOT, T_LANG, table_sha)}"
         pages[f"{BASE}/{s3.pointer_key(PLOT, T_LANG)}"] = json.dumps(
@@ -310,13 +320,26 @@ def test_an_empty_lane_holds_the_orientation_copy_and_says_so(tmp_path):
     assert "No measure is placed in this lens yet" in item["description"]
 
 
-def test_every_layer_reads_the_copy_at_the_plans_tolerance(tmp_path):
-    """D-394: one outline per place on every page, the places map's 250 m."""
+def test_every_layer_reads_its_lanes_slim_copy_at_the_plans_tolerance(tmp_path):
+    """D-394, D-396: the places map's 250 m, and the lane's columns alone."""
     root, portal = garden(tmp_path), StoringPortal()
     run(root, bucket(), portal)
     _, data = stored(portal)
+    key = display.only_key(["limited_english_households", "limited_english_persons_share"])
     urls = [l["url"] for g in data["operationalLayers"] for l in g["layers"]]
-    assert urls and all(u.endswith("_web_250m.geojson") for u in urls)
+    assert urls and all(u.endswith(f"_web_250m_only_{key}.geojson") for u in urls)
+    fields = {f["name"] for g in data["operationalLayers"] for l in g["layers"]
+              for f in l["layerDefinition"]["fields"]}
+    assert not any(f.startswith("some_other_measure") for f in fields)
+
+
+def test_a_slim_copy_still_to_draw_is_named_with_its_only_command(tmp_path):
+    root, portal = garden(tmp_path), StoringPortal()
+    [o] = run(root, bucket(slim_towns=False), portal, write=False)
+    said = "\n".join(o.lines)
+    assert o.outcome == "refused"
+    assert (f"canonical {PLOT} {T_LANG} --display --join {TOWNS} --tolerance 250 --only "
+            f"limited_english_households,limited_english_persons_share --write") in said
 
 
 def test_an_unknown_lane_is_refused(tmp_path):
@@ -400,3 +423,20 @@ def test_replace_remakes_a_deleted_lens_even_when_nothing_is_owed(tmp_path):
     portal.items.clear()
     [o] = run(root, bucket(), portal, replace=True)
     assert o.outcome == "published" and len(portal.items) == 1
+
+
+def test_a_title_changed_by_hand_is_said_and_restored(tmp_path):
+    """D-398: the door owns a whole map's title; session 6's rename survived a
+    restore because nothing read it."""
+    root, portal = garden(tmp_path), StoringPortal()
+    run(root, bucket(), portal)
+    item, _ = stored(portal)
+    door_title = item["title"]
+    item["title"] = "renamed in Map Viewer"
+    kinds = registered(http=portal)
+    [c] = door.check(PLOT, ["test"], root=root, kinds=kinds, ask=lambda p: "test-password")
+    assert c.outcome == "differs" and "renamed in Map Viewer" in "\n".join(c.lines)
+    [o] = run(root, bucket(), portal, restore=True)
+    assert o.outcome == "updated" and item["title"] == door_title
+    [c] = door.check(PLOT, ["test"], root=root, kinds=kinds, ask=lambda p: "test-password")
+    assert c.outcome == "as recorded", c.lines

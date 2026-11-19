@@ -608,11 +608,14 @@ class ArcGISWebMap(TargetKind):
             return None
         data = portal.get(f"content/items/{item_id}/data", token)
         return {"owner": item.get("owner"), "access": item.get("access"),
-                "description": item.get("description") or "", "data": data}
+                "description": item.get("description") or "", "data": data,
+                "title": item.get("title")}
 
     def _fields(self, built: Built, data: dict | None) -> dict:
         out = {"description": built.description, "licenseInfo": built.license_info,
                "accessInformation": built.access_information}
+        if built.extra.get("owns_title"):        # a map the door owns whole (D-380, D-398)
+            out["title"] = built.title
         if data is not None:
             out["text"] = json.dumps(data)
         return out
@@ -620,9 +623,11 @@ class ArcGISWebMap(TargetKind):
     def create(self, session, target: Target, built: Built) -> str:
         portal, token = session["portal"], session["token"]
         folder = portal.folder_id(target.owner, target.folder, token)
+        fields = self._fields(built, built.data)
+        fields.pop("title", None)                # given below, as every item's is
         doc = portal.post(f"content/users/{target.owner}/{folder}/addItem", token,
                           type="Web Map", title=built.title, snippet=built.snippet,
-                          tags=",".join(built.tags), **self._fields(built, built.data))
+                          tags=",".join(built.tags), **fields)
         return doc["id"]
 
     def update(self, session, target: Target, item_id: str, built: Built, *,

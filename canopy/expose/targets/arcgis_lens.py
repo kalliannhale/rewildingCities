@@ -154,4 +154,5 @@ def build_lens(lens: dict, version: str) -> Built:
                  tags=["rewildingCities", lens["plot"], "lens", lens["lane"]],
                  license_info=license_info, access_information=access, data=data,
                  layer_id="lens", url="",
-                 extra={"made": MADE_LENS, "map_sha256": sha, "report": report})
+                 extra={"made": MADE_LENS, "map_sha256": sha, "report": report,
+                        "owns_title": True})

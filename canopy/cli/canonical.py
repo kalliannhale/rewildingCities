@@ -83,6 +83,10 @@ def register(subparsers) -> None:
                    help="with --display: draw this table on an outline harvest (D-331)")
     p.add_argument("--markers", action="store_true",
                    help="with --join: each place as one point on its surface")
+    p.add_argument("--only", default=None, metavar="INDICATORS",
+                   help="with --join: keep only these indicators' columns, comma-separated, "
+                        "for a lens; sent as application/json, so CloudFront compresses it "
+                        "(D-396, D-397)")
     p.add_argument("--local", action="store_true",
                    help="with --display or --told: from the plot's own files; a dry run, no AWS")
     p.add_argument("--refusals", action="store_true",
@@ -93,7 +97,7 @@ def register(subparsers) -> None:
 
 
 def _asked_wrongly(args) -> str | None:
-    others = ("display", "join", "markers", "tolerance", "told", "all")
+    others = ("display", "join", "markers", "tolerance", "told", "all", "only")
     if getattr(args, "refusals", False):
         if args.artifact or any(getattr(args, k, None) for k in others + ("local",)):
             return "--refusals is the whole plot's: it takes no artifact and no other option"
@@ -123,6 +127,8 @@ def _asked_wrongly(args) -> str | None:
         return "--join and --local go with --display"
     if getattr(args, "markers", False) and not display:
         return "--markers goes with --display"
+    if getattr(args, "only", None) and not getattr(args, "join", None):
+        return "--only keeps some of a table's indicators, so it goes with --display --join"
     if getattr(args, "markers", False) and getattr(args, "tolerance", None) is not None:
         return "--markers simplifies nothing, so it takes no --tolerance"
     if getattr(args, "local", False) and args.write:
@@ -260,7 +266,9 @@ def _display(s3, root, args, bucket: str, domain: str) -> int:
         p = s3.prepare_display(args.plot, args.artifact, client=client, bucket=bucket,
                                domain=domain, root=root, tolerance_m=args.tolerance,
                                join=getattr(args, "join", None),
-                               markers=getattr(args, "markers", False), local=local)
+                               markers=getattr(args, "markers", False), local=local,
+                               only=[i for i in (getattr(args, "only", None) or "").split(",")
+                                     if i.strip()] or None)
         result = s3.write_display(p, client=client, bucket=bucket) if args.write else None
     except s3.CanonicalRefusal as e:
         _say_refusal(args.artifact, e)

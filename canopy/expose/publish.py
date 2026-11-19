@@ -691,6 +691,9 @@ def check(plot: str, target_ids: list[str], *, root: Path, kinds: dict | None = 
                                          f"recorded {str(entry.get('map_sha256'))[:12]}: "
                                          f"changed by hand; publish it again with --write "
                                          f"--restore to write the door's map back (D-395)")
+                        if entry.get("title") and state.get("title") != entry["title"]:
+                            found.append(f"its title was changed by hand to "
+                                         f"{state.get('title')!r}; --restore puts it back (D-398)")
                     if made == MADE_PLACES:
                         if "now" not in fresh:
                             fresh["now"] = (fresh_refusals or _fresh_refusals)(plot, Path(root))
@@ -919,6 +922,12 @@ def _check_places_live(kind, session, target, entry: dict, replace: bool, built=
                              f"not the recorded {str(entry.get('map_sha256'))[:12]}",
                              "the door owns the whole map (D-380): publish again with "
                              "--write --restore, which writes it back into the same item (D-395)")
+    if entry.get("title") and state.get("title") != entry["title"]:
+        if restore:
+            return "restore"
+        raise PublishRefusal(f"the {what}'s title was changed by hand to {state.get('title')!r}; "
+                             f"the door owns the whole item (D-398)",
+                             "publish again with --write --restore, which puts the title back")
     if not described_as_recorded(state["description"], entry, built):
         if restore:
             return "restore"
@@ -989,7 +998,10 @@ def publish_places(plot: str, target_ids: list[str], *, root: Path, write: bool 
             o.lines.append(f"the map: {size:,} bytes, sha256 {built.extra['map_sha256'][:12]} "
                            f"(LIMIT-1 has no line yet, so none is applied)")
             due = owed_places(entry, places, built, target)
-            o.lines.append(_SAY_PLACES[due].format(folder=target.folder, sharing=target.sharing))
+            o.lines.append(_SAY_PLACES[due].format(folder=target.folder, sharing=target.sharing)
+                           .replace("nothing owed", "nothing owed by the record"
+                                    + ("; the item itself is read next" if write and (replace or restore)
+                                       else "")))
             if not write:
                 o.outcome = "unchanged" if due == "unchanged" else (
                     "would publish" if due == "create" else "would update")
@@ -1063,7 +1075,7 @@ def _places_entry(places, target, built, item_id, records, by, reason, prior, re
     first = records[0] if records else {}
     return {
         "kind": MADE_PLACES, "portal": target.portal, "owner": target.owner,
-        "folder": target.folder, "item_id": item_id,
+        "folder": target.folder, "item_id": item_id, "title": built.title,
         "map_sha256": built.extra["map_sha256"],
         "parents": _parents(places),
         "refusals_sha256": places["told"]["refusals_sha256"],
@@ -1153,7 +1165,10 @@ def publish_lens(plot: str, lane: str, target_ids: list[str], *, root: Path, wri
                            f"its layers read their copies by URL")
             due = owed_places(entry, lens, built, target)
             o.lines.append(_SAY_PLACES[due].format(folder=target.folder, sharing=target.sharing)
-                           .replace("places map", "lens"))
+                           .replace("places map", "lens")
+                           .replace("nothing owed", "nothing owed by the record"
+                                    + ("; the item itself is read next" if write and (replace or restore)
+                                       else "")))
             if not write:
                 o.outcome = "unchanged" if due == "unchanged" else (
                     "would publish" if due == "create" else "would update")
@@ -1227,7 +1242,7 @@ def _lens_entry(lens, target, built, item_id, records, by, reason, prior, rest_v
     first = records[0] if records else {}
     return {
         "kind": MADE_LENS, "portal": target.portal, "owner": target.owner,
-        "folder": target.folder, "item_id": item_id, "lane": lens["lane"],
+        "folder": target.folder, "item_id": item_id, "title": built.title, "lane": lens["lane"],
         "map_sha256": built.extra["map_sha256"],
         "parents": _parents(lens),
         "layers": built.extra["report"]["levels"], "empty": built.extra["report"]["empty"],

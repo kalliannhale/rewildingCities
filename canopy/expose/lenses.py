@@ -21,7 +21,9 @@ publishes it.
                                and checked as the door checks any copy; what is
                                not yet drawn is named with the command that draws it
 
-a lens never draws a count and never a standing (D-365, D-75, D-385): a
+a lens reads, for each table, the copy holding its lane's columns alone
+(D-396), sent compressed (D-397); the table's full copy is read only as the
+index of which indicators it holds. a lens never draws a count and never a standing (D-365, D-75, D-385): a
 pillar's count (CII's own total of news outlets) is named and kept in the
 profile, and a lane of ours may hold no count at all. an empty lens holds the
 orientation copy and says so. ~
@@ -203,9 +205,8 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
         name = display.joined_name(outline, o["sha256"], tolerance_m=tol)
         layers = []
         for table in spec.get("tables") or []:
-            draw = (f"canonical {plot} {table} --display --join {outline}"
-                    + (f" --tolerance {tol}" if tol != display.DEFAULT_TOLERANCE_M else "")
-                    + " --write")
+            at = f" --tolerance {tol}" if tol != display.DEFAULT_TOLERANCE_M else ""
+            draw = f"canonical {plot} {table} --display --join {outline}{at} --write"
             try:
                 t = door._current(get, base, plot, table)
             except PublishRefusal:
@@ -218,12 +219,23 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
                                f"{o['sha256'][:12]}: {draw}")
                 continue
             held = ((env.get("metadata") or {}).get("join") or {}).get("indicators") or []
+            only = sorted(i for i in the["members"] if i in held and i not in counts)
+            if not only:
+                continue
+            # the full copy is the index of what the table holds; the lens reads
+            # its lane's slim copy, which carries those columns alone (D-396)
+            slim = display.joined_name(outline, o["sha256"], tolerance_m=tol, only=only)
+            if door._json(get, f"{base}/{s3.display_keys(plot, table, t['sha256'], slim)['envelope']}") is None:
+                missing.append(f"{table}'s lens copy for {', '.join(only)} is not drawn on "
+                               f"{outline}: canonical {plot} {table} --display --join {outline}"
+                               f"{at} --only {','.join(only)} --write")
+                continue
             drawn = []
             for ind in the["members"]:
-                if ind not in held or ind in counts:
+                if ind not in only:
                     continue
                 copy = door.read_copy(plot, table, domain=domain, fetch=get, join=outline,
-                                      indicator=ind, display=name)
+                                      indicator=ind, display=slim)
                 columns = ((copy["display_env"].get("metadata") or {}).get("join") or {}) \
                     .get("columns") or {}
                 if column_name(ind, "percentile") in (columns.get(ind) or []):
@@ -236,7 +248,7 @@ def read_lens(plot: str, lane: str, *, domain: str, root: str | Path, fetch) -> 
                 layers.extend(drawn)
                 judged.append(drawn[0])
                 parents.append({"role": f"{level} {table}", "harvest": table,
-                                "sha256": t["sha256"], "allow": t["allow"], "copy": name,
+                                "sha256": t["sha256"], "allow": t["allow"], "copy": slim,
                                 "url": drawn[0]["url"], "allow_doc": t["allow_doc"],
                                 "env": drawn[0]["display_env"],
                                 "outline": {"harvest": outline, "sha256": o["sha256"],

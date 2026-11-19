@@ -117,7 +117,7 @@ class FakePortal:
             if len(parts) == 4 and parts[3] == "data":
                 return Resp(json.loads(item["text"]))
             return Resp({"id": parts[2], "owner": item["owner"], "access": item["access"],
-                         "description": item["description"]})
+                         "description": item["description"], "title": item.get("title")})
         raise AssertionError(f"unexpected GET {path}")
 
     def post(self, url, data=None, headers=None, timeout=None):
@@ -146,6 +146,8 @@ class FakePortal:
             item["description"] = data["description"]
             if "text" in data:
                 item["text"] = data["text"]
+            if "title" in data:
+                item["title"] = data["title"]
             return Resp({"success": True})
         if path.endswith("/share"):
             item = self.items[path.split("/")[4]]

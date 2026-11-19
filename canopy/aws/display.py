@@ -76,6 +76,18 @@ WEB = "EPSG:4326"
 DECIMALS = 6
 OPEN_PINCH_M = 0.1       # COVER-1: how far a pinched hole vertex moves into its hole
 GEOJSON_TYPE = "application/geo+json"
+# a lens's copy (D-396) is sent as plain JSON, which it is, so CloudFront
+# compresses it: CloudFront compresses a fixed list of types, application/json
+# among them and application/geo+json not, and only files of 1,000 to
+# 10,000,000 bytes (COMPRESS-1, D-397). copies already written keep their type.
+COMPRESSED_TYPE = "application/json"
+
+
+def only_key(only) -> str:
+    """eight hex characters naming exactly which indicators a lens's copy holds,
+    so a changed set is a new name and never new bytes under one (D-322)."""
+    import hashlib
+    return hashlib.sha256(",".join(sorted(only)).encode("utf-8")).hexdigest()[:8]
 
 _POINTS = {"Point", "MultiPoint"}
 _POLYGONS = {"Polygon", "MultiPolygon"}
@@ -382,20 +394,26 @@ def draw(parquet_bytes: bytes, *, tolerance_m: int = DEFAULT_TOLERANCE_M,
 # -- joined copies (D-331) ----------------------------------------------------
 
 def joined_name(outline_harvest: str, outline_sha256: str, *, markers: bool = False,
-                tolerance_m: int = DEFAULT_TOLERANCE_M) -> str:
+                tolerance_m: int = DEFAULT_TOLERANCE_M, only=None) -> str:
     """a joined copy is named for the outline version it is drawn on, so a new
-    outline version is a new copy and never new bytes under one name (D-322)."""
+    outline version is a new copy and never new bytes under one name (D-322).
+    a copy holding only some indicators (only, D-396) says which by only_key."""
     stem = f"{outline_harvest}_{outline_sha256[:12]}"
-    return f"{stem}_markers" if markers else f"{stem}_{display_name('polygons', tolerance_m)}"
+    name = f"{stem}_markers" if markers else f"{stem}_{display_name('polygons', tolerance_m)}"
+    return f"{name}_only_{only_key(only)}" if only else name
 
 
 def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: str,
                 outline_sha256: str, level: str, widths: dict, markers: bool = False,
-                tolerance_m: int = DEFAULT_TOLERANCE_M, id_field: str | None = None) -> dict:
+                tolerance_m: int = DEFAULT_TOLERANCE_M, id_field: str | None = None,
+                only=None) -> dict:
     """a long-form table joined onto an outline version and drawn as one wide
     web GeoJSON: every place of the outline, every indicator's columns beside
     it, keyed by (authority, code). polygons are simplified as one coverage,
-    as any polygon copy is; markers are one point on each place's surface."""
+    as any polygon copy is; markers are one point on each place's surface.
+    with only, the copy keeps the columns of those indicators alone, every
+    place's own fields with them, and says in its joined step which it left
+    out (D-396): a lens draws one or two measures of a table that holds 26."""
     import io
 
     import geopandas
@@ -434,6 +452,19 @@ def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: st
         joined = choropleth.join(table, places, level=level, widths=widths)
     except choropleth.ChoroplethRefusal as e:
         raise _refusal(e.reason, e.would_admit) from None
+    left_out: list = []
+    if only:
+        only = sorted(set(only))
+        unheld = [i for i in only if i not in joined["indicators"]]
+        if unheld:
+            raise _refusal(f"the table holds no {', '.join(unheld)}",
+                           f"name only indicators it holds: {', '.join(joined['indicators'])}")
+        left_out = [i for i in joined["indicators"] if i not in only]
+        gone = {c for i in left_out for c in joined["columns"].get(i) or []}
+        joined["properties"] = [{k: v for k, v in row.items() if k not in gone}
+                                for row in joined["properties"]]
+        joined["indicators"] = [i for i in joined["indicators"] if i in only]
+        joined["columns"] = {i: joined["columns"][i] for i in joined["indicators"]}
     props = pandas.DataFrame(joined["properties"])
     out = geopandas.GeoDataFrame(props, geometry=numpy.asarray(frame.geometry), crs=WEB)
     c = joined["counts"]
@@ -444,18 +475,25 @@ def draw_joined(table_bytes: bytes, outline_bytes: bytes, *, outline_harvest: st
         f"{c['places_without_row']} kept with empty columns; of the table's rows, "
         f"{c['rows_outside_outline']} belong to places outside this outline, "
         f"{c['rows_other_level']} to another level and {c['rows_other_authority']} to "
-        f"another authority; each indicator's columns named <indicator>__<column>")})
+        f"another authority; each indicator's columns named <indicator>__<column>"
+        + (f"; only {', '.join(joined['indicators'])} kept, the columns of "
+           f"{len(left_out)} other indicator(s) left out ({', '.join(left_out)}), for a "
+           f"lens (D-396)" if only else ""))})
     as_text += [choropleth.column_name(ind, col) for ind in joined["indicators"]
                 for col in table_dates]
     steps.append(_format_step(out, source_crs, as_text))
 
     body = out.to_json(drop_id=True).encode("utf-8")
     stats = _stats(out, kind, names, vertices_before, body, source_crs)
-    name = joined_name(outline_harvest, outline_sha256, markers=markers, tolerance_m=tolerance_m)
+    name = joined_name(outline_harvest, outline_sha256, markers=markers, tolerance_m=tolerance_m,
+                       only=only)
+    join_said = {"counts": c, "indicators": joined["indicators"],
+                 "columns": joined["columns"], "authority": joined["authority"],
+                 "level": level, "row_notes": choropleth.row_notes(joined["properties"])}
+    if only:
+        join_said.update(only=only, left_out=left_out)
     return {"bytes": body, "steps": steps, "kind": kind, "name": name, "stats": stats,
-            "join": {"counts": c, "indicators": joined["indicators"],
-                     "columns": joined["columns"], "authority": joined["authority"],
-                     "level": level, "row_notes": choropleth.row_notes(joined["properties"])}}
+            "join": join_said}
 
 
 def display_envelope(receipt: dict, *, display_key: str, data_url: str, sha256: str,
@@ -540,7 +578,9 @@ def joined_envelope(table_receipt: dict, outline_receipt: dict, *, display_key: 
                       "authority": join["authority"], "level": join["level"],
                       "lineage": ometa.get("lineage")},
         "join": {"counts": join["counts"], "indicators": join["indicators"],
-                 "columns": join["columns"], "directions": dict(join.get("directions") or {})},
+                 "columns": join["columns"], "directions": dict(join.get("directions") or {}),
+                 **({"only": join["only"], "left_out": join.get("left_out") or []}
+                    if join.get("only") else {})},
         "row_context_notes": list(join["row_notes"]),
         "context_notes": carried,
     })

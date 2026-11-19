@@ -665,7 +665,7 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
                     root: Path, tolerance_m: int | None = None, judge=default_judge,
                     drawer=None, validate=None, now: datetime | None = None,
                     join: str | None = None, markers: bool = False,
-                    local: bool = False) -> PreparedDisplay:
+                    local: bool = False, only=None) -> PreparedDisplay:
     """read the current version back from the bucket (or, local, make it from
     the plot's files), check its bytes against its name, draw the copy, build
     its envelope, and ask the gate. sends nothing; a dry run is this alone.
@@ -683,6 +683,9 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
     receipt = v["receipt"]
     data_url = f"{base}/{v['prefix']}/data.parquet"
 
+    if only and not join:
+        raise CanonicalRefusal("--only keeps some of a table's indicators, so it goes with "
+                               "--join", "draw the table on an outline with --join")
     if not join:
         meta = receipt.get("metadata") or {}
         if markers and meta.get("data_category") != "vector":
@@ -720,15 +723,18 @@ def prepare_display(plot: str, artifact: str, *, client, bucket: str, domain: st
                 "join onto a place_outline, which names both")
         from canopy import choropleth
         drawer = drawer or display.draw_joined
+        slim = {"only": sorted(set(only))} if only else {}    # a stand-in drawer takes none
         drawn, seconds = _drawn(drawer, v["data"], o["data"], outline_harvest=join,
                                 outline_sha256=o["sha256"], level=level,
                                 widths=choropleth.load_widths(root), markers=markers,
-                                tolerance_m=tolerance_m, id_field=ometa.get("id_field"))
+                                tolerance_m=tolerance_m, id_field=ometa.get("id_field"), **slim)
         drawn["join"]["directions"] = _directions(root, drawn["join"].get("indicators") or [])
         keys = display_keys(plot, artifact, v["sha256"], drawn["name"])
         params = {"tolerance_m": None if markers else tolerance_m, "markers": markers,
                   "projected": display.PROJECTED, "web": display.WEB,
-                  "decimals": display.DECIMALS, "name": drawn["name"], "join": join}
+                  "decimals": display.DECIMALS, "name": drawn["name"], "join": join,
+                  **({"only": slim["only"], "content_type": display.COMPRESSED_TYPE}
+                     if only else {})}
         env = display.joined_envelope(
             receipt, o["receipt"], display_key=keys["geojson"], table_url=data_url,
             outline_url=f"{base}/{o['prefix']}/data.parquet", table_sha256=v["sha256"],
@@ -754,7 +760,7 @@ def write_display(prepared: PreparedDisplay, *, client, bucket: str) -> dict:
     """send the envelope, then the GeoJSON last, each with If-None-Match. a
     copy already there with these bytes writes nothing; one there with other
     bytes is refused, never replaced."""
-    from canopy.aws.display import GEOJSON_TYPE, envelope_bytes
+    from canopy.aws.display import COMPRESSED_TYPE, GEOJSON_TYPE, envelope_bytes
     if prepared.local:
         raise CanonicalRefusal("a local copy is drawn from the plot's own files and is a dry "
                                "run only; the copy that is written is drawn from the bucket",
@@ -769,8 +775,9 @@ def write_display(prepared: PreparedDisplay, *, client, bucket: str) -> dict:
             f"{prepared.sha256[:12]} with other bytes, and a version's files never change",
             "draw it under another name (another --tolerance), or find what changed")
     written = []
+    copy_type = COMPRESSED_TYPE if (prepared.join or {}).get("only") else GEOJSON_TYPE
     for key, body, ctype in ((keys["envelope"], envelope_bytes(prepared.envelope), JSON_TYPE),
-                             (keys["geojson"], prepared.body, GEOJSON_TYPE)):
+                             (keys["geojson"], prepared.body, copy_type)):
         if _put_once(client, bucket, key, body, ctype):
             written.append(key)
     return {"copy": "new", "written": written, "keys": keys}
