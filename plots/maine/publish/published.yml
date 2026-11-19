@@ -261,8 +261,8 @@ targets:
       sharing: private
       url: https://dvk5mp17wovwb.cloudfront.net/harvests/maine/clerk_offices_points_points/versions/0b91cb0caae7b2d57d5ee6cc5ee860c790b4257dda95bb460020f0d652550eb1/display/web.geojson
     lens/carriers:
-      description_seen_sha256: 50491ded0024fdc2a657125c8d1f1eb52ef842dcc1e9a13aa6f1b886db959117
-      description_sha256: 24490dda3b39a3168ea6f62c07f07a189a6108905103eb230255a1afc591b546
+      description_seen_sha256: fef123bc37a9b5549a5d807861d870d6a267f9908d2558464a226f3ac6f5b1a8
+      description_sha256: 3f3d77934f432698000e2c707983a877b9e0f4e3396d31879ababd328ae03a23
       door_version: 1.0.0
       empty: false
       folder: rewildingCities test
@@ -282,147 +282,212 @@ targets:
       kind: arcgis_lens_map
       lane: carriers
       layers:
+        county:
+        - news_outlets_per_1000
+        - library_outlets_per_1000
+        - clerk_offices_per_1000
+        - public_schools_per_1000
+        - health_center_sites_per_1000
         cousub:
         - news_outlets_per_1000
         - library_outlets_per_1000
         - clerk_offices_per_1000
         - public_schools_per_1000
         - health_center_sites_per_1000
-      map_sha256: 080abaeb0c146efc350f392a2bd65b2f01a4fdd174748b7e6418f972e8036e9c
-      moved_at: '2026-11-19T01:19:09.732816+00:00'
+      map_sha256: 1a6d0d0a688caf248b3e63c5b794f16b474c607496a5bc32d209d6d956e59c75
+      moved_at: '2026-11-19T02:08:14.042053+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
       parents:
+        county carriers_counts_values:
+          allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_bdb3fa02
+          harvest: carriers_counts_values
+          sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
+        county clerk_offices_counts_values:
+          allow: 8739e38c0226a37a880dbdde54aacd8813fffa2171a72ede0f762edf61db2585
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_ebcd9a7c
+          harvest: clerk_offices_counts_values
+          sha256: 30d832c9d25ed8fce6be6f4da3f6d434d1b09d4421c5353edde26e2e779af45f
+        county health_centers_counts_values:
+          allow: 5a24367bea36064c5b638bcd1dbd17291815f871fe1c4184bfd441ca3a3697a0
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_d92a49e0
+          harvest: health_centers_counts_values
+          sha256: 37587897bf0efc13b0d051e487202a7787b5f8a1624549da907ac40a4b43d780
+        county libraries_counts_values:
+          allow: 143fc0fb410eeb6c346beda2fe1fbbb142d3465c33ca9fa9f9daf8be62b16e1c
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_1de12ead
+          harvest: libraries_counts_values
+          sha256: 40164ca51055a6f21150827dc051f5ec2745d362d91137198e2cb261cee7a99d
+        county schools_counts_values:
+          allow: 584fb3c33e74e00c1f3cb9f60ca45cabf0e290f7722fa615e044527119887eb2
+          copy: outline_counties_outline_ee88e4f41db3_web_250m_only_64339509
+          harvest: schools_counts_values
+          sha256: 0d46334daa29b0d601ba9ab4ca45ecbd487f9e814bfdc0c275aac88aee2f3c6c
         cousub carriers_counts_values:
           allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
-          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_bdb3fa02
+          copy: outline_towns_outline_eda591d0d3ba_markers_only_bdb3fa02
           harvest: carriers_counts_values
           sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
         cousub clerk_offices_counts_values:
           allow: 8739e38c0226a37a880dbdde54aacd8813fffa2171a72ede0f762edf61db2585
-          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_ebcd9a7c
+          copy: outline_towns_outline_eda591d0d3ba_markers_only_ebcd9a7c
           harvest: clerk_offices_counts_values
           sha256: 30d832c9d25ed8fce6be6f4da3f6d434d1b09d4421c5353edde26e2e779af45f
         cousub health_centers_counts_values:
           allow: 5a24367bea36064c5b638bcd1dbd17291815f871fe1c4184bfd441ca3a3697a0
-          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_d92a49e0
+          copy: outline_towns_outline_eda591d0d3ba_markers_only_d92a49e0
           harvest: health_centers_counts_values
           sha256: 37587897bf0efc13b0d051e487202a7787b5f8a1624549da907ac40a4b43d780
         cousub libraries_counts_values:
           allow: 143fc0fb410eeb6c346beda2fe1fbbb142d3465c33ca9fa9f9daf8be62b16e1c
-          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_1de12ead
+          copy: outline_towns_outline_eda591d0d3ba_markers_only_1de12ead
           harvest: libraries_counts_values
           sha256: 40164ca51055a6f21150827dc051f5ec2745d362d91137198e2cb261cee7a99d
         cousub schools_counts_values:
           allow: 584fb3c33e74e00c1f3cb9f60ca45cabf0e290f7722fa615e044527119887eb2
-          copy: outline_towns_outline_eda591d0d3ba_web_250m_only_64339509
+          copy: outline_towns_outline_eda591d0d3ba_markers_only_64339509
           harvest: schools_counts_values
           sha256: 0d46334daa29b0d601ba9ab4ca45ecbd487f9e814bfdc0c275aac88aee2f3c6c
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the six lenses to test (D-385)
+      previous:
+        map_sha256: 080abaeb0c146efc350f392a2bd65b2f01a4fdd174748b7e6418f972e8036e9c
+        parents:
+          cousub carriers_counts_values:
+            allow: 45a517f1117a7a79f7d178bbe503339c1371b9ff457ae09bfa89c7b52aae1604
+            copy: outline_towns_outline_eda591d0d3ba_web_250m_only_bdb3fa02
+            harvest: carriers_counts_values
+            sha256: 33d9b4d7b9b51f7cbdd89ed97b9454ca2d515b04a79dcf9aeedba66632dc9f83
+          cousub clerk_offices_counts_values:
+            allow: 8739e38c0226a37a880dbdde54aacd8813fffa2171a72ede0f762edf61db2585
+            copy: outline_towns_outline_eda591d0d3ba_web_250m_only_ebcd9a7c
+            harvest: clerk_offices_counts_values
+            sha256: 30d832c9d25ed8fce6be6f4da3f6d434d1b09d4421c5353edde26e2e779af45f
+          cousub health_centers_counts_values:
+            allow: 5a24367bea36064c5b638bcd1dbd17291815f871fe1c4184bfd441ca3a3697a0
+            copy: outline_towns_outline_eda591d0d3ba_web_250m_only_d92a49e0
+            harvest: health_centers_counts_values
+            sha256: 37587897bf0efc13b0d051e487202a7787b5f8a1624549da907ac40a4b43d780
+          cousub libraries_counts_values:
+            allow: 143fc0fb410eeb6c346beda2fe1fbbb142d3465c33ca9fa9f9daf8be62b16e1c
+            copy: outline_towns_outline_eda591d0d3ba_web_250m_only_1de12ead
+            harvest: libraries_counts_values
+            sha256: 40164ca51055a6f21150827dc051f5ec2745d362d91137198e2cb261cee7a99d
+          cousub schools_counts_values:
+            allow: 584fb3c33e74e00c1f3cb9f60ca45cabf0e290f7722fa615e044527119887eb2
+            copy: outline_towns_outline_eda591d0d3ba_web_250m_only_64339509
+            harvest: schools_counts_values
+            sha256: 0d46334daa29b0d601ba9ab4ca45ecbd487f9e814bfdc0c275aac88aee2f3c6c
+      reason: 'D-399 and D-400: carriers as markers and rates; empty lenses hold no
+        layer'
       rest_version: '2026.3'
       sharing: private
       title: 'Carriers, per 1,000 people: a lens on the maine plot (maine)'
     lens/civic_participation:
-      description_seen_sha256: 2b162b945143ea939718cda43af093897eab29f80d7d9f4997c59554ab0b238e
-      description_sha256: 0eed27792ced9c00b0543aec1680329f9f161002546a43c60d5046b64532dd7d
+      description_seen_sha256: 038240759b17d27cb34fd312a9154774763cffe7025eb563f79bd4d8a99c801f
+      description_sha256: 8b0f761af8fef0f93a89d74b87637ba2127c7a5eef9a895d1096868cd7e712d2
       door_version: 1.0.0
       empty: true
       folder: rewildingCities test
       gate:
-        context_notes:
-        - contains_census_tribal_area
+        context_notes: []
         decision: allow
-        gate_version: 1.0.0
-        sharing_level: private
+        gate_version: null
+        sharing_level: null
         target: test
       groups: []
       item_id: 5533d5b638024f87af112e4221347472
       kind: arcgis_lens_map
       lane: civic_participation
       layers: {}
-      map_sha256: 4ef12c32aa968844f7b31dd20bbc6fd6460a0acd38222cfe0cdb8a3ff280755e
-      moved_at: '2026-11-19T01:15:44.129609+00:00'
+      map_sha256: e8f18dbb85b52cf97a946576575b794c213ac51aaf809ae42838b2edf3d22221
+      moved_at: '2026-11-19T02:08:31.195458+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
-      parents:
-        orientation:
-          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
-          copy: markers
-          harvest: outline_counties_outline
-          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      parents: {}
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the six lenses to test (D-385)
+      previous:
+        map_sha256: 4ef12c32aa968844f7b31dd20bbc6fd6460a0acd38222cfe0cdb8a3ff280755e
+        parents:
+          orientation:
+            allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+            copy: markers
+            harvest: outline_counties_outline
+            sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      reason: 'D-399 and D-400: carriers as markers and rates; empty lenses hold no
+        layer'
       rest_version: '2026.3'
       sharing: private
       title: 'Civic Participation Index: a lens on the maine plot (maine)'
     lens/environmental_resilience:
-      description_seen_sha256: c565631872e6d720832a2d5f48334ca077c7fa3258a0c637d5398c19621c2c52
-      description_sha256: a8bb5bc410656fd9949360bcc24d31bee88dbeddfd5489bde3f2398eabd20cf5
+      description_seen_sha256: a0296a3cbc0a770c6aabaf691094895ecf07350f4fb97a12ca6f82c8beace57c
+      description_sha256: d47d91c03f8d4c5ac9c33b5c830326a1532537cdf67ef1bfdee064d161a2fcb4
       door_version: 1.0.0
       empty: true
       folder: rewildingCities test
       gate:
-        context_notes:
-        - contains_census_tribal_area
+        context_notes: []
         decision: allow
-        gate_version: 1.0.0
-        sharing_level: private
+        gate_version: null
+        sharing_level: null
         target: test
       groups: []
       item_id: a34782eb366649dd95a5c5bca3fbb692
       kind: arcgis_lens_map
       lane: environmental_resilience
       layers: {}
-      map_sha256: 8664a47b2d07b926e4f5b9d7c2224989fcd7f43867ddb24325d087eacb22d891
-      moved_at: '2026-11-19T01:17:44.615040+00:00'
+      map_sha256: e8f18dbb85b52cf97a946576575b794c213ac51aaf809ae42838b2edf3d22221
+      moved_at: '2026-11-19T02:08:49.779942+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
-      parents:
-        orientation:
-          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
-          copy: markers
-          harvest: outline_counties_outline
-          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      parents: {}
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the six lenses to test (D-385)
+      previous:
+        map_sha256: 8664a47b2d07b926e4f5b9d7c2224989fcd7f43867ddb24325d087eacb22d891
+        parents:
+          orientation:
+            allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+            copy: markers
+            harvest: outline_counties_outline
+            sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      reason: 'D-399 and D-400: carriers as markers and rates; empty lenses hold no
+        layer'
       rest_version: '2026.3'
       sharing: private
       title: 'Environmental Resilience Index: a lens on the maine plot (maine)'
     lens/equity_justice:
-      description_seen_sha256: 9b1393449ad14e081ab01eb2001340dab9f7e70c22dca98221d50b026b9e8393
-      description_sha256: ad8083b1df9cb0d83da2d25db9a048e36fc9c0009e97ed105547d920a82f71d8
+      description_seen_sha256: 8d12ab6bd07056add2b29fe1e981770d6a12d981fbf3d6609ca2a91bbaa7d026
+      description_sha256: 451130d96eb3ea6dc09dc8290d4f84cc211ab6c9eca641fe1a279930fba6fc90
       door_version: 1.0.0
       empty: true
       folder: rewildingCities test
       gate:
-        context_notes:
-        - contains_census_tribal_area
+        context_notes: []
         decision: allow
-        gate_version: 1.0.0
-        sharing_level: private
+        gate_version: null
+        sharing_level: null
         target: test
       groups: []
       item_id: e885afa6edb041969f919308ba18232b
       kind: arcgis_lens_map
       lane: equity_justice
       layers: {}
-      map_sha256: 8b5b2a6b46502aafe817aed24933adab3f866bee544ff61577bebe5b8011231a
-      moved_at: '2026-11-19T01:16:52.285661+00:00'
+      map_sha256: e8f18dbb85b52cf97a946576575b794c213ac51aaf809ae42838b2edf3d22221
+      moved_at: '2026-11-19T02:08:39.937250+00:00'
       moved_by: Kalli A. Hale
       owner: RDS_NU
-      parents:
-        orientation:
-          allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
-          copy: markers
-          harvest: outline_counties_outline
-          sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      parents: {}
       portal: https://nu.maps.arcgis.com
-      previous: null
-      reason: the six lenses to test (D-385)
+      previous:
+        map_sha256: 8b5b2a6b46502aafe817aed24933adab3f866bee544ff61577bebe5b8011231a
+        parents:
+          orientation:
+            allow: 513d0d01678ecb23a05657cb5a09a6e66c890bc250ccd244e85faebeaa4047bb
+            copy: markers
+            harvest: outline_counties_outline
+            sha256: ee88e4f41db3151b4ea4f886639327b7ba6c03e885029dfe9909465df1eb11cf
+      reason: 'D-399 and D-400: carriers as markers and rates; empty lenses hold no
+        layer'
       rest_version: '2026.3'
       sharing: private
       title: 'Equity & Justice Index: a lens on the maine plot (maine)'
